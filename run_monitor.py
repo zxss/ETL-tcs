@@ -17,15 +17,18 @@
     TG_API_HASH     — с https://my.telegram.org
     TG_PHONE        — номер телефона в формате +79001234567
     ANTHROPIC_API_KEY — ключ Claude API (опционально; без него только regex)
+
+ВРЕМЕННО ОТКЛЮЧЕНО: запросы к Telegram закомментированы до настройки авторизации.
+Раскомментировать блоки с пометкой # TG_ENABLED для включения.
 """
 
 import argparse
-import asyncio
+# import asyncio          # TG_ENABLED
 import logging
 import sys
 
 import database
-from services.monitor_news import run_once, run_loop
+# from services.monitor_news import run_once, run_loop  # TG_ENABLED
 
 
 def parse_args():
@@ -45,11 +48,21 @@ def main():
     log = logging.getLogger("run_monitor")
     args = parse_args()
 
-    # Интерактивная авторизация
+    # ── Авторизация Telegram ──────────────────────────────────────────────────
+    # TG_ENABLED: раскомментировать после настройки TG_API_ID / TG_HASH / TG_PHONE
+    #
+    # if args.auth:
+    #     from monitors.tg_reader import auth
+    #     asyncio.run(auth())
+    #     log.info("Авторизация завершена. Теперь запустите без --auth.")
+    #     return
+
     if args.auth:
-        from monitors.tg_reader import auth
-        asyncio.run(auth())
-        log.info("Авторизация завершена. Теперь запустите без --auth.")
+        log.warning(
+            "Telegram-мониторинг отключён. "
+            "Заполните TG_API_ID, TG_API_HASH, TG_PHONE в .env и "
+            "раскомментируйте TG_ENABLED-блоки в run_monitor.py"
+        )
         return
 
     # Подключение к БД
@@ -63,11 +76,20 @@ def main():
     try:
         database.init_db(conn)
 
-        if args.loop:
-            run_loop(conn, interval_sec=args.interval * 60)
-        else:
-            saved = run_once(conn)
-            log.info("Готово. Новых записей: %d", saved)
+        # ── Запуск мониторинга ────────────────────────────────────────────────
+        # TG_ENABLED: раскомментировать оба блока ниже
+        #
+        # if args.loop:
+        #     run_loop(conn, interval_sec=args.interval * 60)
+        # else:
+        #     saved = run_once(conn)
+        #     log.info("Готово. Новых записей: %d", saved)
+
+        log.warning(
+            "Telegram-мониторинг отключён. "
+            "Раскомментируйте TG_ENABLED-блоки в run_monitor.py для включения."
+        )
+
     except KeyboardInterrupt:
         log.info("Остановлено пользователем")
     except Exception as e:
