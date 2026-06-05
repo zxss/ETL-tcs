@@ -21,26 +21,75 @@ DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
 
 # --- ETL параметры ----------------------------------------------------------
 TICKERS: list[str] = [
-    "SBER",   # Сбербанк
-    "GAZP",   # Газпром
-    "ROSN",   # Роснефть
-    "LKOH",   # Лукойл
-    "GMKN",   # Норникель
-    "NVTK",   # Новатэк
-    "PLZL",   # Полюс
-    "TATN",   # Татнефть
-    "MTSS",   # МТС
-    "SNGS",   # Сургутнефтегаз
-    "SNGSP",  # Сургутнефтегаз-п
-    "MAGN",   # ММК
-    "CHMF",   # Северсталь
-    "ALRS",   # Алроса
-    "MOEX",   # Московская биржа
-    "VTBR",   # ВТБ
-    "IRAO",   # Интер РАО
-    "PHOR",   # ФосАгро
-    "FEES",   # Россети
-    "AFLT",   # Аэрофлот
+    # Банки
+    "SBER",
+    "VTBR",
+
+    # Нефть и газ
+    "GAZP",
+    "ROSN",
+    "LKOH",
+    "NVTK",
+    "TATN",
+    "SNGS",
+    "SNGSP",
+
+    # Металлы и добыча
+    "GMKN",
+    "PLZL",
+    "MAGN",
+    "CHMF",
+    "ALRS",
+
+    # Энергетика
+    "IRAO",
+    "FEES",
+    "HYDR",    # РусГидро
+    "UPRO",    # Юнипро
+    "MSNG",    # Мосэнерго
+    "TGKA",    # ТГК-1
+    "OGKB",    # ОГК-2
+
+    # Химия и удобрения
+    "PHOR",
+    "AKRN",    # Акрон
+
+    # Финансы
+    "MOEX",
+
+    # Телеком
+    "MTSS",
+    "RTKM",    # Ростелеком
+
+    # Транспорт
+    "AFLT",
+    "FLOT",    # Совкомфлот
+    "NMTP",    # НМТП
+
+    # Ритейл
+    "MGNT",    # Магнит
+    "X5",      # X5 Group
+    "LENT",    # Лента
+    "FIXP",    # Fix Price
+
+    # IT и технологии
+    "YDEX",    # Яндекс
+    "VKCO",    # VK
+    "ASTR",    # Астра
+    "POSI",    # Positive Technologies
+
+    # Строительство и недвижимость
+    "PIKK",    # ПИК
+    "SMLT",    # Самолет
+    "ETLN",    # Эталон
+
+    # Прочее
+    "RUAL",    # Русал
+    "ENPG",    # Эн+
+    "SELG",    # Селигдар
+    "BSPB",    # Банк Санкт-Петербург
+    "CBOM",    # МКБ
+    "MVID",    # М.Видео
 ]
 
 # Глубина первоначальной загрузки (если данных ещё нет в БД)
@@ -58,3 +107,15 @@ MAX_CONCURRENT_TICKERS: int = 3   # сколько тикеров грузить
 MAX_RETRIES:   int   = 4
 BASE_SLEEP:    float = 0.5    # базовая пауза для exponential backoff
 REQUEST_SLEEP: float = 0.2    # пауза между чанк-запросами одного тикера
+
+# --- Telegram мониторинг @markettwits ----------------------------------------
+# Получить: https://my.telegram.org → API development tools
+TG_API_ID:   int = int(os.getenv("TG_API_ID") or "0")
+TG_API_HASH: str = os.getenv("TG_API_HASH", "")
+TG_PHONE:    str = os.getenv("TG_PHONE", "")     # +79001234567
+TG_CHANNEL:  str = os.getenv("TG_CHANNEL", "@markettwits")
+TG_FETCH_LIMIT: int = int(os.getenv("TG_FETCH_LIMIT", "500"))  # макс. постов за цикл
+
+# --- Claude API (для LLM-парсинга сентимента) --------------------------------
+# Получить: https://console.anthropic.com/keys
+ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
