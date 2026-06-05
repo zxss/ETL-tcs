@@ -20,7 +20,28 @@ DB_USER:     str = os.getenv("DB_USER", "postgres")
 DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
 
 # --- ETL параметры ----------------------------------------------------------
-TICKERS: list[str] = ["SBER", "GAZP", "ROSN", "LKOH", "GMKN", "NVTK", "PLZL"]
+TICKERS: list[str] = [
+    "SBER",   # Сбербанк
+    "GAZP",   # Газпром
+    "ROSN",   # Роснефть
+    "LKOH",   # Лукойл
+    "GMKN",   # Норникель
+    "NVTK",   # Новатэк
+    "PLZL",   # Полюс
+    "TATN",   # Татнефть
+    "MTSS",   # МТС
+    "SNGS",   # Сургутнефтегаз
+    "SNGSP",  # Сургутнефтегаз-п
+    "MAGN",   # ММК
+    "CHMF",   # Северсталь
+    "ALRS",   # Алроса
+    "MOEX",   # Московская биржа
+    "VTBR",   # ВТБ
+    "IRAO",   # Интер РАО
+    "PHOR",   # ФосАгро
+    "FEES",   # Россети
+    "AFLT",   # Аэрофлот
+]
 
 # Глубина первоначальной загрузки (если данных ещё нет в БД)
 INITIAL_MONTHS_DAILY: int = 24   # дневные свечи — 24 мес
