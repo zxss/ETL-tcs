@@ -119,3 +119,35 @@ TG_FETCH_LIMIT: int = int(os.getenv("TG_FETCH_LIMIT", "500"))  # макс. по�
 # --- Claude API (для LLM-парсинга сентимента) --------------------------------
 # Получить: https://console.anthropic.com/keys
 ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
+
+# --- Strategy Edge Validator -------------------------------------------------
+# После загрузки данных main.py может прогнать статистический контур валидации
+# стратегий (validation/verdict.py из скила strategy-edge-validator).
+# RUN_VALIDATION=0 — отключить шаг расчёта.
+RUN_VALIDATION: bool = os.getenv("RUN_VALIDATION", "1") not in ("0", "false", "False")
+
+# Каталог с движком валидации: advanced_stats.py, pnl_engine.py и пакет
+# validation/. По умолчанию используется локальная копия внутри проекта
+# (strategy_validation/), скопированная из скила strategy-edge-validator —
+# внешней зависимости от пути к скилу больше нет. Можно переопределить
+# через переменную окружения VALIDATOR_DIR.
+VALIDATOR_DIR: str = os.getenv(
+    "VALIDATOR_DIR",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "strategy_validation"),
+)
+
+# Куда выгружать CSV-свечи из БД для валидатора.
+VALIDATION_DATA_DIR: str = os.getenv(
+    "VALIDATION_DATA_DIR",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "validation_data"),
+)
+
+# Тикеры и стратегии для прогона валидации.
+# TGKA исключён намеренно (битый масштаб цены) — см. validate_candles.
+VALIDATION_TICKERS: list[str] = (
+    os.getenv("VALIDATION_TICKERS", "ETLN SELG SMLT MGNT ALRS UPRO").split()
+)
+VALIDATION_STRATS: list[str] = (
+    os.getenv("VALIDATION_STRATS", "long_overnight intraday_short").split()
+)
+VALIDATION_BOOT: int = int(os.getenv("VALIDATION_BOOT", "2000"))

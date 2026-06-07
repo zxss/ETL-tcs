@@ -4,3 +4,9 @@ psycopg2-binary>=2.9.9
 python-dotenv>=1.0.0
 requests>=2.31.0
 telethon>=1.36.0
+
+# Strategy Edge Validator (strategy_validation/)
+numpy>=1.26.0
+pandas>=2.0.0
+scipy>=1.11.0
+hmmlearn>=0.3.0  # опционально: HMM-режимы (есть квантильный fallback)
