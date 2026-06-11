@@ -159,6 +159,35 @@ VALIDATION_STRATS: list[str] = (
 )
 VALIDATION_BOOT: int = int(os.getenv("VALIDATION_BOOT", "2000"))
 
+# --- Реалистичные издержки (PR-1) -------------------------------------------
+# Round-trip издержки в % по умолчанию (комиссия + half-spread×2 + проскальзывание).
+# 0.08% = 2×0.04% — оптимистичная оценка для ликвидных голубых фишек. Для мид-капов
+# (ETLN/SELG/SMLT) реальный round-trip ближе к 0.15–0.25% из-за спреда. Переопределяется
+# по тикеру через VALIDATION_COST_RT_MAP="ETLN:0.20 SELG:0.18 SMLT:0.20".
+VALIDATION_COST_RT: float = float(os.getenv("VALIDATION_COST_RT", "0.08"))
+VALIDATION_COST_RT_MAP: dict[str, float] = {
+    kv.split(":")[0].upper(): float(kv.split(":")[1])
+    for kv in os.getenv("VALIDATION_COST_RT_MAP", "").split() if ":" in kv
+}
+
+# --- Честная мультитестовая вселенная (PR-2) --------------------------------
+# При True контур считает HAC-t p-values по ВСЕМ config.TICKERS (а не только по
+# отобранным VALIDATION_TICKERS) и применяет BH-FDR по полной сетке — это
+# корректирует data snooping при выборе тикеров. Отчёт по-прежнему печатается
+# только по VALIDATION_TICKERS. Тяжелее (выгрузка всех тикеров в CSV).
+VALIDATION_FULL_UNIVERSE: bool = os.getenv("VALIDATION_FULL_UNIVERSE", "0") not in ("0", "false", "False")
+
+# --- Винзоризация ex-div / новостных гэпов (PR-4) ---------------------------
+# T-Invest свечи НЕ скорректированы на дивиденды: в ex-div дату overnight/total
+# показывают ложный гэп вниз. При True экстремальные overnight-гэпы винзоризуются
+# (прокси истинной total-return корректировки; для точного учёта нужен дивидендный
+# фид). По умолчанию выключено, чтобы не менять результаты молча.
+VALIDATION_WINSORIZE_GAPS: bool = os.getenv("VALIDATION_WINSORIZE_GAPS", "0") not in ("0", "false", "False")
+
+# --- Walk-forward OOS (PR-5) ------------------------------------------------
+# Доля хвоста ряда, отводимая под честный хронологический out-of-sample тест.
+VALIDATION_OOS_FRACTION: float = float(os.getenv("VALIDATION_OOS_FRACTION", "0.30"))
+
 # --- Multi-Asset TFT Next-Day Range Forecast --------------------------------
 # Единый Temporal Fusion Transformer на ВСЕХ тикерах прогнозирует диапазон
 # цены следующего торгового дня (ForecastLow/High, RangePct, CoverageProb).

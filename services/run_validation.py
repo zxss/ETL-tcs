@@ -77,9 +77,15 @@ def run(conn, quiet: bool = False) -> list | None:
     out_dir = config.VALIDATION_DATA_DIR
     os.makedirs(out_dir, exist_ok=True)
 
+    # PR-2: для честной мультитестовой поправки FDR по выбору тикеров выгружаем
+    # ВСЮ вселенную (config.TICKERS), а отчёт печатаем по VALIDATION_TICKERS.
+    report_tickers = config.VALIDATION_TICKERS
+    universe = config.TICKERS if config.VALIDATION_FULL_UNIVERSE else report_tickers
+    export_set = list(dict.fromkeys([*report_tickers, *universe]))  # сохраняем порядок, без дублей
+
     # 1. Выгрузка свечей из БД в CSV
-    exported = []
-    for tk in config.VALIDATION_TICKERS:
+    exported = set()
+    for tk in export_set:
         try:
             path, n = export_ticker_csv(conn, tk, out_dir)
         except Exception as e:  # noqa: BLE001 — не валим ETL из-за одного тикера
@@ -88,10 +94,12 @@ def run(conn, quiet: bool = False) -> list | None:
         if n == 0:
             log.warning("  [%s] нет данных в БД — пропуск.", tk)
             continue
-        exported.append(tk)
+        exported.add(tk)
         log.info("  [%s] выгружено %d дневных свечей → %s", tk, n, os.path.basename(path))
 
-    if not exported:
+    report_exported = [t for t in report_tickers if t in exported]
+    universe_exported = [t for t in universe if t in exported]
+    if not report_exported:
         log.warning("Нет данных для валидации — шаг расчёта пропущен.")
         return None
 
@@ -104,14 +112,21 @@ def run(conn, quiet: bool = False) -> list | None:
         return None
 
     log.info(
-        "Запуск контура валидации: %d тикеров × %d стратегий (B=%d)...",
-        len(exported), len(config.VALIDATION_STRATS), config.VALIDATION_BOOT,
+        "Запуск контура валидации: отчёт по %d тикерам × %d стратегий, FDR-вселенная=%d "
+        "(B=%d, cost_rt=%.3f%%, winsorize=%s)...",
+        len(report_exported), len(config.VALIDATION_STRATS), len(universe_exported),
+        config.VALIDATION_BOOT, config.VALIDATION_COST_RT, config.VALIDATION_WINSORIZE_GAPS,
     )
     rows = verdict.run(
-        [t.lower() for t in exported],
+        [t.lower() for t in report_exported],
         config.VALIDATION_STRATS,
         out_dir,
         B=config.VALIDATION_BOOT,
+        cost_rt=config.VALIDATION_COST_RT,
+        cost_map=config.VALIDATION_COST_RT_MAP,
+        winsorize=config.VALIDATION_WINSORIZE_GAPS,
+        universe_tickers=[t.lower() for t in universe_exported],
+        oos_fraction=config.VALIDATION_OOS_FRACTION,
     )
     if not quiet:
         verdict.print_report(rows)
