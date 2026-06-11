@@ -43,7 +43,31 @@ except ImportError:
 
 # ── Загрузка данных ───────────────────────────────────────────────────────────
 
-def load_daily(path: str) -> pd.DataFrame:
+def winsorize_div_gaps(d: pd.DataFrame, k: float = 6.0) -> pd.DataFrame:
+    """PR-4: прокси total-return корректировки на дивиденды.
+
+    T-Invest свечи не скорректированы на дивиденды — в ex-div дату overnight
+    (open/prev_close) и total показывают ложный гэп вниз величиной с дивиденд
+    (для росс. high-div имён 5–15%). Истинная корректировка требует дивидендного
+    фида; здесь мы робастно винзоризуем экстремальные overnight-гэпы за пределами
+    median ± k·MAD (k=6 ≈ ловит дивидендные/новостные выбросы, не трогая обычную
+    волатильность) и согласованно пересчитываем total = overnight ⊕ intraday.
+    Меняет ТОЛЬКО overnight/total; intraday (close/open) дивидендами не задет.
+    """
+    ov = d["overnight"]
+    med = ov.median()
+    mad = (ov - med).abs().median() * 1.4826      # robust sigma
+    if not np.isfinite(mad) or mad <= 0:
+        return d
+    lo, hi = med - k * mad, med + k * mad
+    ov_w = ov.clip(lower=lo, upper=hi)
+    d["overnight"] = ov_w
+    # total ≈ (1+overnight/100)(1+intraday/100)-1, в %; пересчитываем согласованно
+    d["total"] = ((1 + ov_w / 100.0) * (1 + d["intraday"] / 100.0) - 1) * 100
+    return d
+
+
+def load_daily(path: str, winsorize: bool = False) -> pd.DataFrame:
     d = pd.read_csv(path)
     d["date"]      = pd.to_datetime(d["date"]).dt.date
     d              = d.sort_values("date").reset_index(drop=True)
@@ -51,6 +75,8 @@ def load_daily(path: str) -> pd.DataFrame:
     d["overnight"] = (d["open"]  / d["close"].shift(1)    - 1) * 100
     d["total"]     = (d["close"] / d["close"].shift(1)    - 1) * 100
     d["log_ret"]   = np.log(d["close"] / d["close"].shift(1))
+    if winsorize:
+        d = winsorize_div_gaps(d)
     return d
 
 
@@ -151,33 +177,25 @@ def white_reality_check(d: pd.DataFrame, cost_rt: float,
     names = list(diff_map.keys())
     F = np.vstack([diff_map[k][:min_T] for k in names])  # (K x T) дифф. ряды
     T = min_T
-    block_len = max(2, int(round(np.sqrt(T))))
 
     means = F.mean(axis=1)            # фактические средние сверхдоходности
     V_obs = means.max()
     best_idx = int(np.argmax(means))
 
-    # Нулевое распределение: центрируем каждый ряд на 0 (H0: нет эджа),
-    # затем block-bootstrap-им и пересчитываем средние/максимум
-    F_centered = F - means[:, None]
+    # PR-6: единый источник истины — validation/white_rc.py (stationary block
+    # bootstrap + SPA, p=(k+1)/(B+1)). Раньше здесь была вторая, расходящаяся
+    # реализация на moving-block bootstrap; теперь делегируем, чтобы CLI и прод-
+    # контур (verdict.py) считали White RC ОДНИМ И ТЕМ ЖЕ кодом. Ленивый импорт —
+    # validation.verdict импортирует этот модуль, прямой импорт сверху дал бы цикл.
+    from validation.white_rc import white_reality_check as _wrc_canonical
+    res = _wrc_canonical(F.T, B=n_boot, seed=seed)   # ждёт (T, K)
+    p_val = res["white_rc_p"]
+    spa_p = res["spa_p"]
 
-    rng = np.random.default_rng(seed)
-    V_star = np.empty(n_boot)
-    for b in range(n_boot):
-        idx = _moving_block_bootstrap_indices(rng, T, block_len)
-        boot_means = F_centered[:, idx].mean(axis=1)
-        V_star[b] = boot_means.max()
-
-    # FIX: bootstrap p-value must be (count+1)/(B+1), not np.mean(...), so it can
-    # never be exactly 0 and is unbiased for finite B (matches validation/white_rc.py).
-    p_val = float((np.sum(V_star >= V_obs) + 1) / (n_boot + 1))
-    pct   = float(np.mean(V_star < V_obs) * 100)
-
-    print(f"\n  Тест (block bootstrap, длина блока = {block_len}, N = {n_boot:,}):")
+    print(f"\n  Тест (validation/white_rc: stationary block bootstrap + SPA, N = {n_boot:,}):")
     print(f"  Лучшая стратегия '{names[best_idx]}': средняя сверхдоходность над бенчмарком "
           f"= {V_obs:+.4f}%/набл.")
-    print(f"  Нулевое распределение V*: ср = {V_star.mean():+.4f} | 95-й перц = {np.percentile(V_star, 95):+.4f}")
-    print(f"  Перцентиль наблюдаемого V: {pct:.0f}-й (p = {p_val:.3f})")
+    print(f"  White RC p = {p_val:.3f}  |  Hansen SPA p = {spa_p:.3f}")
 
     if p_val < 0.05:
         print(f"\n  ✅ Лучшая стратегия значимо превосходит бенчмарк с поправкой на data-snooping (p={p_val:.3f} < 0.05)")
@@ -304,51 +322,17 @@ def pbo_cscv(d: pd.DataFrame, cost_rt: float,
     if chunk < 2:
         print(f"  Слишком мало данных для S={S} частей. Уменьшите S."); return
 
-    T_use    = chunk * S
-    ret_cut  = ret_matrix[:, :T_use]
-    chunks   = [ret_cut[:, i*chunk:(i+1)*chunk] for i in range(S)]
+    # PR-6: единый источник истины — validation/verdict.pbo_cscv (CSCV по Sharpe,
+    # тот же код, что в прод-гейте). Раньше здесь была вторая реализация, ранжировавшая
+    # по net P&L → расхождение PBO между CLI и контуром. Ленивый импорт против цикла.
+    from validation.verdict import pbo_cscv as _pbo_canonical
+    pbo = float(_pbo_canonical(ret_matrix, S=S, seed=seed))
+    if pbo != pbo:
+        print("  PBO неопределён (мало стратегий/данных)."); return
 
-    # Все комбинации S//2 из S
-    S2 = S // 2
-    all_combos = list(combinations(range(S), S2))
-    # Ограничиваем до 1000 для скорости
-    rng = np.random.default_rng(seed)
-    if len(all_combos) > 1000:
-        idx_sel = rng.choice(len(all_combos), 1000, replace=False)
-        all_combos = [all_combos[i] for i in idx_sel]
-
-    overfit_count = 0
-    logit_vals    = []
-
-    for is_idx in all_combos:
-        oos_idx = tuple(i for i in range(S) if i not in is_idx)
-
-        is_ret  = np.hstack([chunks[i] for i in is_idx])   # (N × T/2)
-        oos_ret = np.hstack([chunks[i] for i in oos_idx])
-
-        is_net  = is_ret.sum(axis=1)  - cost_rt * is_ret.shape[1]
-        oos_net = oos_ret.sum(axis=1) - cost_rt * oos_ret.shape[1]
-
-        best_is  = int(np.argmax(is_net))
-        rank_oos = int(np.sum(oos_net > oos_net[best_is]))  # сколько стратегий лучше
-        pct_rank = rank_oos / (N_strat - 1) if N_strat > 1 else 0.5
-
-        if pct_rank >= 0.5:
-            overfit_count += 1
-
-        # logit для распределения
-        eps   = 1e-6
-        omega = np.clip(pct_rank, eps, 1 - eps)
-        logit_vals.append(np.log(omega / (1 - omega)))
-
-    n_combos = len(all_combos)
-    pbo      = overfit_count / n_combos
-    logit_arr = np.array(logit_vals)
-
-    print(f"\n  Стратегий: {N_strat}  |  Разбиений: {n_combos}  |  S={S}")
-    print(f"  Лучшие IS-стратегии: {', '.join(names_list)}")
-    print(f"\n  PBO = {pbo:.3f}  ({overfit_count}/{n_combos} разбиений переобучены)")
-    print(f"  Логит-среднее: {logit_arr.mean():+.3f}  (< 0 = больше не-overfit)")
+    print(f"\n  Стратегий: {N_strat}  |  S={S}  |  метрика производительности: Sharpe (CSCV)")
+    print(f"  Стратегии в наборе: {', '.join(names_list)}")
+    print(f"\n  PBO = {pbo:.3f}")
 
     if pbo < 0.10:
         verdict = "✅ Низкая вероятность переобучения"
@@ -747,12 +731,14 @@ def _selftest_cost_accounting():
 
 def _selftest_pnl_consistency():
     """
-    Тест #7: backtest.py / advanced_stats.py / top3_report.py должны давать
-    идентичный net P&L на одинаковых входных данных через единый pnl_engine.
+    Тест #7: pnl_engine (единый источник) и локальная STRATEGIES+net_pnl формула
+    advanced_stats должны давать ИДЕНТИЧНЫЙ net P&L на одинаковых входных данных.
+
+    PR-8: убрана ссылка на top3_report — этого модуля нет в данной копии проекта
+    (он был частью исходного скила). Сверяем два реально присутствующих источника.
     """
-    print("  [selftest] согласованность net P&L между модулями (через pnl_engine):")
+    print("  [selftest] согласованность net P&L (pnl_engine ↔ advanced_stats.STRATEGIES):")
     import pnl_engine
-    import top3_report as t3r
 
     n = 100
     rng = np.random.default_rng(11)
@@ -769,18 +755,14 @@ def _selftest_pnl_consistency():
     all_ok = True
     for strat in ("intraday_short", "long_overnight", "short_hold", "long_intraday"):
         _, net_engine, _, _ = pnl_engine.pnl(d, strat, cost_rt)
-        # advanced_stats / здесь же использует ту же STRATEGIES+net_pnl формулу,
-        # которая теперь должна совпадать с pnl_engine результатом
         _, ret_adv = STRATEGIES[strat](d, cost_rt)
         net_adv = net_pnl(ret_adv.dropna(), cost_rt)
-        # top3_report PNLS теперь тоже обёртка над pnl_engine
-        _, net_t3r, _ = t3r.PNLS[strat](d, cost_rt)
 
-        ok = (abs(net_engine - net_adv) < 1e-9) and (abs(net_engine - net_t3r) < 1e-9)
+        ok = abs(net_engine - net_adv) < 1e-9
         all_ok &= ok
         print(f"    {strat:<16}: engine={net_engine:+.4f}  advanced_stats={net_adv:+.4f}  "
-              f"top3_report={net_t3r:+.4f}  {'OK' if ok else 'MISMATCH'}")
-    print(f"    {'PASS' if all_ok else 'FAIL'}: все три модуля дают идентичный net P&L")
+              f"{'OK' if ok else 'MISMATCH'}")
+    print(f"    {'PASS' if all_ok else 'FAIL'}: оба источника дают идентичный net P&L")
     return all_ok
 
 

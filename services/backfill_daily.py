@@ -39,6 +39,12 @@ FROM (
            (ts AT TIME ZONE 'Europe/Moscow')::date AS d
     FROM market_data_5m
     WHERE ticker = %(tk)s
+      -- PR-8: только основная сессия (МСК). Вечерняя сессия (19:00–23:50) иначе
+      -- попадала бы в агрегат и давала close/high/low, не совпадающие с
+      -- официальным дневным баром (основная сессия), который позже перезаписывает
+      -- реконструкцию. Закрытие основной сессии — аукцион 18:40–18:50.
+      AND (ts AT TIME ZONE 'Europe/Moscow')::time >= TIME '09:50'
+      AND (ts AT TIME ZONE 'Europe/Moscow')::time <  TIME '18:50'
 ) s
 WHERE d > %(after)s        -- строго новее последней дневной свечи в БД
   AND d < %(today)s        -- только завершённые дни (не сегодняшняя сессия)
