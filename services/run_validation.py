@@ -51,14 +51,18 @@ def export_ticker_csv(conn, ticker: str, out_dir: str) -> tuple[str, int]:
     return path, len(rows)
 
 
-def run(conn) -> bool:
+def run(conn, quiet: bool = False) -> list | None:
     """
     Выгружает выбранные тикеры из БД и запускает verdict.run().
-    Возвращает True если контур отработал, False если пропущен/недоступен.
+    Возвращает список строк-результатов (по одной на ticker×strategy) либо
+    None, если контур пропущен/недоступен.
+
+    quiet=True — не печатать собственный отчёт verdict.print_report (строки
+    всё равно возвращаются для сводной итоговой таблицы).
     """
     if not config.RUN_VALIDATION:
         log.info("RUN_VALIDATION=0 — шаг расчёта пропущен.")
-        return False
+        return None
 
     scripts_dir = config.VALIDATOR_DIR
     verdict_path = os.path.join(scripts_dir, "validation", "verdict.py")
@@ -68,7 +72,7 @@ def run(conn) -> bool:
             "Укажите корректный путь через переменную окружения VALIDATOR_DIR.",
             scripts_dir,
         )
-        return False
+        return None
 
     out_dir = config.VALIDATION_DATA_DIR
     os.makedirs(out_dir, exist_ok=True)
@@ -89,7 +93,7 @@ def run(conn) -> bool:
 
     if not exported:
         log.warning("Нет данных для валидации — шаг расчёта пропущен.")
-        return False
+        return None
 
     # 2. Запуск статистического контура из скила
     sys.path.insert(0, scripts_dir)
@@ -97,7 +101,7 @@ def run(conn) -> bool:
         from validation import verdict  # type: ignore
     except Exception as e:  # noqa: BLE001
         log.warning("Не удалось импортировать validation.verdict: %s", e)
-        return False
+        return None
 
     log.info(
         "Запуск контура валидации: %d тикеров × %d стратегий (B=%d)...",
@@ -109,5 +113,6 @@ def run(conn) -> bool:
         out_dir,
         B=config.VALIDATION_BOOT,
     )
-    verdict.print_report(rows)
-    return True
+    if not quiet:
+        verdict.print_report(rows)
+    return rows

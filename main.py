@@ -21,6 +21,10 @@ import sys
 import database
 from services.load_history import run
 from services import run_validation
+from services import backfill_daily
+from services import load_index
+import config
+import tft_forecast
 
 
 def main() -> None:
@@ -41,11 +45,46 @@ def main() -> None:
     try:
         database.init_db(conn)
         run(conn)
-        log.info("Данные загружены — запуск статистической валидации стратегий...")
+
+        # Индексы (IMOEX) — отдельный шаг для слоя рыночного контекста.
+        log.info("Загрузка биржевых индексов (IMOEX)...")
         try:
-            run_validation.run(conn)
+            load_index.run(conn)
+        except Exception as e:  # noqa: BLE001 — индекс не должен валить ETL
+            log.warning("Шаг загрузки индексов завершился с ошибкой: %s", e)
+
+        # Достраиваем дневные свечи из 5M, если официальный дневной бар ещё
+        # не опубликован брокером (вечер/ночь). Самокорректируется позже.
+        try:
+            backfill_daily.backfill(conn, config.TICKERS)
+        except Exception as e:  # noqa: BLE001 — не валим конвейер
+            log.warning("Backfill дневных из 5M завершился с ошибкой: %s", e)
+
+        combined = getattr(config, "COMBINED_TABLE", True)
+
+        log.info("Данные загружены — запуск статистической валидации стратегий...")
+        val_rows = None
+        try:
+            val_rows = run_validation.run(conn, quiet=combined)
         except Exception as e:  # noqa: BLE001 — расчёт не должен валить ETL
             log.warning("Шаг валидации завершился с ошибкой: %s", e)
+
+        log.info("Запуск Multi-Asset TFT — прогноз диапазона на следующий день...")
+        forecasts = None
+        try:
+            forecasts = tft_forecast.run(conn, quiet=combined)
+        except Exception as e:  # noqa: BLE001 — прогноз не должен валить ETL
+            log.warning("Шаг TFT-прогноза завершился с ошибкой: %s", e)
+
+        if combined:
+            try:
+                tft_forecast.print_combined(
+                    val_rows, forecasts,
+                    config.VALIDATION_TICKERS, config.VALIDATION_STRATS,
+                    show_all=getattr(config, "SHOW_ALL_INTRADAY", False),
+                )
+            except Exception as e:  # noqa: BLE001 — печать не должна валить ETL
+                log.warning("Шаг сводной таблицы завершился с ошибкой: %s", e)
     except Exception as e:
         log.exception("Критическая ошибка: %s", e)
         sys.exit(1)

@@ -10,3 +10,7 @@ numpy>=1.26.0
 pandas>=2.0.0
 scipy>=1.11.0
 hmmlearn>=0.3.0  # опционально: HMM-режимы (есть квантильный fallback)
+
+# Multi-Asset TFT Next-Day Range Forecast (tft_forecast/)
+# torch опционален: без него используется калиброванный baseline.
+torch>=2.2.0  # опционально: полноценный Temporal Fusion Transformer

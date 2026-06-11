@@ -16,7 +16,7 @@ import pandas as pd
 def _series_for(d: pd.DataFrame, strategy: str) -> pd.Series:
     if strategy in ("intraday_short",):
         return -d["intraday"].dropna()
-    if strategy in ("long_intraday",):
+    if strategy in ("long_intraday", "intraday_long"):
         return d["intraday"].dropna()
     if strategy in ("long_overnight",):
         return d["overnight"].dropna()

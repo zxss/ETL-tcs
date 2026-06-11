@@ -1,0 +1,539 @@
+"""
+Сводная итоговая таблица: одна строка на связку (ticker + strategy), все
+ключевые метрики из контура валидации (White RC / SPA / PBO / FDR / Ruin30 /
+LB / Verdict) и из TFT-прогноза (направленный PnL коридора + ценовой диапазон).
+
+Заменяет четыре отдельные таблицы (валидация, диапазон по тикерам, диапазон
+по стратегиям, направленный PnL) единым представлением для принятия решения.
+
+Для дневных стратегий (intraday_short / intraday_long) система автоматически
+оставляет по каждому тикеру ТОЛЬКО ОДНУ — лучшую — идею (best_intraday),
+чтобы не показывать одновременно два противоположных направления. Ночная
+стратегия long_overnight остаётся всегда.
+"""
+
+from __future__ import annotations
+
+import sys
+
+# ── Цвет (ANSI) ────────────────────────────────────────────────────────────────
+_GREEN = "\033[32m"
+_YELLOW = "\033[33m"
+_RED = "\033[31m"
+_BOLD = "\033[1m"
+_RESET = "\033[0m"
+
+
+def _color_enabled() -> bool:
+    return sys.stdout.isatty()
+
+
+def _wrap(text: str, color: str) -> str:
+    if not color or not _color_enabled():
+        return text
+    return f"{color}{text}{_RESET}"
+
+
+# Конкурирующие дневные стратегии — из них выбирается одна лучшая.
+DAILY_STRATS = ("intraday_short", "intraday_long")
+
+# Направление сделки по названию стратегии.
+_DIRECTION = {
+    "long_overnight": "LONG",
+    "intraday_long":  "LONG",
+    "long_intraday":  "LONG",
+    "intraday_short": "SHORT",
+    "short_hold":     "SHORT",
+}
+
+
+def _direction(strategy: str) -> str:
+    return _DIRECTION.get(strategy, "—")
+
+
+# Канонический вердикт → (короткая метка, приоритет сортировки, цвет)
+_VERDICT_INFO = {
+    "CANDIDATE EDGE":      ("CAND", 0, _GREEN),
+    "WEAK / INCONCLUSIVE": ("WEAK", 1, _YELLOW),
+    "REJECTED":            ("REJ",  2, _RED),
+}
+_UNKNOWN = ("—", 1.5, "")
+
+
+def _verdict_meta(verdict: str | None):
+    if verdict is None:
+        return _UNKNOWN
+    return _VERDICT_INFO.get(verdict, _UNKNOWN)
+
+
+def _pnl_color(v: float | None) -> str:
+    if v is None:
+        return ""
+    return _GREEN if v > 0 else _RED
+
+
+def _prob_color(p: float | None) -> str:
+    if p is None:
+        return ""
+    if p > 0.60:
+        return _GREEN
+    if p >= 0.50:
+        return _YELLOW
+    return _RED
+
+
+# ── Сборка строк ───────────────────────────────────────────────────────────────
+
+def _build_rows(val_rows, forecasts, tickers, strats):
+    val_idx = {}
+    for r in (val_rows or []):
+        val_idx[(r["ticker"].upper(), r["strategy"])] = r
+
+    rows = []
+    for tk in tickers:
+        TK = tk.upper()
+        cor = (forecasts or {}).get(TK) or (forecasts or {}).get(tk) or {}
+        dirmap = cor.get("directional", {}) if isinstance(cor, dict) else {}
+        for st in strats:
+            v = val_idx.get((TK, st))
+            d = dirmap.get(st, {})
+            rows.append({
+                "ticker": TK,
+                "strategy": st,
+                "direction": _direction(st),
+                "selected": None,   # проставляется при отборе лучшей дневной
+                "verdict": v["verdict"] if v else None,
+                "white_rc": v["white_rc_p"] if v else None,
+                "spa": v["spa_p"] if v else None,
+                "pbo": v["pbo"] if v else None,
+                "fdr": v["fdr_pass"] if v else None,
+                "ruin30": v["ruin30"] if v else None,
+                "lb": v["lb_struct"] if v else None,
+                "exp_pnl": d.get("ExpPnL"),
+                "prob_profit": d.get("ProbProfit"),
+                "down": d.get("Downside"),
+                "up": d.get("Upside"),
+                "f_low": cor.get("ForecastLow") if isinstance(cor, dict) else None,
+                "f_high": cor.get("ForecastHigh") if isinstance(cor, dict) else None,
+                "range_pct": cor.get("RangePct") if isinstance(cor, dict) else None,
+                "coverage": cor.get("CoverageProb") if isinstance(cor, dict) else None,
+                "price_ts": cor.get("price_ts") if isinstance(cor, dict) else None,
+                "max_pos": cor.get("MaxPos") if isinstance(cor, dict) else None,
+                "liq_score": cor.get("LiqScore") if isinstance(cor, dict) else None,
+                # рыночный контекст (Dashboard 2.0)
+                "regime": cor.get("Regime") if isinstance(cor, dict) else None,
+                "rs": cor.get("RS") if isinstance(cor, dict) else None,
+                "vol_spike": cor.get("VolSpike") if isinstance(cor, dict) else None,
+                "atr_pctl": cor.get("ATRpctl") if isinstance(cor, dict) else None,
+                "gap_down_prob": cor.get("GapDownProb") if isinstance(cor, dict) else None,
+            })
+    return rows
+
+
+# ── Отбор лучшей дневной стратегии ─────────────────────────────────────────────
+
+_EXP_TIE = 0.05   # порог «близости» по ExpPnL%, при котором включаются тай-брейки
+
+
+def _daily_better(a, b) -> bool:
+    """True если дневная стратегия a лучше b по правилам ТЗ:
+    ExpPnL% → (при разнице <0.05%) ProbProfit → Verdict → Ruin30."""
+    ea = a["exp_pnl"] if a["exp_pnl"] is not None else -1e9
+    eb = b["exp_pnl"] if b["exp_pnl"] is not None else -1e9
+    if abs(ea - eb) >= _EXP_TIE:
+        return ea > eb
+    # тай-брейк 1: ProbProfit (выше лучше)
+    pa = a["prob_profit"] if a["prob_profit"] is not None else -1.0
+    pb = b["prob_profit"] if b["prob_profit"] is not None else -1.0
+    if pa != pb:
+        return pa > pb
+    # тай-брейк 2: Verdict (ниже ранг = лучше)
+    ra = _verdict_meta(a["verdict"])[1]
+    rb = _verdict_meta(b["verdict"])[1]
+    if ra != rb:
+        return ra < rb
+    # тай-брейк 3: Ruin30 (ниже лучше)
+    ua = a["ruin30"] if a["ruin30"] is not None else 1e9
+    ub = b["ruin30"] if b["ruin30"] is not None else 1e9
+    return ua < ub
+
+
+def _apply_selection(rows, show_all: bool):
+    """Помечает selected=✓/- у дневных стратегий и (если не show_all)
+    убирает проигравшие дневные. Возвращает отфильтрованный список."""
+    by_tk: dict[str, list] = {}
+    for r in rows:
+        by_tk.setdefault(r["ticker"], []).append(r)
+
+    out = []
+    for tk, group in by_tk.items():
+        daily = [r for r in group if r["strategy"] in DAILY_STRATS]
+        non_daily = [r for r in group if r["strategy"] not in DAILY_STRATS]
+
+        winner = None
+        if daily:
+            winner = daily[0]
+            for cand in daily[1:]:
+                if _daily_better(cand, winner):
+                    winner = cand
+            for r in daily:
+                r["selected"] = (r is winner)
+
+        out.extend(non_daily)
+        if show_all:
+            out.extend(daily)
+        elif winner is not None:
+            out.append(winner)
+    return out
+
+
+def _sort_key(r):
+    _, rank, _ = _verdict_meta(r["verdict"])
+    exp = r["exp_pnl"] if r["exp_pnl"] is not None else -1e9
+    prob = r["prob_profit"] if r["prob_profit"] is not None else -1.0
+    # вердикт по возрастанию приоритета, ExpPnL и ProbProfit — по убыванию
+    return (rank, -exp, -prob)
+
+
+# ── Итоговый рейтинг с рыночным контекстом (Dashboard 2.0) ─────────────────────
+
+def _clamp01(x: float) -> float:
+    return 0.0 if x < 0 else (1.0 if x > 1 else x)
+
+
+def _score_row(r, strict: bool):
+    """
+    Считает FinalScore (0..1) с учётом рыночного контекста и риск-фильтров,
+    проставляет флаги предупреждений и допустимость сделки (strict-фильтр).
+    Возвращает (final_score, allowed, flags).
+    """
+    long = r["direction"] == "LONG"
+    regime = r["regime"]
+    rs = r["rs"]
+    vs = r["vol_spike"]
+    atr = r["atr_pctl"]
+    gdp = r["gap_down_prob"]
+    flags = []
+
+    # — суб-скоры (0..1) —
+    exp = r["exp_pnl"]
+    exp_score = _clamp01(0.5 + (exp or 0.0) / 2.0)          # ±1% → 0..1
+    prob_score = r["prob_profit"] if r["prob_profit"] is not None else 0.5
+
+    vmeta = _verdict_meta(r["verdict"])[1]
+    verdict_score = {0: 1.0, 1: 0.5, 2: 0.0}.get(vmeta, 0.4)
+    fdr_score = 1.0 if r["fdr"] else (0.0 if r["fdr"] is not None else 0.5)
+    pbo_score = _clamp01(1.0 - r["pbo"]) if r["pbo"] is not None else 0.5
+    validation_score = (verdict_score + fdr_score + pbo_score) / 3.0
+
+    liq_score = (r["liq_score"] or 50) / 100.0
+
+    rs_eff = (rs if long else -rs) if rs is not None else 0.0
+    rs_score = _clamp01(0.5 + rs_eff / 10.0)                # ±5% → 0..1
+
+    if regime is None:
+        regime_score = 0.5
+    elif long:
+        regime_score = {"BULL": 1.0, "NEUTRAL": 0.5, "BEAR": 0.2}.get(regime, 0.5)
+    else:
+        regime_score = {"BEAR": 1.0, "NEUTRAL": 0.5, "BULL": 0.2}.get(regime, 0.5)
+
+    if vs is None:
+        vol_score = 0.5
+    elif vs > 4.0:
+        vol_score = 0.2
+    elif vs > 2.5:
+        vol_score = 0.4
+    elif vs < 0.8:
+        vol_score = 0.4
+    else:
+        vol_score = 0.7
+
+    final = (0.30 * exp_score + 0.15 * prob_score + 0.15 * validation_score +
+             0.15 * liq_score + 0.10 * rs_score + 0.10 * regime_score +
+             0.05 * vol_score)
+
+    # — множительные риск-штрафы и флаги —
+    # Market Regime penalty (−30%)
+    if long and regime == "BEAR":
+        final *= 0.70
+    if (not long) and regime == "BULL":
+        final *= 0.70
+    # High Risk Short: SHORT при сильной бумаге (RS > +5%) → −25%
+    if (not long) and rs is not None and rs > 5.0:
+        final *= 0.75
+        flags.append("High Risk Short")
+    # Volume climax / аномальный объём
+    if vs is not None and vs > 2.5:
+        flags.append("⚠ Volume Climax")
+    if vs is not None and vs > 4.0:
+        final *= 0.70   # ExpPnL Confidence × 0.7
+    # Overnight gap risk — только long_overnight
+    if r["strategy"] == "long_overnight" and gdp is not None:
+        if gdp > 0.40:
+            flags.append("⚠ High Overnight Risk")
+        if gdp > 0.50:
+            final *= 0.70   # OvernightScore × 0.7
+
+    # — жёсткий рыночный фильтр —
+    allowed = True
+    if strict:
+        if (long and regime == "BEAR") or ((not long) and regime == "BULL"):
+            allowed = False
+
+    return final, allowed, flags
+
+
+# ── Форматирование ячеек ───────────────────────────────────────────────────────
+
+def _f(v, fmt, na="—"):
+    return na if v is None else format(v, fmt)
+
+
+def _yn(v):
+    if v is None:
+        return "—"
+    return "Y" if v else "n"
+
+
+def _sel(v):
+    if v is None:
+        return "—"
+    return "✓" if v else "-"
+
+
+# ── Печать ─────────────────────────────────────────────────────────────────────
+
+def _money(v):
+    """Компактный рублёвый формат: 12.5M, 850K, 1.23B."""
+    if v is None:
+        return "—"
+    a = abs(v)
+    if a >= 1e9:
+        return f"{v / 1e9:.2f}B"
+    if a >= 1e6:
+        return f"{v / 1e6:.1f}M"
+    if a >= 1e3:
+        return f"{v / 1e3:.0f}K"
+    return f"{v:.0f}"
+
+
+def _hms(ts):
+    try:
+        return ts.strftime("%H:%M:%S")
+    except Exception:  # noqa: BLE001
+        return "—"
+
+
+def _print_header(meta):
+    """Шапка отчёта: дата расчёта, время/источник данных, свежесть."""
+    if not meta:
+        return
+    as_of = meta.get("as_of")
+    date_txt = as_of.strftime("%Y-%m-%d") if as_of else "—"
+    time_txt = as_of.strftime("%H:%M:%S") if as_of else "—"
+    source = meta.get("source", "Previous Close")
+    print(f"\nДата расчёта: {date_txt}")
+    if source == "Real-time":
+        print(f"Время данных: {time_txt} MSK")
+        print("Источник цены: Real-time")
+    else:
+        print("Источник цены: Previous Close")
+        if not meta.get("market_open", False):
+            print("Рынок закрыт")
+    if meta.get("stale"):
+        age_min = int(meta.get("max_age_sec", 0) // 60)
+        print(_wrap(f"WARNING: Market data is stale ({age_min} min old)", _RED))
+        print(_wrap("Results may be inaccurate.", _RED))
+
+
+def _rs_txt(rs):
+    return f"{rs:+.1f}%" if rs is not None else "—"
+
+
+def _vol_txt(vs):
+    return f"{vs:.1f}x" if vs is not None else "—"
+
+
+def _atr_txt(a):
+    return f"{a:.0f}%" if a is not None else "—"
+
+
+def _gap_txt(r):
+    # GapRisk показываем только для long_overnight; иначе «-»
+    if r["strategy"] != "long_overnight" or r["gap_down_prob"] is None:
+        return "-"
+    return f"{r['gap_down_prob'] * 100:.0f}%"
+
+
+def _regime_color(reg):
+    return {"BULL": _GREEN, "BEAR": _RED, "NEUTRAL": _YELLOW}.get(reg, "")
+
+
+def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False):
+    import config
+    strict = bool(getattr(config, "STRICT_MARKET_FILTER", False))
+
+    forecasts = dict(forecasts or {})
+    meta = forecasts.pop("__meta__", None)
+
+    rows = _build_rows(val_rows, forecasts, tickers, strats)
+    if not rows:
+        return
+    rows = _apply_selection(rows, show_all)
+
+    # Итоговый рейтинг с рыночным контекстом + жёсткий фильтр.
+    scored = []
+    for r in rows:
+        score, allowed, flags = _score_row(r, strict)
+        r["final_score"] = score
+        r["flags"] = flags
+        if allowed:
+            scored.append(r)
+    rows = scored
+    if not rows:
+        _print_header(meta)
+        print("\n  Все сигналы отфильтрованы жёстким рыночным фильтром "
+              "(STRICT_MARKET_FILTER).")
+        _print_market_summary(meta)
+        return
+    rows.sort(key=lambda x: x["final_score"], reverse=True)
+
+    _print_header(meta)
+
+    W = 121
+    print("\n" + "=" * W)
+    print(" СВОДНЫЙ ДАШБОРД 2.0 (ИИ-ПРОГНОЗ + РЫНОЧНЫЙ КОНТЕКСТ)")
+    print("=" * W)
+
+    hdr = (f" {'Ticker':<7}{'Strategy':<15}{'Dir':<6}{'ExpPnL':>8}{'PProf':>7}"
+           f"{'FDR':>5}{'PBO':>7}{'Liq':>5}{'MaxPos':>9}"
+           f"{'IMOEX':>9}{'RS':>8}{'VolSpike':>10}{'ATR%':>7}{'GapRisk':>9}")
+    print(hdr)
+    print("-" * W)
+
+    for r in rows:
+        exp = r["exp_pnl"]
+        exp_cell = _wrap(f"{_f(exp, '+.2f'):>7}%" if exp is not None else f"{'—':>8}",
+                         _pnl_color(exp))
+        prob = r["prob_profit"]
+        prob_txt = f"{prob * 100:.0f}%" if prob is not None else "—"
+        prob_cell = _wrap(f"{prob_txt:>7}", _prob_color(prob))
+        reg = r["regime"]
+        reg_cell = _wrap(f"{(reg or '—'):>9}", _regime_color(reg))
+
+        print(
+            f" {r['ticker']:<7}{r['strategy']:<15}{r['direction']:<6}"
+            f"{exp_cell}{prob_cell}{_yn(r['fdr']):>5}{_f(r['pbo'], '.2f'):>7}"
+            f"{_f(r['liq_score'], '.0f'):>5}{_money(r['max_pos']):>9}"
+            f"{reg_cell}{_rs_txt(r['rs']):>8}{_vol_txt(r['vol_spike']):>10}"
+            f"{_atr_txt(r['atr_pctl']):>7}{_gap_txt(r):>9}"
+        )
+    print("=" * W)
+
+    _print_legend()
+    _print_flags(rows)
+    _print_best_trades(rows)
+    _print_market_summary(meta)
+
+
+def _print_legend():
+    print("\n  РАСШИФРОВКА СТОЛБЦОВ")
+    print("  " + "-" * 74)
+    legend = [
+        ("Ticker",   "Тикер инструмента"),
+        ("Strategy", "Название стратегии"),
+        ("Dir",      "Направление сделки (LONG / SHORT)"),
+        ("ExpPnL",   "Ожидаемая доходность следующего дня (нетто)"),
+        ("PProf",    "ProbProfit — вероятность положительного результата"),
+        ("FDR",      "Прошла ли контроль False Discovery Rate (Y/n)"),
+        ("PBO",      "Probability of Backtest Overfitting"),
+        ("Liq",      "Балл ликвидности 0..100 (перцентиль оборота по рынку)"),
+        ("MaxPos",   "Макс. размер позиции ₽ (Amihud; сжат при высоком ATR%)"),
+        ("IMOEX",    "Режим широкого рынка по EMA50/EMA200 (BULL/BEAR/NEUTRAL)"),
+        ("RS",       "Rel.Strength — сила бумаги к рынку за 10 дней"),
+        ("VolSpike", "Объём вчера / SMA20 (кратность)"),
+        ("ATR%",     "Перцентиль текущего ATR(14) за 252 дня"),
+        ("GapRisk",  "Вероятность гэпа вниз (>-0.5%); только long_overnight"),
+    ]
+    for name, desc in legend:
+        print(f"  {name:<10}{desc}")
+    print("  " + "-" * 74)
+
+
+def _print_flags(rows):
+    flagged = [r for r in rows if r.get("flags")]
+    if not flagged:
+        return
+    print("\n  РИСК-ФЛАГИ")
+    print("  " + "-" * 74)
+    for r in flagged:
+        joined = ", ".join(r["flags"])
+        print(f"  {r['ticker']:<6}{r['strategy']:<16}{joined}")
+    print("  " + "-" * 74)
+
+
+def _print_market_summary(meta):
+    m = (meta or {}).get("market") if meta else None
+    if not m:
+        return
+    breadth = m.get("breadth")
+    atr = m.get("atr_pctl")
+    risk = m.get("risk_level", "NORMAL")
+    regime = m.get("regime", "NEUTRAL")
+    src = m.get("index_source", "proxy")
+
+    print("\n  MARKET SUMMARY")
+    print("  " + "-" * 74)
+    reg_lbl = regime + (" (proxy-индекс)" if src != "IMOEX" else "")
+    print(f"  IMOEX Regime:    {reg_lbl}")
+    print(f"  Market Breadth:  {breadth * 100:.0f}%" if breadth is not None else "  Market Breadth:  —")
+    print(f"  ATR Percentile:  {atr:.0f}%" if atr is not None else "  ATR Percentile:  —")
+    print(f"  Risk Level:      {risk}")
+    print("  Recommendation:")
+    for line in _recommendation(regime, risk):
+        print(f"    {line}")
+    print("  " + "-" * 74)
+
+
+def _recommendation(regime, risk):
+    rec = []
+    if risk == "HIGH":
+        rec.append("Снизить размеры позиций на 50%.")
+    elif risk == "ELEVATED":
+        rec.append("Снизить размеры позиций на 25%.")
+    if regime == "BEAR":
+        rec.append("Предпочитать SHORT-сигналы.")
+        rec.append("Избегать long_overnight позиций.")
+    elif regime == "BULL":
+        rec.append("Предпочитать LONG-сигналы.")
+        rec.append("Осторожно с SHORT против тренда.")
+    else:
+        rec.append("Рынок без выраженного тренда — торговать выборочно.")
+    if not rec:
+        rec.append("Условия нормальные — действовать по рейтингу.")
+    return rec
+
+
+def _print_best_trades(sorted_rows):
+    """ЛУЧШИЕ СДЕЛКИ НА ЗАВТРА: топ-5 по Verdict → ExpPnL% → ProbProfit.
+    Берём только исполнимые идеи (есть направленный сигнал ExpPnL) и, если
+    включён подробный режим, не дублируем проигравшие дневные строки."""
+    cand = [r for r in sorted_rows
+            if r["exp_pnl"] is not None and r["selected"] is not False]
+    top = cand[:5]
+    if not top:
+        return
+    print("\n  ЛУЧШИЕ СДЕЛКИ НА ЗАВТРА (топ-5 по итоговому рейтингу FinalScore)")
+    print("  " + "-" * 74)
+    for i, r in enumerate(top, 1):
+        label, _, _ = _verdict_meta(r["verdict"])
+        exp = r["exp_pnl"]
+        prob = r["prob_profit"]
+        exp_txt = f"{exp:+.2f}%" if exp is not None else "—"
+        prob_txt = f"{prob * 100:.0f}%" if prob is not None else "—"
+        score = r.get("final_score")
+        score_txt = f"  score={score:.2f}" if score is not None else ""
+        print(f"  {i}. {r['ticker']:<6}{r['strategy']:<16}({r['direction']})"
+              f"   [{label}]  ExpPnL={exp_txt}  ProbProfit={prob_txt}{score_txt}")
+    print("  " + "-" * 74)

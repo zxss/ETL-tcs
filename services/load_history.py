@@ -28,6 +28,11 @@ from loaders.moex_loader import (
 
 log = logging.getLogger("load_history")
 
+# MOEX торгует по московскому времени (UTC+3, без перехода на летнее время).
+# Порог «свежести» дневных свечей нужно считать в MSK, иначе вечером по UTC
+# «сегодня» ещё вчерашний московский день и свежая дневная свеча пропускается.
+MSK = timezone(timedelta(hours=3))
+
 
 # --- Инкрементальные границы -------------------------------------------------
 
@@ -38,10 +43,16 @@ def _daily_from_dt(conn, ticker: str, to_dt: datetime) -> datetime | None:
         return to_dt - timedelta(days=config.INITIAL_MONTHS_DAILY * 31)
 
     last_dt = datetime(last.year, last.month, last.day, tzinfo=timezone.utc)
-    yesterday = (to_dt - timedelta(days=1)).replace(
-        hour=0, minute=0, second=0, microsecond=0)
 
-    if last_dt >= yesterday:
+    # «Вчера» по московскому календарю: последний заведомо завершённый торговый
+    # день. Если последняя свеча в БД его старше — догружаем (API сам вернёт
+    # только реально существующие свечи).
+    msk_yesterday = (datetime.now(MSK) - timedelta(days=1)).date()
+    last_msk_yesterday = datetime(
+        msk_yesterday.year, msk_yesterday.month, msk_yesterday.day,
+        tzinfo=timezone.utc)
+
+    if last_dt >= last_msk_yesterday:
         return None  # актуально
 
     return last_dt + timedelta(days=1)

@@ -96,6 +96,13 @@ TICKERS: list[str] = [
 INITIAL_MONTHS_DAILY: int = 24   # дневные свечи — 24 мес
 INITIAL_MONTHS_5M:    int = 6    # 5-мин свечи   —  6 мес
 
+# Биржевые индексы (грузятся отдельным шагом services/load_index.py).
+# Нужны слою рыночного контекста (режим рынка по IMOEX, относительная сила).
+LOAD_INDEX: bool = os.getenv("LOAD_INDEX", "1") not in ("0", "false", "False")
+INDEX_TICKERS: list[str] = (
+    os.getenv("INDEX_TICKERS").split() if os.getenv("INDEX_TICKERS") else ["IMOEX"]
+)
+
 # Окно одного запроса к API (чанкинг)
 CHUNK_DAYS_DAILY: int = 365   # дневные: до года за запрос
 CHUNK_DAYS_5M:    int = 1     # 5-мин: не более 1 дня за запрос (лимит API)
@@ -148,6 +155,53 @@ VALIDATION_TICKERS: list[str] = (
     os.getenv("VALIDATION_TICKERS", "ETLN SELG SMLT MGNT ALRS UPRO").split()
 )
 VALIDATION_STRATS: list[str] = (
-    os.getenv("VALIDATION_STRATS", "long_overnight intraday_short").split()
+    os.getenv("VALIDATION_STRATS", "long_overnight intraday_short intraday_long").split()
 )
 VALIDATION_BOOT: int = int(os.getenv("VALIDATION_BOOT", "2000"))
+
+# --- Multi-Asset TFT Next-Day Range Forecast --------------------------------
+# Единый Temporal Fusion Transformer на ВСЕХ тикерах прогнозирует диапазон
+# цены следующего торгового дня (ForecastLow/High, RangePct, CoverageProb).
+# Запускается из main.py после контура валидации. TFT_FORECAST=0 — отключить.
+TFT_FORECAST: bool = os.getenv("TFT_FORECAST", "1") not in ("0", "false", "False")
+# Тикеры для обучения общей модели (по умолчанию — весь список TICKERS).
+TFT_TICKERS: list[str] = (
+    os.getenv("TFT_TICKERS").split() if os.getenv("TFT_TICKERS") else TICKERS
+)
+TFT_EPOCHS: int = int(os.getenv("TFT_EPOCHS", "30"))
+TFT_HIDDEN: int = int(os.getenv("TFT_HIDDEN", "32"))
+# Издержки round-trip (%) для направленного прогноза PnL стратегий.
+# По умолчанию 0.08% = 2 × 0.04% (как cost-side в контуре валидации).
+TFT_COST_RT: float = float(os.getenv("TFT_COST_RT", "0.08"))
+
+# --- Сводная итоговая таблица ------------------------------------------------
+# COMBINED_TABLE=1 — вместо четырёх отдельных таблиц (валидация, диапазон по
+# тикерам, диапазон по стратегиям, направленный PnL) вывести ОДНУ сводную
+# таблицу «ticker + strategy» со всеми метриками + расшифровкой столбцов и
+# топ-5 кандидатов. COMBINED_TABLE=0 — старое поведение (отдельные таблицы).
+COMBINED_TABLE: bool = os.getenv("COMBINED_TABLE", "1") not in ("0", "false", "False")
+
+# SHOW_ALL_INTRADAY=1 — подробный режим: показывать обе дневные стратегии
+# (intraday_short и intraday_long) с флагом Selected ✓/-. По умолчанию (0)
+# в таблице остаётся только лучшая дневная стратегия по каждому тикеру.
+SHOW_ALL_INTRADAY: bool = os.getenv("SHOW_ALL_INTRADAY", "0") not in ("0", "false", "False")
+
+# --- Актуальные котировки на момент запуска ----------------------------------
+# TFT_USE_LIVE_PRICE=1 — перед расчётом получить последнюю цену (Last Price) по
+# каждому тикеру и якорить прогноз диапазона/PnL на ней, а не на вчерашнем
+# закрытии. =0 — считать на последней цене закрытия (Previous Close).
+TFT_USE_LIVE_PRICE: bool = os.getenv("TFT_USE_LIVE_PRICE", "1") not in ("0", "false", "False")
+# Возраст котировки (сек), после которого выводится предупреждение об устаревании.
+TFT_STALE_SECONDS: int = int(os.getenv("TFT_STALE_SECONDS", "900"))
+
+# --- Max Pos ₽ (максимальный размер позиции по ликвидности) -------------------
+# Допустимое ценовое воздействие (доля): сколько можно «сдвинуть» цену входом.
+TFT_IMPACT_TOL: float = float(os.getenv("TFT_IMPACT_TOL", "0.005"))   # 0.5%
+# Максимальная доля участия в среднедневном рублёвом обороте.
+TFT_PARTICIPATION: float = float(os.getenv("TFT_PARTICIPATION", "0.01"))  # 1%
+# Глубина окна (дней) для оценки ликвидности.
+TFT_LIQUIDITY_DAYS: int = int(os.getenv("TFT_LIQUIDITY_DAYS", "60"))
+
+# --- Dashboard 2.0: рыночный контекст и риск-фильтры -------------------------
+# Жёсткий рыночный фильтр: запрещать LONG при BEAR и SHORT при BULL.
+STRICT_MARKET_FILTER: bool = os.getenv("STRICT_MARKET_FILTER", "0") not in ("0", "false", "False")
