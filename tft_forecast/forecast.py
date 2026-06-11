@@ -48,12 +48,24 @@ def _train_tft(panel, epochs: int, hidden: int):
     n_feat = panel.X.shape[-1]
     n_tk = len(panel.tickers)
 
-    # хронологически честный сплит невозможен (окна перемешаны по тикерам),
-    # поэтому случайный held-out 15% — только для калибровки покрытия и ранней оценки.
-    rng = np.random.default_rng(42)
-    perm = rng.permutation(N)
-    n_val = max(1, int(N * 0.15))
-    val_idx, tr_idx = perm[:n_val], perm[n_val:]
+    # PR-7: ХРОНОЛОГИЧЕСКИ ЧЕСТНЫЙ сплит по общей календарной оси (panel.W —
+    # ordinal даты цели окна). Валидация = последние 15% наблюдений ПО ВРЕМЕНИ
+    # (а не случайные), train = всё, что строго раньше, с ЭМБАРГО в LOOKBACK дней,
+    # чтобы обучающие окна не перекрывались по входам с валидационными целями
+    # (иначе утечка). Это даёт честную OOS-оценку покрытия вместо оптимистичной.
+    from .dataset import LOOKBACK
+    W = panel.W
+    cutoff = np.quantile(W, 0.85)
+    val_mask = W >= cutoff
+    tr_mask = W < (cutoff - LOOKBACK)            # эмбарго против перекрытия окон
+    val_idx = np.where(val_mask)[0]
+    tr_idx = np.where(tr_mask)[0]
+    if len(val_idx) < 1 or len(tr_idx) < 10:     # деградация на коротком ряду
+        rng = np.random.default_rng(42)
+        perm = rng.permutation(N)
+        n_val = max(1, int(N * 0.15))
+        val_idx, tr_idx = perm[:n_val], perm[n_val:]
+        log.warning("    TFT: ряд слишком короткий для хронологического сплита — fallback на случайный")
 
     dev = torch.device("cpu")
     Xtr = torch.tensor(panel.X[tr_idx], device=dev)
@@ -98,36 +110,51 @@ def _train_tft(panel, epochs: int, hidden: int):
 
 def _predict_fallback(panel):
     """
-    Квантильный baseline: для каждого тикера берём эмпирические квантили
-    завтрашних low/high из обучающих окон ЭТОГО тикера. Возвращает прогнозы
-    в том же формате, что и TFT-голова: (M, 2, Q).
+    Квантильный baseline без torch: для каждого тикера — эмпирические квантили
+    завтрашних целей из его окон. Возвращает (M, 2, Q) как и TFT-голова.
+
+    PR-7: причинно-честная версия. Раньше квантили считались по ВСЕЙ истории
+    тикера (включая будущее относительно точки), а покрытие оценивалось in-sample
+    по всем окнам → завышенный CoverageProb. Теперь квантили берутся ТОЛЬКО из
+    обучающего периода (W < cutoff), а покрытие меряется на отложенном хвосте
+    (W >= cutoff). Для инференс-окна (последний день) вся история — прошлое.
     """
+    from .dataset import LOOKBACK
     n_tgt = panel.Y.shape[1]
     nq = len(QUANTILES)
     M = panel.infer_X.shape[0]
-    global_Y = panel.Y
 
-    by_tk: dict[int, list[np.ndarray]] = {}
-    for t, y in zip(panel.T, panel.Y):
-        by_tk.setdefault(int(t), []).append(y)
+    W = panel.W
+    cutoff = np.quantile(W, 0.85)
+    train_mask = W < (cutoff - LOOKBACK)
+    val_idx = np.where(W >= cutoff)[0]
+    if len(val_idx) < 1 or int(train_mask.sum()) < 10:
+        train_mask = np.ones(len(W), bool)              # короткий ряд — без сплита
+        val_idx = np.arange(len(W))
+
+    # квантильный источник: только обучающий период
+    by_tk_train: dict[int, list[np.ndarray]] = {}
+    for t, y in zip(panel.T[train_mask], panel.Y[train_mask]):
+        by_tk_train.setdefault(int(t), []).append(y)
+    global_train_Y = panel.Y[train_mask]
 
     def _q(arr):
         return np.stack([np.quantile(arr[:, k], QUANTILES) for k in range(n_tgt)], axis=0)
 
+    def _q_for(tk_i):
+        arr = np.asarray(by_tk_train.get(int(tk_i), []), dtype=np.float64)
+        if len(arr) < 20:
+            arr = global_train_Y
+        return _q(arr)
+
     infer_pred = np.zeros((M, n_tgt, nq), dtype=np.float64)
     for m, tk_i in enumerate(panel.infer_T):
-        arr = np.asarray(by_tk.get(int(tk_i), []), dtype=np.float64)
-        if len(arr) < 20:
-            arr = global_Y
-        infer_pred[m] = _q(arr)
+        infer_pred[m] = _q_for(tk_i)
 
-    val_pred = np.zeros((len(global_Y), n_tgt, nq), dtype=np.float64)
-    for j, t in enumerate(panel.T):
-        arr = np.asarray(by_tk.get(int(t), []), dtype=np.float64)
-        if len(arr) < 20:
-            arr = global_Y
-        val_pred[j] = _q(arr)
-    return infer_pred, val_pred, panel.T, global_Y
+    val_pred = np.zeros((len(val_idx), n_tgt, nq), dtype=np.float64)
+    for j, idx in enumerate(val_idx):
+        val_pred[j] = _q_for(panel.T[idx])
+    return infer_pred, val_pred, panel.T[val_idx], panel.Y[val_idx]
 
 
 # ── Калибровка покрытия ────────────────────────────────────────────────────────

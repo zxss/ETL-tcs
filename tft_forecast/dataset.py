@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
+import pandas as pd
 
 from .features import FEATURE_COLS, TARGET_COLS, TickerFrame
 
@@ -23,6 +24,7 @@ class Panel:
     X: np.ndarray            # (N, LOOKBACK, F) признаки окна
     T: np.ndarray            # (N,) индекс тикера (static categorical)
     Y: np.ndarray            # (N, 2) цели [next_low_pct, next_high_pct]
+    W: np.ndarray            # (N,) ordinal даты цели окна (для хронологического сплита, PR-7)
     feat_mean: np.ndarray    # (F,) для масштабирования
     feat_std: np.ndarray     # (F,)
     tickers: list[str]       # индекс → имя тикера
@@ -41,13 +43,15 @@ def build_panel(frames: list[TickerFrame], lookback: int = LOOKBACK) -> Panel | 
     tk_index = {tk: i for i, tk in enumerate(tickers)}
 
     # --- сбор обучающих окон ---
-    X_list, T_list, Y_list = [], [], []
+    X_list, T_list, Y_list, W_list = [], [], [], []
     infer_X, infer_T, infer_tk = [], [], []
 
     for f in frames:
         d = f.df
         feats = d[FEATURE_COLS].to_numpy(dtype=np.float64)
         tgts = d[TARGET_COLS].to_numpy(dtype=np.float64)
+        # ordinal даты строки-цели (общая календарная ось для всех тикеров, PR-7)
+        date_ord = pd.to_datetime(d["date"]).map(pd.Timestamp.toordinal).to_numpy(dtype=np.int64)
         n = len(d)
 
         # обучающие окна: окно [i-lookback+1 .. i], цель в строке i (next_*),
@@ -60,6 +64,7 @@ def build_panel(frames: list[TickerFrame], lookback: int = LOOKBACK) -> Panel | 
             X_list.append(win)
             T_list.append(tk_index[f.ticker])
             Y_list.append(y)
+            W_list.append(date_ord[i])
 
         # инференс-окно: последние lookback дней (цель неизвестна — её предсказываем)
         if n >= lookback:
@@ -73,6 +78,7 @@ def build_panel(frames: list[TickerFrame], lookback: int = LOOKBACK) -> Panel | 
     X = _clean_window(np.asarray(X_list, dtype=np.float64))
     T = np.asarray(T_list, dtype=np.int64)
     Y = np.asarray(Y_list, dtype=np.float64)
+    W = np.asarray(W_list, dtype=np.int64)
     iX = _clean_window(np.asarray(infer_X, dtype=np.float64))
     iT = np.asarray(infer_T, dtype=np.int64)
 
@@ -89,6 +95,7 @@ def build_panel(frames: list[TickerFrame], lookback: int = LOOKBACK) -> Panel | 
         X=X.astype(np.float32),
         T=T,
         Y=Y.astype(np.float32),
+        W=W,
         feat_mean=feat_mean,
         feat_std=feat_std,
         tickers=tickers,
