@@ -176,7 +176,6 @@ def white_reality_check(d: pd.DataFrame, cost_rt: float,
     min_T = min(len(v) for v in diff_map.values())
     names = list(diff_map.keys())
     F = np.vstack([diff_map[k][:min_T] for k in names])  # (K x T) дифф. ряды
-    T = min_T
 
     means = F.mean(axis=1)            # фактические средние сверхдоходности
     V_obs = means.max()
@@ -291,8 +290,6 @@ def pbo_cscv(d: pd.DataFrame, cost_rt: float,
     PBO < 0.1 → низкая вероятность переобучения
     PBO > 0.5 → скорее всего переобучена
     """
-    from itertools import combinations
-
     print("═" * 64)
     print("  Stage 4d — PBO: PROBABILITY OF BACKTEST OVERFITTING (CSCV)")
     print("  Bailey, López de Prado, Zhu (2016)")
