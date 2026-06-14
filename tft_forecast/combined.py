@@ -117,6 +117,8 @@ def _build_rows(val_rows, forecasts, tickers, strats):
                 "f_high": cor.get("ForecastHigh") if isinstance(cor, dict) else None,
                 "range_pct": cor.get("RangePct") if isinstance(cor, dict) else None,
                 "coverage": cor.get("CoverageProb") if isinstance(cor, dict) else None,
+                "anchor_price": cor.get("anchor_price") if isinstance(cor, dict) else None,
+                "last_date": cor.get("last_date") if isinstance(cor, dict) else None,
                 "price_ts": cor.get("price_ts") if isinstance(cor, dict) else None,
                 "max_pos": cor.get("MaxPos") if isinstance(cor, dict) else None,
                 "liq_score": cor.get("LiqScore") if isinstance(cor, dict) else None,
@@ -370,6 +372,24 @@ def _regime_color(reg):
     return {"BULL": _GREEN, "BEAR": _RED, "NEUTRAL": _YELLOW}.get(reg, "")
 
 
+def _price_time_txt(r):
+    """Дата/время цены, на которой построен прогноз. Real-time котировка →
+    'MM-DD HH:MM'; иначе дата дневной свечи (закрытие) → 'YYYY-MM-DD'."""
+    ts = r.get("price_ts")
+    if ts is not None:
+        try:
+            return ts.strftime("%m-%d %H:%M")
+        except Exception:  # noqa: BLE001
+            pass
+    d = r.get("last_date")
+    if d is not None:
+        try:
+            return d.strftime("%Y-%m-%d")
+        except Exception:  # noqa: BLE001
+            return str(d)[:16]
+    return "—"
+
+
 def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False):
     import config
     strict = bool(getattr(config, "STRICT_MARKET_FILTER", False))
@@ -401,14 +421,14 @@ def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False)
 
     _print_header(meta)
 
-    W = 150
+    W = 172
     print("\n" + "=" * W)
     print(" СВОДНЫЙ ДАШБОРД 2.0 (ИИ-ПРОГНОЗ + РЫНОЧНЫЙ КОНТЕКСТ)")
     print("=" * W)
 
     hdr = (f" {'Ticker':<7}{'Strategy':<15}{'Dir':<6}{'ExpPnL':>8}{'PProf':>7}"
            f"{'FDR':>5}{'PBO':>7}{'Liq':>5}{'MaxPos':>9}"
-           f"{'F.Low':>10}{'F.High':>10}{'Range%':>9}"
+           f"{'Price':>10}{'PriceTime':>14}{'F.Low':>10}{'F.High':>10}{'Range%':>9}"
            f"{'IMOEX':>9}{'RS':>8}{'VolSpike':>10}{'ATR%':>7}{'GapRisk':>9}")
     print(hdr)
     print("-" * W)
@@ -429,6 +449,7 @@ def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False)
             f" {r['ticker']:<7}{r['strategy']:<15}{r['direction']:<6}"
             f"{exp_cell}{prob_cell}{_yn(r['fdr']):>5}{_f(r['pbo'], '.2f'):>7}"
             f"{_f(r['liq_score'], '.0f'):>5}{_money(r['max_pos']):>9}"
+            f"{_f(r['anchor_price'], '.2f'):>10}{_price_time_txt(r):>14}"
             f"{_f(r['f_low'], '.2f'):>10}{_f(r['f_high'], '.2f'):>10}{rng_cell}"
             f"{reg_cell}{_rs_txt(r['rs']):>8}{_vol_txt(r['vol_spike']):>10}"
             f"{_atr_txt(r['atr_pctl']):>7}{_gap_txt(r):>9}"
@@ -454,6 +475,8 @@ def _print_legend():
         ("PBO",      "Probability of Backtest Overfitting"),
         ("Liq",      "Балл ликвидности 0..100 (перцентиль оборота по рынку)"),
         ("MaxPos",   "Макс. размер позиции ₽ (Amihud; сжат при высоком ATR%)"),
+        ("Price",    "Цена, на которой построен прогноз (real-time котировка или закрытие)"),
+        ("PriceTime","Дата/время этой цены: 'MM-DD HH:MM' (real-time) или дата закрытия"),
         ("F.Low",    "Прогноз нижней границы цены на завтра (q0.1, ₽)"),
         ("F.High",   "Прогноз верхней границы цены на завтра (q0.9, ₽)"),
         ("Range%",   "Ширина прогнозного коридора (F.High−F.Low) к якорной цене"),
