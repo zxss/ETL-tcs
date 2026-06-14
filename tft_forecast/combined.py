@@ -401,13 +401,14 @@ def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False)
 
     _print_header(meta)
 
-    W = 121
+    W = 150
     print("\n" + "=" * W)
     print(" СВОДНЫЙ ДАШБОРД 2.0 (ИИ-ПРОГНОЗ + РЫНОЧНЫЙ КОНТЕКСТ)")
     print("=" * W)
 
     hdr = (f" {'Ticker':<7}{'Strategy':<15}{'Dir':<6}{'ExpPnL':>8}{'PProf':>7}"
            f"{'FDR':>5}{'PBO':>7}{'Liq':>5}{'MaxPos':>9}"
+           f"{'F.Low':>10}{'F.High':>10}{'Range%':>9}"
            f"{'IMOEX':>9}{'RS':>8}{'VolSpike':>10}{'ATR%':>7}{'GapRisk':>9}")
     print(hdr)
     print("-" * W)
@@ -421,11 +422,14 @@ def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False)
         prob_cell = _wrap(f"{prob_txt:>7}", _prob_color(prob))
         reg = r["regime"]
         reg_cell = _wrap(f"{(reg or '—'):>9}", _regime_color(reg))
+        rng = r["range_pct"]
+        rng_cell = f"{_f(rng, '.2f'):>8}%" if rng is not None else f"{'—':>9}"
 
         print(
             f" {r['ticker']:<7}{r['strategy']:<15}{r['direction']:<6}"
             f"{exp_cell}{prob_cell}{_yn(r['fdr']):>5}{_f(r['pbo'], '.2f'):>7}"
             f"{_f(r['liq_score'], '.0f'):>5}{_money(r['max_pos']):>9}"
+            f"{_f(r['f_low'], '.2f'):>10}{_f(r['f_high'], '.2f'):>10}{rng_cell}"
             f"{reg_cell}{_rs_txt(r['rs']):>8}{_vol_txt(r['vol_spike']):>10}"
             f"{_atr_txt(r['atr_pctl']):>7}{_gap_txt(r):>9}"
         )
@@ -450,6 +454,9 @@ def _print_legend():
         ("PBO",      "Probability of Backtest Overfitting"),
         ("Liq",      "Балл ликвидности 0..100 (перцентиль оборота по рынку)"),
         ("MaxPos",   "Макс. размер позиции ₽ (Amihud; сжат при высоком ATR%)"),
+        ("F.Low",    "Прогноз нижней границы цены на завтра (q0.1, ₽)"),
+        ("F.High",   "Прогноз верхней границы цены на завтра (q0.9, ₽)"),
+        ("Range%",   "Ширина прогнозного коридора (F.High−F.Low) к якорной цене"),
         ("IMOEX",    "Режим широкого рынка по EMA50/EMA200 (BULL/BEAR/NEUTRAL)"),
         ("RS",       "Rel.Strength — сила бумаги к рынку за 10 дней"),
         ("VolSpike", "Объём вчера / SMA20 (кратность)"),
