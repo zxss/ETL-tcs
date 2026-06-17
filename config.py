@@ -220,6 +220,13 @@ SHOW_ALL_INTRADAY: bool = os.getenv("SHOW_ALL_INTRADAY", "0") not in ("0", "fals
 # 0 — без ограничения (показать все).
 DASHBOARD_TOP_N: int = int(os.getenv("DASHBOARD_TOP_N", "50"))
 
+# BEST_TRADES_TOP_N — сколько сигналов показывать в блоке «ЛУЧШИЕ СДЕЛКИ».
+BEST_TRADES_TOP_N: int = int(os.getenv("BEST_TRADES_TOP_N", "10"))
+
+# BEST_TRADES_POSITION_RUB — целевой размер позиции на одну бумагу (₽)
+# для расчёта объёма лотов в торговых инструкциях.
+BEST_TRADES_POSITION_RUB: float = float(os.getenv("BEST_TRADES_POSITION_RUB", "10000"))
+
 # --- Актуальные котировки на момент запуска ----------------------------------
 # TFT_USE_LIVE_PRICE=1 — перед расчётом получить последнюю цену (Last Price) по
 # каждому тикеру и якорить прогноз диапазона/PnL на ней, а не на вчерашнем

@@ -466,9 +466,12 @@ def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False,
         )
     print("=" * W)
 
+    best_top_n       = int(getattr(config, "BEST_TRADES_TOP_N",      10))
+    best_position    = float(getattr(config, "BEST_TRADES_POSITION_RUB", 10_000.0))
+
     _print_legend()
     _print_flags(rows)
-    _print_best_trades(rows)
+    _print_best_trades(rows, top_n=best_top_n, position_rub=best_position)
     _print_market_summary(meta)
 
 
@@ -555,25 +558,106 @@ def _recommendation(regime, risk):
     return rec
 
 
-def _print_best_trades(sorted_rows):
-    """ЛУЧШИЕ СДЕЛКИ НА ЗАВТРА: топ-5 по Verdict → ExpPnL% → ProbProfit.
-    Берём только исполнимые идеи (есть направленный сигнал ExpPnL) и, если
-    включён подробный режим, не дублируем проигравшие дневные строки."""
+# Размер лота (кол-во акций в 1 лоте) для основных тикеров MOEX.
+# Для отсутствующих тикеров используется лот = 1.
+_LOT_SIZES: dict[str, int] = {
+    "SBER": 10, "SBERP": 10, "GAZP": 10, "LKOH": 1, "NVTK": 1,
+    "ROSN": 1,  "TATN": 1,   "TATNP": 1, "CHMF": 1, "MGNT": 1,
+    "YDEX": 1,  "ALRS": 10,  "PLZL": 1,  "GMKN": 1, "IRAO": 100,
+    "RUAL": 10, "VTBR": 10000, "SNGSP": 100, "SNGS": 100,
+    "UPRO": 1000, "OGKB": 10000, "MSNG": 10000, "FEES": 10000,
+    "HYDR": 1000, "AFLT": 10, "MTSS": 10, "RTKM": 10, "VKCO": 1,
+    "MOEX": 10, "CBOM": 100, "BSPB": 1,  "PHOR": 1,  "ENPG": 1,
+    "FIXP": 1,  "FLOT": 1,   "PIKK": 1,  "POSI": 1,  "SMLT": 1,
+    "MVID": 1,  "SELG": 100, "ETLN": 10, "ASTR": 1,  "LENT": 1,
+    "AKRN": 1,  "NMTP": 100, "MAGN": 100,"X5": 1,    "ENPG": 1,
+}
+
+
+def _lot_size(ticker: str) -> int:
+    return _LOT_SIZES.get(ticker.upper(), 1)
+
+
+def _print_order_instructions(top: list[dict], position_rub: float) -> None:
+    """
+    Инструкции для автоматической подачи заявок.
+
+    Логика:
+      Тип       — Лимитная по цене anchor (реалтайм-котировка или закрытие).
+      Цена входа — anchor_price.
+      Стоп-цена:
+        LONG  → anchor × (1 + Downside/100)  [Downside < 0 → ниже входа]
+        SHORT → anchor × (1 − Downside/100)  [Downside < 0 → выше входа]
+      Объём лотов → floor(position_rub / (anchor × lot_size)), мин. 1 лот.
+      Сумма ₽    → лотов × lot_size × anchor.
+    """
+    W = 116
+    print(f"\n  ИНСТРУКЦИИ ДЛЯ АВТОЗАЯВОК  (целевая позиция ≈ {position_rub / 1000:.0f}K ₽ на бумагу)")
+    print("  " + "─" * W)
+    print(f"  {'№':>3}  {'Ticker':<6}  {'Стратегия':<16}  {'Тип':<10}"
+          f"  {'Цена входа':>11}  {'Стоп-цена':>10}  {'Стоп%':>6}"
+          f"  {'Лот':>4}  {'Лотов':>6}  {'Сумма ₽':>10}")
+    print("  " + "─" * W)
+    for i, r in enumerate(top, 1):
+        anchor = r.get("anchor_price")
+        down   = r.get("down")           # Downside q0.1, net % (< 0 = убыток)
+        lng    = (r["direction"] == "LONG")
+        tk     = r["ticker"]
+        lot    = _lot_size(tk)
+
+        if anchor and anchor > 0:
+            # объём: сколько ЛОТОВ помещается в целевой размер позиции
+            lots  = max(1, int(position_rub / (anchor * lot)))
+            total = lots * lot * anchor
+        else:
+            lots = total = None
+
+        if anchor and anchor > 0 and down is not None:
+            # LONG: стоп ниже входа; SHORT: стоп выше входа
+            stop_p   = anchor * (1.0 + down / 100.0) if lng else anchor * (1.0 - down / 100.0)
+            stop_pct = abs(down)
+        else:
+            stop_p = stop_pct = None
+
+        entry_s   = f"{anchor:>10.2f}"   if anchor   else f"{'—':>10}"
+        stop_s    = f"{stop_p:>9.2f}"    if stop_p   else f"{'—':>9}"
+        stoppct_s = f"{stop_pct:>5.1f}%" if stop_pct is not None else f"{'—':>6}"
+        lots_s    = f"{lots:>6}"          if lots     else f"{'—':>6}"
+        total_s   = f"{total:>10,.0f}"    if total    else f"{'—':>10}"
+
+        print(f"  {i:>3}  {tk:<6}  {r['strategy']:<16}  {'Лимитная':<10}"
+              f"  {entry_s}  {stop_s}  {stoppct_s}"
+              f"  {lot:>4}  {lots_s}  {total_s}")
+    print("  " + "─" * W)
+    print("  Цена входа = anchor (реалтайм-котировка или последнее закрытие).")
+    print("  Стоп = Downside q0.1 модели (нетто)."
+          " LONG: стоп ниже. SHORT: стоп выше.")
+    print(f"  Объём = ⌊{position_rub / 1000:.0f}K ÷ (цена × лот)⌋ лотов."
+          " Уточните лот-размер в спецификации MOEX.")
+
+
+def _print_best_trades(sorted_rows, top_n: int = 10,
+                       position_rub: float = 10_000.0) -> None:
+    """ЛУЧШИЕ СДЕЛКИ НА ЗАВТРА: топ-N по итоговому рейтингу FinalScore +
+    автоматические торговые инструкции (тип заявки, цена, стоп, объём)."""
     cand = [r for r in sorted_rows
             if r["exp_pnl"] is not None and r["selected"] is not False]
-    top = cand[:5]
+    top = cand[:top_n]
     if not top:
         return
-    print("\n  ЛУЧШИЕ СДЕЛКИ НА ЗАВТРА (топ-5 по итоговому рейтингу FinalScore)")
+
+    print(f"\n  ЛУЧШИЕ СДЕЛКИ НА ЗАВТРА (топ-{len(top)} по итоговому рейтингу FinalScore)")
     print("  " + "-" * 74)
     for i, r in enumerate(top, 1):
         label, _, _ = _verdict_meta(r["verdict"])
-        exp = r["exp_pnl"]
+        exp  = r["exp_pnl"]
         prob = r["prob_profit"]
-        exp_txt = f"{exp:+.2f}%" if exp is not None else "—"
-        prob_txt = f"{prob * 100:.0f}%" if prob is not None else "—"
-        score = r.get("final_score")
+        exp_txt  = f"{exp:+.2f}%"         if exp  is not None else "—"
+        prob_txt = f"{prob * 100:.0f}%"   if prob is not None else "—"
+        score    = r.get("final_score")
         score_txt = f"  score={score:.2f}" if score is not None else ""
-        print(f"  {i}. {r['ticker']:<6}{r['strategy']:<16}({r['direction']})"
+        print(f"  {i:>2}. {r['ticker']:<6}{r['strategy']:<16}({r['direction']})"
               f"   [{label}]  ExpPnL={exp_txt}  ProbProfit={prob_txt}{score_txt}")
     print("  " + "-" * 74)
+
+    _print_order_instructions(top, position_rub)
