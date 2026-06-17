@@ -227,6 +227,12 @@ BEST_TRADES_TOP_N: int = int(os.getenv("BEST_TRADES_TOP_N", "10"))
 # для расчёта объёма лотов в торговых инструкциях.
 BEST_TRADES_POSITION_RUB: float = float(os.getenv("BEST_TRADES_POSITION_RUB", "10000"))
 
+# LIMIT_ENTRY_FRACTION — насколько лимитка прижата к экстремуму прогнозного
+# коридора (доля 0..1): 0 = спот, 1 = ровно на F.High/F.Low.
+# SHORT тянется к ВЕРХНЕЙ границе, LONG — к НИЖНЕЙ. Default 0.8 — агрессивно,
+# но не на самом краю, чтобы заявка имела шанс залиться.
+LIMIT_ENTRY_FRACTION: float = float(os.getenv("LIMIT_ENTRY_FRACTION", "0.8"))
+
 # --- Актуальные котировки на момент запуска ----------------------------------
 # TFT_USE_LIVE_PRICE=1 — перед расчётом получить последнюю цену (Last Price) по
 # каждому тикеру и якорить прогноз диапазона/PnL на ней, а не на вчерашнем

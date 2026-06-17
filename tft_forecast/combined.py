@@ -466,12 +466,14 @@ def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False,
         )
     print("=" * W)
 
-    best_top_n       = int(getattr(config, "BEST_TRADES_TOP_N",      10))
-    best_position    = float(getattr(config, "BEST_TRADES_POSITION_RUB", 10_000.0))
+    best_top_n    = int(getattr(config, "BEST_TRADES_TOP_N",         10))
+    best_position = float(getattr(config, "BEST_TRADES_POSITION_RUB", 10_000.0))
+    entry_frac    = float(getattr(config, "LIMIT_ENTRY_FRACTION",    0.8))
 
     _print_legend()
     _print_flags(rows)
-    _print_best_trades(rows, top_n=best_top_n, position_rub=best_position)
+    _print_best_trades(rows, top_n=best_top_n, position_rub=best_position,
+                       entry_frac=entry_frac)
     _print_market_summary(meta)
 
 
@@ -578,66 +580,119 @@ def _lot_size(ticker: str) -> int:
     return _LOT_SIZES.get(ticker.upper(), 1)
 
 
-def _print_order_instructions(top: list[dict], position_rub: float) -> None:
+def _limit_entry_price(direction: str, anchor: float | None,
+                       f_low: float | None, f_high: float | None,
+                       frac: float) -> tuple[float | None, str]:
     """
-    Инструкции для автоматической подачи заявок.
+    Цена лимитной заявки от прогнозного коридора.
+
+    Идея: заходить не «по рынку», а по лучшей цене внутри прогноза:
+      SHORT → ближе к ВЕРХНЕЙ границе (F.High): шорт на откате вверх;
+      LONG  → ближе к НИЖНЕЙ границе (F.Low):   лонг на откате вниз.
+
+    Параметр frac ∈ [0, 1] — насколько близко к экстремуму:
+      0.0 → строго на anchor (как раньше, по рынку);
+      1.0 → строго на F.High / F.Low (максимально агрессивно, риск не залиться);
+      0.8 (default) → 80% пути от anchor к экстремуму — баланс цена/исполняемость.
+
+    Возвращает (price, note). Если коридора нет или его сторона «не лучше»
+    anchor (например, anchor уже выше F.High при шорте), фолбэк на anchor.
+    """
+    if anchor is None or anchor <= 0:
+        return None, "—"
+    if direction == "SHORT":
+        if f_high is None or f_high <= anchor:
+            return anchor, "anchor"
+        return anchor + frac * (f_high - anchor), f"→{frac:.0%}·F.High"
+    # LONG
+    if f_low is None or f_low >= anchor:
+        return anchor, "anchor"
+    return anchor - frac * (anchor - f_low), f"→{frac:.0%}·F.Low"
+
+
+def _print_order_instructions(top: list[dict], position_rub: float,
+                              entry_frac: float) -> None:
+    """
+    Инструкции для автоматической подачи лимитных заявок.
 
     Логика:
-      Тип       — Лимитная по цене anchor (реалтайм-котировка или закрытие).
-      Цена входа — anchor_price.
-      Стоп-цена:
-        LONG  → anchor × (1 + Downside/100)  [Downside < 0 → ниже входа]
-        SHORT → anchor × (1 − Downside/100)  [Downside < 0 → выше входа]
-      Объём лотов → floor(position_rub / (anchor × lot_size)), мин. 1 лот.
-      Сумма ₽    → лотов × lot_size × anchor.
+      Тип       — Лимитная.
+      Цена входа — ВНУТРИ прогнозного коридора, ближе к экстремуму в свою
+                  пользу: SHORT — к F.High, LONG — к F.Low (см. _limit_entry_price).
+      Стоп-цена  — от ВХОДА (не от anchor), чтобы сохранить риск ≈ Downside%:
+        LONG  → entry × (1 + Down/100)   [Down < 0 → стоп ниже входа]
+        SHORT → entry × (1 − Down/100)   [Down < 0 → стоп выше входа]
+      Объём лотов → floor(position_rub / (entry × lot_size)), мин. 1 лот.
+      Сумма ₽    → лотов × lot_size × entry.
     """
-    W = 116
-    print(f"\n  ИНСТРУКЦИИ ДЛЯ АВТОЗАЯВОК  (целевая позиция ≈ {position_rub / 1000:.0f}K ₽ на бумагу)")
+    W = 132
+    pos_k = position_rub / 1000.0
+    print(f"\n  ИНСТРУКЦИИ ДЛЯ АВТОЗАЯВОК  (лимитные, цель ≈ {pos_k:.0f}K ₽/бумагу,"
+          f" вход = {entry_frac:.0%} пути от спот-цены к F.High/F.Low)")
     print("  " + "─" * W)
-    print(f"  {'№':>3}  {'Ticker':<6}  {'Стратегия':<16}  {'Тип':<10}"
-          f"  {'Цена входа':>11}  {'Стоп-цена':>10}  {'Стоп%':>6}"
-          f"  {'Лот':>4}  {'Лотов':>6}  {'Сумма ₽':>10}")
+    print(f"  {'№':>3}  {'Ticker':<6}  {'Стратегия':<16}  {'Тип':<9}"
+          f"  {'Спот':>9}  {'Цена входа':>11}  {'Лучше%':>7}"
+          f"  {'Стоп-цена':>10}  {'Стоп%':>6}"
+          f"  {'Лот':>5}  {'Лотов':>6}  {'Сумма ₽':>10}")
     print("  " + "─" * W)
     for i, r in enumerate(top, 1):
         anchor = r.get("anchor_price")
         down   = r.get("down")           # Downside q0.1, net % (< 0 = убыток)
+        f_low  = r.get("f_low")
+        f_high = r.get("f_high")
         lng    = (r["direction"] == "LONG")
         tk     = r["ticker"]
         lot    = _lot_size(tk)
 
-        if anchor and anchor > 0:
-            # объём: сколько ЛОТОВ помещается в целевой размер позиции
-            lots  = max(1, int(position_rub / (anchor * lot)))
-            total = lots * lot * anchor
+        # цена лимитки — внутри прогнозного коридора
+        entry, _src = _limit_entry_price(r["direction"], anchor, f_low, f_high, entry_frac)
+
+        # «Лучше%» — насколько вход выгоднее спота (положительно = лучше).
+        # SHORT выгоднее, если зашли ВЫШЕ спота; LONG — если НИЖЕ.
+        if entry and anchor and anchor > 0:
+            better = (entry - anchor) / anchor * 100.0  # >0 → entry выше спота
+            if lng:
+                better = -better                          # для LONG ниже = лучше
+        else:
+            better = None
+
+        if entry and entry > 0:
+            lots  = max(1, int(position_rub / (entry * lot)))
+            total = lots * lot * entry
         else:
             lots = total = None
 
-        if anchor and anchor > 0 and down is not None:
-            # LONG: стоп ниже входа; SHORT: стоп выше входа
-            stop_p   = anchor * (1.0 + down / 100.0) if lng else anchor * (1.0 - down / 100.0)
+        if entry and entry > 0 and down is not None:
+            # стоп от ВХОДА, не от спота — сохраняем целевой риск % к новому входу
+            stop_p   = entry * (1.0 + down / 100.0) if lng else entry * (1.0 - down / 100.0)
             stop_pct = abs(down)
         else:
             stop_p = stop_pct = None
 
-        entry_s   = f"{anchor:>10.2f}"   if anchor   else f"{'—':>10}"
+        spot_s    = f"{anchor:>8.2f}"    if anchor   else f"{'—':>9}"
+        entry_s   = f"{entry:>10.2f}"    if entry    else f"{'—':>10}"
+        better_s  = f"{better:>+6.2f}%"  if better is not None else f"{'—':>7}"
         stop_s    = f"{stop_p:>9.2f}"    if stop_p   else f"{'—':>9}"
         stoppct_s = f"{stop_pct:>5.1f}%" if stop_pct is not None else f"{'—':>6}"
-        lots_s    = f"{lots:>6}"          if lots     else f"{'—':>6}"
-        total_s   = f"{total:>10,.0f}"    if total    else f"{'—':>10}"
+        lots_s    = f"{lots:>6}"         if lots     else f"{'—':>6}"
+        total_s   = f"{total:>10,.0f}"   if total    else f"{'—':>10}"
 
-        print(f"  {i:>3}  {tk:<6}  {r['strategy']:<16}  {'Лимитная':<10}"
-              f"  {entry_s}  {stop_s}  {stoppct_s}"
-              f"  {lot:>4}  {lots_s}  {total_s}")
+        print(f"  {i:>3}  {tk:<6}  {r['strategy']:<16}  {'Лимитная':<9}"
+              f"  {spot_s}  {entry_s}  {better_s}"
+              f"  {stop_s}  {stoppct_s}"
+              f"  {lot:>5}  {lots_s}  {total_s}")
     print("  " + "─" * W)
-    print("  Цена входа = anchor (реалтайм-котировка или последнее закрытие).")
-    print("  Стоп = Downside q0.1 модели (нетто)."
-          " LONG: стоп ниже. SHORT: стоп выше.")
-    print(f"  Объём = ⌊{position_rub / 1000:.0f}K ÷ (цена × лот)⌋ лотов."
-          " Уточните лот-размер в спецификации MOEX.")
+    print(f"  Цена входа = спот + {entry_frac:.0%}·(экстремум прогноза − спот):"
+          " SHORT тянется к F.High, LONG — к F.Low.")
+    print("  «Лучше%» — насколько вход выгоднее спот-цены в сторону позиции.")
+    print("  Стоп = Downside q0.1 модели (нетто) от ВХОДА (LONG ниже, SHORT выше).")
+    print(f"  Объём = ⌊{pos_k:.0f}K ÷ (вход × лот)⌋ лотов."
+          " Если лимитка не залилась — заявку снять, в рынок не лезть.")
 
 
 def _print_best_trades(sorted_rows, top_n: int = 10,
-                       position_rub: float = 10_000.0) -> None:
+                       position_rub: float = 10_000.0,
+                       entry_frac: float = 0.8) -> None:
     """ЛУЧШИЕ СДЕЛКИ НА ЗАВТРА: топ-N по итоговому рейтингу FinalScore +
     автоматические торговые инструкции (тип заявки, цена, стоп, объём)."""
     cand = [r for r in sorted_rows
@@ -660,4 +715,4 @@ def _print_best_trades(sorted_rows, top_n: int = 10,
               f"   [{label}]  ExpPnL={exp_txt}  ProbProfit={prob_txt}{score_txt}")
     print("  " + "-" * 74)
 
-    _print_order_instructions(top, position_rub)
+    _print_order_instructions(top, position_rub, entry_frac)
