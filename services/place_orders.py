@@ -184,13 +184,48 @@ def _api_quantity(o: Order, inst: Instrument) -> tuple[int, int, list[str]]:
 # ── ФАЗА 1: только лимитки ────────────────────────────────────────────────────
 
 
+def _occupied_uids(broker: BrokerClient, account_id: str) -> tuple[set[str], list[str]]:
+    """instrument_uid, которые уже «заняты»: активная лимитка / открытая
+    позиция / активный стоп. Защита от задвоения при повторном запуске фазы 1.
+    Возвращает (uids, notes) — notes для печати, что именно учтено."""
+    notes: list[str] = []
+    occupied: set[str] = set()
+    try:
+        ord_uids = broker.get_active_order_instrument_uids(account_id)
+        occupied |= ord_uids
+        notes.append(f"активных заявок: {len(ord_uids)}")
+    except BrokerError as e:
+        notes.append(f"заявки не проверены ({e})")
+    pos_uids = {p.instrument_uid for p in broker.get_positions(account_id) if p.is_open}
+    occupied |= pos_uids
+    notes.append(f"открытых позиций: {len(pos_uids)}")
+    try:
+        stop_uids = broker.get_active_stop_instrument_uids(account_id)
+        occupied |= stop_uids
+        notes.append(f"активных стопов: {len(stop_uids)}")
+    except NotSupportedError:
+        notes.append("стопы не проверены (GetStopOrders недоступен)")
+    return occupied, notes
+
+
 def place_limits(broker: BrokerClient, account_id: str, orders: list[Order], *,
-                 dry_run: bool, immediate_stop: bool,
+                 dry_run: bool, immediate_stop: bool, force: bool,
                  writer: csv.DictWriter, env: str) -> None:
     """Ставит лимитные заявки. Если immediate_stop=False (по умолчанию) —
-    записывает будущий стоп в реестр ожидающих. Если True — ставит стоп сразу."""
+    записывает будущий стоп в реестр ожидающих. Если True — ставит стоп сразу.
+
+    Защита от задвоения: если по инструменту уже есть активная заявка / позиция /
+    стоп — заявка ПРОПУСКАЕТСЯ (если не передан force=True)."""
     pending = _load_pending()
     acc_list = pending.setdefault(account_id, [])
+
+    # снимок занятых инструментов (один раз перед циклом)
+    if force:
+        occupied: set[str] = set()
+        print("[WARN]  --force: защита от задвоения отключена.")
+    else:
+        occupied, notes = _occupied_uids(broker, account_id)
+        print(f"Защита от задвоения: {', '.join(notes)}.")
 
     for o in orders:
         tk = o.ticker
@@ -209,6 +244,16 @@ def place_limits(broker: BrokerClient, account_id: str, orders: list[Order], *,
             _logrow(writer, env=env, account_id=account_id, ticker=tk,
                     action="find_instrument", status="error", info=str(e))
             continue
+
+        # защита от задвоения
+        if inst.instrument_uid in occupied:
+            print(f"[SKIP]  {tk}: уже есть активная заявка/позиция/стоп — "
+                  f"не дублирую (--force для обхода).")
+            _logrow(writer, env=env, account_id=account_id, ticker=tk,
+                    action="skip_duplicate", status="skipped",
+                    info="active order/position/stop exists")
+            continue
+
         if inst.trading_status != "SECURITY_TRADING_STATUS_NORMAL_TRADING":
             print(f"[WARN]  {tk}: торговый статус {inst.trading_status}.")
 
@@ -250,6 +295,7 @@ def place_limits(broker: BrokerClient, account_id: str, orders: list[Order], *,
                     status="error", info=str(e))
             continue
         order_id = st.order_id or order_id
+        occupied.add(inst.instrument_uid)  # не задвоить тем же тикером в этом же прогоне
         print(f"[OK]    {tk}: лимитка {order_id} → {st.execution_report_status} "
               f"({st.lots_executed}/{st.lots_requested}).")
         _logrow(writer, env=env, account_id=account_id, ticker=tk,
@@ -420,6 +466,9 @@ def main(argv: Optional[list[str]] = None) -> int:
                    help="Не спрашивать y/n (для cron).")
     p.add_argument("--immediate-stop", action="store_true",
                    help="ФАЗА 1: ставить стоп сразу за лимиткой (риск раннего стопа).")
+    p.add_argument("--force", action="store_true",
+                   help="ФАЗА 1: отключить защиту от задвоения (ставить лимитку, "
+                        "даже если по инструменту уже есть заявка/позиция/стоп).")
     p.add_argument("--allow-prod", action="store_true",
                    help="Разрешить prod-эндпоинт (нужен и ALLOW_PRODUCTION_TRADING=1).")
     args = p.parse_args(argv)
@@ -455,7 +504,7 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         place_limits(broker, account_id, orders,
                      dry_run=args.dry_run, immediate_stop=args.immediate_stop,
-                     writer=writer, env=env)
+                     force=args.force, writer=writer, env=env)
     finally:
         fp.close()
     print("\nГотово. Журнал: data/order_log/<дата>.csv")

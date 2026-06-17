@@ -282,6 +282,17 @@ class TinkoffSandboxClient(BrokerClient):
                 uids.add(uid)
         return uids
 
+    def get_active_order_instrument_uids(self, account_id: str) -> set[str]:
+        """SandboxService.GetSandboxOrders — активные (неисполненные) заявки."""
+        data = self._post("SandboxService/GetSandboxOrders",
+                          {"accountId": account_id})
+        uids: set[str] = set()
+        for o in (data.get("orders") or []):
+            uid = o.get("instrumentUid") or o.get("instrument_uid")
+            if uid:
+                uids.add(uid)
+        return uids
+
 
 def _parse_order_state(d: dict[str, Any]) -> OrderState:
     return OrderState(

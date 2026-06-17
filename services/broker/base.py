@@ -217,3 +217,8 @@ class BrokerClient(ABC):
         """instrument_uid инструментов, у которых УЖЕ есть активный стоп
         (чтобы --attach-stops не дублировал). Может бросить NotSupportedError,
         если контур не отдаёт список стопов — тогда вызывающий решает сам."""
+
+    @abstractmethod
+    def get_active_order_instrument_uids(self, account_id: str) -> set[str]:
+        """instrument_uid инструментов с активной (неисполненной) заявкой —
+        для защиты от повторного запуска фазы 1 (чтобы не задвоить лимитки)."""
