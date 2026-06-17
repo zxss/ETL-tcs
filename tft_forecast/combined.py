@@ -573,7 +573,7 @@ _LOT_SIZES: dict[str, int] = {
     "ROSN": 1,  "TATN": 1,   "TATNP": 1, "CHMF": 1, "MGNT": 1,
     "YDEX": 1,  "ALRS": 10,  "PLZL": 1,  "GMKN": 10, "IRAO": 100,
     "RUAL": 10, "VTBR": 10000, "SNGSP": 100, "SNGS": 100,
-    "UPRO": 1000, "OGKB": 10000, "MSNG": 10000, "FEES": 10000,
+    "UPRO": 1000, "OGKB": 1000,  "MSNG": 10000, "FEES": 10000,
     "HYDR": 1000, "AFLT": 10, "MTSS": 10, "RTKM": 10, "VKCO": 1,
     "MOEX": 10, "CBOM": 100, "BSPB": 1,  "PHOR": 1,  "ENPG": 1,
     "FLOT": 1,  "PIKK": 1,   "POSI": 1,  "SMLT": 1,
