@@ -390,7 +390,8 @@ def _price_time_txt(r):
     return "—"
 
 
-def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False):
+def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False,
+                   top_n: int = 30):
     import config
     strict = bool(getattr(config, "STRICT_MARKET_FILTER", False))
 
@@ -419,11 +420,20 @@ def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False)
         return
     rows.sort(key=lambda x: x["final_score"], reverse=True)
 
+    # Топ-N бумаг по итоговому рейтингу (FinalScore). По умолчанию 30.
+    total_rows = len(rows)
+    if top_n and top_n > 0:
+        rows = rows[:top_n]
+
     _print_header(meta)
 
     W = 172
     print("\n" + "=" * W)
-    print(" СВОДНЫЙ ДАШБОРД 2.0 (ИИ-ПРОГНОЗ + РЫНОЧНЫЙ КОНТЕКСТ)")
+    shown = len(rows)
+    title = f" СВОДНЫЙ ДАШБОРД 2.0 (ИИ-ПРОГНОЗ + РЫНОЧНЫЙ КОНТЕКСТ) — ТОП-{shown}"
+    if shown < total_rows:
+        title += f" из {total_rows}"
+    print(title)
     print("=" * W)
 
     hdr = (f" {'Ticker':<7}{'Strategy':<15}{'Dir':<6}{'ExpPnL':>8}{'PProf':>7}"

@@ -78,10 +78,15 @@ def main() -> None:
 
         if combined:
             try:
+                # Вселенная дашборда — все бумаги с прогнозом (а не только
+                # VALIDATION_TICKERS), чтобы вывести топ-N по всему рынку.
+                fc = forecasts or {}
+                universe = [k for k in fc if k != "__meta__"] or config.VALIDATION_TICKERS
                 tft_forecast.print_combined(
                     val_rows, forecasts,
-                    config.VALIDATION_TICKERS, config.VALIDATION_STRATS,
+                    universe, config.VALIDATION_STRATS,
                     show_all=getattr(config, "SHOW_ALL_INTRADAY", False),
+                    top_n=getattr(config, "DASHBOARD_TOP_N", 30),
                 )
             except Exception as e:  # noqa: BLE001 — печать не должна валить ETL
                 log.warning("Шаг сводной таблицы завершился с ошибкой: %s", e)

@@ -410,24 +410,31 @@ def run(conn, quiet: bool = False) -> dict | None:
 
     val_tickers = getattr(config, "VALIDATION_TICKERS", [])
     val_strats = getattr(config, "VALIDATION_STRATS", [])
-    if val_tickers and val_strats:
-        if not quiet:
-            _print_strategy_table(forecasts, val_tickers, val_strats)
-
+    if val_strats:
         # направленный прогноз: ожидаемый PnL стратегии с учётом коридора
-        # (на пересчитанных под текущую цену квантилях оставшейся доходности)
+        # (на пересчитанных под текущую цену квантилях оставшейся доходности).
+        # Считаем по ВСЕЙ вселенной прогноза (это лёгкая арифметика квантилей),
+        # чтобы сводный дашборд мог ранжировать топ-N по всем бумагам, а не
+        # только по VALIDATION_TICKERS (у остальных не будет лишь стат-метрик
+        # валидации — White RC / PBO / FDR — они останутся «—»).
         from . import directional
         cost_rt = float(getattr(config, "TFT_COST_RT", 0.08))
+        all_fc_tickers = list(panel.infer_tickers)
         dir_rows = directional.build_rows(
-            infer_pred_adj, panel.infer_tickers, val_tickers, val_strats,
+            infer_pred_adj, panel.infer_tickers, all_fc_tickers, val_strats,
             cost_rt=cost_rt, coridor=forecasts,
         )
-        if dir_rows:
-            if not quiet:
-                directional.print_table(dir_rows, cost_rt)
-            for r in dir_rows:
-                forecasts.setdefault(r["ticker"], {}).setdefault("directional", {})[
-                    r["strategy"]
-                ] = {k: r[k] for k in ("ExpPnL", "Downside", "Upside", "ProbProfit")}
+        for r in dir_rows:
+            forecasts.setdefault(r["ticker"], {}).setdefault("directional", {})[
+                r["strategy"]
+            ] = {k: r[k] for k in ("ExpPnL", "Downside", "Upside", "ProbProfit")}
+
+        # Отдельные таблицы (не combined-режим) печатаем по VALIDATION_TICKERS.
+        if not quiet and val_tickers:
+            _print_strategy_table(forecasts, val_tickers, val_strats)
+            val_set = {t.upper() for t in val_tickers}
+            val_dir = [r for r in dir_rows if r["ticker"] in val_set]
+            if val_dir:
+                directional.print_table(val_dir, cost_rt)
 
     return forecasts
