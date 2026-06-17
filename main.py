@@ -86,7 +86,7 @@ def main() -> None:
                     val_rows, forecasts,
                     universe, config.VALIDATION_STRATS,
                     show_all=getattr(config, "SHOW_ALL_INTRADAY", False),
-                    top_n=getattr(config, "DASHBOARD_TOP_N", 30),
+                    top_n=getattr(config, "DASHBOARD_TOP_N", 50),
                 )
             except Exception as e:  # noqa: BLE001 — печать не должна валить ETL
                 log.warning("Шаг сводной таблицы завершился с ошибкой: %s", e)

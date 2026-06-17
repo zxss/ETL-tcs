@@ -391,7 +391,7 @@ def _price_time_txt(r):
 
 
 def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False,
-                   top_n: int = 30):
+                   top_n: int = 50):
     import config
     strict = bool(getattr(config, "STRICT_MARKET_FILTER", False))
 
@@ -420,7 +420,7 @@ def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False,
         return
     rows.sort(key=lambda x: x["final_score"], reverse=True)
 
-    # Топ-N бумаг по итоговому рейтингу (FinalScore). По умолчанию 30.
+    # Топ-N бумаг по итоговому рейтингу (FinalScore). По умолчанию 50.
     total_rows = len(rows)
     if top_n and top_n > 0:
         rows = rows[:top_n]

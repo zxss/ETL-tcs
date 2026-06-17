@@ -216,9 +216,9 @@ COMBINED_TABLE: bool = os.getenv("COMBINED_TABLE", "1") not in ("0", "false", "F
 SHOW_ALL_INTRADAY: bool = os.getenv("SHOW_ALL_INTRADAY", "0") not in ("0", "false", "False")
 
 # DASHBOARD_TOP_N — сколько строк (бумаг × стратегий) выводить в сводном
-# дашборде, отсортированных по итоговому рейтингу FinalScore. По умолчанию 30.
+# дашборде, отсортированных по итоговому рейтингу FinalScore. По умолчанию 50.
 # 0 — без ограничения (показать все).
-DASHBOARD_TOP_N: int = int(os.getenv("DASHBOARD_TOP_N", "30"))
+DASHBOARD_TOP_N: int = int(os.getenv("DASHBOARD_TOP_N", "50"))
 
 # --- Актуальные котировки на момент запуска ----------------------------------
 # TFT_USE_LIVE_PRICE=1 — перед расчётом получить последнюю цену (Last Price) по
