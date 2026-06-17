@@ -14,6 +14,7 @@ LB / Verdict) и из TFT-прогноза (направленный PnL кор�
 
 from __future__ import annotations
 
+import os
 import sys
 
 # ── Цвет (ANSI) ────────────────────────────────────────────────────────────────
@@ -561,23 +562,46 @@ def _recommendation(regime, risk):
 
 
 # Размер лота (кол-во акций в 1 лоте) для основных тикеров MOEX.
-# Для отсутствующих тикеров используется лот = 1.
+# Источник: спецификации режимов TQBR/TQTF на MOEX, актуально на середину 2025.
+# Для отсутствующих тикеров используется лот = 1 (помечается «(?)»).
+# ВАЖНО про сплиты/изменения:
+#   GMKN 1:100 (апр 2024) → 10 акций/лот;
+#   PLZL 1:10 (май 2024)  → 1 акция/лот;
+#   VKCO после редомициляции — 1 акция/лот.
 _LOT_SIZES: dict[str, int] = {
     "SBER": 10, "SBERP": 10, "GAZP": 10, "LKOH": 1, "NVTK": 1,
     "ROSN": 1,  "TATN": 1,   "TATNP": 1, "CHMF": 1, "MGNT": 1,
-    "YDEX": 1,  "ALRS": 10,  "PLZL": 1,  "GMKN": 1, "IRAO": 100,
+    "YDEX": 1,  "ALRS": 10,  "PLZL": 1,  "GMKN": 10, "IRAO": 100,
     "RUAL": 10, "VTBR": 10000, "SNGSP": 100, "SNGS": 100,
     "UPRO": 1000, "OGKB": 10000, "MSNG": 10000, "FEES": 10000,
     "HYDR": 1000, "AFLT": 10, "MTSS": 10, "RTKM": 10, "VKCO": 1,
     "MOEX": 10, "CBOM": 100, "BSPB": 1,  "PHOR": 1,  "ENPG": 1,
-    "FIXP": 1,  "FLOT": 1,   "PIKK": 1,  "POSI": 1,  "SMLT": 1,
-    "MVID": 1,  "SELG": 100, "ETLN": 10, "ASTR": 1,  "LENT": 1,
-    "AKRN": 1,  "NMTP": 100, "MAGN": 100,"X5": 1,    "ENPG": 1,
+    "FLOT": 1,  "PIKK": 1,   "POSI": 1,  "SMLT": 1,
+    "MVID": 10, "SELG": 100, "ETLN": 10, "ASTR": 1,  "LENT": 1,
+    "AKRN": 1,  "NMTP": 100, "MAGN": 100, "X5": 1,
 }
 
 
-def _lot_size(ticker: str) -> int:
-    return _LOT_SIZES.get(ticker.upper(), 1)
+# Тикеры, по которым нельзя выставить рыночную заявку через Tinkoff
+# (делистинг, редомициляция, смена ISIN). В дашборде/прогнозе остаются,
+# но в блоке «ИНСТРУКЦИИ ДЛЯ АВТОЗАЯВОК» маркируются N/A.
+# Источник: ручной список + env TINKOFF_UNAVAILABLE_TICKERS (через пробел).
+_DEFAULT_UNAVAILABLE = {
+    "FIXP",     # сменил ISIN на FIXR после редомициляции, через Tinkoff не доступен
+}
+
+
+def _unavailable_tickers() -> set[str]:
+    extra = os.getenv("TINKOFF_UNAVAILABLE_TICKERS", "").upper().split()
+    return _DEFAULT_UNAVAILABLE | set(extra)
+
+
+def _lot_size(ticker: str) -> tuple[int, bool]:
+    """Возвращает (размер_лота, точно_известен). False → дефолт 1, надо проверить."""
+    tk = ticker.upper()
+    if tk in _LOT_SIZES:
+        return _LOT_SIZES[tk], True
+    return 1, False
 
 
 def _limit_entry_price(direction: str, anchor: float | None,
@@ -625,16 +649,19 @@ def _print_order_instructions(top: list[dict], position_rub: float,
       Объём лотов → floor(position_rub / (entry × lot_size)), мин. 1 лот.
       Сумма ₽    → лотов × lot_size × entry.
     """
-    W = 132
+    W = 138
     pos_k = position_rub / 1000.0
+    unavail = _unavailable_tickers()
     print(f"\n  ИНСТРУКЦИИ ДЛЯ АВТОЗАЯВОК  (лимитные, цель ≈ {pos_k:.0f}K ₽/бумагу,"
           f" вход = {entry_frac:.0%} пути от спот-цены к F.High/F.Low)")
     print("  " + "─" * W)
-    print(f"  {'№':>3}  {'Ticker':<6}  {'Стратегия':<16}  {'Тип':<9}"
+    print(f"  {'№':>3}  {'Ticker':<7}  {'Стратегия':<16}  {'Тип':<9}"
           f"  {'Спот':>9}  {'Цена входа':>11}  {'Лучше%':>7}"
           f"  {'Стоп-цена':>10}  {'Стоп%':>6}"
           f"  {'Лот':>5}  {'Лотов':>6}  {'Сумма ₽':>10}")
     print("  " + "─" * W)
+    any_unsure_lot = False
+    any_na = False
     for i, r in enumerate(top, 1):
         anchor = r.get("anchor_price")
         down   = r.get("down")           # Downside q0.1, net % (< 0 = убыток)
@@ -642,7 +669,12 @@ def _print_order_instructions(top: list[dict], position_rub: float,
         f_high = r.get("f_high")
         lng    = (r["direction"] == "LONG")
         tk     = r["ticker"]
-        lot    = _lot_size(tk)
+        lot, lot_known = _lot_size(tk)
+        na = tk in unavail
+        if not lot_known:
+            any_unsure_lot = True
+        if na:
+            any_na = True
 
         # цена лимитки — внутри прогнозного коридора
         entry, _src = _limit_entry_price(r["direction"], anchor, f_low, f_high, entry_frac)
@@ -656,7 +688,7 @@ def _print_order_instructions(top: list[dict], position_rub: float,
         else:
             better = None
 
-        if entry and entry > 0:
+        if entry and entry > 0 and not na:
             lots  = max(1, int(position_rub / (entry * lot)))
             total = lots * lot * entry
         else:
@@ -669,18 +701,20 @@ def _print_order_instructions(top: list[dict], position_rub: float,
         else:
             stop_p = stop_pct = None
 
+        tk_cell = (tk + "*") if (na or not lot_known) else tk
         spot_s    = f"{anchor:>8.2f}"    if anchor   else f"{'—':>9}"
         entry_s   = f"{entry:>10.2f}"    if entry    else f"{'—':>10}"
         better_s  = f"{better:>+6.2f}%"  if better is not None else f"{'—':>7}"
         stop_s    = f"{stop_p:>9.2f}"    if stop_p   else f"{'—':>9}"
         stoppct_s = f"{stop_pct:>5.1f}%" if stop_pct is not None else f"{'—':>6}"
-        lots_s    = f"{lots:>6}"         if lots     else f"{'—':>6}"
-        total_s   = f"{total:>10,.0f}"   if total    else f"{'—':>10}"
+        lot_s     = (f"{lot}(?)" if not lot_known else str(lot))
+        lots_s    = (f"{'N/A':>6}" if na else (f"{lots:>6}" if lots else f"{'—':>6}"))
+        total_s   = (f"{'N/A':>10}" if na else (f"{total:>10,.0f}" if total else f"{'—':>10}"))
 
-        print(f"  {i:>3}  {tk:<6}  {r['strategy']:<16}  {'Лимитная':<9}"
+        print(f"  {i:>3}  {tk_cell:<7}  {r['strategy']:<16}  {'Лимитная':<9}"
               f"  {spot_s}  {entry_s}  {better_s}"
               f"  {stop_s}  {stoppct_s}"
-              f"  {lot:>5}  {lots_s}  {total_s}")
+              f"  {lot_s:>5}  {lots_s}  {total_s}")
     print("  " + "─" * W)
     print(f"  Цена входа = спот + {entry_frac:.0%}·(экстремум прогноза − спот):"
           " SHORT тянется к F.High, LONG — к F.Low.")
@@ -688,6 +722,12 @@ def _print_order_instructions(top: list[dict], position_rub: float,
     print("  Стоп = Downside q0.1 модели (нетто) от ВХОДА (LONG ниже, SHORT выше).")
     print(f"  Объём = ⌊{pos_k:.0f}K ÷ (вход × лот)⌋ лотов."
           " Если лимитка не залилась — заявку снять, в рынок не лезть.")
+    if any_na:
+        print("  * N/A — недоступно для торговли через Tinkoff (делистинг/смена ISIN);"
+              " расширить через env TINKOFF_UNAVAILABLE_TICKERS.")
+    if any_unsure_lot:
+        print("  * (?) — лот-размер не зашит в таблице; проверьте спецификацию"
+              " инструмента в Tinkoff/MOEX перед подачей заявки.")
 
 
 def _print_best_trades(sorted_rows, top_n: int = 10,
