@@ -10,3 +10,6 @@ build/
 # Вложенный скил strategy-validator (отдельные данные/скрипты)
 ETL-TB/
 validation_data/
+
+# Рантайм-журналы автозаявок и реестр ожидающих стопов (содержит account_id)
+data/order_log/

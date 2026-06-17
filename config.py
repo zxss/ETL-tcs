@@ -12,6 +12,35 @@ INVEST_TOKEN: str = os.environ["INVEST_TOKEN"]
 API_BASE_URL: str = "https://invest-public-api.tbank.ru/rest"
 API_SERVICE:  str = "tinkoff.public.invest.api.contract.v1"
 
+# --- T-Invest Sandbox (для автозаявок place_orders.py) ----------------------
+# Тестовый контур: виртуальные счета, виртуальные деньги, исполнение по last
+# price. Используется по умолчанию в services/place_orders.py.
+# Прод-эндпоинт (API_BASE_URL) для торговли разрешён только при
+# ALLOW_PRODUCTION_TRADING=1 — защита от случайной отправки реальных заявок.
+SANDBOX_API_BASE_URL: str = os.getenv(
+    "SANDBOX_API_BASE_URL",
+    "https://sandbox-invest-public-api.tbank.ru/rest",
+)
+# Если задан — переиспользуем этот счёт; иначе OpenSandboxAccount + SandboxPayIn.
+# Счета песочницы живут 3 месяца от последнего обращения, потом удаляются.
+SANDBOX_ACCOUNT_ID: str = os.getenv("SANDBOX_ACCOUNT_ID", "")
+# Стартовый баланс при создании нового sandbox-счёта (₽).
+SANDBOX_PAYIN_RUB: float = float(os.getenv("SANDBOX_PAYIN_RUB", "100000"))
+SANDBOX_PAYIN_CURRENCY: str = os.getenv("SANDBOX_PAYIN_CURRENCY", "rub")
+# Поведение по риску раннего стопа (см. ТЗ §7.5.3):
+#   True (default) — стоп ставится ТОЛЬКО после исполнения лимитного входа
+#                    (polling GetOrderState до EXECUTION_REPORT_STATUS_FILL);
+#   False          — стоп выставляется немедленно (риск открыть позицию стопом,
+#                    если вход не залился).
+ORDER_STOP_MODE_WAIT_FILL: bool = (
+    os.getenv("ORDER_STOP_MODE_WAIT_FILL", "1") not in ("0", "false", "False")
+)
+# Защита от случайного запуска против реального счёта. Чтобы place_orders.py
+# работал на prod-эндпоинте, нужно явно: ALLOW_PRODUCTION_TRADING=1.
+ALLOW_PRODUCTION_TRADING: bool = (
+    os.getenv("ALLOW_PRODUCTION_TRADING", "0") not in ("0", "false", "False")
+)
+
 # --- PostgreSQL -------------------------------------------------------------
 DB_HOST:     str = os.getenv("DB_HOST", "localhost")
 DB_PORT:     int = int(os.getenv("DB_PORT", 5432))

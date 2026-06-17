@@ -18,6 +18,6 @@ Multi-Asset TFT Next-Day Range Forecast.
 """
 
 from .forecast import run  # noqa: F401
-from .combined import print_combined  # noqa: F401
+from .combined import print_combined, select_top_rows, build_orders, Order  # noqa: F401
 
-__all__ = ["run", "print_combined"]
+__all__ = ["run", "print_combined", "select_top_rows", "build_orders", "Order"]

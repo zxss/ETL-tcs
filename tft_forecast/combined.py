@@ -16,6 +16,8 @@ from __future__ import annotations
 
 import os
 import sys
+from dataclasses import dataclass, asdict
+from typing import Optional
 
 # ── Цвет (ANSI) ────────────────────────────────────────────────────────────────
 _GREEN = "\033[32m"
@@ -391,6 +393,41 @@ def _price_time_txt(r):
     return "—"
 
 
+def select_top_rows(val_rows, forecasts, tickers, strats, *,
+                    show_all: bool = False, top_n: int = 10,
+                    strict: bool | None = None) -> list[dict]:
+    """Та же пайплайн-логика, что в print_combined → _print_best_trades,
+    но без печати. Возвращает топ-N строк-кандидатов (сортированы по FinalScore).
+
+    Используется services/place_orders.py: для выставления заявок нужна
+    ТА ЖЕ выборка, что показана пользователю в блоке «ЛУЧШИЕ СДЕЛКИ».
+    """
+    if strict is None:
+        import config as _cfg
+        strict = bool(getattr(_cfg, "STRICT_MARKET_FILTER", False))
+    fc = dict(forecasts or {})
+    fc.pop("__meta__", None)
+    rows = _build_rows(val_rows, fc, tickers, strats)
+    if not rows:
+        return []
+    rows = _apply_selection(rows, show_all)
+    scored = []
+    for r in rows:
+        score, allowed, flags = _score_row(r, strict)
+        r["final_score"] = score
+        r["flags"] = flags
+        if allowed:
+            scored.append(r)
+    if not scored:
+        return []
+    scored.sort(key=lambda x: x["final_score"], reverse=True)
+    cand = [r for r in scored
+            if r["exp_pnl"] is not None and r["selected"] is not False]
+    if top_n and top_n > 0:
+        cand = cand[:top_n]
+    return cand
+
+
 def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False,
                    top_n: int = 50):
     import config
@@ -634,13 +671,65 @@ def _limit_entry_price(direction: str, anchor: float | None,
     return anchor - frac * (anchor - f_low), f"→{frac:.0%}·F.Low"
 
 
-def _print_order_instructions(top: list[dict], position_rub: float,
-                              entry_frac: float) -> None:
+@dataclass
+class Order:
+    """Структурированная торговая заявка (вход + связанный стоп).
+
+    Это «полуфабрикат» для services/place_orders.py: вход = ЛИМИТКА внутри
+    прогнозного коридора, стоп = STOP_LOSS от entry. Цены ещё НЕ округлены к
+    min_price_increment инструмента — округление делает брокерский клиент,
+    т.к. ему доступна спецификация. Здесь храним «как считала модель».
+
+    Поля entry_price / stop_price / quantity_lots / total_rub могут быть None,
+    если входных данных не хватило (нет anchor, нет коридора, тикер N/A).
+    Такие заявки печатаются «—» в таблице и пропускаются в place_orders.
     """
-    Инструкции для автоматической подачи лимитных заявок.
+    ticker:          str
+    strategy:        str
+    direction:       str            # "LONG" | "SHORT"
+    anchor_price:    Optional[float]  # спот / якорь прогноза
+    f_low:           Optional[float]
+    f_high:          Optional[float]
+    down_pct:        Optional[float]  # Downside q0.1 (нетто %, <0)
+    entry_price:     Optional[float]  # лимитная цена входа
+    better_pct:      Optional[float]  # насколько entry выгоднее спота
+    stop_price:      Optional[float]
+    stop_pct:        Optional[float]  # |down_pct|
+    lot_size:        int
+    lot_known:       bool
+    quantity_lots:   Optional[int]
+    total_rub:       Optional[float]
+    unavailable:     bool             # True → не торгуется через Tinkoff
+
+    @property
+    def order_direction(self) -> str:
+        """Направление ВХОДНОЙ заявки в терминах брокера (BUY/SELL)."""
+        return "BUY" if self.direction == "LONG" else "SELL"
+
+    @property
+    def stop_direction(self) -> str:
+        """Направление СТОП-заявки (противоположно входу)."""
+        return "SELL" if self.direction == "LONG" else "BUY"
+
+    @property
+    def is_placeable(self) -> bool:
+        """Готова ли заявка к отправке брокеру."""
+        return (not self.unavailable
+                and self.entry_price is not None and self.entry_price > 0
+                and self.stop_price  is not None and self.stop_price  > 0
+                and self.quantity_lots is not None and self.quantity_lots > 0)
+
+
+def build_orders(top: list[dict], position_rub: float,
+                 entry_frac: float) -> list[Order]:
+    """Чистая функция: top-N рейтинга → список структурированных Order.
+
+    Используется и принтером `_print_order_instructions` (для печати таблицы),
+    и services/place_orders.py (для отправки в T-Invest sandbox). Логика
+    расчёта ТА ЖЕ (никаких расхождений между «что показано» и «что отправлено»).
 
     Логика:
-      Тип       — Лимитная.
+      Тип       — Лимитная (LIMIT).
       Цена входа — ВНУТРИ прогнозного коридора, ближе к экстремуму в свою
                   пользу: SHORT — к F.High, LONG — к F.Low (см. _limit_entry_price).
       Стоп-цена  — от ВХОДА (не от anchor), чтобы сохранить риск ≈ Downside%:
@@ -649,42 +738,24 @@ def _print_order_instructions(top: list[dict], position_rub: float,
       Объём лотов → floor(position_rub / (entry × lot_size)), мин. 1 лот.
       Сумма ₽    → лотов × lot_size × entry.
     """
-    W = 138
-    pos_k = position_rub / 1000.0
     unavail = _unavailable_tickers()
-    print(f"\n  ИНСТРУКЦИИ ДЛЯ АВТОЗАЯВОК  (лимитные, цель ≈ {pos_k:.0f}K ₽/бумагу,"
-          f" вход = {entry_frac:.0%} пути от спот-цены к F.High/F.Low)")
-    print("  " + "─" * W)
-    print(f"  {'№':>3}  {'Ticker':<7}  {'Стратегия':<16}  {'Тип':<9}"
-          f"  {'Спот':>9}  {'Цена входа':>11}  {'Лучше%':>7}"
-          f"  {'Стоп-цена':>10}  {'Стоп%':>6}"
-          f"  {'Лот':>5}  {'Лотов':>6}  {'Сумма ₽':>10}")
-    print("  " + "─" * W)
-    any_unsure_lot = False
-    any_na = False
-    for i, r in enumerate(top, 1):
+    orders: list[Order] = []
+    for r in top:
         anchor = r.get("anchor_price")
-        down   = r.get("down")           # Downside q0.1, net % (< 0 = убыток)
+        down   = r.get("down")
         f_low  = r.get("f_low")
         f_high = r.get("f_high")
-        lng    = (r["direction"] == "LONG")
         tk     = r["ticker"]
+        lng    = (r["direction"] == "LONG")
         lot, lot_known = _lot_size(tk)
         na = tk in unavail
-        if not lot_known:
-            any_unsure_lot = True
-        if na:
-            any_na = True
 
-        # цена лимитки — внутри прогнозного коридора
         entry, _src = _limit_entry_price(r["direction"], anchor, f_low, f_high, entry_frac)
 
-        # «Лучше%» — насколько вход выгоднее спота (положительно = лучше).
-        # SHORT выгоднее, если зашли ВЫШЕ спота; LONG — если НИЖЕ.
         if entry and anchor and anchor > 0:
-            better = (entry - anchor) / anchor * 100.0  # >0 → entry выше спота
+            better = (entry - anchor) / anchor * 100.0
             if lng:
-                better = -better                          # для LONG ниже = лучше
+                better = -better
         else:
             better = None
 
@@ -695,23 +766,53 @@ def _print_order_instructions(top: list[dict], position_rub: float,
             lots = total = None
 
         if entry and entry > 0 and down is not None:
-            # стоп от ВХОДА, не от спота — сохраняем целевой риск % к новому входу
             stop_p   = entry * (1.0 + down / 100.0) if lng else entry * (1.0 - down / 100.0)
             stop_pct = abs(down)
         else:
             stop_p = stop_pct = None
 
-        tk_cell = (tk + "*") if (na or not lot_known) else tk
-        spot_s    = f"{anchor:>8.2f}"    if anchor   else f"{'—':>9}"
-        entry_s   = f"{entry:>10.2f}"    if entry    else f"{'—':>10}"
-        better_s  = f"{better:>+6.2f}%"  if better is not None else f"{'—':>7}"
-        stop_s    = f"{stop_p:>9.2f}"    if stop_p   else f"{'—':>9}"
-        stoppct_s = f"{stop_pct:>5.1f}%" if stop_pct is not None else f"{'—':>6}"
-        lot_s     = (f"{lot}(?)" if not lot_known else str(lot))
-        lots_s    = (f"{'N/A':>6}" if na else (f"{lots:>6}" if lots else f"{'—':>6}"))
-        total_s   = (f"{'N/A':>10}" if na else (f"{total:>10,.0f}" if total else f"{'—':>10}"))
+        orders.append(Order(
+            ticker=tk, strategy=r["strategy"], direction=r["direction"],
+            anchor_price=anchor, f_low=f_low, f_high=f_high, down_pct=down,
+            entry_price=entry, better_pct=better,
+            stop_price=stop_p, stop_pct=stop_pct,
+            lot_size=lot, lot_known=lot_known,
+            quantity_lots=lots, total_rub=total,
+            unavailable=na,
+        ))
+    return orders
 
-        print(f"  {i:>3}  {tk_cell:<7}  {r['strategy']:<16}  {'Лимитная':<9}"
+
+def _print_order_instructions(top: list[dict], position_rub: float,
+                              entry_frac: float) -> None:
+    """Печатает блок «ИНСТРУКЦИИ ДЛЯ АВТОЗАЯВОК» из подготовленных Order."""
+    W = 138
+    pos_k = position_rub / 1000.0
+    orders = build_orders(top, position_rub, entry_frac)
+    print(f"\n  ИНСТРУКЦИИ ДЛЯ АВТОЗАЯВОК  (лимитные, цель ≈ {pos_k:.0f}K ₽/бумагу,"
+          f" вход = {entry_frac:.0%} пути от спот-цены к F.High/F.Low)")
+    print("  " + "─" * W)
+    print(f"  {'№':>3}  {'Ticker':<7}  {'Стратегия':<16}  {'Тип':<9}"
+          f"  {'Спот':>9}  {'Цена входа':>11}  {'Лучше%':>7}"
+          f"  {'Стоп-цена':>10}  {'Стоп%':>6}"
+          f"  {'Лот':>5}  {'Лотов':>6}  {'Сумма ₽':>10}")
+    print("  " + "─" * W)
+    any_unsure_lot = any(not o.lot_known for o in orders)
+    any_na         = any(o.unavailable  for o in orders)
+    for i, o in enumerate(orders, 1):
+        tk_cell = (o.ticker + "*") if (o.unavailable or not o.lot_known) else o.ticker
+        spot_s    = f"{o.anchor_price:>8.2f}" if o.anchor_price else f"{'—':>9}"
+        entry_s   = f"{o.entry_price:>10.2f}" if o.entry_price  else f"{'—':>10}"
+        better_s  = f"{o.better_pct:>+6.2f}%" if o.better_pct is not None else f"{'—':>7}"
+        stop_s    = f"{o.stop_price:>9.2f}"   if o.stop_price   else f"{'—':>9}"
+        stoppct_s = f"{o.stop_pct:>5.1f}%"    if o.stop_pct is not None else f"{'—':>6}"
+        lot_s     = (f"{o.lot_size}(?)" if not o.lot_known else str(o.lot_size))
+        lots_s    = (f"{'N/A':>6}"  if o.unavailable
+                     else (f"{o.quantity_lots:>6}" if o.quantity_lots else f"{'—':>6}"))
+        total_s   = (f"{'N/A':>10}" if o.unavailable
+                     else (f"{o.total_rub:>10,.0f}" if o.total_rub else f"{'—':>10}"))
+
+        print(f"  {i:>3}  {tk_cell:<7}  {o.strategy:<16}  {'Лимитная':<9}"
               f"  {spot_s}  {entry_s}  {better_s}"
               f"  {stop_s}  {stoppct_s}"
               f"  {lot_s:>5}  {lots_s}  {total_s}")
