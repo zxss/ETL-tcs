@@ -673,6 +673,32 @@ def _limit_entry_price(direction: str, anchor: float | None,
     return anchor - frac * (anchor - f_low), f"→{frac:.0%}·F.Low"
 
 
+def _take_profit_price(direction: str, entry: float | None,
+                       f_low: float | None, f_high: float | None,
+                       frac: float) -> float | None:
+    """Цена take-profit от прогнозного коридора (анализ диапазона).
+
+    Цель — ПРОТИВОПОЛОЖНАЯ входу граница прогноза (прибыль на возврате цены):
+      SHORT → вниз к F.Low:  entry − frac·(entry − F.Low);
+      LONG  → вверх к F.High: entry + frac·(F.High − entry).
+
+    frac ∈ [0,1]: 1.0 — ровно на дальней границе (полный диапазон),
+    0.8 — ближе ко входу (профит-заявка исполнится с большей вероятностью).
+
+    None, если коридора нет или его сторона не «в прибыль» относительно входа.
+    """
+    if entry is None or entry <= 0:
+        return None
+    if direction == "SHORT":
+        if f_low is None or f_low >= entry:
+            return None
+        return entry - frac * (entry - f_low)
+    # LONG
+    if f_high is None or f_high <= entry:
+        return None
+    return entry + frac * (f_high - entry)
+
+
 @dataclass
 class Order:
     """Структурированная торговая заявка (вход + связанный стоп).
@@ -697,6 +723,8 @@ class Order:
     better_pct:      Optional[float]  # насколько entry выгоднее спота
     stop_price:      Optional[float]
     stop_pct:        Optional[float]  # |down_pct|
+    tp_price:        Optional[float]  # take-profit (цель по диапазону)
+    tp_pct:          Optional[float]  # |прибыль%| от входа до tp_price
     lot_size:        int
     lot_known:       bool
     quantity_lots:   Optional[int]
@@ -709,9 +737,13 @@ class Order:
         return "BUY" if self.direction == "LONG" else "SELL"
 
     @property
-    def stop_direction(self) -> str:
-        """Направление СТОП-заявки (противоположно входу)."""
+    def exit_direction(self) -> str:
+        """Направление ВЫХОДНЫХ заявок — стопа и тейк-профита (противоположно
+        входу). Для SHORT-позиции выход = BUY, для LONG = SELL."""
         return "SELL" if self.direction == "LONG" else "BUY"
+
+    # обратная совместимость: стоп и тейк выходят в одну сторону
+    stop_direction = exit_direction
 
     @property
     def is_placeable(self) -> bool:
@@ -723,7 +755,7 @@ class Order:
 
 
 def build_orders(top: list[dict], position_rub: float,
-                 entry_frac: float) -> list[Order]:
+                 entry_frac: float, tp_frac: float = 1.0) -> list[Order]:
     """Чистая функция: top-N рейтинга → список структурированных Order.
 
     Используется и принтером `_print_order_instructions` (для печати таблицы),
@@ -773,11 +805,16 @@ def build_orders(top: list[dict], position_rub: float,
         else:
             stop_p = stop_pct = None
 
+        # take-profit от диапазона прогноза (противоположная входу граница)
+        tp_p = _take_profit_price(r["direction"], entry, f_low, f_high, tp_frac)
+        tp_pct = (abs(tp_p - entry) / entry * 100.0) if (tp_p and entry) else None
+
         orders.append(Order(
             ticker=tk, strategy=r["strategy"], direction=r["direction"],
             anchor_price=anchor, f_low=f_low, f_high=f_high, down_pct=down,
             entry_price=entry, better_pct=better,
             stop_price=stop_p, stop_pct=stop_pct,
+            tp_price=tp_p, tp_pct=tp_pct,
             lot_size=lot, lot_known=lot_known,
             quantity_lots=lots, total_rub=total,
             unavailable=na,
@@ -788,15 +825,17 @@ def build_orders(top: list[dict], position_rub: float,
 def _print_order_instructions(top: list[dict], position_rub: float,
                               entry_frac: float) -> None:
     """Печатает блок «ИНСТРУКЦИИ ДЛЯ АВТОЗАЯВОК» из подготовленных Order."""
-    W = 138
+    import config as _cfg
+    tp_frac = float(getattr(_cfg, "LIMIT_TP_FRACTION", 1.0))
+    W = 176
     pos_k = position_rub / 1000.0
-    orders = build_orders(top, position_rub, entry_frac)
+    orders = build_orders(top, position_rub, entry_frac, tp_frac=tp_frac)
     print(f"\n  ИНСТРУКЦИИ ДЛЯ АВТОЗАЯВОК  (лимитные, цель ≈ {pos_k:.0f}K ₽/бумагу,"
-          f" вход = {entry_frac:.0%} пути от спот-цены к F.High/F.Low)")
+          f" вход = {entry_frac:.0%} к F.High/F.Low, профит = {tp_frac:.0%} к дальней границе)")
     print("  " + "─" * W)
     print(f"  {'№':>3}  {'Ticker':<7}  {'Стратегия':<16}  {'Тип':<9}"
           f"  {'Спот':>9}  {'Цена входа':>11}  {'Лучше%':>7}"
-          f"  {'Стоп-цена':>10}  {'Стоп%':>6}"
+          f"  {'Стоп-цена':>10}  {'Стоп%':>6}  {'Профит':>10}  {'Профит%':>8}  {'R:R':>5}"
           f"  {'Лот':>5}  {'Лотов':>6}  {'Сумма ₽':>10}")
     print("  " + "─" * W)
     any_unsure_lot = any(not o.lot_known for o in orders)
@@ -808,6 +847,10 @@ def _print_order_instructions(top: list[dict], position_rub: float,
         better_s  = f"{o.better_pct:>+6.2f}%" if o.better_pct is not None else f"{'—':>7}"
         stop_s    = f"{o.stop_price:>9.2f}"   if o.stop_price   else f"{'—':>9}"
         stoppct_s = f"{o.stop_pct:>5.1f}%"    if o.stop_pct is not None else f"{'—':>6}"
+        tp_s      = f"{o.tp_price:>9.2f}"     if o.tp_price  else f"{'—':>10}"
+        tppct_s   = f"{o.tp_pct:>7.1f}%"      if o.tp_pct is not None else f"{'—':>8}"
+        rr        = (o.tp_pct / o.stop_pct) if (o.tp_pct and o.stop_pct) else None
+        rr_s      = f"{rr:>5.1f}" if rr is not None else f"{'—':>5}"
         lot_s     = (f"{o.lot_size}(?)" if not o.lot_known else str(o.lot_size))
         lots_s    = (f"{'N/A':>6}"  if o.unavailable
                      else (f"{o.quantity_lots:>6}" if o.quantity_lots else f"{'—':>6}"))
@@ -816,13 +859,15 @@ def _print_order_instructions(top: list[dict], position_rub: float,
 
         print(f"  {i:>3}  {tk_cell:<7}  {o.strategy:<16}  {'Лимитная':<9}"
               f"  {spot_s}  {entry_s}  {better_s}"
-              f"  {stop_s}  {stoppct_s}"
+              f"  {stop_s}  {stoppct_s}  {tp_s}  {tppct_s}  {rr_s}"
               f"  {lot_s:>5}  {lots_s}  {total_s}")
     print("  " + "─" * W)
     print(f"  Цена входа = спот + {entry_frac:.0%}·(экстремум прогноза − спот):"
           " SHORT тянется к F.High, LONG — к F.Low.")
     print("  «Лучше%» — насколько вход выгоднее спот-цены в сторону позиции.")
     print("  Стоп = Downside q0.1 модели (нетто) от ВХОДА (LONG ниже, SHORT выше).")
+    print(f"  Профит = {tp_frac:.0%} пути от входа к ДАЛЬНЕЙ границе коридора"
+          " (SHORT → F.Low, LONG → F.High). R:R = Профит% / Стоп%.")
     print(f"  Объём = ⌊{pos_k:.0f}K ÷ (вход × лот)⌋ лотов."
           " Если лимитка не залилась — заявку снять, в рынок не лезть.")
     if any_na:

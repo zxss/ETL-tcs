@@ -124,6 +124,14 @@ class Position:
 
 
 @dataclass(frozen=True)
+class StopOrderInfo:
+    """Активная условная заявка (стоп-лосс или тейк-профит) из GetStopOrders."""
+    instrument_uid: str
+    kind:           str   # "STOP_LOSS" | "TAKE_PROFIT" | "" (нераспознан)
+    stop_order_id:  str
+
+
+@dataclass(frozen=True)
 class OrderState:
     """Состояние заявки от GetOrderState (упрощённое до нужных полей)."""
     order_id:               str
@@ -189,13 +197,21 @@ class BrokerClient(ABC):
     @abstractmethod
     def post_stop_order(self, *, account_id: str, instrument: Instrument,
                         direction: str, quantity_lots: int,
-                        stop_price: Quotation, order_id: str) -> str:
-        """Выставить условную стоп-заявку типа STOP_LOSS.
+                        stop_price: Quotation, order_id: str,
+                        order_type: str = "STOP_LOSS") -> str:
+        """Выставить условную заявку. order_type = "STOP_LOSS" | "TAKE_PROFIT".
+
+        STOP_LOSS  срабатывает при движении против позиции (защита от убытка);
+        TAKE_PROFIT — при движении в прибыль (фиксация по цели диапазона).
+        Направление одинаковое (выход из позиции): SHORT→BUY, LONG→SELL.
 
         Возвращает stop_order_id. Если контур не поддерживает PostStopOrder —
-        бросает NotSupportedError (place_orders отметит как [ERROR] и НЕ будет
-        эмулировать стоп программно — по решению ТЗ §9.4).
+        бросает NotSupportedError.
         """
+
+    @abstractmethod
+    def cancel_stop_order(self, *, account_id: str, stop_order_id: str) -> None:
+        """Снять условную (стоп/тейк) заявку по id."""
 
     @abstractmethod
     def get_order_state(self, *, account_id: str, order_id: str) -> OrderState:
@@ -213,10 +229,14 @@ class BrokerClient(ABC):
         лимитки уже залились и требуют стопа)."""
 
     @abstractmethod
+    def get_active_stop_orders(self, account_id: str) -> list[StopOrderInfo]:
+        """Активные условные заявки (стоп-лосс и тейк-профит) с типом и id.
+        Может бросить NotSupportedError, если контур не отдаёт список стопов."""
+
     def get_active_stop_instrument_uids(self, account_id: str) -> set[str]:
-        """instrument_uid инструментов, у которых УЖЕ есть активный стоп
-        (чтобы --attach-stops не дублировал). Может бросить NotSupportedError,
-        если контур не отдаёт список стопов — тогда вызывающий решает сам."""
+        """instrument_uid инструментов с любым активным стопом/тейком
+        (для защиты от задвоения в фазе 1). Производное от get_active_stop_orders."""
+        return {s.instrument_uid for s in self.get_active_stop_orders(account_id)}
 
     @abstractmethod
     def get_active_order_instrument_uids(self, account_id: str) -> set[str]:

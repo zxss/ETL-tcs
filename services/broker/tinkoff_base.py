@@ -29,6 +29,7 @@ from services.broker.base import (
     NotSupportedError,
     OrderState,
     Quotation,
+    StopOrderInfo,
 )
 
 log = logging.getLogger("broker.tinkoff")
@@ -137,10 +138,13 @@ class TinkoffRestBase(BrokerClient):
 
     def post_stop_order(self, *, account_id: str, instrument: Instrument,
                         direction: str, quantity_lots: int,
-                        stop_price: Quotation, order_id: str) -> str:
-        """StopOrdersService.PostStopOrder — условная стоп-заявка STOP_LOSS."""
+                        stop_price: Quotation, order_id: str,
+                        order_type: str = "STOP_LOSS") -> str:
+        """StopOrdersService.PostStopOrder — стоп-лосс или тейк-профит."""
         if direction not in ("BUY", "SELL"):
             raise ValueError(f"direction must be BUY|SELL, got {direction!r}")
+        if order_type not in ("STOP_LOSS", "TAKE_PROFIT"):
+            raise ValueError(f"order_type must be STOP_LOSS|TAKE_PROFIT, got {order_type!r}")
         payload = {
             "accountId":      account_id,
             "instrumentId":   instrument.instrument_uid,
@@ -149,7 +153,7 @@ class TinkoffRestBase(BrokerClient):
             "price":          stop_price.to_payload(),
             "direction":      f"STOP_ORDER_DIRECTION_{direction}",
             "expirationType": "STOP_ORDER_EXPIRATION_TYPE_GOOD_TILL_CANCEL",
-            "stopOrderType":  "STOP_ORDER_TYPE_STOP_LOSS",
+            "stopOrderType":  f"STOP_ORDER_TYPE_{order_type}",
             "orderId":        order_id,
         }
         data = self._post("StopOrdersService/PostStopOrder", payload)
@@ -158,8 +162,24 @@ class TinkoffRestBase(BrokerClient):
             raise BrokerError(f"PostStopOrder: пустой stopOrderId, ответ={data}")
         return stop_id
 
-    def get_active_stop_instrument_uids(self, account_id: str) -> set[str]:
-        """StopOrdersService.GetStopOrders — активные стоп-заявки."""
+    def cancel_stop_order(self, *, account_id: str, stop_order_id: str) -> None:
+        """StopOrdersService.CancelStopOrder — снять стоп/тейк по id."""
+        self._post("StopOrdersService/CancelStopOrder",
+                   {"accountId": account_id, "stopOrderId": stop_order_id})
+
+    def get_active_stop_orders(self, account_id: str) -> list[StopOrderInfo]:
+        """StopOrdersService.GetStopOrders — активные стопы и тейки с типом/id."""
         data = self._post("StopOrdersService/GetStopOrders", {"accountId": account_id})
-        return {o.get("instrumentUid") for o in (data.get("stopOrders") or [])
-                if o.get("instrumentUid")}
+        out: list[StopOrderInfo] = []
+        for o in (data.get("stopOrders") or []):
+            uid = o.get("instrumentUid")
+            if not uid:
+                continue
+            # тип отдаётся как orderType или stopOrderType (в зависимости от версии)
+            raw_kind = (o.get("orderType") or o.get("stopOrderType") or "")
+            kind = raw_kind.replace("STOP_ORDER_TYPE_", "")
+            out.append(StopOrderInfo(
+                instrument_uid=uid, kind=kind,
+                stop_order_id=o.get("stopOrderId") or o.get("orderId") or "",
+            ))
+        return out

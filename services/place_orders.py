@@ -65,7 +65,7 @@ _LOG_DIR = Path(__file__).resolve().parent.parent / "data" / "order_log"
 
 
 def compute_orders(top_n: int, position_rub: float, entry_frac: float,
-                   *, quiet: bool = True) -> tuple[list[Order], dict]:
+                   *, tp_frac: float = 1.0, quiet: bool = True) -> tuple[list[Order], dict]:
     """От подключения к БД до готового списка Order (+meta для журнала)."""
     conn = database.get_connection()
     try:
@@ -80,7 +80,7 @@ def compute_orders(top_n: int, position_rub: float, entry_frac: float,
         val_rows, forecasts, universe, config.VALIDATION_STRATS,
         show_all=getattr(config, "SHOW_ALL_INTRADAY", False), top_n=top_n,
     )
-    orders = build_orders(top_rows, position_rub, entry_frac)
+    orders = build_orders(top_rows, position_rub, entry_frac, tp_frac=tp_frac)
     meta.update(forecast_universe=len(universe), top_n_requested=top_n,
                 orders_built=len(orders))
     return orders, meta
@@ -102,17 +102,21 @@ def print_summary(account_id: str, env: str, orders: list[Order],
         side  = "Покупка (LONG)" if o.direction == "LONG" else "Продажа (SHORT)"
         entry = f"{o.entry_price:.4f}" if o.entry_price else "—"
         stop  = f"{o.stop_price:.4f}"  if o.stop_price  else "—"
+        tp    = f"{o.tp_price:.4f}"    if o.tp_price   else "—"
         qty   = o.quantity_lots if o.quantity_lots is not None else "—"
         marks = []
         if o.unavailable:   marks.append("N/A")
         if not o.lot_known: marks.append("LOT?")
+        if o.tp_price is None: marks.append("без TP")
         flag = f"  [{'/'.join(marks)}]" if marks else ""
         print(f"{i:>2}. {o.ticker:<6} | {side:<16} | Кол-во: {qty} лот. | "
-              f"Цена: {entry} | Стоп: {stop} (STOP_LOSS){flag}")
+              f"Вход: {entry} | Стоп: {stop} | Профит: {tp}{flag}")
     print("-" * 88)
     placeable = sum(1 for o in orders if o.is_placeable)
     print(f"К выставлению: {placeable}. Будет пропущено: {len(orders) - placeable}.")
     print(f"Целевой размер позиции: {position_rub:,.0f} ₽ на бумагу.")
+    print("Стоп (STOP_LOSS) и профит (TAKE_PROFIT) ставятся фазой --attach-stops "
+          "по факту исполнения входа.")
 
 
 def confirm(prompt: str = "Выставить заявки? (y/n): ") -> bool:
@@ -272,14 +276,17 @@ def place_limits(broker: BrokerClient, account_id: str, orders: list[Order], *,
 
         entry_q = Quotation.from_float(o.entry_price, inst.min_price_increment)
         stop_q  = Quotation.from_float(o.stop_price,  inst.min_price_increment)
+        tp_q    = (Quotation.from_float(o.tp_price, inst.min_price_increment)
+                   if o.tp_price else None)
         if abs(entry_q.as_float() - o.entry_price) > 1e-9:
             print(f"[INFO]  {tk}: вход {o.entry_price:.6f} → {entry_q.as_float():.6f} "
                   f"(шаг {inst.min_price_increment.as_float()}).")
 
         # лимитка
         if dry_run:
+            tp_txt = f", TAKE_PROFIT @ {tp_q.as_float()}" if tp_q else " (без TP)"
             print(f"[DRY]   {tk}: LIMIT {o.order_direction} qty={api_q} @ {entry_q.as_float()}"
-                  f"  → стоп STOP_LOSS {o.stop_direction} @ {stop_q.as_float()} "
+                  f"  → STOP_LOSS {o.exit_direction} @ {stop_q.as_float()}{tp_txt} "
                   f"({'сразу' if immediate_stop else 'в реестр ожидающих'})")
             _logrow(writer, env=env, account_id=account_id, ticker=tk,
                     direction=o.order_direction, action="limit",
@@ -309,122 +316,194 @@ def place_limits(broker: BrokerClient, account_id: str, orders: list[Order], *,
                 order_id=order_id, qty_lots_api=api_q, qty_shares=shares,
                 price=entry_q.as_float(), status=st.execution_report_status)
 
+        rec = {
+            "order_id":       order_id,
+            "ticker":         tk,
+            "instrument_uid": inst.instrument_uid,
+            "lot":            inst.lot,
+            "api_qty":        api_q,
+            "exit_direction": o.exit_direction,
+            "stop_units":     stop_q.units,
+            "stop_nano":      stop_q.nano,
+            "tp_units":       tp_q.units if tp_q else None,
+            "tp_nano":        tp_q.nano  if tp_q else None,
+            "created":        dt.datetime.now().isoformat(timespec="seconds"),
+            "stop_placed":    False,
+            "stop_order_id":  None,
+            "tp_placed":      tp_q is None,   # нет TP-цены → считаем «нечего ставить»
+            "tp_order_id":    None,
+            "closed":         False,
+        }
         if immediate_stop:
-            _place_stop(broker, account_id, tk, inst, o.stop_direction,
-                        api_q, stop_q, writer, env)
-        else:
-            acc_list.append({
-                "order_id":       order_id,
-                "ticker":         tk,
-                "instrument_uid": inst.instrument_uid,
-                "lot":            inst.lot,
-                "api_qty":        api_q,
-                "stop_direction": o.stop_direction,
-                "stop_units":     stop_q.units,
-                "stop_nano":      stop_q.nano,
-                "created":        dt.datetime.now().isoformat(timespec="seconds"),
-                "stop_placed":    False,
-                "stop_order_id":  None,
-            })
+            sid = _place_conditional(broker, account_id, tk, inst, o.exit_direction,
+                                     api_q, stop_q, "STOP_LOSS", writer, env)
+            rec["stop_placed"], rec["stop_order_id"] = bool(sid), sid
+            if tp_q:
+                tid = _place_conditional(broker, account_id, tk, inst, o.exit_direction,
+                                         api_q, tp_q, "TAKE_PROFIT", writer, env)
+                rec["tp_placed"], rec["tp_order_id"] = bool(tid), tid
+        acc_list.append(rec)
 
-    if not dry_run and not immediate_stop:
+    if not dry_run:
         _save_pending(pending)
-        n = sum(1 for r in acc_list if not r["stop_placed"])
-        if n:
-            print(f"\n→ {n} стоп(ов) в очереди. Когда лимитки зальются, выполните:")
-            print("    python3 -m services.place_orders --attach-stops")
+        if not immediate_stop:
+            n = sum(1 for r in acc_list if not (r["stop_placed"] and r["tp_placed"]))
+            if n:
+                print(f"\n→ {n} позиц. ждут SL/TP. Когда лимитки зальются, выполните:")
+                print("    python3 -m services.place_orders --attach-stops")
 
 
-def _place_stop(broker: BrokerClient, account_id: str, ticker: str,
-                inst: Instrument, direction: str, qty: int, stop_q: Quotation,
-                writer: csv.DictWriter, env: str) -> bool:
-    """Ставит один STOP_LOSS. True — успех. NotSupportedError → [ERROR]."""
+_KIND_RU = {"STOP_LOSS": "стоп", "TAKE_PROFIT": "профит"}
+
+
+def _place_conditional(broker: BrokerClient, account_id: str, ticker: str,
+                       inst: Instrument, direction: str, qty: int, price_q: Quotation,
+                       order_type: str, writer: csv.DictWriter, env: str) -> Optional[str]:
+    """Ставит одну условную заявку (STOP_LOSS или TAKE_PROFIT).
+    Возвращает stop_order_id при успехе, иначе None."""
+    label = _KIND_RU.get(order_type, order_type)
+    action = order_type.lower()
     try:
-        stop_id = broker.post_stop_order(
+        sid = broker.post_stop_order(
             account_id=account_id, instrument=inst, direction=direction,
-            quantity_lots=qty, stop_price=stop_q, order_id=new_order_id())
+            quantity_lots=qty, stop_price=price_q, order_id=new_order_id(),
+            order_type=order_type)
     except NotSupportedError as e:
-        print(f"[ERROR] {ticker}: PostStopOrder не поддержан. ВХОД БЕЗ СТОПА — "
-              f"поставьте стоп вручную. ({e})")
+        print(f"[ERROR] {ticker}: {label} ({order_type}) не поддержан брокером. ({e})")
         _logrow(writer, env=env, account_id=account_id, ticker=ticker,
-                direction=direction, action="stop_loss",
-                qty_lots_api=qty, price=stop_q.as_float(),
-                status="unsupported", info=str(e))
-        return False
+                direction=direction, action=action, qty_lots_api=qty,
+                price=price_q.as_float(), status="unsupported", info=str(e))
+        return None
     except BrokerError as e:
-        print(f"[ERROR] {ticker}: стоп не выставлен: {e}")
+        print(f"[ERROR] {ticker}: {label} не выставлен: {e}")
         _logrow(writer, env=env, account_id=account_id, ticker=ticker,
-                direction=direction, action="stop_loss",
-                qty_lots_api=qty, price=stop_q.as_float(),
-                status="error", info=str(e))
-        return False
-    print(f"[OK]    {ticker}: стоп {stop_id} @ {stop_q.as_float()} (STOP_LOSS).")
+                direction=direction, action=action, qty_lots_api=qty,
+                price=price_q.as_float(), status="error", info=str(e))
+        return None
+    print(f"[OK]    {ticker}: {label} {sid} @ {price_q.as_float()} ({order_type}).")
     _logrow(writer, env=env, account_id=account_id, ticker=ticker,
-            direction=direction, action="stop_loss", order_id=stop_id,
-            qty_lots_api=qty, price=stop_q.as_float(), status="placed")
-    return True
+            direction=direction, action=action, order_id=sid,
+            qty_lots_api=qty, price=price_q.as_float(), status="placed")
+    return sid
 
 
 # ── ФАЗА 2: привязка стопов к залившимся позициям ────────────────────────────
 
 
+def _exit_dir(r: dict) -> str:
+    """Направление выходных заявок из записи (совместимо со старым ключом)."""
+    return r.get("exit_direction") or r.get("stop_direction") or "BUY"
+
+
 def attach_stops(broker: BrokerClient, account_id: str, *,
                  dry_run: bool, writer: csv.DictWriter, env: str) -> None:
+    """ФАЗА 2: для залившихся позиций ставит STOP_LOSS и TAKE_PROFIT.
+
+    ВНИМАНИЕ: это НЕ нативный OCO. SL и TP — две независимые условные заявки.
+    Когда одна срабатывает и закрывает позицию, вторая остаётся «висеть» и при
+    касании своей цены откроет ОБРАТНУЮ позицию. Поэтому здесь же выполняется
+    reconcile: если позиция, на которую были выставлены SL/TP, теперь закрыта —
+    оставшийся sibling-стоп снимается."""
     pending = _load_pending()
     acc_list = pending.get(account_id, [])
-    todo = [r for r in acc_list if not r.get("stop_placed")]
-    if not todo:
-        print("Реестр ожидающих стопов пуст — нечего привязывать.")
+    active = [r for r in acc_list if not r.get("closed")]
+    if not active:
+        print("Реестр пуст — нечего привязывать.")
         return
 
-    # какие инструменты сейчас в позиции (значит лимитка залилась)
     positions = {p.instrument_uid: p.balance_shares
                  for p in broker.get_positions(account_id) if p.is_open}
-    # у каких уже есть активный стоп (чтобы не дублировать)
     try:
-        existing = broker.get_active_stop_instrument_uids(account_id)
+        stop_orders = broker.get_active_stop_orders(account_id)
     except NotSupportedError:
-        existing = set()
-        print("[WARN]  GetStopOrders не поддержан — не могу проверить дубли стопов; "
-              "ставлю по реестру.")
+        stop_orders = []
+        print("[WARN]  GetStopOrders не поддержан — дедуп стопов по реестру.")
+    existing_sl = {s.instrument_uid for s in stop_orders if s.kind == "STOP_LOSS"}
+    existing_tp = {s.instrument_uid for s in stop_orders if s.kind == "TAKE_PROFIT"}
 
-    print(f"Ожидающих стопов: {len(todo)}. Открытых позиций: {len(positions)}.")
-    for r in todo:
-        tk  = r["ticker"]
-        uid = r["instrument_uid"]
+    print(f"Записей в работе: {len(active)}. Открытых позиций: {len(positions)}.")
+    for r in active:
+        tk, uid = r["ticker"], r["instrument_uid"]
         bal = positions.get(uid, 0.0)
+        bracketed = r.get("stop_placed") or r.get("tp_placed")
+
+        # ── reconcile: позиция закрыта, но брекет был выставлен → снять остаток
         if abs(bal) < 1e-9:
-            print(f"[WAIT]  {tk}: лимитка {r['order_id']} ещё не залилась — оставляю в очереди.")
-            continue
-        if uid in existing:
-            print(f"[SKIP]  {tk}: активный стоп уже есть — помечаю выполненным.")
-            r["stop_placed"] = True
+            if bracketed:
+                _reconcile_closed(broker, account_id, r, stop_orders, dry_run, writer, env)
+            else:
+                print(f"[WAIT]  {tk}: лимитка {r['order_id']} ещё не залилась — в очереди.")
             continue
 
-        # количество стопа = по фактической позиции (учёт частичной заливки)
         lot = int(r.get("lot", 1)) or 1
         qty = max(1, int(abs(bal) // lot))
-        if qty != r["api_qty"]:
+        if qty != r.get("api_qty"):
             print(f"[INFO]  {tk}: позиция {abs(bal):.0f} шт → {qty} лот "
-                  f"(заявлено было {r['api_qty']}).")
-        stop_q = Quotation(units=int(r["stop_units"]), nano=int(r["stop_nano"]))
+                  f"(заявлено {r.get('api_qty')}).")
+        edir = _exit_dir(r)
 
-        if dry_run:
-            print(f"[DRY]   {tk}: STOP_LOSS {r['stop_direction']} qty={qty} @ {stop_q.as_float()}")
-            continue
+        inst = None
+        if not dry_run:
+            try:
+                inst = broker.find_instrument(tk)
+            except BrokerError as e:
+                print(f"[ERROR] {tk}: инструмент недоступен: {e}")
+                continue
 
-        try:
-            inst = broker.find_instrument(tk)
-        except BrokerError as e:
-            print(f"[ERROR] {tk}: инструмент недоступен для стопа: {e}")
-            continue
-        if _place_stop(broker, account_id, tk, inst, r["stop_direction"],
-                       qty, stop_q, writer, env):
-            r["stop_placed"]   = True
-            r["stop_order_id"] = "placed"
+        # ── STOP_LOSS
+        if not r.get("stop_placed"):
+            stop_q = Quotation(units=int(r["stop_units"]), nano=int(r["stop_nano"]))
+            if uid in existing_sl:
+                print(f"[SKIP]  {tk}: STOP_LOSS уже есть — помечаю выполненным.")
+                r["stop_placed"] = True
+            elif dry_run:
+                print(f"[DRY]   {tk}: STOP_LOSS {edir} qty={qty} @ {stop_q.as_float()}")
+            else:
+                sid = _place_conditional(broker, account_id, tk, inst, edir,
+                                         qty, stop_q, "STOP_LOSS", writer, env)
+                if sid:
+                    r["stop_placed"], r["stop_order_id"] = True, sid
+
+        # ── TAKE_PROFIT
+        if not r.get("tp_placed") and r.get("tp_units") is not None:
+            tp_q = Quotation(units=int(r["tp_units"]), nano=int(r["tp_nano"]))
+            if uid in existing_tp:
+                print(f"[SKIP]  {tk}: TAKE_PROFIT уже есть — помечаю выполненным.")
+                r["tp_placed"] = True
+            elif dry_run:
+                print(f"[DRY]   {tk}: TAKE_PROFIT {edir} qty={qty} @ {tp_q.as_float()}")
+            else:
+                tid = _place_conditional(broker, account_id, tk, inst, edir,
+                                         qty, tp_q, "TAKE_PROFIT", writer, env)
+                if tid:
+                    r["tp_placed"], r["tp_order_id"] = True, tid
 
     if not dry_run:
         _save_pending(pending)
+
+
+def _reconcile_closed(broker: BrokerClient, account_id: str, r: dict,
+                      stop_orders: list, dry_run: bool,
+                      writer: csv.DictWriter, env: str) -> None:
+    """Позиция закрыта (сработал SL или TP). Снимаем оставшийся sibling-стоп,
+    чтобы он не открыл обратную позицию, и помечаем запись закрытой."""
+    tk, uid = r["ticker"], r["instrument_uid"]
+    leftovers = [s for s in stop_orders if s.instrument_uid == uid]
+    if dry_run:
+        print(f"[DRY]   {tk}: позиция закрыта — снять {len(leftovers)} оставшихся стоп(ов).")
+        return
+    for s in leftovers:
+        try:
+            broker.cancel_stop_order(account_id=account_id, stop_order_id=s.stop_order_id)
+            print(f"[OCO]   {tk}: снят оставшийся {s.kind} {s.stop_order_id[:8]}… "
+                  f"(позиция уже закрыта).")
+            _logrow(writer, env=env, account_id=account_id, ticker=tk,
+                    action="oco_cancel", order_id=s.stop_order_id,
+                    status="cancelled", info=s.kind)
+        except BrokerError as e:
+            print(f"[WARN]  {tk}: не снять {s.kind} {s.stop_order_id[:8]}…: {e}")
+    r["closed"] = True
+    print(f"[DONE]  {tk}: сделка закрыта, запись архивирована.")
 
 
 # ── Подготовка брокера/счёта ──────────────────────────────────────────────────
@@ -472,6 +551,9 @@ def main(argv: Optional[list[str]] = None) -> int:
                    default=float(getattr(config, "BEST_TRADES_POSITION_RUB", 10_000.0)))
     p.add_argument("--entry-frac", type=float,
                    default=float(getattr(config, "LIMIT_ENTRY_FRACTION", 0.8)))
+    p.add_argument("--tp-frac", type=float,
+                   default=float(getattr(config, "LIMIT_TP_FRACTION", 1.0)),
+                   help="Цель take-profit как доля пути до дальней границы коридора (0..1).")
     p.add_argument("--dry-run", action="store_true",
                    help="Пройти pipeline без реальной отправки в брокер.")
     p.add_argument("--no-confirm", action="store_true",
@@ -500,7 +582,8 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         # ── ФАЗА 1 ──
         log.info("Запуск pipeline (валидация + forecast)...")
-        orders, _meta = compute_orders(args.top_n, args.position, args.entry_frac)
+        orders, _meta = compute_orders(args.top_n, args.position, args.entry_frac,
+                                       tp_frac=args.tp_frac)
         if not orders:
             print("Нет торговых сигналов.")
             return 0
