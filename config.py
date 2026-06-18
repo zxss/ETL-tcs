@@ -93,7 +93,7 @@ TICKERS: list[str] = [
     "MGNT",    # Магнит
     "X5",      # X5 Group
     "LENT",    # Лента
-    "FIXP",    # Fix Price
+    "FIXR",    # Fix Price (новая рос. акция после редомициляции; старый FIXP/US-GDR не торгуется через API)
 
     # IT и технологии
     "YDEX",    # Яндекс

@@ -616,6 +616,7 @@ _LOT_SIZES: dict[str, int] = {
     "FLOT": 1,  "PIKK": 1,   "POSI": 1,  "SMLT": 1,
     "MVID": 10, "SELG": 100, "ETLN": 10, "ASTR": 1,  "LENT": 1,
     "AKRN": 1,  "NMTP": 100, "MAGN": 100, "X5": 1,
+    "FIXR": 1000,   # новая рос. акция Fix Price после редомициляции (цена ~0.45 ₽)
 }
 
 
@@ -623,9 +624,10 @@ _LOT_SIZES: dict[str, int] = {
 # (делистинг, редомициляция, смена ISIN). В дашборде/прогнозе остаются,
 # но в блоке «ИНСТРУКЦИИ ДЛЯ АВТОЗАЯВОК» маркируются N/A.
 # Источник: ручной список + env TINKOFF_UNAVAILABLE_TICKERS (через пробел).
-_DEFAULT_UNAVAILABLE = {
-    "FIXP",     # сменил ISIN на FIXR после редомициляции, через Tinkoff не доступен
-}
+# FIXP убран: пайплайн переведён на торгуемый FIXR (новая рос. акция). Старый
+# FIXP (US-GDR, ISIN US33835G2057) не торгуется через API, но в TICKERS его
+# больше нет, поэтому в дашборде он не появляется.
+_DEFAULT_UNAVAILABLE: set[str] = set()
 
 
 def _unavailable_tickers() -> set[str]:
