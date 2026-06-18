@@ -50,9 +50,10 @@ from services.broker import (
     Instrument,
     NotSupportedError,
     Quotation,
+    TinkoffProdClient,
     TinkoffSandboxClient,
+    new_order_id,
 )
-from services.broker.tinkoff_sandbox import new_order_id
 from tft_forecast.combined import Order, build_orders, select_top_rows
 
 log = logging.getLogger("place_orders")
@@ -90,7 +91,12 @@ def compute_orders(top_n: int, position_rub: float, entry_frac: float,
 
 def print_summary(account_id: str, env: str, orders: list[Order],
                   position_rub: float) -> None:
-    print(f"\nКонтур: {env} | Счёт №{account_id}")
+    if env == "PROD":
+        print("\n" + "!" * 88)
+        print(f"!!  ВНИМАНИЕ: БОЕВОЙ КОНТУР — РЕАЛЬНЫЕ ДЕНЬГИ. Счёт №{account_id}")
+        print("!" * 88)
+    else:
+        print(f"\nКонтур: {env} | Счёт №{account_id}")
     print("-" * 88)
     for i, o in enumerate(orders, 1):
         side  = "Покупка (LONG)" if o.direction == "LONG" else "Продажа (SHORT)"
@@ -424,23 +430,25 @@ def attach_stops(broker: BrokerClient, account_id: str, *,
 # ── Подготовка брокера/счёта ──────────────────────────────────────────────────
 
 
-def _make_broker_and_account(allow_prod: bool) -> tuple[BrokerClient, str, str]:
-    use_prod = allow_prod and config.ALLOW_PRODUCTION_TRADING
-    if allow_prod and not config.ALLOW_PRODUCTION_TRADING:
-        raise BrokerError("--allow-prod передан, но ALLOW_PRODUCTION_TRADING=0 в config.")
-    base = config.API_BASE_URL if use_prod else config.SANDBOX_API_BASE_URL
-    env  = "PROD" if use_prod else "SANDBOX"
-    broker = TinkoffSandboxClient(base_url=base)
-    pref = config.SANDBOX_ACCOUNT_ID if env == "SANDBOX" else ""
-    account_id = broker.open_or_get_account(preferred_id=pref)
-    # пополняем только свежесозданный sandbox-счёт
-    if env == "SANDBOX" and not pref:
-        try:
-            broker.pay_in(account_id, config.SANDBOX_PAYIN_RUB,
-                          currency=config.SANDBOX_PAYIN_CURRENCY)
-        except BrokerError as e:
-            print(f"[WARN] Не удалось пополнить sandbox-счёт: {e}")
-    return broker, account_id, env
+def _make_broker_and_account(sandbox: bool) -> tuple[BrokerClient, str, str]:
+    """Контур по умолчанию — PROD (боевой счёт PROD_ACCOUNT_ID). sandbox=True —
+    тестовый контур (создаёт/пополняет виртуальный счёт)."""
+    if sandbox:
+        broker: BrokerClient = TinkoffSandboxClient()
+        pref = config.SANDBOX_ACCOUNT_ID
+        account_id = broker.open_or_get_account(preferred_id=pref)
+        if not pref:  # свежесозданный sandbox-счёт — пополнить
+            try:
+                broker.pay_in(account_id, config.SANDBOX_PAYIN_RUB,
+                              currency=config.SANDBOX_PAYIN_CURRENCY)
+            except BrokerError as e:
+                print(f"[WARN] Не удалось пополнить sandbox-счёт: {e}")
+        return broker, account_id, "SANDBOX"
+
+    # PROD — верифицируем боевой счёт (FULL access), без создания/пополнения
+    broker = TinkoffProdClient()
+    account_id = broker.open_or_get_account(preferred_id=config.PROD_ACCOUNT_ID)
+    return broker, account_id, "PROD"
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
@@ -451,7 +459,11 @@ def main(argv: Optional[list[str]] = None) -> int:
         level=logging.INFO,
         format="%(asctime)s  %(levelname)-8s  %(name)s  %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S")
-    p = argparse.ArgumentParser(description="Автозаявки в T-Invest sandbox (двухфазно)")
+    p = argparse.ArgumentParser(
+        description="Автозаявки в T-Invest (двухфазно). КОНТУР ПО УМОЛЧАНИЮ — PROD "
+                    "(реальные деньги); --sandbox для тестового контура.")
+    p.add_argument("--sandbox", action="store_true",
+                   help="Тестовый контур (виртуальные деньги). По умолчанию — PROD.")
     p.add_argument("--attach-stops", action="store_true",
                    help="ФАЗА 2: привязать STOP_LOSS к залившимся позициям из реестра.")
     p.add_argument("--top-n", type=int,
@@ -469,12 +481,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     p.add_argument("--force", action="store_true",
                    help="ФАЗА 1: отключить защиту от задвоения (ставить лимитку, "
                         "даже если по инструменту уже есть заявка/позиция/стоп).")
-    p.add_argument("--allow-prod", action="store_true",
-                   help="Разрешить prod-эндпоинт (нужен и ALLOW_PRODUCTION_TRADING=1).")
     args = p.parse_args(argv)
 
     try:
-        broker, account_id, env = _make_broker_and_account(args.allow_prod)
+        broker, account_id, env = _make_broker_and_account(args.sandbox)
     except BrokerError as e:
         print(f"[ERROR] Счёт/контур: {e}", file=sys.stderr)
         return 1
@@ -496,9 +506,11 @@ def main(argv: Optional[list[str]] = None) -> int:
             return 0
 
         print_summary(account_id, env, orders, args.position)
+        prompt = ("ВЫСТАВИТЬ РЕАЛЬНЫЕ ЗАЯВКИ на боевом счёте? (y/n): "
+                  if env == "PROD" else "Выставить заявки? (y/n): ")
         if args.dry_run:
             print("[DRY-RUN] реальные ордера НЕ отправляются.")
-        elif not args.no_confirm and not confirm():
+        elif not args.no_confirm and not confirm(prompt):
             print("[INFO] Выставление заявок отменено пользователем.")
             return 0
 

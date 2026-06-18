@@ -1,13 +1,16 @@
 """
-services/sandbox_status.py — состояние счёта в T-Invest Sandbox (read-only).
+services/account_status.py — состояние счёта T-Invest (read-only).
 
 Показывает: стоимость портфеля, свободные деньги, открытые позиции (с тикерами),
 активные лимитные заявки и активные стоп-заявки. Ничего не меняет.
 
+КОНТУР ПО УМОЛЧАНИЮ — PROD (боевой счёт PROD_ACCOUNT_ID). --sandbox для теста.
+
 Запуск:
-    python3 -m services.sandbox_status                 # счёт из SANDBOX_ACCOUNT_ID
-    python3 -m services.sandbox_status --account <id>  # конкретный счёт
-    python3 -m services.sandbox_status --json          # сырой JSON-снимок
+    python3 -m services.account_status                 # боевой счёт
+    python3 -m services.account_status --sandbox       # песочница
+    python3 -m services.account_status --account <id>  # конкретный счёт
+    python3 -m services.account_status --json          # сырой JSON-снимок
 """
 from __future__ import annotations
 
@@ -16,7 +19,7 @@ import json
 import sys
 
 import config
-from services.broker import TinkoffSandboxClient
+from services.broker import TinkoffProdClient, TinkoffSandboxClient
 from services.broker.base import Quotation
 
 
@@ -24,8 +27,8 @@ def _money(m: dict | None) -> float:
     return Quotation.from_payload(m).as_float() if m else 0.0
 
 
-def _resolve_tickers(c: TinkoffSandboxClient, uids: list[str]) -> dict[str, str]:
-    """instrument_uid → ticker (одним вызовом на каждый, кэш не нужен — их мало)."""
+def _resolve_tickers(c, uids: list[str]) -> dict[str, str]:
+    """instrument_uid → ticker (вызовов мало, кэш не нужен)."""
     out: dict[str, str] = {}
     for uid in uids:
         try:
@@ -37,31 +40,32 @@ def _resolve_tickers(c: TinkoffSandboxClient, uids: list[str]) -> dict[str, str]
     return out
 
 
-def snapshot(c: TinkoffSandboxClient, account_id: str) -> dict:
-    """Собрать сырой снимок счёта (для --json и для печати)."""
+def snapshot(c, account_id: str, *, sandbox: bool) -> dict:
+    """Сырой снимок счёта. Отличается только метод списка заявок:
+    sandbox → SandboxService/GetSandboxOrders, prod → OrdersService/GetOrders.
+    Портфель/позиции/стопы — общие сервисы (OperationsService/StopOrdersService)."""
+    orders_method = "SandboxService/GetSandboxOrders" if sandbox else "OrdersService/GetOrders"
     return {
         "account_id": account_id,
+        "sandbox":    sandbox,
         "portfolio": c._post("OperationsService/GetPortfolio", {"accountId": account_id}),
         "positions": c._post("OperationsService/GetPositions", {"accountId": account_id}),
-        "orders":    c._post("SandboxService/GetSandboxOrders", {"accountId": account_id}).get("orders", []),
+        "orders":    c._post(orders_method, {"accountId": account_id}).get("orders", []),
         "stops":     c._post("StopOrdersService/GetStopOrders", {"accountId": account_id}).get("stopOrders", []),
     }
 
 
-def print_status(c: TinkoffSandboxClient, snap: dict) -> None:
-    acc = snap["account_id"]
-    pf  = snap["portfolio"]
-    pos = snap["positions"]
-    orders = snap["orders"]
-    stops  = snap["stops"]
+def print_status(c, snap: dict) -> None:
+    acc, pf, pos = snap["account_id"], snap["portfolio"], snap["positions"]
+    orders, stops = snap["orders"], snap["stops"]
+    env = "SANDBOX" if snap["sandbox"] else "PROD (РЕАЛЬНЫЕ ДЕНЬГИ)"
 
-    # собрать все UID для расшифровки тикеров
     uids = {p.get("instrumentUid") for p in pos.get("securities", []) if p.get("instrumentUid")}
     uids |= {o.get("instrumentUid") for o in orders if o.get("instrumentUid")}
     uids |= {s.get("instrumentUid") for s in stops if s.get("instrumentUid")}
     tk = _resolve_tickers(c, [u for u in uids if u])
 
-    print(f"\nСЧЁТ SANDBOX: {acc}")
+    print(f"\nСЧЁТ {env}: {acc}")
     print("=" * 64)
     print("Стоимость портфеля:")
     print(f"  Акции:   {_money(pf.get('totalAmountShares')):>14,.2f}")
@@ -100,25 +104,31 @@ def print_status(c: TinkoffSandboxClient, snap: dict) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description="Состояние счёта T-Invest Sandbox (read-only)")
-    p.add_argument("--account", default=config.SANDBOX_ACCOUNT_ID or "",
-                   help="ID sandbox-счёта (по умолч. config.SANDBOX_ACCOUNT_ID).")
+    p = argparse.ArgumentParser(description="Состояние счёта T-Invest (read-only). "
+                                            "По умолчанию — боевой счёт.")
+    p.add_argument("--sandbox", action="store_true", help="тестовый контур")
+    p.add_argument("--account", default="", help="ID счёта (по умолч. из config).")
     p.add_argument("--json", action="store_true", help="сырой JSON-снимок")
     args = p.parse_args(argv)
 
-    c = TinkoffSandboxClient()
-    acc = args.account
-    if not acc:
-        # счёта не задано — берём первый существующий
-        accs = c._post("SandboxService/GetSandboxAccounts").get("accounts", [])
-        if not accs:
-            print("Нет sandbox-счетов. Создайте через place_orders или укажите --account.",
-                  file=sys.stderr)
+    if args.sandbox:
+        c = TinkoffSandboxClient()
+        acc = args.account or config.SANDBOX_ACCOUNT_ID
+        if not acc:
+            accs = c._post("SandboxService/GetSandboxAccounts").get("accounts", [])
+            if not accs:
+                print("Нет sandbox-счетов. Укажите --account.", file=sys.stderr)
+                return 1
+            acc = accs[0]["id"]
+            print(f"(счёт не задан — взят первый sandbox: {acc})")
+    else:
+        c = TinkoffProdClient()
+        acc = args.account or config.PROD_ACCOUNT_ID
+        if not acc:
+            print("Не задан боевой счёт (PROD_ACCOUNT_ID).", file=sys.stderr)
             return 1
-        acc = accs[0]["id"]
-        print(f"(счёт не задан — взят первый: {acc})")
 
-    snap = snapshot(c, acc)
+    snap = snapshot(c, acc, sandbox=args.sandbox)
     if args.json:
         print(json.dumps(snap, ensure_ascii=False, indent=2))
     else:

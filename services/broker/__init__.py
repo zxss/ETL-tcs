@@ -1,16 +1,15 @@
 """Брокерская интеграция для services/place_orders.py.
 
 Структура:
-    base.py             — абстрактный BrokerClient + dataclass'ы Quotation,
-                          Instrument, OrderState. Бизнес-логика place_orders
-                          разговаривает ТОЛЬКО с этим интерфейсом.
-    tinkoff_sandbox.py  — реализация для T-Invest sandbox-эндпоинта
-                          (sandbox-invest-public-api.tbank.ru) на stdlib urllib,
-                          без новых зависимостей. Тот же приём с ssl=False, что
-                          в loaders/list_accounts (MITM на машине пользователя).
+    base.py            — абстрактный BrokerClient + dataclass'ы Quotation,
+                         Instrument, OrderState, Position. Бизнес-логика
+                         place_orders разговаривает ТОЛЬКО с этим интерфейсом.
+    tinkoff_base.py    — общий REST-транспорт (urllib, ssl=False), find_instrument,
+                         стоп-заявки. База для обоих контуров.
+    tinkoff_sandbox.py — TinkoffSandboxClient: тестовый контур (виртуальные деньги).
+    tinkoff_prod.py    — TinkoffProdClient: БОЕВОЙ счёт, реальные деньги.
 
-Чтобы переключиться на prod или другого брокера — реализовать новый класс
-с тем же интерфейсом, бизнес-логику править не нужно.
+Сменить контур/брокера → новый класс с тем же интерфейсом, бизнес-логику не трогаем.
 """
 from services.broker.base import (
     BrokerClient,
@@ -21,9 +20,12 @@ from services.broker.base import (
     BrokerError,
     NotSupportedError,
 )
+from services.broker.tinkoff_base import new_order_id
 from services.broker.tinkoff_sandbox import TinkoffSandboxClient
+from services.broker.tinkoff_prod import TinkoffProdClient
 
 __all__ = [
     "BrokerClient", "Instrument", "OrderState", "Position", "Quotation",
-    "BrokerError", "NotSupportedError", "TinkoffSandboxClient",
+    "BrokerError", "NotSupportedError",
+    "TinkoffSandboxClient", "TinkoffProdClient", "new_order_id",
 ]
