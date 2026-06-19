@@ -252,9 +252,10 @@ BEST_TRADES_POSITION_RUB: float = float(os.getenv("BEST_TRADES_POSITION_RUB", "1
 
 # LIMIT_ENTRY_FRACTION — насколько лимитка прижата к экстремуму прогнозного
 # коридора (доля 0..1): 0 = спот, 1 = ровно на F.High/F.Low.
-# SHORT тянется к ВЕРХНЕЙ границе, LONG — к НИЖНЕЙ. Default 0.8 — агрессивно,
-# но не на самом краю, чтобы заявка имела шанс залиться.
-LIMIT_ENTRY_FRACTION: float = float(os.getenv("LIMIT_ENTRY_FRACTION", "0.8"))
+# SHORT тянется к ВЕРХНЕЙ границе, LONG — к НИЖНЕЙ. Default 0.2 — заявка стоит
+# близко к рынку (~0.5–1% от спота), чтобы реально заливаться; 0.8 ставило вход
+# на 2–5% от рынка, и заявки висели днями не исполняясь.
+LIMIT_ENTRY_FRACTION: float = float(os.getenv("LIMIT_ENTRY_FRACTION", "0.2"))
 
 # LIMIT_TP_FRACTION — цель take-profit как доля пути от ВХОДА к ПРОТИВОПОЛОЖНОЙ
 # границе прогнозного коридора (анализ диапазона):
