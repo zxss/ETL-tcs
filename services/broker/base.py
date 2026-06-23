@@ -132,6 +132,17 @@ class StopOrderInfo:
 
 
 @dataclass(frozen=True)
+class ActiveOrder:
+    """Активная (неисполненная) лимитная заявка из GetOrders.
+    Нужна для синхронизации портфеля: снять заявку по тикеру, сигнал которого
+    исчез/сменил направление."""
+    instrument_uid: str
+    order_id:       str
+    direction:      str   # "BUY" | "SELL"
+    lots:           int
+
+
+@dataclass(frozen=True)
 class OrderState:
     """Состояние заявки от GetOrderState (упрощённое до нужных полей)."""
     order_id:               str
@@ -186,6 +197,11 @@ class BrokerClient(ABC):
         Бросает BrokerError, если не найден или недоступен через API.
         """
 
+    @abstractmethod
+    def find_instrument_by_uid(self, uid: str) -> Instrument:
+        """Найти инструмент по instrument_uid (для позиций, где известен только
+        uid: нужно узнать тикер и размер лота для закрытия по рынку)."""
+
     # ----- Торговля -----
 
     @abstractmethod
@@ -193,6 +209,13 @@ class BrokerClient(ABC):
                          direction: str, quantity_lots: int,
                          price: Quotation, order_id: str) -> OrderState:
         """Выставить лимитную заявку. direction = "BUY" | "SELL"."""
+
+    @abstractmethod
+    def post_market_order(self, *, account_id: str, instrument: Instrument,
+                          direction: str, quantity_lots: int,
+                          order_id: str) -> OrderState:
+        """Выставить РЫНОЧНУЮ заявку (для немедленного закрытия позиции).
+        direction = "BUY" (закрыть шорт) | "SELL" (закрыть лонг)."""
 
     @abstractmethod
     def post_stop_order(self, *, account_id: str, instrument: Instrument,
@@ -239,6 +262,11 @@ class BrokerClient(ABC):
         return {s.instrument_uid for s in self.get_active_stop_orders(account_id)}
 
     @abstractmethod
+    def get_active_orders(self, account_id: str) -> list["ActiveOrder"]:
+        """Активные (неисполненные) лимитные заявки с id и направлением —
+        для синхронизации портфеля (снять заявки по исчезнувшим сигналам)."""
+
     def get_active_order_instrument_uids(self, account_id: str) -> set[str]:
         """instrument_uid инструментов с активной (неисполненной) заявкой —
-        для защиты от повторного запуска фазы 1 (чтобы не задвоить лимитки)."""
+        для защиты от задвоения лимиток. Производное от get_active_orders."""
+        return {o.instrument_uid for o in self.get_active_orders(account_id)}

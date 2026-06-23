@@ -12,6 +12,7 @@
 Сменить контур/брокера → новый класс с тем же интерфейсом, бизнес-логику не трогаем.
 """
 from services.broker.base import (
+    ActiveOrder,
     BrokerClient,
     Instrument,
     OrderState,
@@ -26,7 +27,7 @@ from services.broker.tinkoff_sandbox import TinkoffSandboxClient
 from services.broker.tinkoff_prod import TinkoffProdClient
 
 __all__ = [
-    "BrokerClient", "Instrument", "OrderState", "Position", "Quotation",
-    "StopOrderInfo", "BrokerError", "NotSupportedError",
+    "ActiveOrder", "BrokerClient", "Instrument", "OrderState", "Position",
+    "Quotation", "StopOrderInfo", "BrokerError", "NotSupportedError",
     "TinkoffSandboxClient", "TinkoffProdClient", "new_order_id",
 ]

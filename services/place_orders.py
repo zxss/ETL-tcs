@@ -24,10 +24,17 @@ services/place_orders.py — автозаявки в T-Invest Sandbox по то�
   --immediate-stop  — старое поведение: лимитка + стоп сразу в одном запуске
                       (для prod с гарантированной заливкой; риск принимается).
 
+СИНХРОНИЗАЦИЯ (по умолчанию, ТЗ): обычный прогон приводит портфель к актуальным
+сигналам — закрывает по рынку позиции, по которым сигнал исчез/сменил направление,
+снимает неактуальные лимитки и осиротевшие стопы, выставляет заявки по новым
+сигналам и привязывает SL/TP. Перед любыми изменениями печатается ПЛАН и
+спрашивается y/n. --place-only возвращает старое поведение (только заявки).
+
 CLI:
-  python3 -m services.place_orders --dry-run --top-n 3
-  python3 -m services.place_orders --top-n 3            # фаза 1
-  python3 -m services.place_orders --attach-stops       # фаза 2
+  python3 -m services.place_orders --top-n 10 --dry-run  # план синхронизации
+  python3 -m services.place_orders --top-n 10            # синхронизация портфеля
+  python3 -m services.place_orders --top-n 10 --place-only  # только выставить заявки
+  python3 -m services.place_orders --attach-stops        # только привязать SL/TP
 """
 from __future__ import annotations
 
@@ -506,6 +513,219 @@ def _reconcile_closed(broker: BrokerClient, account_id: str, r: dict,
     print(f"[DONE]  {tk}: сделка закрыта, запись архивирована.")
 
 
+# ── СИНХРОНИЗАЦИЯ ПОРТФЕЛЯ К СИГНАЛАМ (ТЗ) ────────────────────────────────────
+
+
+def _pos_direction(balance_shares: float) -> str:
+    """LONG / SHORT по знаку остатка позиции."""
+    return "LONG" if balance_shares > 0 else "SHORT"
+
+
+def _close_direction(balance_shares: float) -> str:
+    """Направление заявки для ЗАКРЫТИЯ позиции: лонг→SELL, шорт→BUY."""
+    return "SELL" if balance_shares > 0 else "BUY"
+
+
+def _mark_registry_closed(account_id: str, closed_uids: set[str]) -> None:
+    """Пометить записи реестра закрытыми для инструментов, которые мы закрыли
+    по рынку (чтобы attach_stops не считал их ожидающими)."""
+    if not closed_uids:
+        return
+    pending = _load_pending()
+    changed = False
+    for r in pending.get(account_id, []):
+        if r.get("instrument_uid") in closed_uids and not r.get("closed"):
+            r["closed"] = True
+            changed = True
+    if changed:
+        _save_pending(pending)
+
+
+def _market_close(broker: BrokerClient, account_id: str, pos, ticker: str,
+                  writer: csv.DictWriter, env: str) -> bool:
+    """Закрыть позицию по рынку. Возвращает True при успехе."""
+    try:
+        inst = broker.find_instrument_by_uid(pos.instrument_uid)
+    except BrokerError as e:
+        print(f"[ERROR] {ticker}: не закрыть — инструмент по uid не найден: {e}")
+        return False
+    qty = max(1, int(abs(pos.balance_shares) // (inst.lot or 1)))
+    edir = _close_direction(pos.balance_shares)
+    try:
+        st = broker.post_market_order(account_id=account_id, instrument=inst,
+                                      direction=edir, quantity_lots=qty,
+                                      order_id=new_order_id())
+    except BrokerError as e:
+        print(f"[ERROR] {ticker}: market-close не прошёл: {e}")
+        _logrow(writer, env=env, account_id=account_id, ticker=ticker,
+                direction=edir, action="close_market", qty_lots_api=qty,
+                status="error", info=str(e))
+        return False
+    print(f"[CLOSE] {ticker}: market {edir} qty={qty} → {st.execution_report_status}")
+    _logrow(writer, env=env, account_id=account_id, ticker=ticker,
+            direction=edir, action="close_market", order_id=st.order_id,
+            qty_lots_api=qty, status=st.execution_report_status)
+    return True
+
+
+def _print_sync_plan(closes: list, cancel_ord: list, cancel_stp: list,
+                     to_place: list, kept: list, ticker_of, env: str,
+                     account_id: str) -> None:
+    if env == "PROD":
+        print("\n" + "!" * 88)
+        print(f"!!  СИНХРОНИЗАЦИЯ БОЕВОГО ПОРТФЕЛЯ — РЕАЛЬНЫЕ ДЕНЬГИ. Счёт №{account_id}")
+        print("!" * 88)
+    else:
+        print(f"\nКонтур: {env} | Счёт №{account_id} | СИНХРОНИЗАЦИЯ ПОРТФЕЛЯ")
+
+    print(f"\n[=] Оставить без изменений (сигнал совпал): {len(kept)}")
+    for uid, tk, d in kept:
+        print(f"    {tk:<6} {d}")
+
+    print(f"\n[X] ЗАКРЫТЬ по рынку (сигнал исчез/сменил направление): {len(closes)}")
+    for p in closes:
+        print(f"    {ticker_of(p.instrument_uid):<6} {_pos_direction(p.balance_shares):<5} "
+              f"{abs(p.balance_shares):.0f} шт → {_close_direction(p.balance_shares)}")
+
+    print(f"\n[-] Снять лимитки (сигнал исчез/перевёрнут): {len(cancel_ord)}")
+    for ao in cancel_ord:
+        print(f"    {ticker_of(ao.instrument_uid):<6} {ao.direction:<4} {ao.lots} лот  "
+              f"id={ao.order_id[:8]}…")
+
+    print(f"\n[-] Снять осиротевшие стопы: {len(cancel_stp)}")
+    for s in cancel_stp:
+        print(f"    {ticker_of(s.instrument_uid):<6} {s.kind:<12} id={s.stop_order_id[:8]}…")
+
+    print(f"\n[+] Выставить новые заявки: {len(to_place)}")
+    for o in to_place:
+        entry = f"{o.entry_price:.4f}" if o.entry_price else "—"
+        stop  = f"{o.stop_price:.4f}"  if o.stop_price  else "—"
+        tp    = f"{o.tp_price:.4f}"    if o.tp_price   else "—"
+        side  = "BUY (LONG)" if o.direction == "LONG" else "SELL (SHORT)"
+        print(f"    {o.ticker:<6} {side:<13} вход {entry} | стоп {stop} | профит {tp}")
+
+
+def sync_portfolio(broker: BrokerClient, account_id: str, orders: list[Order], *,
+                   dry_run: bool, no_confirm: bool, immediate_stop: bool,
+                   writer: csv.DictWriter, env: str) -> None:
+    """Привести портфель к целевым сигналам (ТЗ):
+      3. закрыть позиции, по которым сигнал исчез/сменил направление (по рынку);
+      4. выставить заявки по новым сигналам (place_limits с дедупом);
+      5. установить/сопроводить SL и TP (attach_stops);
+      6. снять осиротевшие защитные заявки и неактуальные лимитки.
+    """
+    # ── 1. целевые инструменты (uid → Order/Instrument), направления
+    targets: dict[str, tuple[Order, Instrument]] = {}
+    uid2ticker: dict[str, str] = {}
+    for o in orders:
+        if not o.is_placeable:
+            continue
+        try:
+            inst = broker.find_instrument(o.ticker)
+        except BrokerError as e:
+            print(f"[WARN]  {o.ticker}: пропуск в синхронизации — {e}")
+            continue
+        targets[inst.instrument_uid] = (o, inst)
+        uid2ticker[inst.instrument_uid] = o.ticker
+    target_dir = {uid: od.direction for uid, (od, _) in targets.items()}
+
+    # ── 2. текущее состояние
+    positions = [p for p in broker.get_positions(account_id) if p.is_open]
+    active_orders = broker.get_active_orders(account_id)
+    try:
+        stop_orders = broker.get_active_stop_orders(account_id)
+    except NotSupportedError:
+        stop_orders = []
+
+    def ticker_of(uid: str) -> str:
+        if uid not in uid2ticker:
+            try:
+                uid2ticker[uid] = broker.find_instrument_by_uid(uid).ticker
+            except BrokerError:
+                uid2ticker[uid] = uid[:8]
+        return uid2ticker[uid]
+
+    # ── 3. позиции: оставить совпавшие по направлению, остальные закрыть
+    closes, kept = [], []
+    kept_pos_uids: set[str] = set()
+    for p in positions:
+        cur = _pos_direction(p.balance_shares)
+        if target_dir.get(p.instrument_uid) == cur:
+            kept_pos_uids.add(p.instrument_uid)
+            kept.append((p.instrument_uid, ticker_of(p.instrument_uid), cur))
+        else:
+            closes.append(p)
+
+    # ── 4. лимитки: снять не-целевые и перевёрнутые по направлению
+    cancel_ord = []
+    for ao in active_orders:
+        tgt = targets.get(ao.instrument_uid)
+        if tgt is None or tgt[0].order_direction != ao.direction:
+            cancel_ord.append(ao)
+    keep_ord_uids = {ao.instrument_uid for ao in active_orders if ao not in cancel_ord}
+
+    # ── 5. стопы: осиротевшие — нет удерживаемой позиции под ними
+    cancel_stp = [s for s in stop_orders if s.instrument_uid not in kept_pos_uids]
+
+    # ── 6. новые заявки: цель, которая не удерживается и не в активной лимитке
+    to_place = [od for uid, (od, _) in targets.items()
+                if uid not in kept_pos_uids and uid not in keep_ord_uids]
+
+    _print_sync_plan(closes, cancel_ord, cancel_stp, to_place, kept,
+                     ticker_of, env, account_id)
+
+    if dry_run:
+        print("\n[DRY-RUN] синхронизация ничего не меняет.")
+        return
+    if not (closes or cancel_ord or cancel_stp or to_place):
+        print("\nПортфель уже соответствует сигналам — изменений нет.")
+        return
+
+    prompt = ("\nПРИМЕНИТЬ синхронизацию на БОЕВОМ счёте (закрытия по рынку + заявки)? (y/n): "
+              if env == "PROD" else "\nПрименить синхронизацию? (y/n): ")
+    if not no_confirm and not confirm(prompt):
+        print("[INFO] Синхронизация отменена пользователем.")
+        return
+
+    # ── исполнение: снять стопы → снять лимитки → закрыть → выставить → привязать
+    for s in cancel_stp:
+        tk = ticker_of(s.instrument_uid)
+        try:
+            broker.cancel_stop_order(account_id=account_id, stop_order_id=s.stop_order_id)
+            print(f"[-]     {tk}: снят стоп {s.kind} {s.stop_order_id[:8]}…")
+            _logrow(writer, env=env, account_id=account_id, ticker=tk,
+                    action="cancel_stop", order_id=s.stop_order_id,
+                    status="cancelled", info=s.kind)
+        except BrokerError as e:
+            print(f"[WARN]  {tk}: не снять стоп {s.stop_order_id[:8]}…: {e}")
+
+    for ao in cancel_ord:
+        tk = ticker_of(ao.instrument_uid)
+        try:
+            broker.cancel_order(account_id=account_id, order_id=ao.order_id)
+            print(f"[-]     {tk}: снята лимитка {ao.order_id[:8]}…")
+            _logrow(writer, env=env, account_id=account_id, ticker=tk,
+                    direction=ao.direction, action="cancel_order",
+                    order_id=ao.order_id, status="cancelled")
+        except BrokerError as e:
+            print(f"[WARN]  {tk}: не снять лимитку {ao.order_id[:8]}…: {e}")
+
+    closed_uids = set()
+    for p in closes:
+        if _market_close(broker, account_id, p, ticker_of(p.instrument_uid), writer, env):
+            closed_uids.add(p.instrument_uid)
+    _mark_registry_closed(account_id, closed_uids)
+
+    # новые заявки — place_limits сам сделает дедуп по СВЕЖЕМУ состоянию
+    print("\n— Выставление заявок по новым сигналам —")
+    place_limits(broker, account_id, orders, dry_run=False,
+                 immediate_stop=immediate_stop, force=False, writer=writer, env=env)
+
+    # привязка/подчистка SL+TP к залившимся позициям
+    print("\n— Привязка стоп-лосс / тейк-профит —")
+    attach_stops(broker, account_id, dry_run=False, writer=writer, env=env)
+
+
 # ── Подготовка брокера/счёта ──────────────────────────────────────────────────
 
 
@@ -558,6 +778,9 @@ def main(argv: Optional[list[str]] = None) -> int:
                    help="Пройти pipeline без реальной отправки в брокер.")
     p.add_argument("--no-confirm", action="store_true",
                    help="Не спрашивать y/n (для cron).")
+    p.add_argument("--place-only", action="store_true",
+                   help="Только выставить заявки по сигналам, НЕ закрывать позиции "
+                        "и не снимать заявки (старое поведение без синхронизации).")
     p.add_argument("--immediate-stop", action="store_true",
                    help="ФАЗА 1: ставить стоп сразу за лимиткой (риск раннего стопа).")
     p.add_argument("--force", action="store_true",
@@ -589,6 +812,15 @@ def main(argv: Optional[list[str]] = None) -> int:
             return 0
 
         print_summary(account_id, env, orders, args.position)
+
+        # ── СИНХРОНИЗАЦИЯ (по умолчанию): закрыть выпавшие сигналы + выставить новые
+        if not args.place_only:
+            sync_portfolio(broker, account_id, orders,
+                           dry_run=args.dry_run, no_confirm=args.no_confirm,
+                           immediate_stop=args.immediate_stop, writer=writer, env=env)
+            return 0
+
+        # ── --place-only: старое поведение (только заявки, без закрытий)
         prompt = ("ВЫСТАВИТЬ РЕАЛЬНЫЕ ЗАЯВКИ на боевом счёте? (y/n): "
                   if env == "PROD" else "Выставить заявки? (y/n): ")
         if args.dry_run:

@@ -15,6 +15,7 @@ import logging
 
 import config
 from services.broker.base import (
+    ActiveOrder,
     BrokerError,
     Instrument,
     OrderState,
@@ -80,6 +81,22 @@ class TinkoffProdClient(TinkoffRestBase):
         })
         return parse_order_state(data)
 
+    def post_market_order(self, *, account_id: str, instrument: Instrument,
+                          direction: str, quantity_lots: int,
+                          order_id: str) -> OrderState:
+        """OrdersService.PostOrder с ORDER_TYPE_MARKET — закрытие по рынку."""
+        if direction not in ("BUY", "SELL"):
+            raise ValueError(f"direction must be BUY|SELL, got {direction!r}")
+        data = self._post("OrdersService/PostOrder", {
+            "accountId":    account_id,
+            "instrumentId": instrument.instrument_uid,
+            "quantity":     str(int(quantity_lots)),
+            "direction":    f"ORDER_DIRECTION_{direction}",
+            "orderType":    "ORDER_TYPE_MARKET",
+            "orderId":      order_id,
+        })
+        return parse_order_state(data)
+
     def get_order_state(self, *, account_id: str, order_id: str) -> OrderState:
         data = self._post("OrdersService/GetOrderState",
                           {"accountId": account_id, "orderId": order_id})
@@ -102,7 +119,17 @@ class TinkoffProdClient(TinkoffRestBase):
                                     blocked_shares=float(s.get("blocked", 0) or 0)))
         return out
 
-    def get_active_order_instrument_uids(self, account_id: str) -> set[str]:
+    def get_active_orders(self, account_id: str) -> list[ActiveOrder]:
         data = self._post("OrdersService/GetOrders", {"accountId": account_id})
-        return {o.get("instrumentUid") for o in (data.get("orders") or [])
-                if o.get("instrumentUid")}
+        out: list[ActiveOrder] = []
+        for o in (data.get("orders") or []):
+            uid = o.get("instrumentUid")
+            if not uid:
+                continue
+            out.append(ActiveOrder(
+                instrument_uid=uid,
+                order_id=o.get("orderId", ""),
+                direction=(o.get("direction", "") or "").replace("ORDER_DIRECTION_", ""),
+                lots=int(o.get("lotsRequested", 0) or 0),
+            ))
+        return out

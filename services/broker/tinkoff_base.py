@@ -134,6 +134,28 @@ class TinkoffRestBase(BrokerClient):
             api_trade_available=bool(inst.get("apiTradeAvailableFlag", False)),
         )
 
+    def find_instrument_by_uid(self, uid: str) -> Instrument:
+        """InstrumentsService.GetInstrumentBy по UID — для позиций, где известен
+        только instrument_uid (нужны тикер и размер лота, чтобы закрыть по рынку)."""
+        try:
+            data = self._post("InstrumentsService/GetInstrumentBy",
+                              {"idType": "INSTRUMENT_ID_TYPE_UID", "id": uid})
+        except BrokerError as e:
+            raise BrokerError(f"GetInstrumentBy {uid[:8]}…: {e}") from e
+        inst = data.get("instrument") or {}
+        if not inst.get("uid"):
+            raise BrokerError(f"GetInstrumentBy {uid[:8]}…: инструмент не найден")
+        return Instrument(
+            ticker=inst.get("ticker", uid[:8]),
+            instrument_uid=inst["uid"],
+            figi=inst.get("figi", ""),
+            lot=int(inst.get("lot", 1)),
+            min_price_increment=Quotation.from_payload(inst.get("minPriceIncrement")),
+            currency=inst.get("currency", "rub"),
+            trading_status=inst.get("tradingStatus", ""),
+            api_trade_available=bool(inst.get("apiTradeAvailableFlag", False)),
+        )
+
     # ── Стоп-заявки (StopOrdersService — общий сервис) ───────────────────────
 
     def post_stop_order(self, *, account_id: str, instrument: Instrument,
