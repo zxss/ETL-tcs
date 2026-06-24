@@ -25,15 +25,21 @@ services/place_orders.py — автозаявки в T-Invest Sandbox по то�
                       (для prod с гарантированной заливкой; риск принимается).
 
 СИНХРОНИЗАЦИЯ (по умолчанию, ТЗ): обычный прогон приводит портфель к актуальным
-сигналам — закрывает по рынку позиции, по которым сигнал исчез/сменил направление,
-снимает неактуальные лимитки и осиротевшие стопы, выставляет заявки по новым
-сигналам и привязывает SL/TP. Перед любыми изменениями печатается ПЛАН и
-спрашивается y/n. --place-only возвращает старое поведение (только заявки).
+сигналам ОДНОЙ командой:
+  1) закрывает по рынку позиции, по которым сигнал исчез/сменил направление;
+  2) снимает неактуальные лимитки и осиротевшие стопы;
+  3) выставляет заявки по новым сигналам;
+  4) ЖДЁТ исполнения лимиток (--wait-fill, по умолч. 30s);
+  5) привязывает SL/TP к залившимся позициям (+OCO-reconcile);
+  6) проверяет, что каждая открытая позиция защищена SL и TP.
+Перед любыми изменениями печатается ПЛАН и спрашивается y/n.
+--place-only возвращает старое поведение (только выставить заявки, без закрытий).
 
 CLI:
   python3 -m services.place_orders --top-n 10 --dry-run  # план синхронизации
   python3 -m services.place_orders --top-n 10            # синхронизация портфеля
-  python3 -m services.place_orders --top-n 10 --place-only  # только выставить заявки
+  python3 -m services.place_orders --top-n 10 --wait-fill 60   # ждать заливки до 60s
+  python3 -m services.place_orders --top-n 10 --place-only     # только выставить заявки
   python3 -m services.place_orders --attach-stops        # только привязать SL/TP
 """
 from __future__ import annotations
@@ -44,6 +50,7 @@ import datetime as dt
 import json
 import logging
 import sys
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -227,14 +234,18 @@ def _occupied_uids(broker: BrokerClient, account_id: str) -> tuple[set[str], lis
 
 def place_limits(broker: BrokerClient, account_id: str, orders: list[Order], *,
                  dry_run: bool, immediate_stop: bool, force: bool,
-                 writer: csv.DictWriter, env: str) -> None:
+                 writer: csv.DictWriter, env: str) -> list[dict]:
     """Ставит лимитные заявки. Если immediate_stop=False (по умолчанию) —
     записывает будущий стоп в реестр ожидающих. Если True — ставит стоп сразу.
 
     Защита от задвоения: если по инструменту уже есть активная заявка / позиция /
-    стоп — заявка ПРОПУСКАЕТСЯ (если не передан force=True)."""
+    стоп — заявка ПРОПУСКАЕТСЯ (если не передан force=True).
+
+    Возвращает список записей реестра, выставленных В ЭТОМ прогоне (для ожидания
+    исполнения и последующей привязки стопов)."""
     pending = _load_pending()
     acc_list = pending.setdefault(account_id, [])
+    placed: list[dict] = []  # записи, выставленные именно в этом прогоне
 
     # снимок занятых инструментов (один раз перед циклом)
     if force:
@@ -350,6 +361,7 @@ def place_limits(broker: BrokerClient, account_id: str, orders: list[Order], *,
                                          api_q, tp_q, "TAKE_PROFIT", writer, env)
                 rec["tp_placed"], rec["tp_order_id"] = bool(tid), tid
         acc_list.append(rec)
+        placed.append(rec)
 
     if not dry_run:
         _save_pending(pending)
@@ -358,6 +370,7 @@ def place_limits(broker: BrokerClient, account_id: str, orders: list[Order], *,
             if n:
                 print(f"\n→ {n} позиц. ждут SL/TP. Когда лимитки зальются, выполните:")
                 print("    python3 -m services.place_orders --attach-stops")
+    return placed
 
 
 _KIND_RU = {"STOP_LOSS": "стоп", "TAKE_PROFIT": "профит"}
@@ -541,6 +554,53 @@ def _mark_registry_closed(account_id: str, closed_uids: set[str]) -> None:
         _save_pending(pending)
 
 
+def _wait_for_fills(broker: BrokerClient, account_id: str, placed: list[dict], *,
+                    wait_s: float, poll_s: float) -> None:
+    """Подождать исполнения только что выставленных лимиток (до wait_s сек),
+    опрашивая позиции каждые poll_s. Выходит раньше, когда все залились.
+    Нужно, чтобы стопы привязались в ТОМ ЖЕ прогоне, а не следующим."""
+    pending_uids = {r["instrument_uid"] for r in placed}
+    if not pending_uids or wait_s <= 0:
+        return
+    print(f"\n— Ожидание исполнения лимиток (до {wait_s:.0f}s) —")
+    deadline = time.monotonic() + wait_s
+    while True:
+        open_uids = {p.instrument_uid for p in broker.get_positions(account_id) if p.is_open}
+        remaining = pending_uids - open_uids
+        print(f"  залилось {len(pending_uids) - len(remaining)}/{len(pending_uids)}; "
+              f"ждём {len(remaining)}…")
+        if not remaining:
+            print("  все лимитки исполнены.")
+            return
+        if time.monotonic() >= deadline:
+            print(f"  таймаут: {len(remaining)} не залилось — стопы по ним поставит "
+                  f"следующий прогон (--attach-stops).")
+            return
+        time.sleep(min(poll_s, max(0.0, deadline - time.monotonic())))
+
+
+def _verify_protection(broker: BrokerClient, account_id: str, ticker_of) -> None:
+    """Финальная проверка: у каждой открытой позиции есть и SL, и TP."""
+    print("\n— Проверка защиты позиций —")
+    positions = [p for p in broker.get_positions(account_id) if p.is_open]
+    if not positions:
+        print("  открытых позиций нет.")
+        return
+    try:
+        stops = broker.get_active_stop_orders(account_id)
+    except NotSupportedError:
+        print("  GetStopOrders недоступен — проверка пропущена.")
+        return
+    sl = {s.instrument_uid for s in stops if s.kind == "STOP_LOSS"}
+    tp = {s.instrument_uid for s in stops if s.kind == "TAKE_PROFIT"}
+    for p in positions:
+        miss = [n for n, have in (("SL", p.instrument_uid in sl),
+                                  ("TP", p.instrument_uid in tp)) if not have]
+        mark = "OK" if not miss else "⚠ НЕТ " + "/".join(miss)
+        print(f"  {ticker_of(p.instrument_uid):<6} {_pos_direction(p.balance_shares):<5} "
+              f"{abs(p.balance_shares):.0f} шт  {mark}")
+
+
 def _market_close(broker: BrokerClient, account_id: str, pos, ticker: str,
                   writer: csv.DictWriter, env: str) -> bool:
     """Закрыть позицию по рынку. Возвращает True при успехе."""
@@ -607,7 +667,8 @@ def _print_sync_plan(closes: list, cancel_ord: list, cancel_stp: list,
 
 def sync_portfolio(broker: BrokerClient, account_id: str, orders: list[Order], *,
                    dry_run: bool, no_confirm: bool, immediate_stop: bool,
-                   writer: csv.DictWriter, env: str) -> None:
+                   writer: csv.DictWriter, env: str,
+                   wait_s: float = 0.0, poll_s: float = 5.0) -> None:
     """Привести портфель к целевым сигналам (ТЗ):
       3. закрыть позиции, по которым сигнал исчез/сменил направление (по рынку);
       4. выставить заявки по новым сигналам (place_limits с дедупом);
@@ -718,12 +779,20 @@ def sync_portfolio(broker: BrokerClient, account_id: str, orders: list[Order], *
 
     # новые заявки — place_limits сам сделает дедуп по СВЕЖЕМУ состоянию
     print("\n— Выставление заявок по новым сигналам —")
-    place_limits(broker, account_id, orders, dry_run=False,
-                 immediate_stop=immediate_stop, force=False, writer=writer, env=env)
+    placed = place_limits(broker, account_id, orders, dry_run=False,
+                          immediate_stop=immediate_stop, force=False,
+                          writer=writer, env=env)
+
+    # подождать, пока лимитки у рынка зальются, чтобы привязать стопы СЕЙЧАС
+    if not immediate_stop:
+        _wait_for_fills(broker, account_id, placed, wait_s=wait_s, poll_s=poll_s)
 
     # привязка/подчистка SL+TP к залившимся позициям
     print("\n— Привязка стоп-лосс / тейк-профит —")
     attach_stops(broker, account_id, dry_run=False, writer=writer, env=env)
+
+    # финальная проверка: каждая позиция защищена SL и TP
+    _verify_protection(broker, account_id, ticker_of)
 
 
 # ── Подготовка брокера/счёта ──────────────────────────────────────────────────
@@ -781,6 +850,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     p.add_argument("--place-only", action="store_true",
                    help="Только выставить заявки по сигналам, НЕ закрывать позиции "
                         "и не снимать заявки (старое поведение без синхронизации).")
+    p.add_argument("--wait-fill", type=float,
+                   default=float(getattr(config, "ORDER_FILL_WAIT_SEC", 30.0)),
+                   help="Секунд ждать исполнения лимиток перед привязкой стопов "
+                        "(0 — не ждать). По умолч. из config.ORDER_FILL_WAIT_SEC.")
     p.add_argument("--immediate-stop", action="store_true",
                    help="ФАЗА 1: ставить стоп сразу за лимиткой (риск раннего стопа).")
     p.add_argument("--force", action="store_true",
@@ -817,7 +890,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         if not args.place_only:
             sync_portfolio(broker, account_id, orders,
                            dry_run=args.dry_run, no_confirm=args.no_confirm,
-                           immediate_stop=args.immediate_stop, writer=writer, env=env)
+                           immediate_stop=args.immediate_stop, writer=writer, env=env,
+                           wait_s=args.wait_fill,
+                           poll_s=float(getattr(config, "ORDER_FILL_POLL_SEC", 5.0)))
             return 0
 
         # ── --place-only: старое поведение (только заявки, без закрытий)

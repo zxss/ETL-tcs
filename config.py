@@ -265,6 +265,13 @@ LIMIT_ENTRY_FRACTION: float = float(os.getenv("LIMIT_ENTRY_FRACTION", "0.2"))
 # 0.8 — консервативнее, выше шанс, что профит-заявка исполнится.
 LIMIT_TP_FRACTION: float = float(os.getenv("LIMIT_TP_FRACTION", "1.0"))
 
+# ORDER_FILL_WAIT_SEC — сколько секунд ждать исполнения только что выставленных
+# лимиток ПЕРЕД привязкой стопов (в едином прогоне --top-n). При entry_frac≈0.2
+# заявки стоят у рынка и заливаются за секунды; 0 — не ждать (стопы привяжет
+# следующий прогон / --attach-stops). ORDER_FILL_POLL_SEC — интервал опроса.
+ORDER_FILL_WAIT_SEC: float = float(os.getenv("ORDER_FILL_WAIT_SEC", "30"))
+ORDER_FILL_POLL_SEC: float = float(os.getenv("ORDER_FILL_POLL_SEC", "5"))
+
 # --- Актуальные котировки на момент запуска ----------------------------------
 # TFT_USE_LIVE_PRICE=1 — перед расчётом получить последнюю цену (Last Price) по
 # каждому тикеру и якорить прогноз диапазона/PnL на ней, а не на вчерашнем
