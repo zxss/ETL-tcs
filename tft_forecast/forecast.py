@@ -118,13 +118,21 @@ def _predict_fallback(panel):
     по всем окнам → завышенный CoverageProb. Теперь квантили берутся ТОЛЬКО из
     обучающего периода (W < cutoff), а покрытие меряется на отложенном хвосте
     (W >= cutoff). Для инференс-окна (последний день) вся история — прошлое.
+
+    Сезонность по дню недели: квантили считаются с учётом day-of-week целевого
+    дня (бакет (тикер, dow)). Так прогноз на понедельник (overnight через
+    выходные) опирается на распределение именно понедельников, а не всех дней.
+    Если бакет тонкий (<MIN_DOW наблюдений) — откат на (тикер, все дни), затем
+    на глобальное распределение.
     """
     from .dataset import LOOKBACK
     n_tgt = panel.Y.shape[1]
     nq = len(QUANTILES)
     M = panel.infer_X.shape[0]
+    MIN_DOW = 30   # минимум наблюдений в бакете дня недели, иначе откат
 
     W = panel.W
+    Wd = getattr(panel, "Wd", np.full(len(W), -1, dtype=np.int64))
     cutoff = np.quantile(W, 0.85)
     train_mask = W < (cutoff - LOOKBACK)
     val_idx = np.where(W >= cutoff)[0]
@@ -132,16 +140,24 @@ def _predict_fallback(panel):
         train_mask = np.ones(len(W), bool)              # короткий ряд — без сплита
         val_idx = np.arange(len(W))
 
-    # квантильный источник: только обучающий период
+    # квантильный источник: только обучающий период.
+    # by_tk[ti] — все дни тикера; by_tk_dow[(ti, dow)] — отдельно по дню недели.
     by_tk_train: dict[int, list[np.ndarray]] = {}
-    for t, y in zip(panel.T[train_mask], panel.Y[train_mask]):
+    by_tk_dow_train: dict[tuple[int, int], list[np.ndarray]] = {}
+    for t, dwd, y in zip(panel.T[train_mask], Wd[train_mask], panel.Y[train_mask]):
         by_tk_train.setdefault(int(t), []).append(y)
+        if int(dwd) >= 0:
+            by_tk_dow_train.setdefault((int(t), int(dwd)), []).append(y)
     global_train_Y = panel.Y[train_mask]
 
     def _q(arr):
         return np.stack([np.quantile(arr[:, k], QUANTILES) for k in range(n_tgt)], axis=0)
 
-    def _q_for(tk_i):
+    def _q_for(tk_i, dow):
+        if int(dow) >= 0:
+            arr = np.asarray(by_tk_dow_train.get((int(tk_i), int(dow)), []), dtype=np.float64)
+            if len(arr) >= MIN_DOW:
+                return _q(arr)
         arr = np.asarray(by_tk_train.get(int(tk_i), []), dtype=np.float64)
         if len(arr) < 20:
             arr = global_train_Y
@@ -149,11 +165,11 @@ def _predict_fallback(panel):
 
     infer_pred = np.zeros((M, n_tgt, nq), dtype=np.float64)
     for m, tk_i in enumerate(panel.infer_T):
-        infer_pred[m] = _q_for(tk_i)
+        infer_pred[m] = _q_for(tk_i, panel.infer_Wd[m])
 
     val_pred = np.zeros((len(val_idx), n_tgt, nq), dtype=np.float64)
     for j, idx in enumerate(val_idx):
-        val_pred[j] = _q_for(panel.T[idx])
+        val_pred[j] = _q_for(panel.T[idx], Wd[idx])
     return infer_pred, val_pred, panel.T[val_idx], panel.Y[val_idx]
 
 

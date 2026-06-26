@@ -26,8 +26,10 @@ FEATURE_COLS = [
     "vol_z",         # z-оценка объёма за 20 дней
     "ret_mean5",     # средняя доходность за 5 дней
     "ret_std20",     # волатильность доходности за 20 дней
-    "dow_sin",       # день недели (циклический)
+    "dow_sin",       # день недели сегодня (циклический)
     "dow_cos",
+    "next_dow_sin",  # день недели ПРОГНОЗИРУЕМОГО дня (known-future: календарь
+    "next_dow_cos",  # завтра известен заранее). Ловит Пт→Пн (гэп через выходные).
 ]
 
 # Целевые переменные:
@@ -116,6 +118,23 @@ def _build_features(df: pd.DataFrame) -> pd.DataFrame:
     dow = d["date"].dt.dayofweek
     d["dow_sin"] = np.sin(2 * np.pi * dow / 5.0)
     d["dow_cos"] = np.cos(2 * np.pi * dow / 5.0)
+
+    # День недели ПРОГНОЗИРУЕМОГО (следующего) дня — known-future ковариата.
+    # Для обучающих строк это dow реального следующего бара (корректно учитывает
+    # и выходные, и праздники). Для последней строки следующего бара ещё нет —
+    # берём следующий торговый день (пропуская сб/вс): именно его day-of-week мы
+    # предсказываем. Это и отделяет прогноз на понедельник от прогноза на среду.
+    next_date = d["date"].shift(-1)
+    if len(d):
+        nb = d["date"].iloc[-1] + pd.Timedelta(days=1)
+        while nb.dayofweek >= 5:  # сб(5)/вс(6) → следующий торговый день
+            nb += pd.Timedelta(days=1)
+        next_date = next_date.copy()
+        next_date.iloc[-1] = nb
+    ndow = next_date.dt.dayofweek
+    d["next_dow"] = ndow.astype("Int64")          # сырой день недели для fallback-бакетов
+    d["next_dow_sin"] = np.sin(2 * np.pi * ndow / 5.0)
+    d["next_dow_cos"] = np.cos(2 * np.pi * ndow / 5.0)
 
     # Цели: завтрашние low/high относительно СЕГОДНЯШНЕГО close (без look-ahead:
     # предсказываем будущее, признаки — только до текущего дня включительно).

@@ -25,12 +25,14 @@ class Panel:
     T: np.ndarray            # (N,) индекс тикера (static categorical)
     Y: np.ndarray            # (N, 2) цели [next_low_pct, next_high_pct]
     W: np.ndarray            # (N,) ordinal даты цели окна (для хронологического сплита, PR-7)
+    Wd: np.ndarray           # (N,) день недели (0-4) ПРОГНОЗИРУЕМОГО дня (для fallback-бакетов)
     feat_mean: np.ndarray    # (F,) для масштабирования
     feat_std: np.ndarray     # (F,)
     tickers: list[str]       # индекс → имя тикера
     # Финальные окна (последний день каждого тикера) для инференса:
     infer_X: np.ndarray      # (M, LOOKBACK, F)
     infer_T: np.ndarray      # (M,)
+    infer_Wd: np.ndarray     # (M,) день недели прогнозируемого дня для каждого infer-окна
     infer_tickers: list[str] # имена тикеров для каждого infer-окна
 
 
@@ -43,8 +45,8 @@ def build_panel(frames: list[TickerFrame], lookback: int = LOOKBACK) -> Panel | 
     tk_index = {tk: i for i, tk in enumerate(tickers)}
 
     # --- сбор обучающих окон ---
-    X_list, T_list, Y_list, W_list = [], [], [], []
-    infer_X, infer_T, infer_tk = [], [], []
+    X_list, T_list, Y_list, W_list, Wd_list = [], [], [], [], []
+    infer_X, infer_T, infer_tk, infer_Wd = [], [], [], []
 
     for f in frames:
         d = f.df
@@ -52,6 +54,9 @@ def build_panel(frames: list[TickerFrame], lookback: int = LOOKBACK) -> Panel | 
         tgts = d[TARGET_COLS].to_numpy(dtype=np.float64)
         # ordinal даты строки-цели (общая календарная ось для всех тикеров, PR-7)
         date_ord = pd.to_datetime(d["date"]).map(pd.Timestamp.toordinal).to_numpy(dtype=np.int64)
+        # день недели прогнозируемого дня (0-4); NaN→-1 как «неизвестно»
+        ndow_arr = d["next_dow"].to_numpy(dtype="float64") if "next_dow" in d.columns \
+            else np.full(len(d), np.nan)
         n = len(d)
 
         # обучающие окна: окно [i-lookback+1 .. i], цель в строке i (next_*),
@@ -65,11 +70,13 @@ def build_panel(frames: list[TickerFrame], lookback: int = LOOKBACK) -> Panel | 
             T_list.append(tk_index[f.ticker])
             Y_list.append(y)
             W_list.append(date_ord[i])
+            Wd_list.append(ndow_arr[i])
 
         # инференс-окно: последние lookback дней (цель неизвестна — её предсказываем)
         if n >= lookback:
             infer_X.append(feats[n - lookback : n])
             infer_T.append(tk_index[f.ticker])
+            infer_Wd.append(ndow_arr[n - 1])
             infer_tk.append(f.ticker)
 
     if not X_list or not infer_X:
@@ -79,8 +86,11 @@ def build_panel(frames: list[TickerFrame], lookback: int = LOOKBACK) -> Panel | 
     T = np.asarray(T_list, dtype=np.int64)
     Y = np.asarray(Y_list, dtype=np.float64)
     W = np.asarray(W_list, dtype=np.int64)
+    # день недели цели: NaN → -1 (бакет «неизвестно», fallback на все дни)
+    Wd = np.nan_to_num(np.asarray(Wd_list, dtype=np.float64), nan=-1.0).astype(np.int64)
     iX = _clean_window(np.asarray(infer_X, dtype=np.float64))
     iT = np.asarray(infer_T, dtype=np.int64)
+    iWd = np.nan_to_num(np.asarray(infer_Wd, dtype=np.float64), nan=-1.0).astype(np.int64)
 
     # глобальное масштабирование признаков (по обучающему пулу)
     flat = X.reshape(-1, X.shape[-1])
@@ -96,10 +106,12 @@ def build_panel(frames: list[TickerFrame], lookback: int = LOOKBACK) -> Panel | 
         T=T,
         Y=Y.astype(np.float32),
         W=W,
+        Wd=Wd,
         feat_mean=feat_mean,
         feat_std=feat_std,
         tickers=tickers,
         infer_X=iX.astype(np.float32),
         infer_T=iT,
+        infer_Wd=iWd,
         infer_tickers=infer_tk,
     )
