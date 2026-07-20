@@ -7,7 +7,9 @@ Temporal Fusion Transformer (компактная, но честная реал�
   * Static covariate encoders: embedding тикера → контекстные векторы
   * LSTM-энкодер последовательности с static-инициализацией
   * Static enrichment + Interpretable Multi-Head Attention
-  * Квантильные головы (pinball loss) для [next_low_pct, next_high_pct]
+  * Квантильные головы (pinball loss) для всех целей features.TARGET_COLS:
+    дневные (next_low/high, overnight/intraday/total) и недельные
+    (week_low/high/total за WEEK_H дней) — единый multi-horizon прогноз
 
 Модель ОДНА на все тикеры: кросс-секционные паттерны рынка извлекаются
 общими весами, а специфика инструмента — через static-embedding тикера.
@@ -96,7 +98,7 @@ class VariableSelection(nn.Module):
 class TFT(nn.Module):
     def __init__(self, n_features: int, n_tickers: int, hidden: int = 32,
                  n_heads: int = 4, dropout: float = 0.1,
-                 n_quantiles: int = len(QUANTILES), n_targets: int = 5):
+                 n_quantiles: int = len(QUANTILES), n_targets: int = 8):
         super().__init__()
         self.hidden = hidden
         self.n_quantiles = n_quantiles

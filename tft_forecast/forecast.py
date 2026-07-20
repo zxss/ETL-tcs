@@ -31,6 +31,7 @@ Q_LOW, Q_MED, Q_HIGH = 0, 2, 4   # индексы 0.1 / 0.5 / 0.9 в сетке 
 
 # Индексы целей (порядок — features.TARGET_COLS)
 T_LOW, T_HIGH, T_OVN, T_INTRA, T_TOTAL = 0, 1, 2, 3, 4
+T_WLOW, T_WHIGH, T_WTOTAL = 5, 6, 7   # недельный горизонт (WEEK_H дней)
 
 
 # ── Обучение TFT (torch) ──────────────────────────────────────────────────────
@@ -75,7 +76,7 @@ def _train_tft(panel, epochs: int, hidden: int):
     Tva = torch.tensor(panel.T[val_idx], device=dev)
     Yva = panel.Y[val_idx]
 
-    model = TFT(n_feat, n_tk, hidden=hidden)
+    model = TFT(n_feat, n_tk, hidden=hidden, n_targets=panel.Y.shape[1])
     opt = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)
 
     ds = TensorDataset(Xtr, Ttr, Ytr)
@@ -175,16 +176,53 @@ def _predict_fallback(panel):
 
 # ── Калибровка покрытия ────────────────────────────────────────────────────────
 
-def _coverage(val_pred, val_T, val_Y):
+def _conformal_week_margin(val_pred, val_Y, target: float = 0.80) -> float:
+    """Конформная поправка ширины недельного коридора (split-conformal).
+
+    Сырые q0.1/q0.9 на недельном горизонте недокрывают (59% при номинале 80%):
+    экстремумы за 5 дней рассеяны шире, чем выучили квантильные головы. Считаем
+    на held-out хвосте нормированный на ширину коридора «промах»:
+
+        score = max(pred_low − actual_low, actual_high − pred_high, 0) / width
+
+    и берём его target-квантиль (с поправкой (n+1)/n малой выборки) → λ.
+    Расширение обеих границ на λ·width доводит покрытие до ≈target по
+    построению; гарантия на будущее — в предположении обменности наблюдений.
+    Нормировка на width адаптивна: волатильные бумаги получают больший запас
+    в абсолюте, тихие — меньший.
     """
-    Эмпирическое покрытие интервала [low_q0.1, high_q0.9]:
-    доля дней, где реальные next_low/high попали внутрь прогноза.
+    lo = val_pred[:, T_WLOW, Q_LOW]
+    hi = val_pred[:, T_WHIGH, Q_HIGH]
+    width = np.maximum(hi - lo, 1e-6)
+    viol = np.maximum(lo - val_Y[:, T_WLOW], val_Y[:, T_WHIGH] - hi)
+    scores = np.maximum(viol / width, 0.0)
+    n = len(scores)
+    if n == 0:
+        return 0.0
+    q = min(1.0, np.ceil((n + 1) * target) / n)
+    return float(np.quantile(scores, q))
+
+
+def _widen_week(pred: np.ndarray, lam: float) -> np.ndarray:
+    """Копия pred с недельным коридором, расширенным на λ·width с обеих сторон."""
+    out = pred.copy()
+    width = np.maximum(out[:, T_WHIGH, Q_HIGH] - out[:, T_WLOW, Q_LOW], 0.0)
+    out[:, T_WLOW, Q_LOW] -= lam * width
+    out[:, T_WHIGH, Q_HIGH] += lam * width
+    return out
+
+
+def _coverage(val_pred, val_T, val_Y, lo_idx: int = T_LOW, hi_idx: int = T_HIGH):
+    """
+    Эмпирическое покрытие интервала [low_q0.1, high_q0.9] для пары целей
+    (lo_idx, hi_idx): доля наблюдений, где реальные low/high попали внутрь
+    прогноза. По умолчанию — дневной коридор; (T_WLOW, T_WHIGH) — недельный.
     Возвращает (per_ticker: dict idx→prob, global_prob).
     """
-    low_pred = val_pred[:, 0, Q_LOW]
-    high_pred = val_pred[:, 1, Q_HIGH]
-    actual_low = val_Y[:, 0]
-    actual_high = val_Y[:, 1]
+    low_pred = val_pred[:, lo_idx, Q_LOW]
+    high_pred = val_pred[:, hi_idx, Q_HIGH]
+    actual_low = val_Y[:, lo_idx]
+    actual_high = val_Y[:, hi_idx]
     hit = (actual_low >= low_pred) & (actual_high <= high_pred)
 
     global_prob = float(hit.mean()) if len(hit) else float("nan")
@@ -198,20 +236,27 @@ def _coverage(val_pred, val_T, val_Y):
 
 # ── Сборка прогнозов ───────────────────────────────────────────────────────────
 
-def _assemble(frames, panel, infer_pred, per_tk_cov, global_cov, quotes=None):
+def _assemble(frames, panel, infer_pred, per_tk_cov, global_cov, quotes=None,
+              week_cov=None):
     """
     Собирает прогноз диапазона. Якорная цена — актуальная Last Price (если есть
     котировка), иначе последнее закрытие. ForecastLow/High/RangePct считаются
     ОТНОСИТЕЛЬНО якорной цены, а не вчерашнего закрытия.
+
+    Недельный коридор (WeekLow/High) — НАСТОЯЩИЕ квантили модели по целям
+    week_low_pct/week_high_pct (min/max за WEEK_H дней), с отдельной калибровкой
+    покрытия week_cov=(per_tk, global) на held-out хвосте.
     """
     quotes = quotes or {}
+    week_per_tk, week_global = week_cov if week_cov else ({}, float("nan"))
     fr_by_tk = {f.ticker: f for f in frames}
     out = {}
     tk_index = {tk: i for i, tk in enumerate(panel.tickers)}
+    h = max(1, int(getattr(config, "WEEK_HORIZON_DAYS", 5)))
     for m, tk in enumerate(panel.infer_tickers):
         f = fr_by_tk[tk]
-        low_pct = float(infer_pred[m, 0, Q_LOW])    # консервативная нижняя граница
-        high_pct = float(infer_pred[m, 1, Q_HIGH])  # консервативная верхняя граница
+        low_pct = float(infer_pred[m, T_LOW, Q_LOW])    # консервативная нижняя граница
+        high_pct = float(infer_pred[m, T_HIGH, Q_HIGH]) # консервативная верхняя граница
         # защита от вырожденного интервала
         if high_pct <= low_pct:
             mid = (high_pct + low_pct) / 2.0
@@ -223,10 +268,29 @@ def _assemble(frames, panel, infer_pred, per_tk_cov, global_cov, quotes=None):
         forecast_high = anchor * (1 + high_pct / 100.0)
         range_pct = (forecast_high - forecast_low) / anchor * 100.0
         cov = per_tk_cov.get(tk_index[tk], global_cov)
+
+        # Недельный коридор из предсказанных квантилей week_*-целей.
+        wlow_pct = float(infer_pred[m, T_WLOW, Q_LOW])
+        whigh_pct = float(infer_pred[m, T_WHIGH, Q_HIGH])
+        # консистентность горизонтов: экстремум за 5 дней не может быть уже
+        # дневного коридора — мягкий клэмп на случай шума квантильных голов
+        wlow_pct = min(wlow_pct, low_pct)
+        whigh_pct = max(whigh_pct, high_pct)
+        week_low = anchor * (1 + wlow_pct / 100.0)
+        week_high = anchor * (1 + whigh_pct / 100.0)
+        week_range_pct = (week_high - week_low) / anchor * 100.0
+        week_med_pct = float(infer_pred[m, T_WTOTAL, Q_MED])  # медиана close за H дней
+
         out[tk] = {
             "ForecastLow": forecast_low,
             "ForecastHigh": forecast_high,
             "RangePct": range_pct,
+            "WeekLow": week_low,
+            "WeekHigh": week_high,
+            "WeekRangePct": week_range_pct,
+            "WeekMedPct": week_med_pct,
+            "WeekCoverage": week_per_tk.get(tk_index[tk], week_global),
+            "WeekHorizon": h,
             "CoverageProb": cov,
             "last_close": f.last_close,
             "last_date": f.last_date,
@@ -288,6 +352,41 @@ def _print_full(forecasts: dict):
         print(f"  {tk:<8}{r['last_close']:>10.2f}{r['ForecastLow']:>13.2f}"
               f"{r['ForecastHigh']:>14.2f}{r['RangePct']:>9.2f}%{r['CoverageProb'] * 100:>9.0f}%")
     print("=" * 78)
+
+
+def print_weekly(forecasts: dict) -> None:
+    """Таблица недельного прогноза диапазона по акциям (по аналогии с дневной).
+
+    Настоящий multi-horizon прогноз: модель обучена на недельных целях
+    week_low/high/total (min/max/close за WEEK_H торговых дней), Coverage —
+    отдельно калиброванное НЕДЕЛЬНОЕ покрытие на held-out хвосте."""
+    rows = [k for k in forecasts if k != "__meta__"]
+    if not rows:
+        return
+    h = forecasts[rows[0]].get("WeekHorizon", 5)
+    print("\n" + "=" * 86)
+    print(f"  MULTI-ASSET TFT — ПРОГНОЗ ДИАПАЗОНА НА НЕДЕЛЮ ({h} торг. дн., обученные цели)")
+    print("=" * 86)
+    hdr = (f"  {'ticker':<8}{'last':>10}{'WeekLow':>13}{'WeekHigh':>14}"
+           f"{'RangePct':>10}{'Med5d%':>8}{'Coverage':>10}")
+    print(hdr)
+    print("  " + "-" * 82)
+    for tk in sorted(rows):
+        r = forecasts[tk]
+        if r.get("WeekLow") is None:
+            continue
+        med = r.get("WeekMedPct")
+        med_s = f"{med:>+7.2f}%" if med is not None else f"{'—':>8}"
+        wcov = r.get("WeekCoverage")
+        wcov_s = f"{wcov * 100:>9.0f}%" if wcov is not None and wcov == wcov else f"{'—':>10}"
+        print(f"  {tk:<8}{r['last_close']:>10.2f}{r['WeekLow']:>13.2f}"
+              f"{r['WeekHigh']:>14.2f}{r['WeekRangePct']:>9.2f}%{med_s}{wcov_s}")
+    print("  " + "-" * 82)
+    print("  WeekLow/High — q0.1/q0.9 модели по целям min(low)/max(high) за неделю,")
+    print("  расширенные конформной поправкой до целевого покрытия;")
+    print("  Med5d% — медиана предсказанного изменения close за горизонт;")
+    print("  Coverage — эмпирическое НЕДЕЛЬНОЕ покрытие коридора на held-out валидации.")
+    print("=" * 86)
 
 
 def _print_strategy_table(forecasts: dict, tickers: list[str], strats: list[str]):
@@ -366,8 +465,21 @@ def run(conn, quiet: bool = False) -> dict | None:
              f", max age={ctx.max_age_sec / 60:.0f} мин" if ctx.quotes else "")
 
     per_tk_cov, global_cov = _coverage(val_pred, val_T, val_Y)
-    forecasts = _assemble(frames, panel, infer_pred, per_tk_cov, global_cov,
-                          quotes=ctx.quotes)
+
+    # Недельный коридор: конформная поправка до целевого покрытия, затем
+    # калибровка покрытия уже НА РАСШИРЕННЫХ границах (сырое — для лога).
+    week_target = float(getattr(config, "WEEK_TARGET_COVERAGE", 0.80))
+    _, week_cov_raw = _coverage(val_pred, val_T, val_Y, lo_idx=T_WLOW, hi_idx=T_WHIGH)
+    week_lam = _conformal_week_margin(val_pred, val_Y, target=week_target)
+    week_cov = _coverage(_widen_week(val_pred, week_lam), val_T, val_Y,
+                         lo_idx=T_WLOW, hi_idx=T_WHIGH)
+    log.info("Недельный коридор: сырое покрытие=%.0f%%, конформная λ=%.3f → "
+             "покрытие=%.0f%% (цель %.0f%%).",
+             week_cov_raw * 100, week_lam, week_cov[1] * 100, week_target * 100)
+
+    forecasts = _assemble(frames, panel, _widen_week(infer_pred, week_lam),
+                          per_tk_cov, global_cov,
+                          quotes=ctx.quotes, week_cov=week_cov)
 
     # Оценка максимально допустимого размера позиции по ликвидности (Max Pos ₽).
     from . import liquidity as liquidity_mod
@@ -420,7 +532,8 @@ def run(conn, quiet: bool = False) -> dict | None:
         },
     }
 
-    log.info("Прогноз готов (backend=%s, global coverage=%.0f%%).", backend, global_cov * 100)
+    log.info("Прогноз готов (backend=%s, дневное покрытие=%.0f%%, недельное=%.0f%%).",
+             backend, global_cov * 100, week_cov[1] * 100)
     if not quiet:
         _print_full(forecasts)
 

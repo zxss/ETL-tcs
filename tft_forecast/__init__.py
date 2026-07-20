@@ -17,7 +17,8 @@ Multi-Asset TFT Next-Day Range Forecast.
     (EWMA-волатильность + эмпирическое покрытие), чтобы main.py не падал.
 """
 
-from .forecast import run  # noqa: F401
+from .forecast import run, print_weekly  # noqa: F401
 from .combined import print_combined, select_top_rows, build_orders, Order  # noqa: F401
 
-__all__ = ["run", "print_combined", "select_top_rows", "build_orders", "Order"]
+__all__ = ["run", "print_weekly", "print_combined",
+           "select_top_rows", "build_orders", "Order"]

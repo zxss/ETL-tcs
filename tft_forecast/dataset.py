@@ -23,7 +23,7 @@ LOOKBACK = 30  # длина окна истории, дней
 class Panel:
     X: np.ndarray            # (N, LOOKBACK, F) признаки окна
     T: np.ndarray            # (N,) индекс тикера (static categorical)
-    Y: np.ndarray            # (N, 2) цели [next_low_pct, next_high_pct]
+    Y: np.ndarray            # (N, len(TARGET_COLS)) цели: дневные + недельные
     W: np.ndarray            # (N,) ordinal даты цели окна (для хронологического сплита, PR-7)
     Wd: np.ndarray           # (N,) день недели (0-4) ПРОГНОЗИРУЕМОГО дня (для fallback-бакетов)
     feat_mean: np.ndarray    # (F,) для масштабирования
@@ -59,8 +59,10 @@ def build_panel(frames: list[TickerFrame], lookback: int = LOOKBACK) -> Panel | 
             else np.full(len(d), np.nan)
         n = len(d)
 
-        # обучающие окна: окно [i-lookback+1 .. i], цель в строке i (next_*),
-        # пропускаем строки без цели (последняя строка) и неполные окна.
+        # обучающие окна: окно [i-lookback+1 .. i], цель в строке i (next_* и
+        # week_*), пропускаем строки без ПОЛНОГО набора целей и неполные окна.
+        # Из-за недельных целей последние WEEK_H строк не имеют цели и выпадают
+        # из обучения (≈1% окон) — цена честного multi-horizon без маскирования.
         for i in range(lookback - 1, n - 1):
             y = tgts[i]
             if not np.all(np.isfinite(y)):

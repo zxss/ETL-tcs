@@ -265,6 +265,20 @@ LIMIT_ENTRY_FRACTION: float = float(os.getenv("LIMIT_ENTRY_FRACTION", "0.2"))
 # 0.8 — консервативнее, выше шанс, что профит-заявка исполнится.
 LIMIT_TP_FRACTION: float = float(os.getenv("LIMIT_TP_FRACTION", "1.0"))
 
+# WEEK_HORIZON_DAYS — горизонт недельного прогноза (торговых дней). Модель
+# обучается на НАСТОЯЩИХ недельных целях: min(low)/max(high)/close за следующие
+# H дней (features.TARGET_COLS: week_low_pct/week_high_pct/week_total), квантили
+# предсказываются той же TFT-головой, покрытие недельного коридора калибруется
+# отдельно на held-out хвосте. Смена значения требует переобучения (следующий
+# запуск main.py / place_orders обучит с новым горизонтом автоматически).
+WEEK_HORIZON_DAYS: int = int(os.getenv("WEEK_HORIZON_DAYS", "5"))
+
+# WEEK_TARGET_COVERAGE — целевое покрытие недельного коридора. Сырые квантили
+# q0.1/q0.9 на недельном горизонте недокрывают (экстремумы за 5 дней шире, чем
+# модель им выучила) — конформная поправка расширяет коридор на held-out хвосте
+# до этой цели (см. forecast._conformal_week_margin).
+WEEK_TARGET_COVERAGE: float = float(os.getenv("WEEK_TARGET_COVERAGE", "0.80"))
+
 # ORDER_FILL_WAIT_SEC — сколько секунд ждать исполнения только что выставленных
 # лимиток ПЕРЕД привязкой стопов (в едином прогоне --top-n). При entry_frac≈0.2
 # заявки стоят у рынка и заливаются за секунды; 0 — не ждать (стопы привяжет

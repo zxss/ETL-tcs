@@ -14,7 +14,13 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
+import config
+
 log = logging.getLogger("tft.features")
+
+# Горизонт недельного прогноза (торговых дней). Модель обучается предсказывать
+# min(low)/max(high)/close за следующие WEEK_H дней НАРЯДУ с дневными целями.
+WEEK_H = max(1, int(getattr(config, "WEEK_HORIZON_DAYS", 5)))
 
 # Список time-varying числовых признаков (входы энкодера на каждый день).
 FEATURE_COLS = [
@@ -35,13 +41,20 @@ FEATURE_COLS = [
 # Целевые переменные:
 #   next_low_pct / next_high_pct — коридор (low/high завтра отн. сегодняшнего close);
 #   next_overnight / next_intraday / next_total — ПРИМИТИВНЫЕ доходности следующего
-#   дня, из которых собирается направленный PnL стратегий (см. directional.py).
+#   дня, из которых собирается направленный PnL стратегий (см. directional.py);
+#   week_low_pct / week_high_pct / week_total — НЕДЕЛЬНЫЙ горизонт (WEEK_H торговых
+#   дней вперёд): экстремумы min(low)/max(high) и итоговый close за окно. Модель
+#   предсказывает их квантили той же головой — это настоящий multi-horizon
+#   прогноз, а не масштабирование дневного по √t.
 TARGET_COLS = [
     "next_low_pct",
     "next_high_pct",
     "next_overnight",   # (next_open / today_close - 1) * 100   → long_overnight
     "next_intraday",    # (next_close / next_open - 1) * 100     → long/short intraday
     "next_total",       # (next_close / today_close - 1) * 100   → short_hold (с минусом)
+    "week_low_pct",     # (min(low[t+1..t+H]) / today_close - 1) * 100
+    "week_high_pct",    # (max(high[t+1..t+H]) / today_close - 1) * 100
+    "week_total",       # (close[t+H] / today_close - 1) * 100
 ]
 
 # Минимум наблюдений у тикера, чтобы он попал в обучающий пул.
@@ -145,6 +158,16 @@ def _build_features(df: pd.DataFrame) -> pd.DataFrame:
     d["next_overnight"] = (nopen / d["close"] - 1) * 100
     d["next_intraday"] = (nclose / nopen - 1) * 100
     d["next_total"] = (nclose / d["close"] - 1) * 100
+
+    # Недельные цели: экстремумы и close за следующие WEEK_H торговых дней.
+    # Reverse-rolling: rolling по перевёрнутому ряду в позиции t покрывает
+    # оригинальные [t .. t+H-1]; shift(-1) сдвигает окно на [t+1 .. t+H].
+    # Последние H строк остаются NaN — dataset их не берёт в обучение.
+    fwd_min_low = d["low"][::-1].rolling(WEEK_H, min_periods=WEEK_H).min()[::-1].shift(-1)
+    fwd_max_high = d["high"][::-1].rolling(WEEK_H, min_periods=WEEK_H).max()[::-1].shift(-1)
+    d["week_low_pct"] = (fwd_min_low / d["close"] - 1) * 100
+    d["week_high_pct"] = (fwd_max_high / d["close"] - 1) * 100
+    d["week_total"] = (d["close"].shift(-WEEK_H) / d["close"] - 1) * 100
 
     return d
 
