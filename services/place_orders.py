@@ -62,7 +62,8 @@ from typing import Optional
 import config
 import database
 import tft_forecast
-from services import backfill_daily, load_history, run_validation
+from services import run_validation
+from services.data_freshness import StaleDataError, ensure_fresh_data
 from services.broker import (
     BrokerClient,
     BrokerError,
@@ -81,57 +82,6 @@ _LOG_DIR = Path(__file__).resolve().parent.parent / "data" / "order_log"
 
 
 # ── Pipeline (от БД до Order) ─────────────────────────────────────────────────
-
-
-class StaleDataError(RuntimeError):
-    """Дневные свечи не догнали последнюю завершённую сессию даже после догрузки.
-    place_orders ОТКАЗывается ставить заявки — иначе прогноз считается на старых
-    данных (см. историю: last_close залипал на несколько сессий назад)."""
-
-
-_MSK = dt.timezone(dt.timedelta(hours=3))
-
-
-def ensure_fresh_data(conn, *, refresh: bool = True) -> dt.date:
-    """Догрузить дневные свечи и убедиться, что они актуальны.
-
-    1) refresh=True → load_history (инкрементально) + backfill дневных из 5M;
-    2) сверка: max(date) в market_data должен догнать последнюю ЗАВЕРШЁННУЮ
-       сессию, известную по market_data_5m (день < сегодня с 5-мин барами).
-    Возвращает актуальную last_date или бросает StaleDataError.
-    """
-    if refresh:
-        log.info("Догрузка свежих свечей (load_history + backfill)...")
-        try:
-            load_history.run(conn)
-        except Exception as e:  # noqa: BLE001 — сеть/API; решение примет гард
-            log.warning("load_history не отработал (%s) — проверю, что уже есть.", e)
-        try:
-            backfill_daily.backfill(conn, config.TICKERS)
-        except Exception as e:  # noqa: BLE001
-            log.warning("backfill дневных из 5M не отработал: %s", e)
-
-    today_msk = dt.datetime.now(_MSK).date()
-    with conn.cursor() as cur:
-        cur.execute("SELECT MAX(date) FROM market_data;")
-        md_max = cur.fetchone()[0]
-        # последняя завершённая сессия, известная 5-минуткам (день строго < сегодня)
-        cur.execute(
-            "SELECT MAX((ts AT TIME ZONE 'Europe/Moscow')::date) "
-            "FROM market_data_5m "
-            "WHERE (ts AT TIME ZONE 'Europe/Moscow')::date < %s;",
-            (today_msk,))
-        expected = cur.fetchone()[0]
-
-    if md_max is None:
-        raise StaleDataError("market_data пуста — сначала прогоните main.py.")
-    if expected is not None and md_max < expected:
-        raise StaleDataError(
-            f"дневные свечи устарели: last_date={md_max}, а последняя завершённая "
-            f"сессия={expected}. Догрузка не помогла (источник данных недоступен?). "
-            f"Торговля по устаревшему прогнозу заблокирована.")
-    log.info("Данные актуальны: market_data до %s (сессия=%s).", md_max, expected)
-    return md_max
 
 
 def compute_orders(top_n: int, position_rub: float, entry_frac: float,

@@ -23,6 +23,7 @@ from services.load_history import run
 from services import run_validation
 from services import backfill_daily
 from services import load_index
+from services.data_freshness import StaleDataError, ensure_fresh_data
 import config
 import tft_forecast
 
@@ -60,6 +61,18 @@ def main() -> None:
         except Exception as e:  # noqa: BLE001 — не валим конвейер
             log.warning("Backfill дневных из 5M завершился с ошибкой: %s", e)
 
+        # Гард свежести: свечи уже догружены выше (refresh=False — только проверка).
+        # Дашборд деньги не двигает, поэтому НЕ падаем — громко предупреждаем, что
+        # прогноз пойдёт на устаревших данных (в отличие от place_orders, который
+        # на этом блокирует торговлю).
+        try:
+            ensure_fresh_data(conn, refresh=False)
+        except StaleDataError as e:
+            log.warning("!" * 76)
+            log.warning("ВНИМАНИЕ: %s", e)
+            log.warning("Дашборд и прогноз считаются на УСТАРЕВШИХ дневных свечах.")
+            log.warning("!" * 76)
+
         combined = getattr(config, "COMBINED_TABLE", True)
 
         log.info("Данные загружены — запуск статистической валидации стратегий...")
@@ -90,6 +103,13 @@ def main() -> None:
                 )
             except Exception as e:  # noqa: BLE001 — печать не должна валить ETL
                 log.warning("Шаг сводной таблицы завершился с ошибкой: %s", e)
+
+        # Недельный прогноз диапазона по акциям (по аналогии с дневным).
+        if forecasts:
+            try:
+                tft_forecast.print_weekly(forecasts)
+            except Exception as e:  # noqa: BLE001 — печать не должна валить ETL
+                log.warning("Шаг недельной таблицы завершился с ошибкой: %s", e)
     except Exception as e:
         log.exception("Критическая ошибка: %s", e)
         sys.exit(1)
