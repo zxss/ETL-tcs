@@ -335,6 +335,9 @@ def _adjust_for_realized(infer_pred, panel, frames, ctx):
         adj[m, T_OVN, :] -= r_ovn
         adj[m, T_INTRA, :] -= r_intra
         adj[m, T_TOTAL, :] -= r_total
+        # week_total тоже задан от вчерашнего close → оставшийся недельный ход
+        # относительно ТЕКУЩЕЙ цены = прогноз минус уже реализованное движение.
+        adj[m, T_WTOTAL, :] -= r_total
     return adj
 
 
@@ -514,6 +517,12 @@ def run(conn, quiet: bool = False) -> dict | None:
 
     # Пересчёт оставшейся доходности относительно текущей цены.
     infer_pred_adj = _adjust_for_realized(infer_pred, panel, frames, ctx)
+
+    # Квантили недельной доходности (оставшейся, отн. текущей цены) — для
+    # недельного дашборда: рекомендация LONG/SHORT + ExpPnL/PProf на 5 дней.
+    for m, tk in enumerate(panel.infer_tickers):
+        if tk in forecasts:
+            forecasts[tk]["WeekTotalQ"] = [float(v) for v in infer_pred_adj[m, T_WTOTAL, :]]
 
     forecasts["__meta__"] = {
         "as_of": ctx.as_of,

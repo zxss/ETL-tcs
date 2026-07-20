@@ -515,6 +515,131 @@ def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False,
     _print_market_summary(meta)
 
 
+# ── НЕДЕЛЬНЫЙ ДАШБОРД (формат дневного) ───────────────────────────────────────
+
+_DOW_RU = ("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
+
+
+def _next_trading_day(d):
+    import datetime as dt
+    d = d + dt.timedelta(days=1)
+    while d.weekday() >= 5:          # сб/вс → следующий будний
+        d += dt.timedelta(days=1)
+    return d
+
+
+def print_weekly_dashboard(forecasts, top_n: int = 50) -> None:
+    """Недельный дашборд по аналогии с дневным «СВОДНЫЙ ДАШБОРД 2.0».
+
+    Рекомендация LONG/SHORT — по знаку медианы предсказанной 5-дневной
+    доходности (week_total, пересчитанной в ОСТАВШУЮСЯ отн. текущей цены);
+    ExpPnL5 — медиана нетто издержек, PProf — P(доходность > издержек) по
+    квантильной функции (как в дневном направленном прогнозе).
+
+    Текущий день недели учитывается дважды: (1) модель получает dow/next_dow
+    как признаки — прогноз с пятницы (окно через выходные) отличается от
+    прогноза со вторника; (2) в шапке печатается фактическое окно прогноза
+    (следующие H торговых дней от сегодняшнего дня недели).
+    """
+    import config as _cfg
+    import datetime as dt
+    from .directional import QUANTILES as _Q, _prob_above
+
+    fc = dict(forecasts or {})
+    meta = fc.pop("__meta__", None) or {}
+    cost_rt = float(getattr(_cfg, "TFT_COST_RT", 0.08))
+
+    rows = []
+    for tk, r in fc.items():
+        if not isinstance(r, dict):
+            continue
+        q = r.get("WeekTotalQ")
+        if not q or r.get("WeekLow") is None:
+            continue
+        med = float(q[len(q) // 2])
+        sign = 1.0 if med >= 0 else -1.0
+        sq = sorted(sign * float(v) for v in q)   # знаковая доходность, возр.
+        exp_net = abs(med) - cost_rt
+        prob = _prob_above(_Q, sq, cost_rt)
+        rows.append({
+            "ticker": tk,
+            "dir": "LONG" if sign > 0 else "SHORT",
+            "exp": exp_net,
+            "prob": prob,
+            "w_low": r.get("WeekLow"), "w_high": r.get("WeekHigh"),
+            "w_range": r.get("WeekRangePct"), "w_cov": r.get("WeekCoverage"),
+            "med5": med,
+            "liq_score": r.get("LiqScore"), "max_pos": r.get("MaxPos"),
+            "anchor_price": r.get("anchor_price"),
+            "price_ts": r.get("price_ts"), "last_date": r.get("last_date"),
+            "regime": r.get("Regime"), "rs": r.get("RS"),
+            "vol_spike": r.get("VolSpike"), "atr_pctl": r.get("ATRpctl"),
+        })
+    if not rows:
+        return
+    rows.sort(key=lambda x: x["exp"], reverse=True)
+    total = len(rows)
+    if top_n and top_n > 0:
+        rows = rows[:top_n]
+
+    # Окно прогноза от ТЕКУЩЕГО дня недели (следующие H торговых дней).
+    h = int(fc[rows[0]["ticker"]].get("WeekHorizon", 5))
+    as_of = meta.get("as_of") or dt.datetime.now(dt.timezone(dt.timedelta(hours=3)))
+    today = as_of.date() if hasattr(as_of, "date") else as_of
+    start = _next_trading_day(today)
+    end = start
+    for _ in range(h - 1):
+        end = _next_trading_day(end)
+
+    W = 146
+    print("\n" + "=" * W)
+    shown = len(rows)
+    title = f" НЕДЕЛЬНЫЙ ДАШБОРД (ИИ-ПРОГНОЗ НА {h} ТОРГ. ДНЕЙ) — ТОП-{shown}"
+    if shown < total:
+        title += f" из {total}"
+    print(title)
+    print(f" Сегодня {_DOW_RU[today.weekday()]} {today.strftime('%d.%m')} → окно прогноза: "
+          f"{_DOW_RU[start.weekday()]} {start.strftime('%d.%m')} — "
+          f"{_DOW_RU[end.weekday()]} {end.strftime('%d.%m')} "
+          f"(день недели — признак модели: прогноз с Пт ≠ прогнозу со Вт)")
+    print("=" * W)
+    hdr = (f" {'Ticker':<7}{'Dir':<6}{'Rec':>4}{'ExpPnL5':>9}{'PProf':>7}{'Cover':>7}"
+           f"{'Liq':>5}{'MaxPos':>9}{'Price':>10}{'PriceTime':>14}"
+           f"{'W.Low':>10}{'W.High':>10}{'Range%':>9}{'Med5d%':>8}"
+           f"{'IMOEX':>9}{'RS':>8}{'VolSpike':>10}{'ATR%':>7}")
+    print(hdr)
+    print("-" * W)
+
+    for r in rows:
+        rec = "✓" if (r["exp"] is not None and r["exp"] > 0
+                      and r["prob"] is not None and r["prob"] > 0.5) else ""
+        exp_cell = _wrap(f"{_f(r['exp'], '+.2f'):>8}%", _pnl_color(r["exp"]))
+        prob_txt = f"{r['prob'] * 100:.0f}%" if r["prob"] is not None else "—"
+        prob_cell = _wrap(f"{prob_txt:>7}", _prob_color(r["prob"]))
+        cov = r["w_cov"]
+        cov_txt = f"{cov * 100:.0f}%" if cov is not None and cov == cov else "—"
+        reg_cell = _wrap(f"{(r['regime'] or '—'):>9}", _regime_color(r["regime"]))
+        rng = r["w_range"]
+        rng_cell = f"{_f(rng, '.2f'):>8}%" if rng is not None else f"{'—':>9}"
+        print(
+            f" {r['ticker']:<7}{r['dir']:<6}{rec:>4}{exp_cell}{prob_cell}{cov_txt:>7}"
+            f"{_f(r['liq_score'], '.0f'):>5}{_money(r['max_pos']):>9}"
+            f"{_f(r['anchor_price'], '.2f'):>10}{_price_time_txt(r):>14}"
+            f"{_f(r['w_low'], '.2f'):>10}{_f(r['w_high'], '.2f'):>10}{rng_cell}"
+            f"{_f(r['med5'], '+.2f'):>7}%{reg_cell}{_rs_txt(r['rs']):>8}"
+            f"{_vol_txt(r['vol_spike']):>10}{_atr_txt(r['atr_pctl']):>7}"
+        )
+    print("=" * W)
+    print("  Dir/Rec — рекомендация по знаку медианы 5-дневной доходности; "
+          "✓ = ExpPnL5>0 и PProf>50%.")
+    print("  ExpPnL5 — медианная ОСТАВШАЯСЯ доходность за окно (нетто издержек, "
+          "отн. текущей цены); Med5d% — то же брутто.")
+    print("  W.Low/W.High — недельный коридор (конформно калиброван), Cover — его "
+          "покрытие на held-out; остальные столбцы — как в дневном дашборде.")
+    print("  ВНИМАНИЕ: недельный прогноз не проходил контур валидации стратегий "
+          "(White RC/PBO/FDR) — это сырой прогноз модели, не подтверждённый edge.")
+
+
 def _print_legend():
     print("\n  РАСШИФРОВКА СТОЛБЦОВ")
     print("  " + "-" * 74)

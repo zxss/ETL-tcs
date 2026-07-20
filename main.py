@@ -104,10 +104,12 @@ def main() -> None:
             except Exception as e:  # noqa: BLE001 — печать не должна валить ETL
                 log.warning("Шаг сводной таблицы завершился с ошибкой: %s", e)
 
-        # Недельный прогноз диапазона по акциям (по аналогии с дневным).
+        # Недельный дашборд (формат дневного): рекомендация LONG/SHORT из
+        # 5-дневных квантилей, окно прогноза от текущего дня недели.
         if forecasts:
             try:
-                tft_forecast.print_weekly(forecasts)
+                tft_forecast.print_weekly_dashboard(
+                    forecasts, top_n=getattr(config, "DASHBOARD_TOP_N", 50))
             except Exception as e:  # noqa: BLE001 — печать не должна валить ETL
                 log.warning("Шаг недельной таблицы завершился с ошибкой: %s", e)
     except Exception as e:
