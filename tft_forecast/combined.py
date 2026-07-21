@@ -879,26 +879,48 @@ class Order:
                 and self.quantity_lots is not None and self.quantity_lots > 0)
 
 
+def _risk_parity_alloc(geoms: list[dict], budget_rub: float) -> list[float]:
+    """Риск-паритетное распределение бюджета: вес ∝ 1/стоп%, чтобы каждая
+    позиция несла ОДИНАКОВЫЙ рублёвый риск (position_value × стоп% = const).
+
+    Волатильные бумаги (широкий стоп) получают меньше денег, тихие — больше.
+    Веса считаются только по бумагам с валидной геометрией (entry>0, стоп%>0,
+    торгуется); затем каждая аллокация ограничивается лимитом ликвидности
+    MaxPos (не заходим в рынок больше, чем он переваривает)."""
+    inv = [(1.0 / g["stop_pct"]) if g["sizable"] else 0.0 for g in geoms]
+    tot = sum(inv)
+    if tot <= 0:
+        return [0.0] * len(geoms)
+    alloc = [budget_rub * w / tot for w in inv]
+    for i, g in enumerate(geoms):        # потолок ликвидности
+        mp = g.get("max_pos")
+        if mp:
+            alloc[i] = min(alloc[i], mp)
+    return alloc
+
+
 def build_orders(top: list[dict], position_rub: float,
-                 entry_frac: float, tp_frac: float = 1.0) -> list[Order]:
+                 entry_frac: float, tp_frac: float = 1.0,
+                 budget_rub: float | None = None) -> list[Order]:
     """Чистая функция: top-N рейтинга → список структурированных Order.
 
     Используется и принтером `_print_order_instructions` (для печати таблицы),
-    и services/place_orders.py (для отправки в T-Invest sandbox). Логика
-    расчёта ТА ЖЕ (никаких расхождений между «что показано» и «что отправлено»).
+    и services/place_orders.py (для отправки в T-Invest). Логика расчёта ТА ЖЕ
+    (никаких расхождений между «что показано» и «что отправлено»).
 
-    Логика:
-      Тип       — Лимитная (LIMIT).
-      Цена входа — ВНУТРИ прогнозного коридора, ближе к экстремуму в свою
-                  пользу: SHORT — к F.High, LONG — к F.Low (см. _limit_entry_price).
-      Стоп-цена  — от ВХОДА (не от anchor), чтобы сохранить риск ≈ Downside%:
-        LONG  → entry × (1 + Down/100)   [Down < 0 → стоп ниже входа]
-        SHORT → entry × (1 − Down/100)   [Down < 0 → стоп выше входа]
-      Объём лотов → floor(position_rub / (entry × lot_size)), мин. 1 лот.
-      Сумма ₽    → лотов × lot_size × entry.
+    Размер позиции:
+      • budget_rub задан → РИСК-ПАРИТЕТ: бюджет делится по бумагам так, чтобы
+        рублёвый риск (объём × стоп%) был одинаков; вес ∝ 1/стоп%. Если на
+        бумагу не хватает даже 1 лота — она пропускается (0 лотов).
+      • иначе → фикс position_rub на бумагу, минимум 1 лот (прежнее поведение).
+
+    Прочее (цена входа в коридоре, стоп от входа, take-profit по диапазону) —
+    без изменений.
     """
     unavail = _unavailable_tickers()
-    orders: list[Order] = []
+
+    # ── проход 1: геометрия входа/стопа/тейка на каждую бумагу
+    geoms: list[dict] = []
     for r in top:
         anchor = r.get("anchor_price")
         down   = r.get("down")
@@ -910,19 +932,11 @@ def build_orders(top: list[dict], position_rub: float,
         na = tk in unavail
 
         entry, _src = _limit_entry_price(r["direction"], anchor, f_low, f_high, entry_frac)
-
+        better = None
         if entry and anchor and anchor > 0:
             better = (entry - anchor) / anchor * 100.0
             if lng:
                 better = -better
-        else:
-            better = None
-
-        if entry and entry > 0 and not na:
-            lots  = max(1, int(position_rub / (entry * lot)))
-            total = lots * lot * entry
-        else:
-            lots = total = None
 
         if entry and entry > 0 and down is not None:
             stop_p   = entry * (1.0 + down / 100.0) if lng else entry * (1.0 - down / 100.0)
@@ -930,17 +944,44 @@ def build_orders(top: list[dict], position_rub: float,
         else:
             stop_p = stop_pct = None
 
-        # take-profit от диапазона прогноза (противоположная входу граница)
         tp_p = _take_profit_price(r["direction"], entry, f_low, f_high, tp_frac)
         tp_pct = (abs(tp_p - entry) / entry * 100.0) if (tp_p and entry) else None
 
+        geoms.append({
+            "r": r, "tk": tk, "lng": lng, "lot": lot, "lot_known": lot_known,
+            "na": na, "anchor": anchor, "down": down, "f_low": f_low, "f_high": f_high,
+            "entry": entry, "better": better, "stop_p": stop_p, "stop_pct": stop_pct,
+            "tp_p": tp_p, "tp_pct": tp_pct, "max_pos": r.get("max_pos"),
+            # можно ли считать риск-паритет: есть вход, положительный стоп%, торгуется
+            "sizable": bool(entry and entry > 0 and stop_pct and not na),
+        })
+
+    # ── проход 2: размеры позиций
+    use_budget = bool(budget_rub and budget_rub > 0)
+    alloc = _risk_parity_alloc(geoms, budget_rub) if use_budget else [None] * len(geoms)
+
+    orders: list[Order] = []
+    for i, g in enumerate(geoms):
+        entry, lot, na = g["entry"], g["lot"], g["na"]
+        if entry and entry > 0 and not na:
+            if use_budget:
+                lots = int(alloc[i] / (entry * lot)) if g["sizable"] else 0
+                # риск-паритет не форсирует лот: не хватило на 1 лот → пропуск
+                total = (lots * lot * entry) if lots > 0 else None
+                lots = lots if lots > 0 else None
+            else:
+                lots = max(1, int(position_rub / (entry * lot)))
+                total = lots * lot * entry
+        else:
+            lots = total = None
+
         orders.append(Order(
-            ticker=tk, strategy=r["strategy"], direction=r["direction"],
-            anchor_price=anchor, f_low=f_low, f_high=f_high, down_pct=down,
-            entry_price=entry, better_pct=better,
-            stop_price=stop_p, stop_pct=stop_pct,
-            tp_price=tp_p, tp_pct=tp_pct,
-            lot_size=lot, lot_known=lot_known,
+            ticker=g["tk"], strategy=g["r"]["strategy"], direction=g["r"]["direction"],
+            anchor_price=g["anchor"], f_low=g["f_low"], f_high=g["f_high"], down_pct=g["down"],
+            entry_price=entry, better_pct=g["better"],
+            stop_price=g["stop_p"], stop_pct=g["stop_pct"],
+            tp_price=g["tp_p"], tp_pct=g["tp_pct"],
+            lot_size=lot, lot_known=g["lot_known"],
             quantity_lots=lots, total_rub=total,
             unavailable=na,
         ))

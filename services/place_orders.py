@@ -86,7 +86,8 @@ _LOG_DIR = Path(__file__).resolve().parent.parent / "data" / "order_log"
 
 def compute_orders(top_n: int, position_rub: float, entry_frac: float,
                    *, tp_frac: float = 1.0, quiet: bool = True,
-                   refresh: bool = True) -> tuple[list[Order], dict]:
+                   refresh: bool = True,
+                   budget_rub: float | None = None) -> tuple[list[Order], dict]:
     """От подключения к БД до готового списка Order (+meta для журнала).
     Перед расчётом догружает свечи и проверяет их свежесть (StaleDataError)."""
     conn = database.get_connection()
@@ -103,9 +104,11 @@ def compute_orders(top_n: int, position_rub: float, entry_frac: float,
         val_rows, forecasts, universe, config.VALIDATION_STRATS,
         show_all=getattr(config, "SHOW_ALL_INTRADAY", False), top_n=top_n,
     )
-    orders = build_orders(top_rows, position_rub, entry_frac, tp_frac=tp_frac)
+    orders = build_orders(top_rows, position_rub, entry_frac, tp_frac=tp_frac,
+                          budget_rub=budget_rub)
     meta.update(forecast_universe=len(universe), top_n_requested=top_n,
-                orders_built=len(orders), data_last_date=str(last_date))
+                orders_built=len(orders), data_last_date=str(last_date),
+                budget_rub=budget_rub)
     return orders, meta
 
 
@@ -113,31 +116,47 @@ def compute_orders(top_n: int, position_rub: float, entry_frac: float,
 
 
 def print_summary(account_id: str, env: str, orders: list[Order],
-                  position_rub: float) -> None:
+                  position_rub: float, budget_rub: float | None = None) -> None:
     if env == "PROD":
         print("\n" + "!" * 88)
         print(f"!!  ВНИМАНИЕ: БОЕВОЙ КОНТУР — РЕАЛЬНЫЕ ДЕНЬГИ. Счёт №{account_id}")
         print("!" * 88)
     else:
         print(f"\nКонтур: {env} | Счёт №{account_id}")
-    print("-" * 88)
+    print("-" * 100)
+    use_budget = bool(budget_rub and budget_rub > 0)
     for i, o in enumerate(orders, 1):
         side  = "Покупка (LONG)" if o.direction == "LONG" else "Продажа (SHORT)"
         entry = f"{o.entry_price:.4f}" if o.entry_price else "—"
         stop  = f"{o.stop_price:.4f}"  if o.stop_price  else "—"
         tp    = f"{o.tp_price:.4f}"    if o.tp_price   else "—"
         qty   = o.quantity_lots if o.quantity_lots is not None else "—"
+        # рублёвый риск позиции = сумма × стоп% (для контроля риск-паритета)
+        risk = (o.total_rub * o.stop_pct / 100.0
+                if (o.total_rub and o.stop_pct) else None)
+        sum_s  = f"{o.total_rub:,.0f}₽" if o.total_rub else "—"
+        risk_s = f"риск {risk:,.0f}₽" if risk is not None else "риск —"
         marks = []
         if o.unavailable:   marks.append("N/A")
         if not o.lot_known: marks.append("LOT?")
         if o.tp_price is None: marks.append("без TP")
         flag = f"  [{'/'.join(marks)}]" if marks else ""
-        print(f"{i:>2}. {o.ticker:<6} | {side:<16} | Кол-во: {qty} лот. | "
-              f"Вход: {entry} | Стоп: {stop} | Профит: {tp}{flag}")
-    print("-" * 88)
+        print(f"{i:>2}. {o.ticker:<6} | {side:<16} | {qty} лот | сумма {sum_s:>11} | "
+              f"{risk_s:>13} | Вход {entry} | Стоп {stop} | Профит {tp}{flag}")
+    print("-" * 100)
     placeable = sum(1 for o in orders if o.is_placeable)
     print(f"К выставлению: {placeable}. Будет пропущено: {len(orders) - placeable}.")
-    print(f"Целевой размер позиции: {position_rub:,.0f} ₽ на бумагу.")
+    if use_budget:
+        spent = sum(o.total_rub for o in orders if o.total_rub)
+        risks = [o.total_rub * o.stop_pct / 100.0
+                 for o in orders if o.total_rub and o.stop_pct]
+        print(f"Бюджет: {budget_rub:,.0f} ₽ | задействовано: {spent:,.0f} ₽ "
+              f"({spent / budget_rub * 100:.0f}%) | остаток: {budget_rub - spent:,.0f} ₽.")
+        if risks:
+            print(f"Режим РИСК-ПАРИТЕТ: риск на позицию {min(risks):,.0f}–{max(risks):,.0f} ₽ "
+                  f"(равный вклад в просадку; вес ∝ 1/стоп%).")
+    else:
+        print(f"Целевой размер позиции: {position_rub:,.0f} ₽ на бумагу.")
     print("Стоп (STOP_LOSS) и профит (TAKE_PROFIT) ставятся фазой --attach-stops "
           "по факту исполнения входа.")
 
@@ -847,6 +866,10 @@ def main(argv: Optional[list[str]] = None) -> int:
                    default=int(getattr(config, "BEST_TRADES_TOP_N", 10)))
     p.add_argument("--position", type=float,
                    default=float(getattr(config, "BEST_TRADES_POSITION_RUB", 10_000.0)))
+    p.add_argument("--budget", type=float, default=None,
+                   help="Общий бюджет в ТЫСЯЧАХ ₽ (--budget 100 = 100 000 ₽). "
+                        "Распределяется по бумагам РИСК-ПАРИТЕТОМ (вес ∝ 1/стоп%%), "
+                        "перекрывает --position.")
     p.add_argument("--entry-frac", type=float,
                    default=float(getattr(config, "LIMIT_ENTRY_FRACTION", 0.8)))
     p.add_argument("--tp-frac", type=float,
@@ -890,10 +913,12 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         # ── ФАЗА 1 ──
         log.info("Запуск pipeline (валидация + forecast)...")
+        budget_rub = args.budget * 1000.0 if args.budget and args.budget > 0 else None
         try:
             orders, _meta = compute_orders(args.top_n, args.position, args.entry_frac,
                                            tp_frac=args.tp_frac,
-                                           refresh=not args.skip_refresh)
+                                           refresh=not args.skip_refresh,
+                                           budget_rub=budget_rub)
         except StaleDataError as e:
             print(f"[ОТКАЗ] Устаревшие данные: {e}", file=sys.stderr)
             print("        Прогоните `python3 main.py` и повторите.", file=sys.stderr)
@@ -902,7 +927,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             print("Нет торговых сигналов.")
             return 0
 
-        print_summary(account_id, env, orders, args.position)
+        print_summary(account_id, env, orders, args.position, budget_rub=budget_rub)
 
         # ── СИНХРОНИЗАЦИЯ (по умолчанию): закрыть выпавшие сигналы + выставить новые
         if not args.place_only:
