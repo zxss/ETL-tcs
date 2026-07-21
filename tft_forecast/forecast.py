@@ -304,22 +304,35 @@ def _assemble(frames, panel, infer_pred, per_tk_cov, global_cov, quotes=None,
 
 # ── Реализованное движение → пересчёт оставшейся доходности ────────────────────
 
-def _adjust_for_realized(infer_pred, panel, frames, ctx):
+def _session_tau(as_of) -> float:
+    """Доля прошедшей основной сессии (10:00–18:40 MSK) на момент запуска."""
+    from .intraday import SESSION_END_MIN, SESSION_START_MIN
+    if as_of is None:
+        return 0.5
+    minutes = as_of.hour * 60 + as_of.minute
+    span = max(1, SESSION_END_MIN - SESSION_START_MIN)
+    return float(min(max((minutes - SESSION_START_MIN) / span, 0.0), 1.0))
+
+
+def _adjust_for_realized(infer_pred, panel, frames, ctx, intraday_model=None,
+                         sigma_by_tk=None):
     """
     Когда рынок открыт и часть дневного хода уже отработана, направленный PnL
-    должен отражать ОСТАВШУЮСЯ доходность. Для каждого примитива вычитаем уже
-    реализованную часть из предсказанных квантилей:
+    должен отражать ОСТАВШУЮСЯ доходность.
 
-        overnight_remaining = predicted_overnight - (today_open/yest_close - 1)
-        intraday_remaining  = predicted_intraday  - (last_price/today_open - 1)
-        total_remaining     = predicted_total     - (last_price/yest_close - 1)
+    intraday/total: если задана обученная поправка (intraday_model, Шаг 1) —
+    остаток сейчас→close берётся из неё (функция времени запуска τ и
+    реализованного r_so_far, из 5M). Иначе фолбэк на арифметику
+    remaining = predicted − realized.
 
-    Так после сильного движения лучшая дневная стратегия (long/short) может
-    автоматически смениться. Возвращает новый массив (копию) той же формы.
+    overnight/week_total: арифметика (вычитание реализованного) — Шаг 1 их
+    не трогает. Возвращает новый массив (копию) той же формы.
     """
     adj = infer_pred.copy()
     if not ctx or not ctx.market_open or not ctx.quotes:
         return adj
+    sigma_by_tk = sigma_by_tk or {}
+    tau = _session_tau(getattr(ctx, "as_of", None))
     fr_by_tk = {f.ticker: f for f in frames}
     for m, tk in enumerate(panel.infer_tickers):
         q = ctx.quotes.get(tk)
@@ -332,12 +345,22 @@ def _adjust_for_realized(infer_pred, panel, frames, ctx):
         r_ovn = (to / yest_close - 1.0) * 100.0 if to else 0.0
         r_intra = (last_price / to - 1.0) * 100.0 if to else 0.0
         r_total = (last_price / yest_close - 1.0) * 100.0
+
         adj[m, T_OVN, :] -= r_ovn
-        adj[m, T_INTRA, :] -= r_intra
-        adj[m, T_TOTAL, :] -= r_total
-        # week_total тоже задан от вчерашнего close → оставшийся недельный ход
-        # относительно ТЕКУЩЕЙ цены = прогноз минус уже реализованное движение.
+        # week_total: остаток недельного хода отн. текущей цены (арифметика)
         adj[m, T_WTOTAL, :] -= r_total
+
+        learned = None
+        if intraday_model is not None and to:
+            learned = intraday_model.remaining_quantiles(
+                tau, r_intra, sigma_by_tk.get(tk, 0.0))
+        if learned is not None:
+            # остаток сейчас→close из обученной поправки (уже отн. текущей цены)
+            adj[m, T_INTRA, :] = learned
+            adj[m, T_TOTAL, :] = learned
+        else:
+            adj[m, T_INTRA, :] -= r_intra
+            adj[m, T_TOTAL, :] -= r_total
     return adj
 
 
@@ -515,8 +538,33 @@ def run(conn, quiet: bool = False) -> dict | None:
                 elif tm.atr_pctl > 85:
                     forecasts[tk]["MaxPos"] = mp / 2.0
 
+    # Обучаемая внутридневная поправка (Шаг 1): при открытом рынке остаток
+    # дневного хода — функция времени запуска τ и реализованного движения.
+    intraday_model = None
+    sigma_by_tk: dict[str, float] = {}
+    if getattr(config, "INTRADAY_ADJUST", True) and ctx.market_open and ctx.quotes:
+        for f in frames:
+            s = f.df["ret_std20"].dropna()
+            if len(s):
+                sigma_by_tk[f.ticker] = float(abs(s.iloc[-1]))
+        try:
+            from . import intraday as intraday_mod
+            intraday_model = intraday_mod.fit(
+                conn, [f.ticker for f in frames], sigma_by_tk,
+                lookback_days=int(getattr(config, "INTRADAY_LOOKBACK_DAYS", 60)),
+                n_buckets=int(getattr(config, "INTRADAY_BUCKETS", 6)))
+            if intraday_model is not None:
+                intraday_mod.log_report(intraday_model)
+                if not intraday_model.apply:   # авто-гард: нет OOS-сигнала
+                    intraday_model = None      # → арифметика
+        except Exception as e:  # noqa: BLE001 — поправка опциональна, не валим прогноз
+            log.warning("Внутридневная поправка не обучилась (%s) — арифметика.", e)
+            intraday_model = None
+
     # Пересчёт оставшейся доходности относительно текущей цены.
-    infer_pred_adj = _adjust_for_realized(infer_pred, panel, frames, ctx)
+    infer_pred_adj = _adjust_for_realized(infer_pred, panel, frames, ctx,
+                                          intraday_model=intraday_model,
+                                          sigma_by_tk=sigma_by_tk)
 
     # Квантили недельной доходности (оставшейся, отн. текущей цены) — для
     # недельного дашборда: рекомендация LONG/SHORT + ExpPnL/PProf на 5 дней.

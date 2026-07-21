@@ -279,6 +279,15 @@ WEEK_HORIZON_DAYS: int = int(os.getenv("WEEK_HORIZON_DAYS", "5"))
 # до этой цели (см. forecast._conformal_week_margin).
 WEEK_TARGET_COVERAGE: float = float(os.getenv("WEEK_TARGET_COVERAGE", "0.80"))
 
+# INTRADAY_ADJUST — обучаемая внутридневная поправка (Шаг 1): при открытом рынке
+# остаток дневного хода (сейчас→close) предсказывается моделью от времени запуска
+# τ и реализованного движения (из market_data_5m), а не арифметикой remaining =
+# predicted − realized. =0 → прежняя арифметика. Валидация покрытия по времени
+# суток пишется в лог (см. intraday.log_report).
+INTRADAY_ADJUST: bool = os.getenv("INTRADAY_ADJUST", "1") not in ("0", "false", "False")
+INTRADAY_LOOKBACK_DAYS: int = int(os.getenv("INTRADAY_LOOKBACK_DAYS", "60"))
+INTRADAY_BUCKETS: int = int(os.getenv("INTRADAY_BUCKETS", "6"))
+
 # ORDER_FILL_WAIT_SEC — сколько секунд ждать исполнения только что выставленных
 # лимиток ПЕРЕД привязкой стопов (в едином прогоне --top-n). При entry_frac≈0.2
 # заявки стоят у рынка и заливаются за секунды; 0 — не ждать (стопы привяжет
