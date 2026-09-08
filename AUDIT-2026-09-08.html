@@ -1,0 +1,973 @@
+<title>Разбор контура ETL-tcs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;700&family=Golos+Text:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+
+<style>
+:root{
+  --paper:#F0F2F1;
+  --surface:#FFFFFF;
+  --surface-2:#E7EBE9;
+  --ink:#131A1D;
+  --ink-2:#41504F;
+  --ink-3:#6E7C7A;
+  --rule:#D2D9D6;
+  --rule-soft:#E2E7E5;
+  --up:#0B6B4B;
+  --up-soft:#DCEDE5;
+  --down:#A72B24;
+  --down-soft:#F6E0DE;
+  --warn:#9A6A0E;
+  --warn-soft:#F5E8CE;
+  --info:#1F5A78;
+  --info-soft:#DDEAF1;
+  --accent:#0B6B4B;
+  --shadow:0 1px 2px rgba(19,26,29,.05), 0 8px 24px -16px rgba(19,26,29,.28);
+
+  --f-display:"Bitter", Georgia, "Times New Roman", serif;
+  --f-body:"Golos Text", "Helvetica Neue", Arial, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1416;
+    --surface:#161D1F;
+    --surface-2:#1E2629;
+    --ink:#E6EDEA;
+    --ink-2:#AFBCB8;
+    --ink-3:#7D8C89;
+    --rule:#2A3437;
+    --rule-soft:#212A2C;
+    --up:#4FBE92;
+    --up-soft:#12312A;
+    --down:#E4756C;
+    --down-soft:#361F1E;
+    --warn:#D9A94A;
+    --warn-soft:#332916;
+    --info:#6FADCC;
+    --info-soft:#152B36;
+    --accent:#4FBE92;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -18px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1416;
+  --surface:#161D1F;
+  --surface-2:#1E2629;
+  --ink:#E6EDEA;
+  --ink-2:#AFBCB8;
+  --ink-3:#7D8C89;
+  --rule:#2A3437;
+  --rule-soft:#212A2C;
+  --up:#4FBE92;
+  --up-soft:#12312A;
+  --down:#E4756C;
+  --down-soft:#361F1E;
+  --warn:#D9A94A;
+  --warn-soft:#332916;
+  --info:#6FADCC;
+  --info-soft:#152B36;
+  --accent:#4FBE92;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -18px rgba(0,0,0,.9);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--f-body);
+  font-size:15px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px 96px}
+
+/* ── Шапка ───────────────────────────────────────────── */
+header.masthead{
+  border-bottom:2px solid var(--ink);
+  padding:44px 0 18px;
+  margin-bottom:36px;
+}
+.eyebrow{
+  font-family:var(--f-mono);
+  font-size:11px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--ink-3);
+  display:flex;
+  flex-wrap:wrap;
+  gap:0 18px;
+  margin-bottom:14px;
+}
+h1{
+  font-family:var(--f-display);
+  font-weight:700;
+  font-size:clamp(2rem,4.6vw,2.85rem);
+  line-height:1.08;
+  letter-spacing:-.015em;
+  margin:0 0 12px;
+  text-wrap:balance;
+}
+.standfirst{
+  font-size:1.02rem;
+  color:var(--ink-2);
+  max-width:64ch;
+  margin:0;
+}
+
+/* ── Паспорт ─────────────────────────────────────────── */
+.passport{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(148px,1fr));
+  gap:1px;
+  background:var(--rule);
+  border:1px solid var(--rule);
+  margin:32px 0 8px;
+}
+.passport div{background:var(--surface);padding:14px 16px}
+.passport dt{
+  font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);margin:0 0 6px;
+}
+.passport dd{
+  margin:0;font-family:var(--f-mono);font-weight:600;font-size:1.28rem;
+  font-variant-numeric:tabular-nums;line-height:1.15;
+}
+.passport dd small{display:block;font-family:var(--f-body);font-weight:400;
+  font-size:11.5px;color:var(--ink-3);letter-spacing:0;margin-top:3px}
+
+/* ── Секции ──────────────────────────────────────────── */
+section{margin-top:56px;scroll-margin-top:20px}
+h2{
+  font-family:var(--f-display);font-weight:700;font-size:1.42rem;
+  letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance;
+  display:flex;align-items:baseline;gap:12px;
+}
+h2 .num{
+  font-family:var(--f-mono);font-size:.72rem;font-weight:600;
+  color:var(--accent);letter-spacing:.06em;
+}
+h2 + .lede{color:var(--ink-2);max-width:70ch;margin:0 0 22px}
+h3{
+  font-family:var(--f-body);font-weight:600;font-size:1rem;
+  margin:32px 0 10px;letter-spacing:.005em;
+}
+h4{
+  font-family:var(--f-mono);font-weight:600;font-size:11.5px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);
+  margin:26px 0 8px;
+}
+p{max-width:72ch}
+code{
+  font-family:var(--f-mono);font-size:.855em;
+  background:var(--surface-2);padding:.1em .34em;border-radius:2px;
+}
+
+/* ── Таблицы ─────────────────────────────────────────── */
+.tw{overflow-x:auto;border:1px solid var(--rule);background:var(--surface);margin:14px 0}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{
+  font-family:var(--f-mono);font-size:10.5px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-3);text-align:left;
+  padding:10px 14px;border-bottom:1px solid var(--rule);
+  background:var(--surface-2);white-space:nowrap;font-weight:600;
+}
+td{padding:9px 14px;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+tbody tr:last-child td{border-bottom:none}
+td.k{font-family:var(--f-mono);font-size:12.2px;white-space:nowrap;font-weight:600}
+td.v{font-family:var(--f-mono);font-size:12.2px;font-variant-numeric:tabular-nums;
+  white-space:nowrap;color:var(--ink-2)}
+td.n{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.tw table caption{
+  caption-side:top;text-align:left;padding:11px 14px 10px;
+  font-family:var(--f-mono);font-size:11px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-2);
+  border-bottom:1px solid var(--rule);background:var(--surface-2);
+}
+
+/* ── Пилюли ──────────────────────────────────────────── */
+.pill{
+  display:inline-block;font-family:var(--f-mono);font-size:10.5px;font-weight:600;
+  letter-spacing:.07em;text-transform:uppercase;padding:2px 7px;
+  border-radius:2px;white-space:nowrap;
+}
+.p-crit{background:var(--down-soft);color:var(--down)}
+.p-high{background:var(--warn-soft);color:var(--warn)}
+.p-med{background:var(--info-soft);color:var(--info)}
+.p-low{background:var(--surface-2);color:var(--ink-3)}
+.p-ok{background:var(--up-soft);color:var(--up)}
+
+/* ── Находки ─────────────────────────────────────────── */
+.finding{
+  display:grid;grid-template-columns:44px 1fr;gap:0;
+  background:var(--surface);border:1px solid var(--rule);
+  margin-bottom:-1px;
+}
+.finding .rail{
+  border-right:1px solid var(--rule);
+  display:flex;align-items:flex-start;justify-content:center;
+  padding-top:15px;font-family:var(--f-mono);font-size:12px;font-weight:600;
+  color:var(--ink-3);font-variant-numeric:tabular-nums;
+}
+.f-crit .rail{background:var(--down-soft);color:var(--down)}
+.f-high .rail{background:var(--warn-soft);color:var(--warn)}
+.f-med  .rail{background:var(--info-soft);color:var(--info)}
+.f-low  .rail{background:var(--surface-2)}
+.finding .body{padding:14px 18px 16px}
+.finding .head{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:5px}
+.finding .ttl{font-weight:600;font-size:15px}
+.finding p{margin:0 0 8px;font-size:13.8px;color:var(--ink-2);max-width:76ch}
+.finding p:last-child{margin-bottom:0}
+.finding .where{
+  font-family:var(--f-mono);font-size:11.5px;color:var(--ink-3);
+  display:block;margin-top:9px;padding-top:8px;border-top:1px dotted var(--rule);
+}
+.finding .fix{color:var(--ink);font-weight:500}
+.finding .fix::before{content:"→ ";color:var(--accent);font-weight:700}
+
+/* ── Диаграмма ───────────────────────────────────────── */
+.diagram{
+  border:1px solid var(--rule);background:var(--surface);
+  padding:20px 16px;margin:16px 0;overflow-x:auto;
+}
+.diagram svg{display:block;min-width:820px;width:100%;height:auto}
+
+/* ── Врезка ──────────────────────────────────────────── */
+.note{
+  border-left:3px solid var(--accent);
+  background:var(--surface);
+  padding:13px 18px;margin:18px 0;
+  font-size:13.8px;color:var(--ink-2);
+}
+.note strong{color:var(--ink)}
+
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin:16px 0}
+.panel{border:1px solid var(--rule);background:var(--surface);padding:16px 18px}
+.panel h4{margin-top:0}
+.panel ul{margin:0;padding-left:18px;font-size:13.6px;color:var(--ink-2)}
+.panel li{margin-bottom:5px}
+.panel li:last-child{margin-bottom:0}
+
+ul.plain{list-style:none;padding:0;margin:12px 0}
+ul.plain li{
+  padding:8px 0 8px 0;border-bottom:1px solid var(--rule-soft);
+  font-size:13.8px;color:var(--ink-2);
+}
+ul.plain li:last-child{border-bottom:none}
+ul.plain b{color:var(--ink);font-weight:600}
+
+footer{
+  margin-top:64px;padding-top:18px;border-top:1px solid var(--rule);
+  font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;
+  color:var(--ink-3);text-transform:uppercase;
+  display:flex;flex-wrap:wrap;gap:0 20px;
+}
+@media (prefers-reduced-motion:no-preference){
+  a{transition:color .15s}
+}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">
+    <span>Технический аудит</span>
+    <span>~/my-project/etl-tcs</span>
+    <span>branch main · 5e96192</span>
+    <span>08.09.2026</span>
+  </div>
+  <h1>Разбор контура ETL-tcs</h1>
+  <p class="standfirst">Загрузка биржевых данных MOEX через T-Invest API, статистическая валидация стратегий, TFT-прогноз диапазона и автоматическое выставление заявок — четыре контура в одном репозитории. Ниже: что и как настроено, в каком состоянии данные, и 19 находок аудита.</p>
+</header>
+
+<dl class="passport">
+  <div><dt>Python</dt><dd>11 029<small>строк, 56 файлов</small></dd></div>
+  <div><dt>Дневные свечи</dt><dd>33 079<small>48 тикеров</small></dd></div>
+  <div><dt>5-мин свечи</dt><dd>2 495 842<small>46 тикеров</small></dd></div>
+  <div><dt>Размер БД</dt><dd>528 MB<small>PostgreSQL 18.4</small></dd></div>
+  <div><dt>Глубина 1D</dt><dd>28 мес<small>21.05.2024 → 07.09.2026</small></dd></div>
+  <div><dt>Параметров</dt><dd>68<small>в config.py</small></dd></div>
+  <div><dt>Тестов</dt><dd>0<small>нет CI</small></dd></div>
+  <div><dt>Находок</dt><dd>19<small>3 критичных</small></dd></div>
+</dl>
+
+<!-- ═══ 1 ═══ -->
+<section id="what">
+  <h2><span class="num">01</span> Что это за сервис</h2>
+  <p class="lede">Формально в README описан ETL на 7 тикеров. Фактически репозиторий содержит пять функциональных контуров, четыре из которых живые, а пятый выключен комментированием кода.</p>
+
+  <div class="tw">
+  <table>
+    <caption>Контуры и точки входа</caption>
+    <thead><tr><th>Контур</th><th>Точка входа</th><th>Что делает</th><th>Статус</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="k">ETL</td>
+        <td class="v">main.py</td>
+        <td>Инкрементальная загрузка 1D и 5M свечей по 47 акциям + IMOEX через REST T-Invest, upsert в PostgreSQL, реконструкция дневного бара из 5-минуток, гард свежести.</td>
+        <td><span class="pill p-ok">Работает</span></td>
+      </tr>
+      <tr>
+        <td class="k">Валидация</td>
+        <td class="v">services/<wbr>run_validation.py</td>
+        <td>Выгрузка свечей в CSV и прогон статистического контура: White RC, SPA, PBO (CSCV), BH-FDR, Ljung-Box, Hurst, энтропия, Probability of Ruin, walk-forward OOS → вердикт.</td>
+        <td><span class="pill p-ok">Работает</span></td>
+      </tr>
+      <tr>
+        <td class="k">Прогноз</td>
+        <td class="v">tft_forecast/</td>
+        <td>Один Temporal Fusion Transformer на всю кросс-секцию рынка: квантильный прогноз коридора цены на день и на неделю + направленный PnL по стратегиям. Без torch — калиброванный статистический baseline.</td>
+        <td><span class="pill p-ok">Работает</span></td>
+      </tr>
+      <tr>
+        <td class="k">Торговля</td>
+        <td class="v">services/<wbr>place_orders.py</td>
+        <td>Синхронизация портфеля к сигналам дашборда: закрытие выпавших позиций, снятие неактуальных заявок, лимитки внутри прогнозного коридора, ожидание заливки, привязка SL/TP, проверка защищённости.</td>
+        <td><span class="pill p-crit">PROD по умолчанию</span></td>
+      </tr>
+      <tr>
+        <td class="k">Новости</td>
+        <td class="v">run_monitor.py</td>
+        <td>Чтение @markettwits через Telethon, разбор сентимента regex + Claude, запись в <code>news_sentiment</code>, джойн со свечами через VIEW.</td>
+        <td><span class="pill p-low">Выключен</span></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Поток данных</h3>
+  <div class="diagram">
+    <svg viewBox="0 0 880 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Схема потока данных: T-Invest API и Telegram питают PostgreSQL, откуда данные идут в контур валидации и TFT-прогноз, сводятся в дашборд и превращаются в заявки">
+      <defs>
+        <marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+          <path d="M0,1 L7,4 L0,7 z" fill="var(--ink-3)"/>
+        </marker>
+      </defs>
+
+      <!-- источники -->
+      <rect x="8" y="26" width="132" height="46" fill="var(--surface-2)" stroke="var(--rule)"/>
+      <text x="74" y="46" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="var(--ink)">T-Invest REST</text>
+      <text x="74" y="61" text-anchor="middle" font-family="Golos Text, sans-serif" font-size="10" fill="var(--ink-3)">1D · 5M · LastPrice</text>
+
+      <rect x="8" y="90" width="132" height="46" fill="var(--surface-2)" stroke="var(--rule)" stroke-dasharray="4 3"/>
+      <text x="74" y="110" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="var(--ink-3)">Telegram</text>
+      <text x="74" y="125" text-anchor="middle" font-family="Golos Text, sans-serif" font-size="10" fill="var(--ink-3)">выключен</text>
+
+      <line x1="140" y1="49" x2="196" y2="70" stroke="var(--ink-3)" stroke-width="1.2" marker-end="url(#ar)"/>
+      <line x1="140" y1="113" x2="196" y2="92" stroke="var(--ink-3)" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+
+      <!-- БД -->
+      <rect x="204" y="34" width="146" height="96" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.6"/>
+      <text x="277" y="54" text-anchor="middle" font-family="Bitter, serif" font-size="12.5" font-weight="700" fill="var(--ink)">PostgreSQL</text>
+      <text x="277" y="73" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--ink-2)">market_data · 33 079</text>
+      <text x="277" y="89" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--ink-2)">market_data_5m · 2,5M</text>
+      <text x="277" y="105" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--ink-3)">news_sentiment · 379</text>
+      <text x="277" y="121" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--ink-3)">VIEW news_with_candles</text>
+
+      <line x1="350" y1="62" x2="406" y2="62" stroke="var(--ink-3)" stroke-width="1.2" marker-end="url(#ar)"/>
+      <line x1="350" y1="102" x2="406" y2="102" stroke="var(--ink-3)" stroke-width="1.2" marker-end="url(#ar)"/>
+
+      <!-- аналитика -->
+      <rect x="414" y="38" width="150" height="48" fill="var(--surface)" stroke="var(--rule)"/>
+      <text x="489" y="57" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="var(--ink)">Валидация</text>
+      <text x="489" y="72" text-anchor="middle" font-family="Golos Text, sans-serif" font-size="10" fill="var(--ink-3)">White RC · SPA · PBO · FDR</text>
+
+      <rect x="414" y="78" width="150" height="48" fill="none" stroke="none"/>
+      <rect x="414" y="96" width="150" height="48" fill="var(--surface)" stroke="var(--rule)"/>
+      <text x="489" y="115" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="var(--ink)">TFT-прогноз</text>
+      <text x="489" y="130" text-anchor="middle" font-family="Golos Text, sans-serif" font-size="10" fill="var(--ink-3)">коридор 1д / 5д + PnL</text>
+
+      <line x1="564" y1="62" x2="620" y2="83" stroke="var(--ink-3)" stroke-width="1.2" marker-end="url(#ar)"/>
+      <line x1="564" y1="120" x2="620" y2="99" stroke="var(--ink-3)" stroke-width="1.2" marker-end="url(#ar)"/>
+
+      <!-- дашборд -->
+      <rect x="628" y="60" width="132" height="62" fill="var(--up-soft)" stroke="var(--up)"/>
+      <text x="694" y="82" text-anchor="middle" font-family="Bitter, serif" font-size="12.5" font-weight="700" fill="var(--up)">Дашборд</text>
+      <text x="694" y="99" text-anchor="middle" font-family="Golos Text, sans-serif" font-size="10" fill="var(--up)">FinalScore · топ-N</text>
+      <text x="694" y="113" text-anchor="middle" font-family="Golos Text, sans-serif" font-size="10" fill="var(--up)">рыночный контекст</text>
+
+      <line x1="694" y1="122" x2="694" y2="164" stroke="var(--ink-3)" stroke-width="1.2" marker-end="url(#ar)"/>
+
+      <!-- заявки -->
+      <rect x="628" y="172" width="132" height="54" fill="var(--down-soft)" stroke="var(--down)"/>
+      <text x="694" y="193" text-anchor="middle" font-family="Bitter, serif" font-size="12.5" font-weight="700" fill="var(--down)">Заявки PROD</text>
+      <text x="694" y="210" text-anchor="middle" font-family="Golos Text, sans-serif" font-size="10" fill="var(--down)">лимитка → SL/TP</text>
+
+      <!-- журнал -->
+      <rect x="784" y="172" width="88" height="54" fill="var(--surface-2)" stroke="var(--rule)" stroke-dasharray="4 3"/>
+      <text x="828" y="193" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--ink-2)">CSV-журнал</text>
+      <text x="828" y="208" text-anchor="middle" font-family="Golos Text, sans-serif" font-size="9.5" fill="var(--ink-3)">не в БД</text>
+      <line x1="760" y1="199" x2="780" y2="199" stroke="var(--ink-3)" stroke-width="1.2" marker-end="url(#ar)"/>
+
+      <text x="8" y="196" font-family="Golos Text, sans-serif" font-size="10.5" fill="var(--ink-3)">Пунктир — контур существует,</text>
+      <text x="8" y="211" font-family="Golos Text, sans-serif" font-size="10.5" fill="var(--ink-3)">но не участвует в рабочем потоке.</text>
+      <text x="8" y="232" font-family="Golos Text, sans-serif" font-size="10.5" fill="var(--down)">Прогнозы и заявки в БД не сохраняются.</text>
+    </svg>
+  </div>
+</section>
+
+<!-- ═══ 2 ═══ -->
+<section id="model">
+  <h2><span class="num">02</span> Модель данных</h2>
+  <p class="lede">Три таблицы и один VIEW, все создаются автоматически при первом запуске <code>database.init_db()</code>. Никакой миграционной системы нет — схема живёт в <code>models/market_data.py</code> как строки DDL с <code>IF NOT EXISTS</code>.</p>
+
+  <div class="tw">
+  <table>
+    <caption>market_data — дневные свечи и индексы</caption>
+    <thead><tr><th>Поле</th><th>Тип</th><th>Смысл для аналитики</th></tr></thead>
+    <tbody>
+      <tr><td class="k">ticker</td><td class="v">VARCHAR(10)</td><td>Тикер TQBR либо тикер индекса (IMOEX лежит в этой же таблице).</td></tr>
+      <tr><td class="k">date</td><td class="v">DATE</td><td>Дата торговой сессии. Берётся из первых 10 символов ISO-времени бара — то есть <b>UTC-дата</b>, а не московская.</td></tr>
+      <tr><td class="k">open high low close</td><td class="v">NUMERIC(18,4)</td><td>Цены. <b>Не скорректированы на дивиденды</b> — в ex-div дату overnight показывает ложный гэп вниз.</td></tr>
+      <tr><td class="k">volume</td><td class="v">BIGINT</td><td>Объём в лотах. Для IMOEX всегда 0 — 582 строки.</td></tr>
+      <tr><td class="k">created_at</td><td class="v">TIMESTAMPTZ</td><td>Время загрузки. При upsert <b>не обновляется</b>, поэтому не годится как отметка последней правки строки.</td></tr>
+      <tr><td class="k">UNIQUE</td><td class="v">(ticker, date)</td><td>Ключ идемпотентности: повторный прогон безопасен, ON CONFLICT DO UPDATE перезаписывает OHLCV.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="tw">
+  <table>
+    <caption>market_data_5m — пятиминутные свечи</caption>
+    <thead><tr><th>Поле</th><th>Тип</th><th>Смысл для аналитики</th></tr></thead>
+    <tbody>
+      <tr><td class="k">ts</td><td class="v">TIMESTAMPTZ</td><td>Начало бара в UTC. Вся аналитика приводит его к <code>AT TIME ZONE 'Europe/Moscow'</code>.</td></tr>
+      <tr><td class="k">UNIQUE</td><td class="v">(ticker, ts)</td><td>Дедупликация чанков (API отдаёт пересечения по границам суток).</td></tr>
+      <tr><td colspan="3">Содержит и основную (09:50–18:50 МСК), и вечернюю сессию. Реконструкция дневных баров и внутридневная поправка фильтруют вечёрку явно, остальные потребители — нет.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="tw">
+  <table>
+    <caption>news_sentiment + VIEW news_with_candles</caption>
+    <thead><tr><th>Поле</th><th>Тип</th><th>Смысл для аналитики</th></tr></thead>
+    <tbody>
+      <tr><td class="k">message_id, ts</td><td class="v">BIGINT, TIMESTAMPTZ</td><td>Идентификатор поста Telegram и время публикации.</td></tr>
+      <tr><td class="k">ticker, sentiment</td><td class="v">VARCHAR</td><td>Тикер вотчлиста и метка pos / neg / neutral. Один пост даёт N строк — по одной на упомянутый тикер.</td></tr>
+      <tr><td class="k">UNIQUE</td><td class="v">(message_id, ticker)</td><td>Пара «пост × тикер».</td></tr>
+      <tr><td class="k">VIEW</td><td class="v">news_with_candles</td><td>Джойн новости к дневной свече по <code>d.date = n.ts::date</code> с оконным <code>LEAD(open)</code> — даёт overnight следующего дня и интрадей дня новости. Ключевой артефакт для событийного анализа, но питать его нечем: контур выключен.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note">
+    <strong>Чего в модели нет.</strong> Ни прогнозов, ни сигналов, ни сделок. Ежедневный дашборд печатается в stdout и исчезает; заявки пишутся в <code>data/order_log/&lt;дата&gt;.csv</code> (11 файлов с 17.06.2026). Оценить постфактум, насколько TFT попадал в свой коридор и какой PnL дали реальные сигналы, средствами сервиса невозможно — исторических предсказаний просто не существует.
+  </div>
+</section>
+
+<!-- ═══ 3 ═══ -->
+<section id="state">
+  <h2><span class="num">03</span> Фактическое состояние данных</h2>
+  <p class="lede">Снимок рабочей БД <code>market_data</code> на 08.09.2026. Целостность OHLC не нарушена ни в одной строке; проблемы — в покрытии и в остатках прошлых конфигураций.</p>
+
+  <div class="two">
+    <div class="panel">
+      <h4>Проверки целостности</h4>
+      <ul>
+        <li><span class="pill p-ok">чисто</span> Нарушений <code>high≥low, open/close ∈ [low,high]</code> — 0 из 33 079.</li>
+        <li><span class="pill p-ok">чисто</span> Дублей по <code>(ticker,date)</code> нет — гарантировано UNIQUE-ключом.</li>
+        <li><span class="pill p-ok">норма</span> 582 строки с <code>volume = 0</code> — ровно все бары IMOEX.</li>
+        <li><span class="pill p-med">внимание</span> Свечи не скорректированы на дивиденды; винзоризация гэпов есть, но по умолчанию выключена.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h4>Покрытие</h4>
+      <ul>
+        <li>44 из 48 тикеров имеют 704–711 дневных баров — полная история с 21–22.05.2024.</li>
+        <li><b>X5</b> — 548 баров с 09.01.2025 (редомициляция), <b>IMOEX</b> — 582, <b>ETLN</b> — 618, <b>FIXR</b> — 621.</li>
+        <li><b>FIXP</b> — 276 баров, заморожен на 20.06.2025: тикер убран из конфигурации, данные остались.</li>
+        <li>5-минутки — с 30.11.2025, около 9,5 месяцев, 46 тикеров (нет IMOEX и FIXP).</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Тикеры с неполной историей</h3>
+  <div class="tw">
+  <table>
+    <thead><tr><th>Тикер</th><th class="n">Баров</th><th>Период</th><th>Причина</th></tr></thead>
+    <tbody>
+      <tr><td class="k">FIXP</td><td class="n">276</td><td class="v">22.05.2024 → 20.06.2025</td><td>Расписки Fix Price до редомициляции. Убран из <code>TICKERS</code> коммитом 7e386b2, строки в БД не удалены — «мёртвый» тикер, который попадёт в любой сплошной скан <code>market_data</code>.</td></tr>
+      <tr><td class="k">X5</td><td class="n">548</td><td class="v">09.01.2025 → 07.09.2026</td><td>Торги начались после редомициляции. Короче остальных на 8 месяцев — учитывать при кросс-секционном обучении и при сравнении накопленного PnL.</td></tr>
+      <tr><td class="k">IMOEX</td><td class="n">582</td><td class="v">28.05.2024 → 07.09.2026</td><td>Индекс. Меньше баров, чем у акций, — расхождение календарей публикации; <code>market.py</code> строит на нём EMA50/EMA200.</td></tr>
+      <tr><td class="k">ETLN</td><td class="n">618</td><td class="v">22.05.2024 → 07.09.2026</td><td>Пропуски в истории. При этом ETLN входит в отчётную выборку валидации.</td></tr>
+      <tr><td class="k">FIXR</td><td class="n">621</td><td class="v">04.06.2024 → 07.09.2026</td><td>Новая российская акция Fix Price. Цена 0,35–1,84 ₽ — при лотности и расчёте стопов даёт грубую дискретизацию.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note">
+    <strong>news_sentiment.</strong> 379 строк по 36 тикерам с датами <b>09.11.2017 — 01.12.2017</b>. Данные девятилетней давности, не связанные ни с одним периодом в <code>market_data</code>: VIEW <code>news_with_candles</code> на них возвращает пустоту. Это остаток тестового прогона, а не рабочий набор.
+  </div>
+</section>
+
+<!-- ═══ 4 ═══ -->
+<section id="config">
+  <h2><span class="num">04</span> Конфигурация: 68 параметров</h2>
+  <p class="lede">Вся настройка сосредоточена в <code>config.py</code>, каждый параметр читается из окружения с дефолтом в коде. Ниже — полная карта с указанием, на что именно параметр влияет в аналитике.</p>
+
+  <h4>Доступ и контуры</h4>
+  <div class="tw">
+  <table>
+    <thead><tr><th>Параметр</th><th>Дефолт</th><th>Влияние</th></tr></thead>
+    <tbody>
+      <tr><td class="k">INVEST_TOKEN</td><td class="v">— обязателен</td><td>Bearer-токен T-Invest. Читается как <code>os.environ[...]</code> — <b>без него падает любой импорт config</b>, включая чисто аналитические сценарии.</td></tr>
+      <tr><td class="k">API_BASE_URL</td><td class="v">invest-public-api.tbank.ru/rest</td><td>Боевой REST-контур для свечей и котировок.</td></tr>
+      <tr><td class="k">SANDBOX_API_BASE_URL</td><td class="v">sandbox-invest-public-api…</td><td>Песочница: виртуальные счета, исполнение по last price.</td></tr>
+      <tr><td class="k">PROD_ACCOUNT_ID</td><td class="v">2018145468</td><td>Боевой счёт. <b>Реальный номер зашит дефолтом в отслеживаемый git файл.</b></td></tr>
+      <tr><td class="k">SANDBOX_ACCOUNT_ID</td><td class="v">из .env</td><td>Переиспользуемый sandbox-счёт; пусто — создаётся новый и пополняется.</td></tr>
+      <tr><td class="k">SANDBOX_PAYIN_RUB</td><td class="v">100 000</td><td>Виртуальное пополнение нового sandbox-счёта.</td></tr>
+      <tr><td class="k">INVEST_TLS_VERIFY</td><td class="v">0</td><td>Проверка TLS-сертификата брокера. <b>По умолчанию выключена.</b></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h4>PostgreSQL</h4>
+  <div class="tw">
+  <table>
+    <thead><tr><th>Параметр</th><th>Дефолт</th><th>Влияние</th></tr></thead>
+    <tbody>
+      <tr><td class="k">DB_HOST / DB_PORT</td><td class="v">localhost / 5432</td><td>Один синхронный <code>psycopg2</code>-коннект на весь прогон, без пула.</td></tr>
+      <tr><td class="k">DB_NAME</td><td class="v">market_data</td><td>Фактически: PostgreSQL 18.4 Homebrew, aarch64, 528 MB.</td></tr>
+      <tr><td class="k">DB_USER / DB_PASSWORD</td><td class="v">postgres / пусто</td><td>Пустой пароль → аргумент <code>password</code> не передаётся вовсе.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h4>Загрузка данных</h4>
+  <div class="tw">
+  <table>
+    <thead><tr><th>Параметр</th><th>Дефолт</th><th>Влияние</th></tr></thead>
+    <tbody>
+      <tr><td class="k">TICKERS</td><td class="v">47 акций</td><td>Вселенная: 10 отраслевых блоков от банков до недвижимости. Это же — обучающий пул TFT и вселенная FDR-поправки.</td></tr>
+      <tr><td class="k">INDEX_TICKERS</td><td class="v">IMOEX</td><td>Индекс для слоя рыночного контекста. Без него <code>market.py</code> строит синтетический равновзвешенный proxy — режим рынка становится менее надёжным.</td></tr>
+      <tr><td class="k">LOAD_INDEX</td><td class="v">1</td><td>Включает отдельный шаг загрузки индексов (<code>INSTRUMENT_TYPE_INDEX</code>).</td></tr>
+      <tr><td class="k">INITIAL_MONTHS_DAILY</td><td class="v">24</td><td>Глубина первичной загрузки дневных. Фактически в БД 28 месяцев — накопилось прогонами.</td></tr>
+      <tr><td class="k">INITIAL_MONTHS_5M</td><td class="v">6</td><td>Глубина 5-минуток при пустой таблице. Фактически 9,5 месяцев.</td></tr>
+      <tr><td class="k">CHUNK_DAYS_DAILY</td><td class="v">365</td><td>Окно одного запроса к <code>GetCandles</code> для 1D.</td></tr>
+      <tr><td class="k">CHUNK_DAYS_5M</td><td class="v">1</td><td>Лимит API: 5-минутки — не более суток за запрос. 47 тикеров × 190 дней ≈ 9 000 запросов при первичной загрузке.</td></tr>
+      <tr><td class="k">MAX_CONCURRENT_TICKERS</td><td class="v">3</td><td>Семафор параллельной загрузки. Задаёт и число потоков, конкурирующих за единственный DB-коннект.</td></tr>
+      <tr><td class="k">MAX_RETRIES / BASE_SLEEP</td><td class="v">4 / 0,5 с</td><td>Экспоненциальный backoff на 429 и 5xx, уважает <code>Retry-After</code>.</td></tr>
+      <tr><td class="k">REQUEST_SLEEP</td><td class="v">0,2 с</td><td>Пауза между чанками одного тикера — троттлинг под лимиты API.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h4>Контур валидации</h4>
+  <div class="tw">
+  <table>
+    <thead><tr><th>Параметр</th><th>Дефолт</th><th>Влияние</th></tr></thead>
+    <tbody>
+      <tr><td class="k">RUN_VALIDATION</td><td class="v">1</td><td>Включает статистический контур после ETL.</td></tr>
+      <tr><td class="k">VALIDATOR_DIR</td><td class="v">./strategy_validation</td><td>Локальная копия движка. Подмешивается в <code>sys.path</code> на лету.</td></tr>
+      <tr><td class="k">VALIDATION_DATA_DIR</td><td class="v">./validation_data</td><td>Куда выгружаются CSV-свечи. Промежуточный слой между БД и валидатором.</td></tr>
+      <tr><td class="k">VALIDATION_TICKERS</td><td class="v">ETLN SELG SMLT MGNT ALRS UPRO</td><td>Отчётная выборка. Выбраны по результатам прошлых прогонов — сам по себе источник data snooping, который призван компенсировать следующий параметр.</td></tr>
+      <tr><td class="k">VALIDATION_FULL_UNIVERSE</td><td class="v">0</td><td>Честная мультитестовая вселенная: HAC-t p-values по всем 47 тикерам и BH-FDR по полной сетке. <b>Выключено</b> — значит поправка на выбор тикеров сейчас не применяется.</td></tr>
+      <tr><td class="k">VALIDATION_STRATS</td><td class="v">long_overnight intraday_short intraday_long</td><td>Меню стратегий. Внутри валидатора intraday_short и intraday_long — точные зеркала одного примитива, FDR считает примитив один раз.</td></tr>
+      <tr><td class="k">VALIDATION_BOOT</td><td class="v">2000</td><td>Число бутстрап-реплик для White RC / SPA. Определяет разрешение p-value (снизу ≈ 0,0005).</td></tr>
+      <tr><td class="k">VALIDATION_COST_RT</td><td class="v">0,08 %</td><td>Round-trip издержки: комиссия + 2×half-spread + проскальзывание. Оптимистично для мид-капов — комментарий в коде сам называет 0,15–0,25 % реалистичнее для ETLN/SELG/SMLT.</td></tr>
+      <tr><td class="k">VALIDATION_COST_RT_MAP</td><td class="v">пусто</td><td>Пер-тикерное переопределение издержек, формат <code>ETLN:0.20 SELG:0.18</code>. <b>Не заполнено</b> — все бумаги считаются по 0,08 %.</td></tr>
+      <tr><td class="k">VALIDATION_WINSORIZE_GAPS</td><td class="v">0</td><td>Винзоризация ex-div и новостных гэпов как прокси total-return коррекции. Выключено «чтобы не менять результаты молча» — значит overnight-стратегии сейчас считаются на нескорректированных гэпах.</td></tr>
+      <tr><td class="k">VALIDATION_OOS_FRACTION</td><td class="v">0,30</td><td>Доля хвоста под хронологический out-of-sample. При 710 барах это ≈ 213 дней OOS.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h4>TFT-прогноз</h4>
+  <div class="tw">
+  <table>
+    <thead><tr><th>Параметр</th><th>Дефолт</th><th>Влияние</th></tr></thead>
+    <tbody>
+      <tr><td class="k">TFT_FORECAST</td><td class="v">1</td><td>Включает прогноз. Без установленного <code>torch</code> молча используется статистический baseline на EWMA-волатильности — в логе это видно, в таблице нет.</td></tr>
+      <tr><td class="k">TFT_TICKERS</td><td class="v">= TICKERS</td><td>Пул обучения. Модель одна на все бумаги, специфика инструмента — через static-embedding тикера.</td></tr>
+      <tr><td class="k">TFT_EPOCHS / TFT_HIDDEN</td><td class="v">30 / 32</td><td>Бюджет обучения. Модель переобучается на каждом прогоне — весов на диске нет.</td></tr>
+      <tr><td class="k">TFT_COST_RT</td><td class="v">0,08 %</td><td>Издержки для направленного PnL. Дублирует <code>VALIDATION_COST_RT</code> отдельной переменной — рассинхрон возможен.</td></tr>
+      <tr><td class="k">WEEK_HORIZON_DAYS</td><td class="v">5</td><td>Горизонт недельных целей: min(low)/max(high)/close за H дней. Смена значения требует переобучения.</td></tr>
+      <tr><td class="k">WEEK_TARGET_COVERAGE</td><td class="v">0,80</td><td>Целевое покрытие недельного коридора; конформная поправка расширяет квантили на held-out хвосте.</td></tr>
+      <tr><td class="k">TFT_USE_LIVE_PRICE</td><td class="v">1</td><td>Якорить прогноз на текущем Last Price, а не на вчерашнем закрытии. Меняет и границы коридора, и выбор лучшей дневной стратегии.</td></tr>
+      <tr><td class="k">TFT_STALE_SECONDS</td><td class="v">900</td><td>Возраст котировки, после которого печатается предупреждение об устаревании.</td></tr>
+      <tr><td class="k">INTRADAY_ADJUST</td><td class="v">1</td><td>Обучаемая внутридневная поправка вместо арифметики «остаток = прогноз − реализованное». Модель <code>z_rem ≈ β(τ)·z_so_far</code> на 5-минутках.</td></tr>
+      <tr><td class="k">INTRADAY_LOOKBACK_DAYS</td><td class="v">60</td><td>Глубина обучения поправки.</td></tr>
+      <tr><td class="k">INTRADAY_BUCKETS</td><td class="v">6</td><td>Число временных корзин сессии, в каждой свой β.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h4>Дашборд и рыночный контекст</h4>
+  <div class="tw">
+  <table>
+    <thead><tr><th>Параметр</th><th>Дефолт</th><th>Влияние</th></tr></thead>
+    <tbody>
+      <tr><td class="k">COMBINED_TABLE</td><td class="v">1</td><td>Одна сводная таблица «тикер × стратегия» вместо четырёх раздельных.</td></tr>
+      <tr><td class="k">SHOW_ALL_INTRADAY</td><td class="v">0</td><td>По умолчанию по каждому тикеру остаётся только лучшая дневная стратегия — чтобы не показывать два противоположных направления сразу. <b>Скрывает от аналитика вторую половину сетки.</b></td></tr>
+      <tr><td class="k">DASHBOARD_TOP_N</td><td class="v">50</td><td>Сколько строк печатать, отсортированных по FinalScore.</td></tr>
+      <tr><td class="k">STRICT_MARKET_FILTER</td><td class="v">0</td><td>Жёсткий запрет LONG при BEAR и SHORT при BULL. Выключено — режим только штрафует рейтинг множителем 0,70.</td></tr>
+      <tr><td class="k">TFT_IMPACT_TOL</td><td class="v">0,005</td><td>Допустимое ценовое воздействие входа (0,5 %) в модели Amihud.</td></tr>
+      <tr><td class="k">TFT_PARTICIPATION</td><td class="v">0,01</td><td>Максимальная доля в среднедневном рублёвом обороте.</td></tr>
+      <tr><td class="k">TFT_LIQUIDITY_DAYS</td><td class="v">60</td><td>Окно оценки ликвидности для Max Pos ₽.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h4>Автозаявки</h4>
+  <div class="tw">
+  <table>
+    <thead><tr><th>Параметр</th><th>Дефолт</th><th>Влияние</th></tr></thead>
+    <tbody>
+      <tr><td class="k">BEST_TRADES_TOP_N</td><td class="v">10</td><td>Сколько сигналов уходит в блок «лучшие сделки» и, соответственно, в заявки.</td></tr>
+      <tr><td class="k">BEST_TRADES_POSITION_RUB</td><td class="v">10 000 ₽</td><td>Целевой размер позиции на бумагу. Перекрывается флагом <code>--budget</code> с риск-паритетным распределением (вес ∝ 1/стоп%).</td></tr>
+      <tr><td class="k">LIMIT_ENTRY_FRACTION</td><td class="v">0,2</td><td>Насколько лимитка прижата к краю прогнозного коридора. Было 0,8 — заявки висели днями неисполненными; 0,2 ставит вход в 0,5–1 % от спота.</td></tr>
+      <tr><td class="k">LIMIT_TP_FRACTION</td><td class="v">1,0</td><td>Take-profit как доля пути до противоположной границы коридора. 1,0 — целимся ровно в дальнюю границу.</td></tr>
+      <tr><td class="k">ORDER_FILL_WAIT_SEC</td><td class="v">30 с</td><td>Сколько ждать заливки лимиток перед привязкой стопов в едином прогоне.</td></tr>
+      <tr><td class="k">ORDER_FILL_POLL_SEC</td><td class="v">5 с</td><td>Интервал опроса статуса заявок.</td></tr>
+      <tr><td class="k">ORDER_STOP_MODE_WAIT_FILL</td><td class="v">1</td><td>Влияет только на режим <code>--immediate-stop</code>; в двухфазной модели стоп ставится по факту наличия позиции.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h4>Новости — контур выключен</h4>
+  <div class="tw">
+  <table>
+    <thead><tr><th>Параметр</th><th>Дефолт</th><th>Влияние</th></tr></thead>
+    <tbody>
+      <tr><td class="k">TG_API_ID / TG_API_HASH / TG_PHONE</td><td class="v">из .env</td><td>Учётные данные my.telegram.org. Заданы, но код, который их использует, закомментирован.</td></tr>
+      <tr><td class="k">TG_CHANNEL</td><td class="v">@markettwits</td><td>Источник новостей; он же значение колонки <code>source</code>.</td></tr>
+      <tr><td class="k">TG_FETCH_LIMIT</td><td class="v">500</td><td>Максимум постов за цикл.</td></tr>
+      <tr><td class="k">ANTHROPIC_API_KEY</td><td class="v">из .env</td><td>LLM-разбор сентимента поверх regex. Ключ лежит в <code>.env</code>, вызовов в рабочем коде нет.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ═══ 5 ═══ -->
+<section id="analytics">
+  <h2><span class="num">05</span> Аналитический слой: как считается решение</h2>
+  <p class="lede">Итог работы сервиса — одна строка на связку «тикер × стратегия» с рейтингом FinalScore. Понимать, из чего он складывается, важнее, чем любой отдельный столбец.</p>
+
+  <h3>Вердикт контура валидации</h3>
+  <p>Гейт <code>strategy_validation/validation/verdict.py</code> отвечает не на вопрос «сколько заработала стратегия», а на вопрос «отличается ли результат от случайности». White RC, SPA и PBO считаются <b>один раз на тикер</b> (это тесты отбора по меню стратегий), BH-FDR — по всей сетке.</p>
+  <div class="tw">
+  <table>
+    <thead><tr><th>Вердикт</th><th>Условие</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill p-crit">REJECTED</span></td><td>Любое из: White RC p &gt; 0,05 · SPA p &gt; 0,05 · PBO &gt; 0,5 · не прошёл BH-FDR · ProbRuin(−30 %) &gt; 0,30 · Ljung-Box не находит структуры · перестановочная энтропия &gt; 0,99.</td></tr>
+      <tr><td><span class="pill p-high">WEAK</span></td><td>Всё остальное — промежуточная зона.</td></tr>
+      <tr><td><span class="pill p-ok">CANDIDATE EDGE</span></td><td>Одновременно: White RC &lt; 0,05 и SPA &lt; 0,05 и BH-FDR пройден и PBO &lt; 0,2 и |H − 0,5| ≥ 0,05 и ProbRuin(−30 %) &lt; 0,10.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>FinalScore</h3>
+  <p>Взвешенная сумма семи суб-скоров, приведённых к 0..1, затем мультипликативные риск-штрафы:</p>
+  <div class="tw">
+  <table>
+    <thead><tr><th>Вес</th><th>Суб-скор</th><th>Из чего</th></tr></thead>
+    <tbody>
+      <tr><td class="n">0,30</td><td class="k">exp_score</td><td>Ожидаемый нетто-PnL следующего дня, линейно ±1 % → 0..1.</td></tr>
+      <tr><td class="n">0,15</td><td class="k">prob_score</td><td>ProbProfit — вероятность положительного результата по квантильной функции.</td></tr>
+      <tr><td class="n">0,15</td><td class="k">validation_score</td><td>Среднее трёх: вердикт (1 / 0,5 / 0), прохождение FDR, 1 − PBO.</td></tr>
+      <tr><td class="n">0,15</td><td class="k">liq_score</td><td>Перцентиль оборота по рынку, 0..100.</td></tr>
+      <tr><td class="n">0,10</td><td class="k">rs_score</td><td>Относительная сила к рынку за 10 дней со знаком направления, ±5 % → 0..1.</td></tr>
+      <tr><td class="n">0,10</td><td class="k">regime_score</td><td>Режим IMOEX по EMA50/EMA200 против направления: BULL/NEUTRAL/BEAR → 1,0 / 0,5 / 0,2.</td></tr>
+      <tr><td class="n">0,05</td><td class="k">vol_score</td><td>Объём вчера к SMA20: норма 0,7, аномалия или затухание 0,4, климакс &gt;4× 0,2.</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="tw">
+  <table>
+    <thead><tr><th>Штраф</th><th>Условие</th><th>Флаг</th></tr></thead>
+    <tbody>
+      <tr><td class="n">×0,70</td><td>LONG при BEAR или SHORT при BULL</td><td class="v">—</td></tr>
+      <tr><td class="n">×0,75</td><td>SHORT по бумаге с RS &gt; +5 %</td><td class="v">High Risk Short</td></tr>
+      <tr><td class="n">×0,70</td><td>VolSpike &gt; 4×</td><td class="v">Volume Climax</td></tr>
+      <tr><td class="n">×0,70</td><td>long_overnight при вероятности гэпа вниз &gt; 0,50</td><td class="v">High Overnight Risk</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note">
+    <strong>Что стоит знать аналитику про этот рейтинг.</strong> Веса заданы вручную, не откалиброваны ни на каком целевом критерии, и их качество никогда не проверялось на данных — потому что история FinalScore нигде не сохраняется. Ожидаемый PnL и вероятность прибыли — обе из одной модели — вместе весят 0,45; весь статистический контур валидации, самая дорогая часть системы, весит 0,15.
+  </div>
+
+  <h4>Столбцы дашборда</h4>
+  <ul class="plain">
+    <li><b>ExpPnL, PProf</b> — медианная нетто-доходность следующего дня и P(доходность &gt; издержек), из квантилей TFT по примитиву стратегии.</li>
+    <li><b>FDR, PBO</b> — прошла ли связка контроль False Discovery Rate и Probability of Backtest Overfitting из CSCV.</li>
+    <li><b>Liq, MaxPos</b> — балл ликвидности 0..100 и максимальная позиция в рублях по Amihud, сжатая при высоком ATR%.</li>
+    <li><b>Price, PriceTime</b> — якорная цена и её отметка времени: real-time котировка либо закрытие предыдущего дня.</li>
+    <li><b>F.Low, F.High, Range%</b> — границы прогнозного коридора (q0.1 / q0.9) и его ширина к якорной цене.</li>
+    <li><b>IMOEX, RS, VolSpike, ATR%, GapRisk</b> — слой рыночного контекста; GapRisk считается только для long_overnight.</li>
+  </ul>
+</section>
+
+<!-- ═══ 6 ═══ -->
+<section id="findings">
+  <h2><span class="num">06</span> Находки аудита</h2>
+  <p class="lede">19 находок, отсортированы по серьёзности. Нумерация — ранг, а не порядок в коде.</p>
+
+  <h4>Критично</h4>
+
+  <div class="finding f-crit">
+    <div class="rail">01</div>
+    <div class="body">
+      <div class="head"><span class="ttl">Проверка TLS отключена на всех каналах к брокеру</span><span class="pill p-crit">critical</span></div>
+      <p>Пять мест поднимают соединение без валидации сертификата: <code>aiohttp.TCPConnector(ssl=False)</code> в трёх загрузчиках и <code>ssl.CERT_NONE</code> в двух REST-клиентах. По этим же каналам уходят Bearer-токен, номер счёта и инструкции на выставление заявок, а приходят цены, на которых строится решение о сделке. Дефолт <code>INVEST_TLS_VERIFY=0</code> закрепляет это как норму.</p>
+      <p>Комментарий в коде объясняет причину: MITM-перехват TLS на машине разработчика. Это решает задачу отладки ценой того, что подменить ответ брокера может кто угодно на пути.</p>
+      <p class="fix">Инвертировать дефолт на <code>INVEST_TLS_VERIFY=1</code> и явно снимать проверку только под отладку; для локального перехвата добавить корневой сертификат прокси в trust store, а не отключать проверку глобально.</p>
+      <span class="where">loaders/moex_loader.py · services/load_history.py:144 · services/load_index.py:84 · tft_forecast/quotes.py:95 · services/broker/tinkoff_base.py:38–45 · services/list_accounts.py:54</span>
+    </div>
+  </div>
+
+  <div class="finding f-crit">
+    <div class="rail">02</div>
+    <div class="body">
+      <div class="head"><span class="ttl">Боевой счёт — контур по умолчанию</span><span class="pill p-crit">critical</span></div>
+      <p><code>python3 -m services.place_orders</code> без флагов идёт в PROD с реальными деньгами; песочница требует явного <code>--sandbox</code>. Рядом живёт <code>--no-confirm</code> «для cron», снимающий подтверждение y/n. Комбинация опечатки и привычки к безопасным дефолтам здесь стоит реальных денег.</p>
+      <p>Подтверждение на боевом счёте есть и текст его усилен баннером — это хорошо. Но защита держится на том, что оператор не забудет флаг, а не на устройстве системы.</p>
+      <p class="fix">Сделать sandbox дефолтом, а боевой контур — явным <code>--prod</code>; запретить сочетание <code>--prod --no-confirm</code> без отдельной переменной окружения.</p>
+      <span class="where">services/place_orders.py:829–847, 861 · config.py:16–18</span>
+    </div>
+  </div>
+
+  <div class="finding f-crit">
+    <div class="rail">03</div>
+    <div class="body">
+      <div class="head"><span class="ttl">Номер боевого счёта зашит в отслеживаемый файл</span><span class="pill p-crit">critical</span></div>
+      <p><code>PROD_ACCOUNT_ID</code> имеет дефолтом реальный номер счёта прямо в <code>config.py</code>, который лежит в git и на remote. <code>.gitignore</code> аккуратно исключает <code>.env</code> и <code>data/order_log/</code> именно потому, что там account_id — а в конфиге он открыт.</p>
+      <p class="fix">Убрать дефолт, читать только из окружения и падать с внятной ошибкой, если не задан. Учесть, что значение уже в истории коммитов.</p>
+      <span class="where">config.py:18</span>
+    </div>
+  </div>
+
+  <h4>Высокая</h4>
+
+  <div class="finding f-high">
+    <div class="rail">04</div>
+    <div class="body">
+      <div class="head"><span class="ttl">Один DB-коннект на три конкурирующих потока с коммитом внутри</span><span class="pill p-high">high</span></div>
+      <p>Загрузка гоняет до трёх тикеров параллельно, синхронные вызовы psycopg2 обёрнуты в <code>asyncio.to_thread</code>, но коннект один на весь прогон, и <code>upsert_candles</code> делает <code>conn.commit()</code> сам. Коммит одного потока фиксирует незавершённые батчи двух других — транзакционных границ у загрузки фактически нет. Пока это не проявляется как порча данных только потому, что upsert идемпотентен.</p>
+      <p class="fix">Либо коннект на поток (пул), либо один поток записи с очередью, либо явные <code>SAVEPOINT</code>. Коммит вынести из низкоуровневой функции наверх.</p>
+      <span class="where">database.py:66–84 · services/load_history.py:96–140 · config.MAX_CONCURRENT_TICKERS = 3</span>
+    </div>
+  </div>
+
+  <div class="finding f-high">
+    <div class="rail">05</div>
+    <div class="body">
+      <div class="head"><span class="ttl">Прогнозы и сигналы нигде не сохраняются</span><span class="pill p-high">high</span></div>
+      <p>Дашборд печатается в stdout, модель переобучается каждый прогон, весов на диске нет. В БД нет ни таблицы прогнозов, ни таблицы сигналов, ни таблицы сделок — только свечи. Заявки попадают в CSV, но без прогнозного контекста.</p>
+      <p>Следствия для аналитики прямые: нельзя измерить фактическое покрытие коридора (заявлено 80 % — не проверено ни разу на живых прогнозах), нельзя сопоставить FinalScore с последующим результатом, нельзя откалибровать веса рейтинга, нельзя отличить деградацию модели от невезения.</p>
+      <p class="fix">Таблица <code>forecasts(ticker, asof_date, strategy, q10, q50, q90, exp_pnl, prob_profit, final_score, model_version, anchor_price)</code> с записью на каждом прогоне — минимальное вложение, открывающее весь ретроспективный анализ.</p>
+      <span class="where">models/market_data.py · tft_forecast/forecast.py · tft_forecast/combined.py</span>
+    </div>
+  </div>
+
+  <div class="finding f-high">
+    <div class="rail">06</div>
+    <div class="body">
+      <div class="head"><span class="ttl">Ни одного теста на коде, который отправляет заявки</span><span class="pill p-high">high</span></div>
+      <p>11 029 строк, из них ~1 500 — расчёт цен входа, стопов, размера позиции и синхронизация портфеля. Тестов нет, CI нет. История коммитов при этом содержит именно те баги, которые тест поймал бы: «фикс лот-размера OGKB (10000 → 1000)», «фикс GMKN (лот=10 после сплита)».</p>
+      <p class="fix">Начать с чистых функций: <code>_api_quantity</code>, расчёт цен из <code>entry_frac</code>/<code>tp_frac</code>, риск-паритетное распределение бюджета, <code>_score_row</code>. Это тестируется без сети и без БД.</p>
+      <span class="where">весь репозиторий</span>
+    </div>
+  </div>
+
+  <div class="finding f-high">
+    <div class="rail">07</div>
+    <div class="body">
+      <div class="head"><span class="ttl">main.py гасит любые ошибки шагов и завершается успешно</span><span class="pill p-high">high</span></div>
+      <p>Семь блоков <code>except Exception</code> подряд: индексы, backfill, свежесть, валидация, прогноз, сводная таблица, недельная таблица. Каждый пишет warning и идёт дальше. Если валидация и прогноз упали оба, процесс всё равно выйдет с кодом 0 и напечатает «ETL + валидация завершены».</p>
+      <p>Для необязательных шагов это осознанное решение и оно правильное. Проблема в том, что снаружи нельзя отличить полный прогон от прогона, где не отработало ничего, кроме загрузки, — под cron это тишина вместо алерта.</p>
+      <p class="fix">Считать неуспешные шаги и возвращать ненулевой код, если упало что-то кроме заведомо опциональных; свести итог одной строкой статуса по каждому шагу.</p>
+      <span class="where">main.py:52–121</span>
+    </div>
+  </div>
+
+  <h4>Средняя</h4>
+
+  <div class="finding f-med">
+    <div class="rail">08</div>
+    <div class="body">
+      <div class="head"><span class="ttl">Реконструированные из 5M бары неотличимы от биржевых</span><span class="pill p-med">medium</span></div>
+      <p><code>backfill_daily</code> собирает дневной OHLCV из пятиминуток основной сессии и кладёт в ту же <code>market_data</code> без признака происхождения. Расчёт с оговорками (агрегат по МСК-дню, фильтр 09:50–18:50) сделан аккуратно, и позже официальный бар перезапишет реконструкцию. Но пока этого не произошло, аналитик не может отличить биржевые данные от собственных; <code>created_at</code> при upsert не обновляется, так что и по времени не разделить.</p>
+      <p class="fix">Колонка <code>source</code> (<code>api</code> / <code>backfill_5m</code>) с дефолтом <code>api</code> и обновлением в обоих upsert-путях.</p>
+      <span class="where">services/backfill_daily.py:26–60 · models/market_data.py</span>
+    </div>
+  </div>
+
+  <div class="finding f-med">
+    <div class="rail">09</div>
+    <div class="body">
+      <div class="head"><span class="ttl">Контур новостей выключен комментированием, инфраструктура осталась</span><span class="pill p-med">medium</span></div>
+      <p>Четыре модуля (~500 строк) закомментированы блоками с маркером <code>TG_ENABLED</code>: <code>run_monitor.py</code>, <code>services/monitor_news.py</code>, <code>monitors/tg_reader.py</code> и вместе с ними <code>monitors/news_parser.py</code>. При этом таблица <code>news_sentiment</code> и VIEW <code>news_with_candles</code> создаются при каждом старте, зависимости <code>telethon</code> и <code>anthropic</code> стоят в requirements, а ключи Telegram и Anthropic лежат в <code>.env</code>. В таблице — 379 строк из ноября 2017 года, которые никакой код обновить уже не может.</p>
+      <p class="fix">Либо включить контур, либо изъять его в отдельную ветку и убрать из <code>init_db</code>, requirements и <code>.env</code>. Закомментированный код в основной ветке — худший из трёх вариантов: он не работает и при этом требует сопровождения.</p>
+      <span class="where">run_monitor.py · services/monitor_news.py · monitors/ · models/market_data.py:76–140</span>
+    </div>
+  </div>
+
+  <div class="finding f-med">
+    <div class="rail">10</div>
+    <div class="body">
+      <div class="head"><span class="ttl">477 строк мёртвого кода в tft_forecast</span><span class="pill p-med">medium</span></div>
+      <p><code>tft_forecast/feature_engineering.py</code> не импортируется ниоткуда. Внутри — календарные признаки, Amihud, VWAP-дистанция, макро-контекст РФ (IMOEX / RGBI / RVI) и сборка <code>pytorch_forecasting.TimeSeriesDataSet</code>. Библиотека <code>pytorch-forecasting</code> при этом не заявлена в requirements. Рабочий пайплайн использует другой набор признаков — из <code>features.py</code>.</p>
+      <p>Модуль выглядит как более богатая версия признакового слоя, до которой не дошли руки. Он опасен именно этим: читающий может решить, что макро-контекст РГБИ уже в модели.</p>
+      <p class="fix">Либо подключить и добавить зависимость, либо удалить — история в git сохранится.</p>
+      <span class="where">tft_forecast/feature_engineering.py</span>
+    </div>
+  </div>
+
+  <div class="finding f-med">
+    <div class="rail">11</div>
+    <div class="body">
+      <div class="head"><span class="ttl">Две копии статистического валидатора</span><span class="pill p-med">medium</span></div>
+      <p><code>strategy_validation/</code> (в git, используется) и <code>ETL-TB/strategy-validator/</code> (в <code>.gitignore</code>, со своими CSV по GAZP/SBER/LKOH/ROSN и скриптами <code>backtest.py</code>, <code>stat_tests.py</code>) — один и тот же движок в двух местах. Расхождение между ними невидимо, потому что вторая копия не отслеживается.</p>
+      <p class="fix">Оставить одну копию. Если <code>ETL-TB</code> — исходный скил, зафиксировать в README, откуда и какой версии сделан снимок.</p>
+      <span class="where">strategy_validation/ · ETL-TB/strategy-validator/ · .gitignore</span>
+    </div>
+  </div>
+
+  <div class="finding f-med">
+    <div class="rail">12</div>
+    <div class="body">
+      <div class="head"><span class="ttl">requirements.txt не отражает реальность установки</span><span class="pill p-med">medium</span></div>
+      <p>Версии заданы только нижней границей, лока нет — воспроизвести окружение нельзя. <code>torch&gt;=2.2.0</code> и <code>hmmlearn&gt;=0.3.0</code> помечены комментарием «опционально», но стоят обычными строками: <code>pip install -r requirements.txt</code> потянет несколько гигабайт PyTorch. <code>telethon</code> и <code>anthropic</code> — для выключенного контура. <code>pytorch-forecasting</code>, наоборот, нужен коду, но не заявлен.</p>
+      <p class="fix">Базовый набор в <code>requirements.txt</code> с точными версиями, тяжёлое и необязательное — в <code>requirements-ml.txt</code>; зафиксировать интерпретатор.</p>
+      <span class="where">requirements.txt</span>
+    </div>
+  </div>
+
+  <div class="finding f-med">
+    <div class="rail">13</div>
+    <div class="body">
+      <div class="head"><span class="ttl">README описывает проект двухлетней давности</span><span class="pill p-med">medium</span></div>
+      <p>В README — ETL на 7 тикеров, одна таблица, пять переменных окружения. В коде — 47 тикеров плюс индекс, три таблицы и VIEW, 68 параметров, контур валидации, TFT, автозаявки в боевой контур. Раздел «Схема таблицы» описывает только <code>market_data</code>; про <code>market_data_5m</code>, реконструкцию баров, гард свежести и торговлю не сказано ничего.</p>
+      <p class="fix">Переписать под фактический состав; как минимум — предупредить, что <code>place_orders</code> по умолчанию идёт в боевой контур.</p>
+      <span class="where">README.md</span>
+    </div>
+  </div>
+
+  <div class="finding f-med">
+    <div class="rail">14</div>
+    <div class="body">
+      <div class="head"><span class="ttl">Мёртвый тикер FIXP остался в данных</span><span class="pill p-med">medium</span></div>
+      <p>276 баров, заморожены на 20.06.2025. Из <code>TICKERS</code> тикер убран, из БД — нет. Любая выборка по всей таблице (ликвидность по рынку, breadth, кросс-секционные перцентили) молча включает бумагу, которая больше года не торгуется.</p>
+      <p class="fix">Удалить строки либо ввести признак активности тикера и фильтровать по нему в аналитических запросах.</p>
+      <span class="where">market_data · config.TICKERS · коммит 7e386b2</span>
+    </div>
+  </div>
+
+  <div class="finding f-med">
+    <div class="rail">15</div>
+    <div class="body">
+      <div class="head"><span class="ttl">Дата бара берётся по UTC, а торговый день — московский</span><span class="pill p-med">medium</span></div>
+      <p><code>fetch_daily_candles</code> формирует <code>date</code> как <code>key[:10]</code> — первые десять символов ISO-времени в UTC. Остальная система живёт в МСК: <code>_daily_from_dt</code> сравнивает со «вчера» по московскому календарю, <code>backfill_daily</code> группирует по <code>AT TIME ZONE 'Europe/Moscow'</code>, гард свежести — тоже. Для дневных баров MOEX расхождения сейчас не возникает, потому что API отдаёт бар с началом в 07:00 UTC. Но допущение нигде не проверено и сломается при смене представления времени на стороне API.</p>
+      <p class="fix">Приводить время бара к московской дате явно, а не полагаться на срез строки.</p>
+      <span class="where">loaders/moex_loader.py:140–160</span>
+    </div>
+  </div>
+
+  <div class="finding f-med">
+    <div class="rail">16</div>
+    <div class="body">
+      <div class="head"><span class="ttl">Валидатор подключается через подмену sys.path на лету</span><span class="pill p-med">medium</span></div>
+      <p><code>run_validation.run()</code> делает <code>sys.path.insert(0, VALIDATOR_DIR)</code> и импортирует <code>validation.verdict</code>. Путь остаётся в <code>sys.path</code> навсегда, а имена <code>pnl_engine</code> и <code>advanced_stats</code> оказываются в глобальном пространстве модулей и могут перекрыть одноимённые. Каталог при этом лежит внутри проекта и мог бы быть обычным пакетом.</p>
+      <p class="fix">Сделать <code>strategy_validation</code> нормальным пакетом с относительными импортами; <code>VALIDATOR_DIR</code> оставить как аварийную возможность.</p>
+      <span class="where">services/run_validation.py:113–120</span>
+    </div>
+  </div>
+
+  <h4>Низкая</h4>
+
+  <div class="finding f-low">
+    <div class="rail">17</div>
+    <div class="body">
+      <div class="head"><span class="ttl">config падает без INVEST_TOKEN даже для чтения БД</span><span class="pill p-low">low</span></div>
+      <p><code>INVEST_TOKEN</code> читается через <code>os.environ[...]</code> на уровне модуля, поэтому любой импорт <code>config</code> без токена даёт <code>KeyError</code>. Аналитический скрипт, которому нужны только <code>DB_*</code> и <code>TICKERS</code>, запуститься не может.</p>
+      <p class="fix">Читать через <code>os.getenv</code> и проверять наличие в момент первого сетевого вызова.</p>
+      <span class="where">config.py:12</span>
+    </div>
+  </div>
+
+  <div class="finding f-low">
+    <div class="rail">18</div>
+    <div class="body">
+      <div class="head"><span class="ttl">Исключение TGKA живёт в комментарии</span><span class="pill p-low">low</span></div>
+      <p>Комментарий в конфиге сообщает, что TGKA исключён из валидации из-за «битого масштаба цены». Тикер при этом остаётся в <code>TICKERS</code>, грузится, участвует в обучении TFT и в рыночных агрегатах. Его цена (0,0036–0,0093 ₽) действительно на три порядка ниже остальных.</p>
+      <p class="fix">Если бумага исключается — исключать по правилу в коде, а не отсутствием в одном списке; если нет — снять комментарий.</p>
+      <span class="where">config.py:171 · VALIDATION_TICKERS</span>
+    </div>
+  </div>
+
+  <div class="finding f-low">
+    <div class="rail">19</div>
+    <div class="body">
+      <div class="head"><span class="ttl">Запуск по расписанию только на словах</span><span class="pill p-low">low</span></div>
+      <p>Docstring'и в нескольких местах упоминают cron (<code>--attach-stops</code> «можно по cron», <code>--no-confirm</code> «для cron»), но ни crontab, ни launchd-плиста, ни Dockerfile, ни файла логов в репозитории нет. Логи идут в stdout, наружу ничего не пишется. Как сервис реально запускается — из репозитория не восстановить.</p>
+      <p class="fix">Положить рядом файл расписания и настроить запись логов в файл с ротацией.</p>
+      <span class="where">services/place_orders.py · services/cancel_orders.py</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 7 ═══ -->
+<section id="strong">
+  <h2><span class="num">07</span> Что сделано хорошо</h2>
+  <p class="lede">Аудит перечисляет проблемы, поэтому стоит отдельно назвать решения, которые в проектах такого рода встречаются редко.</p>
+  <div class="two">
+    <div class="panel">
+      <h4>Инженерия</h4>
+      <ul>
+        <li>Брокер за абстракцией <code>BrokerClient</code>: бизнес-логика заявок не знает про T-Invest, смена контура — новый класс.</li>
+        <li>Двухфазное выставление заявок закрывает риск раннего стопа архитектурно: стоп физически не может появиться раньше факта позиции.</li>
+        <li>Идемпотентность на всех уровнях — UNIQUE-ключи, ON CONFLICT DO UPDATE, UUID как ключ идемпотентности заявки.</li>
+        <li>Гард свежести данных как общий модуль: торговля на устаревших свечах блокируется, дашборд — только предупреждает.</li>
+        <li>Реконструкция дневного бара из 5-минуток с фильтром вечерней сессии и самокоррекцией при публикации официального бара.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h4>Методология</h4>
+      <ul>
+        <li>Контур валидации отвечает на правильный вопрос — «отличается ли от случайности», а не «сколько заработало».</li>
+        <li>White RC / SPA / PBO считаются как тесты отбора (раз на тикер), BH-FDR — на уровне примитива, чтобы зеркальные стратегии не раздували семейство.</li>
+        <li>Издержки начисляются за каждую сделку, а не один раз на период удержания — единый <code>pnl_engine</code> как источник истины.</li>
+        <li>Направленный PnL выводится из квантилей самих примитивных доходностей, а не из маргинальных low/high — статистически честно.</li>
+        <li>Внутридневная поправка обучается и валидируется на held-out днях с явной готовностью показать нулевой результат.</li>
+        <li>Комментарии честно фиксируют ограничения: «0,08 % оптимистично для мид-капов», «свечи не скорректированы на дивиденды».</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 8 ═══ -->
+<section id="plan">
+  <h2><span class="num">08</span> Порядок работ</h2>
+  <p class="lede">Ранжировано по отношению «риск, который снимается» к «объёму работы».</p>
+  <div class="tw">
+  <table>
+    <thead><tr><th class="n">#</th><th>Действие</th><th>Находки</th><th>Объём</th></tr></thead>
+    <tbody>
+      <tr><td class="n">1</td><td>Инвертировать дефолты безопасности: TLS-проверка включена, sandbox — контур по умолчанию, <code>PROD_ACCOUNT_ID</code> без значения в коде.</td><td class="v">01 02 03</td><td class="v">часы</td></tr>
+      <tr><td class="n">2</td><td>Завести таблицу прогнозов и писать в неё каждый прогон — открывает ретроспективную оценку модели и калибровку FinalScore.</td><td class="v">05</td><td class="v">день</td></tr>
+      <tr><td class="n">3</td><td>Развести транзакции загрузки: пул коннектов либо один писатель, коммит из низкоуровневой функции наверх.</td><td class="v">04</td><td class="v">день</td></tr>
+      <tr><td class="n">4</td><td>Тесты на чистые функции расчёта заявок и рейтинга; код возврата <code>main.py</code> по числу упавших шагов.</td><td class="v">06 07</td><td class="v">2–3 дня</td></tr>
+      <tr><td class="n">5</td><td>Гигиена данных: колонка <code>source</code> для реконструированных баров, удаление FIXP, очистка <code>news_sentiment</code>.</td><td class="v">08 14</td><td class="v">часы</td></tr>
+      <tr><td class="n">6</td><td>Решить судьбу выключенного и мёртвого кода: контур новостей, <code>feature_engineering.py</code>, вторая копия валидатора.</td><td class="v">09 10 11</td><td class="v">день</td></tr>
+      <tr><td class="n">7</td><td>Зафиксировать окружение и переписать README под фактический состав сервиса.</td><td class="v">12 13 19</td><td class="v">день</td></tr>
+      <tr><td class="n">8</td><td>Аналитическая точность: включить <code>VALIDATION_FULL_UNIVERSE</code>, заполнить <code>VALIDATION_COST_RT_MAP</code> реальными спредами мид-капов, оценить эффект винзоризации гэпов.</td><td class="v">—</td><td class="v">день</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note">
+    Пункт 8 стоит последним по срочности, но он единственный меняет сами выводы системы. Сейчас отчётная выборка из шести тикеров отобрана по прошлым результатам, а поправка на этот отбор выключена; издержки для всех бумаг взяты по нижней оценке ликвидных голубых фишек, хотя четыре из шести отчётных тикеров — мид-капы. Оба смещения работают в одну сторону: в пользу того, что преимущество есть.
+  </div>
+</section>
+
+<footer>
+  <span>ETL-tcs · аудит</span>
+  <span>11 029 строк · 56 модулей</span>
+  <span>19 находок</span>
+  <span>08.09.2026</span>
+</footer>
+
+</div>

@@ -9,10 +9,10 @@ from __future__ import annotations
   4. Сохраняем в news_sentiment.
 
 Запуск разовый:
-    python3 run_monitor.py
+    python3 -m contrib.experimental_news.run_monitor
 
 Запуск в режиме демона (каждые N минут):
-    python3 run_monitor.py --loop --interval 15
+    python3 -m contrib.experimental_news.run_monitor --loop --interval 15
 
 ВРЕМЕННО ОТКЛЮЧЕНО: блоки Telegram закомментированы до настройки авторизации.
 Пометка # TG_ENABLED — что нужно раскомментировать для включения.
@@ -24,10 +24,15 @@ from datetime import datetime, timezone
 
 # import anthropic                              # TG_ENABLED
 
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 import config
-import database
-# from monitors.tg_reader import fetch_messages  # TG_ENABLED
-# from monitors.news_parser import parse_messages  # TG_ENABLED
+from contrib.experimental_news import news_db
+# from contrib.experimental_news.monitors.tg_reader import fetch_messages    # TG_ENABLED
+# from contrib.experimental_news.monitors.news_parser import parse_messages  # TG_ENABLED
 
 log = logging.getLogger("monitor_news")
 
@@ -46,7 +51,7 @@ async def run_once_async(conn) -> int:
     #
     # # 1. Последний обработанный message_id
     # last_id = await asyncio.to_thread(
-    #     database.get_last_message_id, conn, config.TG_CHANNEL
+    #     news_db.get_last_message_id, config.TG_CHANNEL
     # )
     # log.info("Последний обработанный message_id: %s", last_id or "нет (первый запуск)")
     #
@@ -84,7 +89,7 @@ async def run_once_async(conn) -> int:
     #     )
     #     for r in records
     # ]
-    # saved = await asyncio.to_thread(database.upsert_news, conn, rows)
+    # saved = await asyncio.to_thread(news_db.upsert_news, rows)
     # log.info("Сохранено записей: %d", saved)
     # return saved
 

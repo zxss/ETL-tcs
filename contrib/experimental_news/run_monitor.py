@@ -4,13 +4,13 @@
 
 Использование:
     # Разовый запуск (загрузить всё новое):
-    python3 run_monitor.py
+    python3 -m contrib.experimental_news.run_monitor
 
     # Демон (каждые 15 мин):
-    python3 run_monitor.py --loop --interval 15
+    python3 -m contrib.experimental_news.run_monitor --loop --interval 15
 
     # Первичная авторизация в Telegram (один раз):
-    python3 run_monitor.py --auth
+    python3 -m contrib.experimental_news.run_monitor --auth
 
 Переменные окружения (в .env):
     TG_API_ID       — с https://my.telegram.org
@@ -25,10 +25,14 @@
 import argparse
 # import asyncio          # TG_ENABLED
 import logging
+import os
 import sys
 
-import database
-# from services.monitor_news import run_once, run_loop  # TG_ENABLED
+# запуск из корня проекта: python3 -m contrib.experimental_news.run_monitor
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+from contrib.experimental_news import news_db
+# from contrib.experimental_news.monitor_news import run_once, run_loop  # TG_ENABLED
 
 
 def parse_args():
@@ -52,7 +56,7 @@ def main():
     # TG_ENABLED: раскомментировать после настройки TG_API_ID / TG_HASH / TG_PHONE
     #
     # if args.auth:
-    #     from monitors.tg_reader import auth
+    #     from contrib.experimental_news.monitors.tg_reader import auth
     #     asyncio.run(auth())
     #     log.info("Авторизация завершена. Теперь запустите без --auth.")
     #     return
@@ -61,7 +65,7 @@ def main():
         log.warning(
             "Telegram-мониторинг отключён. "
             "Заполните TG_API_ID, TG_API_HASH, TG_PHONE в .env и "
-            "раскомментируйте TG_ENABLED-блоки в run_monitor.py"
+            "раскомментируйте TG_ENABLED-блоки в contrib/experimental_news/run_monitor.py"
         )
         return
 
@@ -87,7 +91,7 @@ def main():
 
         log.warning(
             "Telegram-мониторинг отключён. "
-            "Раскомментируйте TG_ENABLED-блоки в run_monitor.py для включения."
+            "Раскомментируйте TG_ENABLED-блоки в contrib/experimental_news/run_monitor.py."
         )
 
     except KeyboardInterrupt:

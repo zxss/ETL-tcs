@@ -11,7 +11,7 @@
   3. Раскомментируйте импорты telethon ниже
 
 Первый запуск после включения:
-    python3 run_monitor.py --auth
+    python3 -m contrib.experimental_news.run_monitor --auth
 """
 
 from __future__ import annotations
@@ -24,6 +24,12 @@ from datetime import datetime, timezone
 # from telethon import TelegramClient
 # from telethon.errors import FloodWaitError
 # from telethon.tl.types import Message
+
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))))))
 
 import config
 

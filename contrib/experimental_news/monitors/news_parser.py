@@ -21,7 +21,11 @@ import logging
 import re
 from typing import Any
 
-import anthropic
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))))))
 
 import config
 
@@ -159,7 +163,7 @@ def _make_batch_prompt(messages: list[dict]) -> str:
     return _BATCH_PROMPT_TEMPLATE.format(posts=posts_text)
 
 
-def parse_batch_llm(messages: list[dict], client: anthropic.Anthropic) -> list[dict]:
+def parse_batch_llm(messages: list[dict], client: "anthropic.Anthropic") -> list[dict]:  # noqa: F821
     """
     Вызывает Claude для батча сообщений.
     Возвращает список результатов в том же порядке.
@@ -204,7 +208,7 @@ def parse_batch_llm(messages: list[dict], client: anthropic.Anthropic) -> list[d
 
 def parse_messages(
     messages: list[dict],
-    anthropic_client: anthropic.Anthropic | None = None,
+    anthropic_client: "anthropic.Anthropic | None" = None,  # noqa: F821
 ) -> list[dict]:
     """
     Парсит список сообщений и возвращает список записей для БД:
