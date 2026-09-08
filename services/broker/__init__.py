@@ -4,7 +4,7 @@
     base.py            — абстрактный BrokerClient + dataclass'ы Quotation,
                          Instrument, OrderState, Position. Бизнес-логика
                          place_orders разговаривает ТОЛЬКО с этим интерфейсом.
-    tinkoff_base.py    — общий REST-транспорт (urllib, ssl=False), find_instrument,
+    tinkoff_base.py    — общий REST-транспорт (urllib + TLS-проверка), find_instrument,
                          стоп-заявки. База для обоих контуров.
     tinkoff_sandbox.py — TinkoffSandboxClient: тестовый контур (виртуальные деньги).
     tinkoff_prod.py    — TinkoffProdClient: БОЕВОЙ счёт, реальные деньги.

@@ -25,7 +25,7 @@ import aiohttp
 
 import config
 from loaders.moex_loader import (
-    make_headers, find_instrument, quotation_to_float, _api_post,
+    make_headers, make_connector, find_instrument, quotation_to_float, _api_post,
 )
 
 log = logging.getLogger("tft.quotes")
@@ -92,7 +92,7 @@ def _today_open(conn, ticker: str, today_msk) -> float | None:
 
 async def _fetch_async(tickers: list[str]) -> dict[str, dict]:
     """Возвращает {ticker: {"uid","price","time"}}. Бросает только при фатале."""
-    connector = aiohttp.TCPConnector(ssl=False)
+    connector = make_connector()
     async with aiohttp.ClientSession(
         headers=make_headers(),
         connector=connector,

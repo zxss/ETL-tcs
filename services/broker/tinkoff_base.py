@@ -2,7 +2,7 @@
 Общая база для T-Invest брокерских клиентов (sandbox и prod).
 
 Содержит то, что ИДЕНТИЧНО в обоих контурах:
-  • HTTP-транспорт (_post) на stdlib urllib + ssl=False (MITM на машине);
+  • HTTP-транспорт (_post) на stdlib urllib с проверкой TLS (см. tls.py);
   • find_instrument (InstrumentsService.ShareBy — один и тот же эндпоинт);
   • стоп-заявки (StopOrdersService — общий сервис для sandbox и prod);
   • разбор OrderState, генерация order_id.
@@ -14,14 +14,13 @@ from __future__ import annotations
 
 import json
 import logging
-import os
-import ssl
 import urllib.error
 import urllib.request
 import uuid
 from typing import Any
 
 import config
+import tls
 from services.broker.base import (
     BrokerClient,
     BrokerError,
@@ -33,17 +32,6 @@ from services.broker.base import (
 )
 
 log = logging.getLogger("broker.tinkoff")
-
-
-def _ssl_context(verify: bool) -> ssl.SSLContext:
-    """Тот же контекст, что в services/list_accounts.py: по умолчанию verify=OFF
-    (MITM-перехват TLS на машине пользователя). INVEST_TLS_VERIFY=1 — вернуть."""
-    if verify:
-        return ssl.create_default_context()
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-    return ctx
 
 
 def parse_order_state(d: dict[str, Any]) -> OrderState:
@@ -72,11 +60,12 @@ class TinkoffRestBase(BrokerClient):
                  base_url: str | None = None,
                  verify_tls: bool | None = None,
                  timeout: float = 15.0):
-        self.token = token or config.INVEST_TOKEN
+        # Валидация токена — здесь, при инициализации сетевого клиента:
+        # config импортируется без токена (аналитика, работа с БД).
+        self.token = token or config.require_invest_token()
         self.base  = base_url or self.DEFAULT_BASE
-        if verify_tls is None:
-            verify_tls = os.getenv("INVEST_TLS_VERIFY", "0") not in ("0", "false", "False")
-        self.ssl_ctx = _ssl_context(verify_tls)
+        # verify_tls=None → политика из config.INVEST_TLS_VERIFY (по умолч. ВКЛ).
+        self.ssl_ctx = tls.ssl_context(verify_tls)
         self.timeout = timeout
 
     # ── HTTP ──────────────────────────────────────────────────────────────────

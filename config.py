@@ -1,6 +1,7 @@
 """
 Конфигурация приложения — читается из переменных окружения / .env файла.
 """
+from __future__ import annotations
 
 import os
 from dotenv import load_dotenv
@@ -8,14 +9,45 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- T-Invest API -----------------------------------------------------------
-INVEST_TOKEN: str = os.environ["INVEST_TOKEN"]
+# Токен НЕ обязателен на этапе импорта: аналитические скрипты и работа с БД
+# должны импортировать config без него. Наличие токена проверяют сетевые
+# клиенты брокера при инициализации — см. require_invest_token().
+INVEST_TOKEN: str | None = os.getenv("INVEST_TOKEN")
 API_BASE_URL: str = "https://invest-public-api.tbank.ru/rest"
 API_SERVICE:  str = "tinkoff.public.invest.api.contract.v1"
 
+
+def require_invest_token() -> str:
+    """Токен для обращения к API брокера. Вызывается в инициализации сетевых
+    клиентов (services/broker/, loaders/), а не при импорте config."""
+    if not INVEST_TOKEN:
+        raise ValueError("INVEST_TOKEN не задан в .env")
+    return INVEST_TOKEN
+
+
+# Проверка TLS-сертификатов брокера. По умолчанию ВКЛЮЧЕНА. Отключать только
+# явно (INVEST_TLS_VERIFY=0) и осознанно — например при MITM-перехвате TLS
+# корпоративным прокси; при отключении в лог пишется предупреждение (tls.py).
+INVEST_TLS_VERIFY: int = 0 if os.getenv(
+    "INVEST_TLS_VERIFY", "1").strip().lower() in ("0", "false", "no", "") else 1
+
+# Сертификат T-Invest выпущен «Russian Trusted Root CA» (Минцифры), которого нет
+# в дефолтном доверенном хранилище Python. Путь к PEM-бандлу с этим корнем —
+# INVEST_CA_BUNDLE; без него проверка TLS упадёт CERTIFICATE_VERIFY_FAILED.
+INVEST_CA_BUNDLE: str = os.getenv("INVEST_CA_BUNDLE", "")
+
 # --- T-Invest автозаявки (services/place_orders.py) -------------------------
-# КОНТУР ПО УМОЛЧАНИЮ — PROD (реальный счёт, реальные деньги). Песочница
-# доступна флагом --sandbox. Боевой счёт: PROD_ACCOUNT_ID.
-PROD_ACCOUNT_ID: str = os.getenv("PROD_ACCOUNT_ID", "2018145468")
+# КОНТУР ПО УМОЛЧАНИЮ — SANDBOX (виртуальные деньги). Боевой контур требует
+# явного флага --prod. Боевой счёт берётся ТОЛЬКО из окружения: захардкоженного
+# номера счёта здесь быть не должно.
+PROD_ACCOUNT_ID: str = os.getenv("PROD_ACCOUNT_ID", "")
+
+
+def require_prod_account_id() -> str:
+    """Номер боевого счёта. Вызывается только при реальном обращении к PROD."""
+    if not PROD_ACCOUNT_ID:
+        raise ValueError("PROD_ACCOUNT_ID не задан в .env")
+    return PROD_ACCOUNT_ID
 
 # Песочница: тестовый контур (виртуальные счета/деньги, исполнение по last price).
 SANDBOX_API_BASE_URL: str = os.getenv(
@@ -41,6 +73,12 @@ DB_PORT:     int = int(os.getenv("DB_PORT", 5432))
 DB_NAME:     str = os.getenv("DB_NAME", "market_data")
 DB_USER:     str = os.getenv("DB_USER", "postgres")
 DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
+
+# Пул соединений (database.init_pool). Загрузка идёт в MAX_CONCURRENT_TICKERS
+# потоков, каждому нужен свой коннект — иначе commit одного потока фиксирует
+# незавершённую транзакцию другого.
+DB_POOL_MIN: int = int(os.getenv("DB_POOL_MIN", "1"))
+DB_POOL_MAX: int = int(os.getenv("DB_POOL_MAX", "5"))
 
 # --- ETL параметры ----------------------------------------------------------
 TICKERS: list[str] = [
@@ -243,6 +281,11 @@ SHOW_ALL_INTRADAY: bool = os.getenv("SHOW_ALL_INTRADAY", "0") not in ("0", "fals
 # 0 — без ограничения (показать все).
 DASHBOARD_TOP_N: int = int(os.getenv("DASHBOARD_TOP_N", "50"))
 
+# SAVE_FORECASTS=1 (по умолчанию) — сохранять строки дневного и недельного
+# дашбордов в таблицу forecasts (upsert по asof_date+ticker+strategy), чтобы
+# потом сверять прогноз с фактом. =0 — только печать, без записи в БД.
+SAVE_FORECASTS: bool = os.getenv("SAVE_FORECASTS", "1") not in ("0", "false", "False")
+
 # BEST_TRADES_TOP_N — сколько сигналов показывать в блоке «ЛУЧШИЕ СДЕЛКИ».
 BEST_TRADES_TOP_N: int = int(os.getenv("BEST_TRADES_TOP_N", "10"))
 
@@ -310,6 +353,18 @@ TFT_IMPACT_TOL: float = float(os.getenv("TFT_IMPACT_TOL", "0.005"))   # 0.5%
 TFT_PARTICIPATION: float = float(os.getenv("TFT_PARTICIPATION", "0.01"))  # 1%
 # Глубина окна (дней) для оценки ликвидности.
 TFT_LIQUIDITY_DAYS: int = int(os.getenv("TFT_LIQUIDITY_DAYS", "60"))
+
+# --- Торговый календарь (weekend trading) ------------------------------------
+# В market_data есть бары за субботы/воскресенья (сессии выходного дня): объём
+# в них примерно в 8 раз ниже будничного, и они искажают ATR, EWMA и z-оценки
+# объёма, а шаг модели (H торговых дней) расходится с окном Пн–Пт в шапке
+# дашборда.
+#   0 (по умолчанию) — строгий биржевой календарь: бары выходных отбрасываются
+#       при формировании датасета валидации и TFT, дашборд считает окно по Пн–Пт.
+#   1 — торговля 7 дней в неделю: бары выходных остаются, а торговые дни
+#       определяются по фактическому наличию торгов в БД (trading_calendar).
+# Смена режима меняет датасет — модель переобучается на следующем прогоне.
+INCLUDE_WEEKEND_TRADING: int = int(os.getenv("INCLUDE_WEEKEND_TRADING", "0"))
 
 # --- Dashboard 2.0: рыночный контекст и риск-фильтры -------------------------
 # Жёсткий рыночный фильтр: запрещать LONG при BEAR и SHORT при BULL.

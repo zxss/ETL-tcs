@@ -40,12 +40,16 @@ services/place_orders.py — автозаявки в T-Invest Sandbox по то�
 StaleDataError, заявки НЕ ставятся (защита от торговли по устаревшему прогнозу).
 --skip-refresh пропускает догрузку (проверка свежести остаётся).
 
+КОНТУР: по умолчанию SANDBOX (виртуальные деньги). Боевой счёт — только с явным
+--prod. Связка --prod --no-confirm (cron) требует ALLOW_UNATTENDED_PROD=1.
+
 CLI:
-  python3 -m services.place_orders --top-n 10 --dry-run  # план синхронизации
+  python3 -m services.place_orders --top-n 10 --dry-run  # план синхронизации (sandbox)
   python3 -m services.place_orders --top-n 10            # синхронизация портфеля
   python3 -m services.place_orders --top-n 10 --wait-fill 60   # ждать заливки до 60s
   python3 -m services.place_orders --top-n 10 --place-only     # только выставить заявки
   python3 -m services.place_orders --attach-stops        # только привязать SL/TP
+  python3 -m services.place_orders --prod --top-n 10     # БОЕВОЙ контур
 """
 from __future__ import annotations
 
@@ -54,6 +58,7 @@ import csv
 import datetime as dt
 import json
 import logging
+import os
 import sys
 import time
 from pathlib import Path
@@ -221,16 +226,26 @@ def _save_pending(data: dict) -> None:
 def _api_quantity(o: Order, inst: Instrument) -> tuple[int, int, list[str]]:
     """Инвариант — число АКЦИЙ = lots_dashboard × lot_size_dashboard.
     Делим на инструментный лот API (inst.lot) → quantity для PostOrder.
-    Возвращает (api_quantity_lots, shares, warnings)."""
+    Возвращает (api_quantity_lots, shares, warnings).
+
+    Округление ТОЛЬКО ВНИЗ: если посчитанных акций не хватает даже на один
+    API-лот, возвращаем 0 и заявка не выставляется (вызывающий код проверяет
+    api_q <= 0). Прежний max(1, ...) в этом случае поднимал размер до целого
+    лота — то есть покупал БОЛЬШЕ, чем посчитала модель (при shares=1 и
+    inst.lot=10 — в 10 раз), обходя защиту вызывающего и ломая риск-сайзинг."""
     warnings: list[str] = []
     shares = (o.quantity_lots or 0) * o.lot_size
     if shares <= 0:
         return 0, 0, ["нулевое число акций"]
     if not o.lot_known:
         warnings.append(f"лот по дашборду = {o.lot_size}(?) — не подтверждён")
+    if shares < inst.lot:
+        warnings.append(f"shares={shares} меньше API-лота={inst.lot} → "
+                        f"размер 0, заявка не выставляется")
+        return 0, shares, warnings
     if shares % inst.lot != 0:
         warnings.append(f"shares={shares} не делится на API-лот={inst.lot} → округляем вниз")
-    return max(1, shares // inst.lot), shares, warnings
+    return shares // inst.lot, shares, warnings
 
 
 # ── ФАЗА 1: только лимитки ────────────────────────────────────────────────────
@@ -826,10 +841,10 @@ def sync_portfolio(broker: BrokerClient, account_id: str, orders: list[Order], *
 # ── Подготовка брокера/счёта ──────────────────────────────────────────────────
 
 
-def _make_broker_and_account(sandbox: bool) -> tuple[BrokerClient, str, str]:
-    """Контур по умолчанию — PROD (боевой счёт PROD_ACCOUNT_ID). sandbox=True —
-    тестовый контур (создаёт/пополняет виртуальный счёт)."""
-    if sandbox:
+def _make_broker_and_account(prod: bool) -> tuple[BrokerClient, str, str]:
+    """Контур по умолчанию — SANDBOX (виртуальный счёт: создаётся/пополняется).
+    prod=True — боевой счёт (реальные деньги), только по явному флагу --prod."""
+    if not prod:
         broker: BrokerClient = TinkoffSandboxClient()
         pref = config.SANDBOX_ACCOUNT_ID
         account_id = broker.open_or_get_account(preferred_id=pref)
@@ -843,8 +858,17 @@ def _make_broker_and_account(sandbox: bool) -> tuple[BrokerClient, str, str]:
 
     # PROD — верифицируем боевой счёт (FULL access), без создания/пополнения
     broker = TinkoffProdClient()
-    account_id = broker.open_or_get_account(preferred_id=config.PROD_ACCOUNT_ID)
+    account_id = broker.open_or_get_account(preferred_id=config.require_prod_account_id())
     return broker, account_id, "PROD"
+
+
+def _guard_unattended_prod(prod: bool, no_confirm: bool) -> None:
+    """Связка «боевой контур + без подтверждения» — только по явному флагу
+    окружения ALLOW_UNATTENDED_PROD=1 (осознанный запуск по cron)."""
+    if prod and no_confirm and os.getenv("ALLOW_UNATTENDED_PROD", "") != "1":
+        raise RuntimeError(
+            "Выполнение на PROD без подтверждения запрещено без флага "
+            "ALLOW_UNATTENDED_PROD=1")
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
@@ -856,10 +880,14 @@ def main(argv: Optional[list[str]] = None) -> int:
         format="%(asctime)s  %(levelname)-8s  %(name)s  %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S")
     p = argparse.ArgumentParser(
-        description="Автозаявки в T-Invest (двухфазно). КОНТУР ПО УМОЛЧАНИЮ — PROD "
-                    "(реальные деньги); --sandbox для тестового контура.")
-    p.add_argument("--sandbox", action="store_true",
-                   help="Тестовый контур (виртуальные деньги). По умолчанию — PROD.")
+        description="Автозаявки в T-Invest (двухфазно). КОНТУР ПО УМОЛЧАНИЮ — "
+                    "SANDBOX (виртуальные деньги); боевой контур только с --prod.")
+    g_env = p.add_mutually_exclusive_group()
+    g_env.add_argument("--sandbox", action="store_true",
+                       help="Тестовый контур (виртуальные деньги) — режим по умолчанию.")
+    g_env.add_argument("--prod", action="store_true",
+                       help="БОЕВОЙ контур: реальный счёт, реальные деньги. "
+                            "В связке с --no-confirm требует ALLOW_UNATTENDED_PROD=1.")
     p.add_argument("--attach-stops", action="store_true",
                    help="ФАЗА 2: привязать STOP_LOSS к залившимся позициям из реестра.")
     p.add_argument("--top-n", type=int,
@@ -896,9 +924,11 @@ def main(argv: Optional[list[str]] = None) -> int:
                         "даже если по инструменту уже есть заявка/позиция/стоп).")
     args = p.parse_args(argv)
 
+    _guard_unattended_prod(args.prod, args.no_confirm)
+
     try:
-        broker, account_id, env = _make_broker_and_account(args.sandbox)
-    except BrokerError as e:
+        broker, account_id, env = _make_broker_and_account(args.prod)
+    except (BrokerError, ValueError) as e:
         print(f"[ERROR] Счёт/контур: {e}", file=sys.stderr)
         return 1
 
