@@ -28,13 +28,14 @@ import logging
 from statistics import median
 
 import config
+import trading_calendar
 
 log = logging.getLogger("tft.liquidity")
 
-_SQL = """
+_SQL_TMPL = """
     SELECT close, volume
     FROM market_data
-    WHERE ticker = %(tk)s
+    WHERE ticker = %(tk)s{session_filter}
     ORDER BY date DESC
     LIMIT %(n)s;
 """
@@ -93,12 +94,15 @@ def compute(conn, tickers: list[str]) -> dict:
     """
     n = int(getattr(config, "TFT_LIQUIDITY_DAYS", 60))
     out: dict[str, dict] = {}
+    # Сессии выходного дня дают объём примерно в 8 раз ниже будничного —
+    # в строгом календаре они не должны занижать ADV и Max Pos.
+    sql = _SQL_TMPL.format(session_filter=trading_calendar.sql_session_filter("date"))
     try:
         with conn.cursor() as cur:
             for tk in tickers:
                 TK = tk.upper()
                 try:
-                    cur.execute(_SQL, {"tk": TK, "n": n})
+                    cur.execute(sql, {"tk": TK, "n": n})
                     rows = cur.fetchall()
                 except Exception:  # noqa: BLE001 — один тикер не должен валить всё
                     continue

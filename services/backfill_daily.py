@@ -7,6 +7,10 @@ T-Invest ещё не опубликован (часто — поздним ве�
 Когда брокер опубликует настоящий дневной бар, обычный ETL перезапишет
 реконструкцию (UPSERT ON CONFLICT DO UPDATE) — данные самокорректируются.
 
+Происхождение бара видно в market_data.source: 'backfill_5m' — реконструкция
+этим модулем, 'api' — официальный бар биржи. Так реконструированные бары можно
+исключать из расчётов или отслеживать, когда они заменились официальными.
+
 Реконструируются ТОЛЬКО завершённые дни (строго раньше текущей московской
 даты), чтобы не зафиксировать частичную свечу текущей сессии.
 """
@@ -25,7 +29,7 @@ MSK = timezone(timedelta(hours=3))
 # Агрегация 5M → дневная OHLCV по московскому календарному дню.
 # open  = первый по времени, close = последний по времени, high/low/volume — экстремумы/сумма.
 _BACKFILL_SQL = """
-INSERT INTO market_data (ticker, date, open, high, low, close, volume)
+INSERT INTO market_data (ticker, date, open, high, low, close, volume, source)
 SELECT
     ticker,
     d AS date,
@@ -33,7 +37,8 @@ SELECT
     MAX(high)                              AS high,
     MIN(low)                               AS low,
     (array_agg(close ORDER BY ts DESC))[1] AS close,
-    SUM(volume)                            AS volume
+    SUM(volume)                            AS volume,
+    'backfill_5m'                          AS source
 FROM (
     SELECT ticker, ts, open, high, low, close, volume,
            (ts AT TIME ZONE 'Europe/Moscow')::date AS d
@@ -54,7 +59,8 @@ ON CONFLICT (ticker, date) DO UPDATE SET
     high   = EXCLUDED.high,
     low    = EXCLUDED.low,
     close  = EXCLUDED.close,
-    volume = EXCLUDED.volume
+    volume = EXCLUDED.volume,
+    source = EXCLUDED.source
 RETURNING date;
 """
 

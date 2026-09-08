@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 
 import config
+import trading_calendar
 
 log = logging.getLogger("tft.features")
 
@@ -60,10 +61,12 @@ TARGET_COLS = [
 # Минимум наблюдений у тикера, чтобы он попал в обучающий пул.
 MIN_ROWS = 120
 
-_EXPORT_SQL = """
+# Фильтр сессий подставляется на КАЖДЫЙ вызов (не на импорте): режим
+# INCLUDE_WEEKEND_TRADING может меняться между прогонами и в тестах.
+_EXPORT_SQL_TMPL = """
     SELECT date, open, high, low, close, volume
     FROM market_data
-    WHERE ticker = %s
+    WHERE ticker = %s{session_filter}
     ORDER BY date ASC;
 """
 
@@ -77,8 +80,10 @@ class TickerFrame:
 
 
 def _load_raw(conn, ticker: str) -> pd.DataFrame | None:
+    sql = _EXPORT_SQL_TMPL.format(
+        session_filter=trading_calendar.sql_session_filter("date"))
     with conn.cursor() as cur:
-        cur.execute(_EXPORT_SQL, (ticker,))
+        cur.execute(sql, (ticker,))
         rows = cur.fetchall()
     if not rows:
         return None
@@ -128,9 +133,11 @@ def _build_features(df: pd.DataFrame) -> pd.DataFrame:
     d["ret_mean5"] = d["log_ret"].rolling(5, min_periods=2).mean() * 100
     d["ret_std20"] = d["log_ret"].rolling(20, min_periods=5).std() * 100
 
+    # Период кодирования: 5 в строгом календаре (Пн–Пт), 7 при торговле 7/7.
+    dow_period = trading_calendar.dow_period()
     dow = d["date"].dt.dayofweek
-    d["dow_sin"] = np.sin(2 * np.pi * dow / 5.0)
-    d["dow_cos"] = np.cos(2 * np.pi * dow / 5.0)
+    d["dow_sin"] = np.sin(2 * np.pi * dow / dow_period)
+    d["dow_cos"] = np.cos(2 * np.pi * dow / dow_period)
 
     # День недели ПРОГНОЗИРУЕМОГО (следующего) дня — known-future ковариата.
     # Для обучающих строк это dow реального следующего бара (корректно учитывает
@@ -139,15 +146,15 @@ def _build_features(df: pd.DataFrame) -> pd.DataFrame:
     # предсказываем. Это и отделяет прогноз на понедельник от прогноза на среду.
     next_date = d["date"].shift(-1)
     if len(d):
-        nb = d["date"].iloc[-1] + pd.Timedelta(days=1)
-        while nb.dayofweek >= 5:  # сб(5)/вс(6) → следующий торговый день
-            nb += pd.Timedelta(days=1)
+        # Следующий торговый день по ТЕКУЩЕМУ календарю (а не «пропусти сб/вс»):
+        # в режиме 7/7 это буквально завтра.
+        nb = trading_calendar.next_trading_day(d["date"].iloc[-1].date())
         next_date = next_date.copy()
-        next_date.iloc[-1] = nb
+        next_date.iloc[-1] = pd.Timestamp(nb)
     ndow = next_date.dt.dayofweek
     d["next_dow"] = ndow.astype("Int64")          # сырой день недели для fallback-бакетов
-    d["next_dow_sin"] = np.sin(2 * np.pi * ndow / 5.0)
-    d["next_dow_cos"] = np.cos(2 * np.pi * ndow / 5.0)
+    d["next_dow_sin"] = np.sin(2 * np.pi * ndow / dow_period)
+    d["next_dow_cos"] = np.cos(2 * np.pi * ndow / dow_period)
 
     # Цели: завтрашние low/high относительно СЕГОДНЯШНЕГО close (без look-ahead:
     # предсказываем будущее, признаки — только до текущего дня включительно).

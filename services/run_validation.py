@@ -21,15 +21,16 @@ import os
 import sys
 
 import config
+import trading_calendar
 
 log = logging.getLogger("run_validation")
 
 # Свечи дневные: validation/advanced_stats.load_daily ждёт колонки
 # date, open, high, low, close, volume.
-_EXPORT_SQL = """
+_EXPORT_SQL_TMPL = """
     SELECT date, open, high, low, close, volume
     FROM market_data
-    WHERE ticker = %s
+    WHERE ticker = %s{session_filter}
     ORDER BY date ASC;
 """
 
@@ -38,8 +39,10 @@ _HEADER = ["date", "open", "high", "low", "close", "volume"]
 
 def export_ticker_csv(conn, ticker: str, out_dir: str) -> tuple[str, int]:
     """Выгружает дневные свечи тикера в {ticker}_candles.csv. Возвращает (path, n)."""
+    sql = _EXPORT_SQL_TMPL.format(
+        session_filter=trading_calendar.sql_session_filter("date"))
     with conn.cursor() as cur:
-        cur.execute(_EXPORT_SQL, (ticker,))
+        cur.execute(sql, (ticker,))
         rows = cur.fetchall()
 
     path = os.path.join(out_dir, f"{ticker.lower()}_candles.csv")

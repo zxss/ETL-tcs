@@ -28,13 +28,14 @@ import numpy as np
 import pandas as pd
 
 import config
+import trading_calendar
 
 log = logging.getLogger("tft.market")
 
-_SQL = """
+_SQL_TMPL = """
     SELECT date, open, high, low, close, volume
     FROM market_data
-    WHERE ticker = %(tk)s
+    WHERE ticker = %(tk)s{session_filter}
     ORDER BY date DESC
     LIMIT %(n)s;
 """
@@ -69,8 +70,10 @@ class MarketContext2:
 
 def _load(conn, ticker: str) -> pd.DataFrame | None:
     try:
+        sql = _SQL_TMPL.format(
+            session_filter=trading_calendar.sql_session_filter("date"))
         with conn.cursor() as cur:
-            cur.execute(_SQL, {"tk": ticker, "n": _LOOKBACK})
+            cur.execute(sql, {"tk": ticker, "n": _LOOKBACK})
             rows = cur.fetchall()
     except Exception:  # noqa: BLE001
         return None
