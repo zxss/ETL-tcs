@@ -2,7 +2,11 @@
 DDL и SQL для таблиц:
   market_data      — дневные свечи
   market_data_5m   — 5-минутные свечи
-  news_sentiment   — новости/сентимент из TG @markettwits
+  forecasts        — рассчитанные прогнозы и сигналы дашбордов
+
+Схема отключённого контура новостей (news_sentiment + view news_with_candles)
+живёт отдельно: contrib/experimental_news/news_schema.py — штатный init_db()
+её не создаёт.
 """
 
 # --- Дневные свечи -----------------------------------------------------------
@@ -16,6 +20,15 @@ CREATE TABLE IF NOT EXISTS market_data (
     low        NUMERIC(18, 4) NOT NULL,
     close      NUMERIC(18, 4) NOT NULL,
     volume     BIGINT         NOT NULL DEFAULT 0,
+    -- Происхождение бара:
+    --   'api'         — официальный дневной бар биржи (значение по умолчанию
+    --                   для всех новых вставок из брокерского API);
+    --   'backfill_5m' — локальная интрадей-реконструкция из 5-минуток
+    --                   (см. services/backfill_daily.py);
+    --   'api_legacy'  — исторические данные, загруженные ДО внедрения трекинга
+    --                   источника: происхождение достоверно неизвестно, среди
+    --                   них могут быть реконструированные бары.
+    source     VARCHAR(20)    DEFAULT 'api',
     created_at TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
     CONSTRAINT uq_market_data_ticker_date UNIQUE (ticker, date)
 );
@@ -23,15 +36,38 @@ CREATE INDEX IF NOT EXISTS idx_market_data_ticker_date
     ON market_data (ticker, date DESC);
 """
 
+# Миграция для уже существующих баз (init_db выполняет её при каждом старте).
+MIGRATE_MARKET_DATA_SOURCE_SQL = """
+ALTER TABLE market_data ADD COLUMN IF NOT EXISTS source VARCHAR(20) DEFAULT 'api';
+"""
+
+# Разметка исторического слоя: строки, созданные до внедрения трекинга, получили
+# source='api' по DEFAULT, хотя часть из них могла быть реконструкцией из
+# 5-минуток. Помечаем их отдельным значением, чтобы не выдавать за официальные
+# бары биржи. Запускается ОДНОРАЗОВО скриптом scripts/mark_legacy_source.py
+# (в init_db не входит: это разовая правка данных, а не эволюция схемы).
+# Идемпотентна — повторный запуск не находит строк.
+MIGRATE_MARKET_DATA_SOURCE_LEGACY_SQL = """
+UPDATE market_data
+SET source = 'api_legacy'
+WHERE source = 'api' AND created_at < %(cutoff)s;
+"""
+
+# Допустимые значения market_data.source.
+SOURCE_API = "api"                  # официальный дневной бар биржи
+SOURCE_BACKFILL_5M = "backfill_5m"  # локальная реконструкция из 5-минуток
+SOURCE_API_LEGACY = "api_legacy"    # история до внедрения трекинга источника
+
 UPSERT_SQL = """
-INSERT INTO market_data (ticker, date, open, high, low, close, volume)
-VALUES (%s, %s, %s, %s, %s, %s, %s)
+INSERT INTO market_data (ticker, date, open, high, low, close, volume, source)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
 ON CONFLICT (ticker, date) DO UPDATE SET
     open   = EXCLUDED.open,
     high   = EXCLUDED.high,
     low    = EXCLUDED.low,
     close  = EXCLUDED.close,
-    volume = EXCLUDED.volume;
+    volume = EXCLUDED.volume,
+    source = EXCLUDED.source;
 """
 
 LAST_DATE_SQL = """
@@ -71,57 +107,61 @@ LAST_TS_5M_SQL = """
 SELECT MAX(ts) FROM market_data_5m WHERE ticker = %s;
 """
 
-# --- Новости и сентимент (TG @markettwits) -----------------------------------
-CREATE_NEWS_SQL = """
-CREATE TABLE IF NOT EXISTS news_sentiment (
-    id          BIGSERIAL PRIMARY KEY,
-    message_id  BIGINT         NOT NULL,          -- ID сообщения в Telegram
-    ts          TIMESTAMPTZ    NOT NULL,           -- время публикации (UTC)
-    ticker      VARCHAR(10)    NOT NULL,           -- тикер из вотчлиста
-    sentiment   VARCHAR(10)    NOT NULL,           -- pos | neg | neutral
-    headline    TEXT           NOT NULL DEFAULT '',-- краткая суть (≤120 симв)
-    raw_text    TEXT           NOT NULL DEFAULT '',-- полный текст поста
-    source      VARCHAR(64)    NOT NULL DEFAULT '@markettwits',
-    created_at  TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
-    CONSTRAINT uq_news_message_ticker UNIQUE (message_id, ticker)
+# --- Прогнозы и сигналы дашбордов --------------------------------------------
+# Одна строка = (дата расчёта, тикер, стратегия). Дневные строки дашборда пишутся
+# со стратегией из VALIDATION_STRATS (long_overnight / intraday_long / ...),
+# недельный дашборд — со стратегией 'weekly'.
+#
+# q10/q50/q90 — ЦЕНОВЫЕ квантили прогнозного коридора (₽), приведённые к
+# anchor_price: для дневных строк это ForecastLow / медиана дневного total /
+# ForecastHigh, для недельных — WeekLow / медиана week_total / WeekHigh.
+# exp_pnl и prob_profit — нетто издержек (доли %/вероятность), final_score —
+# итоговый рейтинг дашборда. Всё, что не влезло в колонки (рыночный контекст,
+# метрики валидации, ликвидность), лежит в raw_payload.
+CREATE_FORECASTS_SQL = """
+CREATE TABLE IF NOT EXISTS forecasts (
+    id BIGSERIAL PRIMARY KEY,
+    asof_date DATE NOT NULL,
+    ticker VARCHAR(10) NOT NULL,
+    strategy VARCHAR(30) NOT NULL,
+    anchor_price NUMERIC(18, 4),
+    q10 NUMERIC(18, 4),
+    q50 NUMERIC(18, 4),
+    q90 NUMERIC(18, 4),
+    exp_pnl NUMERIC(10, 4),
+    prob_profit NUMERIC(6, 4),
+    final_score NUMERIC(6, 4),
+    verdict VARCHAR(20),
+    raw_payload JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(asof_date, ticker, strategy)
 );
-CREATE INDEX IF NOT EXISTS idx_news_ticker_ts
-    ON news_sentiment (ticker, ts DESC);
-CREATE INDEX IF NOT EXISTS idx_news_ts
-    ON news_sentiment (ts DESC);
+CREATE INDEX IF NOT EXISTS idx_forecasts_date_ticker ON forecasts(asof_date, ticker);
 """
 
-UPSERT_NEWS_SQL = """
-INSERT INTO news_sentiment (message_id, ts, ticker, sentiment, headline, raw_text, source)
-VALUES (%s, %s, %s, %s, %s, %s, %s)
-ON CONFLICT (message_id, ticker) DO UPDATE SET
-    sentiment  = EXCLUDED.sentiment,
-    headline   = EXCLUDED.headline,
-    raw_text   = EXCLUDED.raw_text;
-"""
+# Порядок/состав полей, которые принимает database.save_forecasts.
+FORECAST_COLUMNS = (
+    "asof_date", "ticker", "strategy", "anchor_price",
+    "q10", "q50", "q90", "exp_pnl", "prob_profit", "final_score",
+    "verdict", "raw_payload",
+)
 
-LAST_MESSAGE_ID_SQL = """
-SELECT MAX(message_id) FROM news_sentiment WHERE source = %s;
-"""
-
-# --- Полезный VIEW: связка новости ↔ свечи -----------------------------------
-CREATE_NEWS_CANDLES_VIEW_SQL = """
-CREATE OR REPLACE VIEW news_with_candles AS
-SELECT
-    n.ts                                   AS news_ts,
-    n.ticker,
-    n.sentiment,
-    n.headline,
-    n.message_id,
-    d.date                                 AS candle_date,
-    d.open, d.high, d.low, d.close, d.volume,
-    -- overnight-гэп следующего дня после новости
-    LEAD(d.open) OVER (PARTITION BY d.ticker ORDER BY d.date)
-        / d.close - 1                      AS next_overnight_pct,
-    -- интрадей в день новости
-    d.close / d.open - 1                   AS intraday_pct
-FROM news_sentiment n
-JOIN market_data d
-    ON d.ticker = n.ticker
-   AND d.date = n.ts::date;
+UPSERT_FORECAST_SQL = """
+INSERT INTO forecasts (asof_date, ticker, strategy, anchor_price,
+                       q10, q50, q90, exp_pnl, prob_profit, final_score,
+                       verdict, raw_payload)
+VALUES (%(asof_date)s, %(ticker)s, %(strategy)s, %(anchor_price)s,
+        %(q10)s, %(q50)s, %(q90)s, %(exp_pnl)s, %(prob_profit)s, %(final_score)s,
+        %(verdict)s, %(raw_payload)s)
+ON CONFLICT (asof_date, ticker, strategy) DO UPDATE SET
+    anchor_price = EXCLUDED.anchor_price,
+    q10          = EXCLUDED.q10,
+    q50          = EXCLUDED.q50,
+    q90          = EXCLUDED.q90,
+    exp_pnl      = EXCLUDED.exp_pnl,
+    prob_profit  = EXCLUDED.prob_profit,
+    final_score  = EXCLUDED.final_score,
+    verdict      = EXCLUDED.verdict,
+    raw_payload  = EXCLUDED.raw_payload,
+    created_at   = NOW();
 """

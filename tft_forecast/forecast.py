@@ -571,6 +571,13 @@ def run(conn, quiet: bool = False) -> dict | None:
     for m, tk in enumerate(panel.infer_tickers):
         if tk in forecasts:
             forecasts[tk]["WeekTotalQ"] = [float(v) for v in infer_pred_adj[m, T_WTOTAL, :]]
+            # Квантили ДНЕВНОЙ полной доходности (оставшейся, отн. текущей цены).
+            # Медиана даёт q50 ценового коридора для сохранения в forecasts.
+            day_q = [float(v) for v in infer_pred_adj[m, T_TOTAL, :]]
+            forecasts[tk]["DayTotalQ"] = day_q
+            anchor = forecasts[tk].get("anchor_price")
+            if anchor:
+                forecasts[tk]["ForecastMed"] = anchor * (1 + day_q[len(day_q) // 2] / 100.0)
 
     forecasts["__meta__"] = {
         "as_of": ctx.as_of,

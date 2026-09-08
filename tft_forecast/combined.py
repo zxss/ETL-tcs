@@ -14,10 +14,13 @@ LB / Verdict) и из TFT-прогноза (направленный PnL кор�
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
 from dataclasses import dataclass, asdict
 from typing import Optional
+
+log = logging.getLogger("tft.combined")
 
 # ── Цвет (ANSI) ────────────────────────────────────────────────────────────────
 _GREEN = "\033[32m"
@@ -458,6 +461,11 @@ def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False,
         return
     rows.sort(key=lambda x: x["final_score"], reverse=True)
 
+    # Сохранение в БД (forecasts) — ДО отсечения по top_n, чтобы в базе была
+    # вся посчитанная выборка, а не только видимый топ.
+    from . import persist
+    persist.save_daily(rows, meta, forecasts)
+
     # Топ-N бумаг по итоговому рейтингу (FinalScore). По умолчанию 50.
     total_rows = len(rows)
     if top_n and top_n > 0:
@@ -521,11 +529,14 @@ _DOW_RU = ("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
 
 
 def _next_trading_day(d):
-    import datetime as dt
-    d = d + dt.timedelta(days=1)
-    while d.weekday() >= 5:          # сб/вс → следующий будний
-        d += dt.timedelta(days=1)
-    return d
+    """Следующий торговый день по календарю биржи (services/calendar.py).
+
+    Раньше здесь было `while d.weekday() >= 5` — жёсткий Пн–Пт: окно в шапке
+    расходилось с шагом модели при торговле по выходным и не знало о
+    праздниках и переносах."""
+    from services.calendar import get_calendar
+    days = get_calendar().get_next_trading_days(d, 1)
+    return days[0] if days else d
 
 
 def print_weekly_dashboard(forecasts, top_n: int = 50) -> None:
@@ -578,18 +589,27 @@ def print_weekly_dashboard(forecasts, top_n: int = 50) -> None:
     if not rows:
         return
     rows.sort(key=lambda x: x["exp"], reverse=True)
+
+    # Сохранение в БД (forecasts, strategy='weekly') — тоже до отсечения top_n.
+    from . import persist
+    _h = int(fc[rows[0]["ticker"]].get("WeekHorizon", 5))
+    persist.save_weekly(rows, meta, _h)
+
     total = len(rows)
     if top_n and top_n > 0:
         rows = rows[:top_n]
 
-    # Окно прогноза от ТЕКУЩЕГО дня недели (следующие H торговых дней).
+    # Окно прогноза = ровно те H торговых дней, которые покрывает горизонт
+    # модели. Календарь один: TradingCalendar знает праздники, переносы и
+    # расписание биржи из API, а маску дней недели берёт из режима проекта.
+    from services.calendar import get_calendar
     h = int(fc[rows[0]["ticker"]].get("WeekHorizon", 5))
     as_of = meta.get("as_of") or dt.datetime.now(dt.timezone(dt.timedelta(hours=3)))
     today = as_of.date() if hasattr(as_of, "date") else as_of
-    start = _next_trading_day(today)
-    end = start
-    for _ in range(h - 1):
-        end = _next_trading_day(end)
+    _cal = get_calendar()
+    horizon_days = _cal.get_next_trading_days(today, h)
+    start = horizon_days[0] if horizon_days else today
+    end = _cal.get_target_horizon_date(today, h) or start
 
     W = 146
     print("\n" + "=" * W)
@@ -908,11 +928,13 @@ def build_orders(top: list[dict], position_rub: float,
     и services/place_orders.py (для отправки в T-Invest). Логика расчёта ТА ЖЕ
     (никаких расхождений между «что показано» и «что отправлено»).
 
-    Размер позиции:
+    Размер позиции (контракт ОДИНАКОВ в обоих режимах — не хватает на лот,
+    бумага пропускается, а не «доливается» до целого лота):
       • budget_rub задан → РИСК-ПАРИТЕТ: бюджет делится по бумагам так, чтобы
-        рублёвый риск (объём × стоп%) был одинаков; вес ∝ 1/стоп%. Если на
-        бумагу не хватает даже 1 лота — она пропускается (0 лотов).
-      • иначе → фикс position_rub на бумагу, минимум 1 лот (прежнее поведение).
+        рублёвый риск (объём × стоп%) был одинаков; вес ∝ 1/стоп%.
+      • иначе → фикс position_rub на бумагу.
+    В обоих случаях число лотов округляется ВНИЗ, и при 0 лотов заявка
+    помечается неисполнимой (quantity_lots=None → is_placeable False).
 
     Прочее (цена входа в коридоре, стоп от входа, take-profit по диапазону) —
     без изменений.
@@ -970,8 +992,18 @@ def build_orders(top: list[dict], position_rub: float,
                 total = (lots * lot * entry) if lots > 0 else None
                 lots = lots if lots > 0 else None
             else:
-                lots = max(1, int(position_rub / (entry * lot)))
-                total = lots * lot * entry
+                # Честное квантование вниз, как и в риск-паритете. Прежний
+                # max(1, ...) насильно ставил минимум один лот, даже когда он
+                # дороже лимита позиции: это тихая эскалация риска —
+                # незапланированная маржиналка (или отказ INSUFFICIENT_FUNDS)
+                # и перекос диверсификации на дорогих лотах.
+                lots = int(position_rub / (entry * lot))
+                if lots <= 0:
+                    log.warning("[SKIP] %s: 1 лот (%.2f ₽) превышает лимит "
+                                "позиции (%.2f ₽)", g["tk"], entry * lot, position_rub)
+                    lots = total = None
+                else:
+                    total = lots * lot * entry
         else:
             lots = total = None
 
