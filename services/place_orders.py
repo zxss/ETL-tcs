@@ -124,6 +124,9 @@ def compute_orders(top_n: int, position_rub: float, entry_frac: float,
 
     meta = dict(forecasts.get("__meta__") or {})
     universe = [k for k in forecasts if k != "__meta__"] or config.VALIDATION_TICKERS
+    # Валидация продолжает считать ВСЕ стратегии (config.VALIDATION_STRATS),
+    # а торгуются только разрешённые: select_top_rows применяет специализацию
+    # Пути А — см. combined.apply_strategy_specialisation.
     top_rows = select_top_rows(
         val_rows, forecasts, universe, config.VALIDATION_STRATS,
         show_all=getattr(config, "SHOW_ALL_INTRADAY", False), top_n=top_n,

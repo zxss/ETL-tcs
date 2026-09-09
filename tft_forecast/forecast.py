@@ -530,6 +530,10 @@ def run(conn, quiet: bool = False) -> dict | None:
             forecasts[tk]["VolSpike"] = tm.vol_spike
             forecasts[tk]["ATRpctl"] = tm.atr_pctl
             forecasts[tk]["ATRpct"] = tm.atr_pct
+            forecasts[tk]["Ret1"] = tm.ret1
+            # Волатильность РЫНКА (медиана ATR-перцентиля по вселенной) —
+            # нужна фильтру импульса продавцов для intraday_short.
+            forecasts[tk]["MarketATRpctl"] = mctx.atr_pctl_market
             forecasts[tk]["GapDownProb"] = tm.gap_down_prob
             # Риск-фильтр волатильности: сжимаем максимальную позицию.
             mp = forecasts[tk].get("MaxPos")

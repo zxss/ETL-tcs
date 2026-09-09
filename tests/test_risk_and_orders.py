@@ -36,6 +36,7 @@ from tft_forecast.combined import (                                   # noqa: E4
     _risk_parity_alloc, _score_row, build_orders, select_top_rows,
     non_shortable_tickers, _drop_blocked_shorts, _DEFAULT_NON_SHORTABLE,
     _apply_penalty, is_rejected, warn_unvalidated,
+    apply_strategy_specialisation, trading_strategies,
 )
 
 
@@ -892,6 +893,128 @@ class TestPenaltyToggle(unittest.TestCase):
         _, allowed, _ = _score_row(r, False, mode="raw_alpha",
                                    apply_penalties=False, hard_exclude=True)
         self.assertFalse(allowed)
+
+
+class TestStrategySpecialisation(unittest.TestCase):
+    """Путь А: торгуем только там, где измерено преимущество."""
+
+    @staticmethod
+    def row(strategy, **over):
+        base = dict(strategy=strategy, direction=_DIR[strategy],
+                    ret1=-1.0, market_atr_pctl=70.0, exp_pnl=1.0, cost_rt=0.13)
+        base.update(over)
+        return make_dashboard_row(**base)
+
+    def keep(self, rows, **kw):
+        kw.setdefault("verbose", False)
+        return apply_strategy_specialisation(rows, **kw)
+
+    # ── 1. меню стратегий ───────────────────────────────────────────────────
+    def test_intraday_long_is_removed(self):
+        """Самая убыточная стратегия (средняя -0.2393%, t -17.26) не торгуется."""
+        rows = [self.row("intraday_long"), self.row("intraday_short"),
+                self.row("long_overnight")]
+        kept = self.keep(rows)
+        self.assertNotIn("intraday_long", {r["strategy"] for r in kept})
+        self.assertEqual(len(kept), 2)
+
+    def test_allowed_set_is_configurable(self):
+        rows = [self.row("intraday_long"), self.row("intraday_short")]
+        kept = self.keep(rows, allowed={"intraday_long"})
+        self.assertEqual([r["strategy"] for r in kept], ["intraday_long"])
+
+    # ── 2. импульс продавцов для intraday_short ─────────────────────────────
+    def test_short_kept_on_seller_momentum(self):
+        r = self.row("intraday_short", ret1=-1.5, market_atr_pctl=70.0)
+        self.assertEqual(len(self.keep([r])), 1)
+
+    def test_short_dropped_on_calm_day(self):
+        """Вчера рост — импульса продавцов нет."""
+        r = self.row("intraday_short", ret1=+1.5, market_atr_pctl=70.0)
+        self.assertEqual(self.keep([r]), [])
+
+    def test_short_dropped_on_low_market_vol(self):
+        r = self.row("intraday_short", ret1=-1.5, market_atr_pctl=30.0)
+        self.assertEqual(self.keep([r]), [])
+
+    def test_short_kept_when_data_missing(self):
+        """Нет данных — не отбрасываем: отсутствие признака не есть отказ."""
+        for over in ({"ret1": None}, {"market_atr_pctl": None}):
+            r = self.row("intraday_short", **over)
+            self.assertEqual(len(self.keep([r])), 1, over)
+
+    def test_momentum_filter_can_be_disabled(self):
+        r = self.row("intraday_short", ret1=+1.5, market_atr_pctl=30.0)
+        self.assertEqual(len(self.keep([r], require_momentum=False)), 1)
+
+    def test_momentum_filter_does_not_touch_overnight(self):
+        """Фильтр импульса — только для intraday_short."""
+        r = self.row("long_overnight", ret1=+2.0, market_atr_pctl=10.0)
+        self.assertEqual(len(self.keep([r])), 1)
+
+    # ── 3. порог преимущества для long_overnight ────────────────────────────
+    def test_overnight_kept_above_threshold(self):
+        r = self.row("long_overnight", exp_pnl=0.20, cost_rt=0.13)
+        self.assertEqual(len(self.keep([r], overnight_k=0.5)), 1)   # 0.20 > 0.065
+
+    def test_overnight_dropped_below_threshold(self):
+        r = self.row("long_overnight", exp_pnl=0.05, cost_rt=0.13)
+        self.assertEqual(self.keep([r], overnight_k=0.5), [])        # 0.05 < 0.065
+
+    def test_overnight_threshold_zero_disables(self):
+        r = self.row("long_overnight", exp_pnl=-1.0, cost_rt=0.13)
+        self.assertEqual(len(self.keep([r], overnight_k=0.0)), 1)
+
+    def test_overnight_threshold_does_not_touch_short(self):
+        r = self.row("intraday_short", exp_pnl=-5.0, ret1=-1.0, market_atr_pctl=70.0)
+        self.assertEqual(len(self.keep([r], overnight_k=10.0)), 1)
+
+    def test_overnight_falls_back_to_config_cost(self):
+        """Без cost_rt в строке берётся config.TFT_COST_RT, а не ноль."""
+        r = self.row("long_overnight", exp_pnl=0.01, cost_rt=None)
+        self.assertEqual(self.keep([r], overnight_k=1.0), [])
+
+    # ── интеграция ──────────────────────────────────────────────────────────
+    def test_config_defaults_wired(self):
+        import importlib
+        import config
+        importlib.reload(config)
+        self.assertEqual(set(config.TRADING_STRATEGIES),
+                         {"long_overnight", "intraday_short"})
+        self.assertNotIn("intraday_long", config.TRADING_STRATEGIES)
+        # валидация продолжает считать все три — иначе перестанем видеть
+        # что происходит с исключённой стратегией
+        self.assertIn("intraday_long", config.VALIDATION_STRATS)
+
+    def test_select_top_rows_applies_specialisation(self):
+        rows = _select_specialised(["intraday_long", "intraday_short"])
+        self.assertNotIn("intraday_long", {r["strategy"] for r in rows})
+
+    def test_specialise_can_be_turned_off(self):
+        rows = _select_specialised(["intraday_long", "intraday_short"],
+                                   specialise=False)
+        self.assertIn("intraday_long", {r["strategy"] for r in rows})
+
+
+_DIR = {"intraday_long": "LONG", "intraday_short": "SHORT",
+        "long_overnight": "LONG"}
+
+
+def _select_specialised(strats, specialise=True):
+    """select_top_rows на синтетическом прогнозе по заданным стратегиям."""
+    tk = "AAA"
+    val_rows = [{"ticker": tk, "strategy": st, "verdict": None, "white_rc_p": 0.5,
+                 "spa_p": 0.5, "pbo": 0.1, "fdr_pass": True, "ruin30": 0.1,
+                 "lb_struct": True} for st in strats]
+    forecasts = {tk: {
+        "ForecastLow": 98.0, "ForecastHigh": 104.0, "RangePct": 6.0,
+        "CoverageProb": 0.8, "anchor_price": 100.0, "LiqScore": 50,
+        "Regime": "NEUTRAL", "RS": 0.0, "VolSpike": 1.0, "ATRpctl": 50,
+        "GapDownProb": 0.1, "Ret1": -1.0, "MarketATRpctl": 70.0, "CostRT": 0.13,
+        "directional": {st: {"ExpPnL": 1.0, "ProbProfit": 0.6,
+                             "Downside": -2.0, "Upside": 3.0} for st in strats}}}
+    return select_top_rows(val_rows, forecasts, [tk], strats, top_n=10,
+                           strict=False, show_all=True, specialise=specialise)
 
 
 class TestValidationGate(unittest.TestCase):

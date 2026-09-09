@@ -134,6 +134,10 @@ def _build_rows(val_rows, forecasts, tickers, strats):
                 "vol_spike": cor.get("VolSpike") if isinstance(cor, dict) else None,
                 "atr_pctl": cor.get("ATRpctl") if isinstance(cor, dict) else None,
                 "atr_pct": cor.get("ATRpct") if isinstance(cor, dict) else None,
+                "ret1": cor.get("Ret1") if isinstance(cor, dict) else None,
+                "market_atr_pctl": (cor.get("MarketATRpctl")
+                                    if isinstance(cor, dict) else None),
+                "cost_rt": cor.get("CostRT") if isinstance(cor, dict) else None,
                 "gap_down_prob": cor.get("GapDownProb") if isinstance(cor, dict) else None,
             })
     return rows
@@ -496,6 +500,95 @@ def _price_time_txt(r):
     return "—"
 
 
+# ── Путь А: специализация по стратегиям ───────────────────────────────────────
+
+def trading_strategies() -> set[str]:
+    """Что разрешено торговать (config.TRADING_STRATEGIES).
+
+    Отдельно от VALIDATION_STRATS: контур валидации продолжает считать все
+    стратегии, иначе мы перестанем видеть, что происходит с исключённой.
+    """
+    import config as _cfg
+    return set(getattr(_cfg, "TRADING_STRATEGIES", None)
+               or ["long_overnight", "intraday_short"])
+
+
+def _seller_momentum(r: dict) -> bool | None:
+    """Подтверждён ли импульс продавцов: вчера падение И волатильность рынка
+    выше медианы.
+
+    None — данных не хватает (нет ret1 или оценки волатильности рынка). Вызывающий
+    решает сам; здесь мы НЕ выдаём False, чтобы не спутать «нет импульса» с
+    «не знаем».
+    """
+    ret1 = r.get("ret1")
+    mkt = r.get("market_atr_pctl")
+    if ret1 is None or mkt is None:
+        return None
+    return bool(ret1 < 0 and mkt > 50.0)
+
+
+def _overnight_edge_ok(r: dict, k: float) -> bool | None:
+    """ExpPnL превышает издержки round-trip в k раз.
+
+    ExpPnL приходит УЖЕ нетто издержек (directional.strategy_pnl), поэтому это
+    порог сверх безубыточности, а не «покрывает ли сделка комиссию».
+    """
+    exp = r.get("exp_pnl")
+    if exp is None:
+        return None
+    cost = r.get("cost_rt")
+    if cost is None:
+        import config as _cfg
+        cost = float(getattr(_cfg, "TFT_COST_RT", 0.08))
+    return bool(exp > k * float(cost))
+
+
+def apply_strategy_specialisation(rows: list[dict], *,
+                                  allowed: set[str] | None = None,
+                                  require_momentum: bool | None = None,
+                                  overnight_k: float | None = None,
+                                  verbose: bool = True) -> list[dict]:
+    """Фильтр Пути А: оставить только те сигналы, где есть преимущество.
+
+      1. Торгуются только стратегии из TRADING_STRATEGIES (intraday_long убрана:
+         её средняя доходность -0.2393% при t -17.26).
+      2. intraday_short — только при подтверждённом импульсе продавцов.
+      3. long_overnight — только когда ExpPnL превышает издержки в k раз.
+
+    Строки, по которым не хватает данных для решения, ПРОПУСКАЮТСЯ (остаются),
+    а не отбрасываются: отсутствие признака не есть отрицательный сигнал.
+    """
+    import config as _cfg
+    allowed = allowed if allowed is not None else trading_strategies()
+    if require_momentum is None:
+        require_momentum = bool(getattr(_cfg, "INTRADAY_SHORT_REQUIRE_MOMENTUM", True))
+    if overnight_k is None:
+        overnight_k = float(getattr(_cfg, "OVERNIGHT_MIN_EDGE_X_COST", 0.5))
+
+    out, dropped = [], {"strategy": 0, "momentum": 0, "edge": 0}
+    for r in rows:
+        st = r.get("strategy")
+        if st not in allowed:
+            dropped["strategy"] += 1
+            continue
+        if require_momentum and st == "intraday_short":
+            if _seller_momentum(r) is False:
+                dropped["momentum"] += 1
+                continue
+        if overnight_k > 0 and st == "long_overnight":
+            if _overnight_edge_ok(r, overnight_k) is False:
+                dropped["edge"] += 1
+                continue
+        out.append(r)
+
+    if verbose and any(dropped.values()):
+        log.info("Специализация: отсеяно %d по стратегии, %d без импульса продавцов, "
+                 "%d ниже порога преимущества; осталось %d.",
+                 dropped["strategy"], dropped["momentum"], dropped["edge"], len(out))
+    return out
+
+
 REJECTED_VERDICT = "REJECTED"
 
 
@@ -542,7 +635,8 @@ def warn_unvalidated(rows: list[dict], *, env: str = "", force: bool = False) ->
 def select_top_rows(val_rows, forecasts, tickers, strats, *,
                     show_all: bool = False, top_n: int = 10,
                     strict: bool | None = None,
-                    validation_gate: bool | None = None) -> list[dict]:
+                    validation_gate: bool | None = None,
+                    specialise: bool = True) -> list[dict]:
     """Та же пайплайн-логика, что в print_combined → _print_best_trades,
     но без печати. Возвращает топ-N строк-кандидатов (сортированы по рейтингу).
 
@@ -571,6 +665,11 @@ def select_top_rows(val_rows, forecasts, tickers, strats, *,
     if not rows:
         return []
     rows = _apply_selection(rows, show_all)
+    # Путь А: специализация — торгуем только там, где измерено преимущество.
+    if specialise:
+        rows = apply_strategy_specialisation(rows)
+        if not rows:
+            return []
     scored = []
     for r in rows:
         score, allowed, flags = _score_row(r, strict)

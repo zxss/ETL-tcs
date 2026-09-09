@@ -54,6 +54,7 @@ class TickerMarket:
     atr_pctl: float | None = None      # 0..100 — ПЕРЦЕНТИЛЬ, не величина
     atr_pct: float | None = None       # ATR(14) / close * 100 — величина, %
     gap_down_prob: float | None = None # 0..1
+    ret1: float | None = None          # доходность последнего закрытого дня, %
 
 
 @dataclass
@@ -149,6 +150,17 @@ def _gap_down_prob(df: pd.DataFrame) -> float | None:
     return float((gaps < _GAP_THRESH).mean())
 
 
+def _ret1(close: pd.Series) -> float | None:
+    """Доходность последнего ЗАКРЫТОГО дня, %. Признак импульса продавцов:
+    отрицательное значение = вчера бумага падала."""
+    if len(close) < 2:
+        return None
+    prev = float(close.iloc[-2])
+    if prev <= 0:
+        return None
+    return float(close.iloc[-1] / prev - 1.0) * 100.0
+
+
 def _ret10(close: pd.Series) -> float | None:
     if len(close) < 11:
         return None
@@ -231,6 +243,7 @@ def compute(conn, tickers: list[str]) -> MarketContext2:
                 atr_pctl=_atr_pctl(df),
                 atr_pct=_atr_pct(df),
                 gap_down_prob=_gap_down_prob(df),
+                ret1=_ret1(close),
             )
             ctx.per[tk] = tm
             if tm.atr_pctl is not None:
