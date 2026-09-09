@@ -834,7 +834,22 @@ def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False,
 
     _print_legend()
     _print_flags(rows)
-    _print_best_trades(rows, top_n=best_top_n, position_rub=best_position,
+
+    # Блок «ЛУЧШИЕ СДЕЛКИ» и инструкции для автозаявок ДЕЙСТВЕННЫЕ: из них
+    # напрямую строятся заявки. Поэтому здесь применяется та же специализация
+    # Пути А, что и в select_top_rows, — иначе дашборд предлагал бы сигналы по
+    # стратегиям, которые торговать запрещено (intraday_long), и «что показано»
+    # расходилось бы с «что отправлено».
+    # Таблица ВЫШЕ намеренно остаётся полной: контур валидации продолжает
+    # считать все стратегии из VALIDATION_STRATS, иначе мы перестанем видеть,
+    # что происходит с исключённой.
+    tradable = apply_strategy_specialisation(rows, verbose=False)
+    if len(tradable) != len(rows):
+        allowed = ", ".join(sorted(trading_strategies()))
+        print(f"\n  К торговле допущено {len(tradable)} из {len(rows)} сигналов "
+              f"(TRADING_STRATEGIES: {allowed} + предохранители Пути А).")
+        print("  Строки выше — полный мониторинг, включая нетоварные стратегии.")
+    _print_best_trades(tradable, top_n=best_top_n, position_rub=best_position,
                        entry_frac=entry_frac)
     _print_market_summary(meta)
 

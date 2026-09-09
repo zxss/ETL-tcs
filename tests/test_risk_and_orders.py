@@ -331,6 +331,59 @@ class TestNonShortableTickers(unittest.TestCase):
         return replace(make_instrument(lot=1), short_enabled=short_enabled)
 
 
+class TestDashboardMatchesOrders(unittest.TestCase):
+    """Действенный блок дашборда обязан совпадать с тем, что уйдёт в заявки.
+
+    Регрессия: «ЛУЧШИЕ СДЕЛКИ» показывали топ по intraday_long — стратегии,
+    исключённой из TRADING_STRATEGIES, — тогда как select_top_rows её
+    отбрасывал. Дашборд предлагал то, чего система не торгует.
+    """
+
+    @staticmethod
+    def _rows():
+        import io, contextlib
+        rows = []
+        for tk in ("SBER", "GAZP", "LKOH"):
+            for st, d in (("intraday_long", "LONG"), ("long_overnight", "LONG")):
+                rows.append(make_dashboard_row(ticker=tk, strategy=st, direction=d,
+                                               exp_pnl=2.0 if st == "intraday_long" else 0.5,
+                                               prob_profit=0.9))
+        return rows
+
+    def test_excluded_strategy_never_reaches_tradable_set(self):
+        import io, contextlib
+        with contextlib.redirect_stdout(io.StringIO()):
+            kept = apply_strategy_specialisation(self._rows(), verbose=False)
+        self.assertNotIn("intraday_long", {r["strategy"] for r in kept},
+                         "исключённая стратегия просочилась в торговый набор")
+
+    def test_dashboard_actionable_block_uses_same_filter(self):
+        """В печати дашборда действенный блок строится из отфильтрованных строк."""
+        import inspect
+        from tft_forecast import combined
+        src = inspect.getsource(combined.print_combined)
+        i_filter = src.find("apply_strategy_specialisation")
+        i_best = src.find("_print_best_trades")
+        self.assertNotEqual(i_filter, -1,
+                            "print_combined не применяет специализацию Пути А")
+        self.assertLess(i_filter, i_best,
+                        "фильтр должен стоять ДО блока «ЛУЧШИЕ СДЕЛКИ»")
+        self.assertIn("_print_best_trades(tradable", src,
+                      "в блок передаются нефильтрованные строки")
+
+    def test_full_table_stays_unfiltered_for_monitoring(self):
+        """Полная таблица остаётся мониторинговой: исключённую стратегию
+        по-прежнему видно, иначе потеряем контроль смены режима."""
+        import inspect
+        from tft_forecast import combined
+        src = inspect.getsource(combined.print_combined)
+        i_filter = src.find("tradable = apply_strategy_specialisation")
+        i_table = src.find("for r in rows:")
+        self.assertNotEqual(i_table, -1)
+        self.assertLess(i_table, i_filter,
+                        "фильтр не должен урезать мониторинговую таблицу")
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # 2. Цены входа, стопа и тейк-профита
 # ═══════════════════════════════════════════════════════════════════════════

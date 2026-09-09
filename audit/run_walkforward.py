@@ -34,13 +34,34 @@ log = logging.getLogger("audit.walkforward")
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out")
 
 
-def realized_outcomes(daily: pd.DataFrame) -> pd.DataFrame:
-    """Фактические примитивные доходности СЛЕДУЮЩЕГО дня для каждой даты."""
+MAX_GAP_DAYS = 5
+
+
+def realized_outcomes(daily: pd.DataFrame, max_gap_days: int = MAX_GAP_DAYS) -> pd.DataFrame:
+    """Фактические примитивные доходности СЛЕДУЮЩЕГО дня для каждой даты.
+
+    ВАЖНО: shift(-1) берёт следующую СТРОКУ, а не следующий календарный день.
+    Если у бумаги разрыв в данных (делистинг, приостановка торгов,
+    редомициляция), следующая строка может отстоять на месяцы, и движение за
+    весь этот срок засчитается как ОДНА ночь.
+
+    Реальный случай: FIXR, разрыв 2025-06-20 → 2025-08-20 (61 день) давал
+    мнимый овернайт +34,5%, и эта единственная строка обеспечивала около
+    половины всей прибыли портфеля в бэктесте. У ETLN разрыв 73 дня,
+    у YDEX — 40 дней.
+
+    Поэтому исходы через разрыв длиннее max_gap_days обнуляются в NaN: сделку,
+    которую нельзя было провести, нельзя и засчитывать.
+    """
     rows = []
     for tk, g in daily.groupby("ticker", sort=False):
         g = g.sort_values("date").reset_index(drop=True)
         nxt_o = g["open"].shift(-1)
         nxt_c = g["close"].shift(-1)
+        gap = (g["date"].shift(-1) - g["date"]).dt.days
+        bad = gap > max_gap_days
+        nxt_o = nxt_o.mask(bad)
+        nxt_c = nxt_c.mask(bad)
         rows.append(pd.DataFrame({
             "ticker": tk,
             "asof_date": g["date"],
