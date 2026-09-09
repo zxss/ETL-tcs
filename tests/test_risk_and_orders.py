@@ -28,10 +28,11 @@ except ImportError:  # запуск изнутри каталога tests/
     from conftest import (make_dashboard_row, make_instrument, make_order,
                           make_geom)
 
-from services.place_orders import _api_quantity                      # noqa: E402
+from services.place_orders import _api_quantity, _short_blocked      # noqa: E402
 from tft_forecast.combined import (                                   # noqa: E402
     _lot_size, _limit_entry_price, _take_profit_price,
-    _risk_parity_alloc, _score_row, build_orders,
+    _risk_parity_alloc, _score_row, build_orders, select_top_rows,
+    non_shortable_tickers, _drop_blocked_shorts, _DEFAULT_NON_SHORTABLE,
 )
 
 
@@ -212,6 +213,118 @@ class TestBuildOrdersSizing(unittest.TestCase):
         self.assertTrue(o.unavailable)
         self.assertIsNone(o.quantity_lots)
         self.assertFalse(o.is_placeable)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 1b. Нешортабельные бумаги
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestNonShortableTickers(unittest.TestCase):
+    """Шорт по бумагам без маржиналки не должен доходить до брокера.
+
+    Базовый список сверен с InstrumentsService/ShareBy по всем 46 тикерам
+    config.TICKERS: shortEnabledFlag=false ровно у AKRN, CBOM, MVID.
+    """
+
+    def setUp(self):
+        os.environ.pop("NON_SHORTABLE_TICKERS", None)
+        self.addCleanup(os.environ.pop, "NON_SHORTABLE_TICKERS", None)
+
+    def test_default_blacklist(self):
+        self.assertEqual(_DEFAULT_NON_SHORTABLE, {"AKRN", "CBOM", "MVID"})
+        self.assertTrue({"AKRN", "CBOM", "MVID"} <= non_shortable_tickers())
+
+    def test_env_extends_blacklist(self):
+        os.environ["NON_SHORTABLE_TICKERS"] = "zzzz yyyy"
+        got = non_shortable_tickers()
+        self.assertIn("ZZZZ", got, "расширение из .env должно приводиться к верхнему регистру")
+        self.assertIn("YYYY", got)
+        self.assertTrue(_DEFAULT_NON_SHORTABLE <= got, "базовый список не должен теряться")
+
+    # ── фильтр строк дашборда ───────────────────────────────────────────────
+
+    @staticmethod
+    def _rows():
+        return [
+            make_dashboard_row(ticker="AKRN", strategy="intraday_short",
+                               direction="SHORT", exp_pnl=1.0),
+            make_dashboard_row(ticker="AKRN", strategy="intraday_long",
+                               direction="LONG", exp_pnl=0.1),
+            make_dashboard_row(ticker="SBER", strategy="intraday_short",
+                               direction="SHORT", exp_pnl=0.5),
+        ]
+
+    def test_blocked_short_is_dropped(self):
+        kept = _drop_blocked_shorts(self._rows())
+        self.assertNotIn(("AKRN", "SHORT"), [(r["ticker"], r["direction"]) for r in kept])
+
+    def test_long_on_blocked_ticker_survives(self):
+        """Бумага не выпадает целиком — LONG-кандидат по ней остаётся."""
+        kept = _drop_blocked_shorts(self._rows())
+        self.assertIn(("AKRN", "LONG"), [(r["ticker"], r["direction"]) for r in kept])
+
+    def test_short_on_allowed_ticker_survives(self):
+        kept = _drop_blocked_shorts(self._rows())
+        self.assertIn(("SBER", "SHORT"), [(r["ticker"], r["direction"]) for r in kept])
+
+    def test_filter_logs_skip(self):
+        with self.assertLogs("tft.combined", level="INFO") as cm:
+            _drop_blocked_shorts(self._rows())
+        self.assertTrue(any("[SKIP SHORT] AKRN" in line for line in cm.output))
+
+    def test_select_top_rows_excludes_blocked_short(self):
+        """Сквозная проверка: сигнал не доходит до отбора топ-N.
+
+        У AKRN шорт выгоднее лонга, поэтому без фильтра победил бы именно он.
+        """
+        forecasts = {tk: {"anchor_price": 100.0, "ForecastLow": 98.0,
+                          "ForecastHigh": 104.0, "RangePct": 6.0,
+                          "CoverageProb": 0.8, "LiqScore": 50,
+                          "directional": {
+                              "intraday_short": {"ExpPnL": 1.0, "ProbProfit": 0.8,
+                                                 "Downside": -2.0, "Upside": 3.0},
+                              "intraday_long": {"ExpPnL": 0.1, "ProbProfit": 0.55,
+                                                "Downside": -2.0, "Upside": 3.0}}}
+                     for tk in ("AKRN", "SBER")}
+        top = select_top_rows(None, forecasts, ["AKRN", "SBER"],
+                              ["intraday_short", "intraday_long"], top_n=10)
+        picked = {(r["ticker"], r["direction"]) for r in top}
+        self.assertNotIn(("AKRN", "SHORT"), picked)
+        self.assertIn(("SBER", "SHORT"), picked, "шортабельная бумага не должна страдать")
+
+    # ── вторая линия защиты: build_orders ───────────────────────────────────
+
+    def test_build_orders_marks_blocked_short_unavailable(self):
+        row = make_dashboard_row(ticker="MVID", strategy="intraday_short",
+                                 direction="SHORT")
+        o = build_orders([row], position_rub=50_000.0, entry_frac=0.2)[0]
+        self.assertTrue(o.unavailable)
+        self.assertIsNone(o.quantity_lots)
+        self.assertFalse(o.is_placeable)
+
+    def test_build_orders_allows_long_on_blocked_ticker(self):
+        row = make_dashboard_row(ticker="MVID", strategy="intraday_long",
+                                 direction="LONG")
+        o = build_orders([row], position_rub=50_000.0, entry_frac=0.2)[0]
+        self.assertFalse(o.unavailable)
+        self.assertTrue(o.is_placeable)
+
+    # ── гард по живому флагу брокера ────────────────────────────────────────
+
+    def test_live_flag_blocks_short_entry(self):
+        o = make_order(direction="SHORT")
+        self.assertTrue(_short_blocked(o, self._instrument(short_enabled=False)))
+        self.assertFalse(_short_blocked(o, self._instrument(short_enabled=True)))
+
+    def test_live_flag_does_not_block_long(self):
+        """Выход из лонга — тоже SELL, но маржи не требует: блокировать нельзя."""
+        o = make_order(direction="LONG")
+        self.assertFalse(_short_blocked(o, self._instrument(short_enabled=False)))
+
+    @staticmethod
+    def _instrument(short_enabled: bool):
+        from dataclasses import replace
+        return replace(make_instrument(lot=1), short_enabled=short_enabled)
 
 
 # ═══════════════════════════════════════════════════════════════════════════

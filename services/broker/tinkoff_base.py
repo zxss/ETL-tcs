@@ -121,6 +121,7 @@ class TinkoffRestBase(BrokerClient):
             currency=inst.get("currency", "rub"),
             trading_status=inst.get("tradingStatus", ""),
             api_trade_available=bool(inst.get("apiTradeAvailableFlag", False)),
+            short_enabled=bool(inst.get("shortEnabledFlag", False)),
         )
 
     def find_instrument_by_uid(self, uid: str) -> Instrument:
@@ -143,6 +144,7 @@ class TinkoffRestBase(BrokerClient):
             currency=inst.get("currency", "rub"),
             trading_status=inst.get("tradingStatus", ""),
             api_trade_available=bool(inst.get("apiTradeAvailableFlag", False)),
+            short_enabled=bool(inst.get("shortEnabledFlag", False)),
         )
 
     # ── Стоп-заявки (StopOrdersService — общий сервис) ───────────────────────

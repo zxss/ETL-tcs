@@ -70,6 +70,30 @@ python3 -m services.place_orders --prod --top-n 10   # БОЕВОЙ счёт, р
 Неинтерактивный запуск на бою (`--prod --no-confirm`, cron) дополнительно
 требует `ALLOW_UNATTENDED_PROD=1` в окружении — иначе `RuntimeError`.
 
+### Нешортабельные бумаги
+
+По части бумаг брокер не даёт маржинальный шорт (`shortEnabledFlag=false`), и
+заявка SELL без позиции по ним отклоняется. Такие сигналы отсекаются на двух
+уровнях:
+
+1. `tft_forecast/combined.py` — список `NON_SHORTABLE_TICKERS` убирает
+   SHORT-строку до отбора топ-N, с записью в лог
+   `[SKIP SHORT] {ticker}: шорт недоступен у брокера`. Бумага не выпадает
+   целиком: LONG-кандидат по ней остаётся.
+2. `services/place_orders.py` — жёсткий гард по ЖИВОМУ флагу
+   `Instrument.short_enabled` из `InstrumentsService/ShareBy`. Ловит случаи,
+   когда брокер снял бумагу с маржиналки, а список ещё не обновили.
+
+Базовый список сверен с API по всем тикерам `config.TICKERS`: `AKRN`, `CBOM`,
+`MVID`. Расширяется из `.env`:
+
+```env
+NON_SHORTABLE_TICKERS=AKRN CBOM MVID XXXX
+```
+
+Не путать с `TINKOFF_UNAVAILABLE_TICKERS` — там бумаги, по которым нельзя
+торговать вообще (делистинг, смена ISIN), а не только шортить.
+
 ### 3. Создание базы данных
 
 ```sql

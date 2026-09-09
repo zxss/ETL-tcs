@@ -106,6 +106,10 @@ class Instrument:
     currency:             str   # "rub", "usd"...
     trading_status:       str   # "SECURITY_TRADING_STATUS_NORMAL_TRADING" — норма
     api_trade_available:  bool  # True → можно торговать через API
+    # shortEnabledFlag из ShareBy: False → маржинальный шорт по бумаге запрещён
+    # брокером, заявка SELL без позиции будет отклонена. Default True, чтобы не
+    # ломать конструирование Instrument там, где флаг не важен.
+    short_enabled:        bool = True
 
 
 # ── Состояние заявки ─────────────────────────────────────────────────────────

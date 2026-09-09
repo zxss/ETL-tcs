@@ -220,6 +220,20 @@ def _save_pending(data: dict) -> None:
                              encoding="utf-8")
 
 
+# ── Гард маржинального шорта ─────────────────────────────────────────────────
+
+
+def _short_blocked(o: Order, inst: Instrument) -> bool:
+    """True → вход SHORT по бумаге, у которой брокер запретил маржинальный шорт.
+
+    Источник истины — живой shortEnabledFlag из ShareBy, а не список в
+    combined.py: список отсекает сигнал раньше, а этот гард ловит случаи, когда
+    брокер снял бумагу с маржиналки, а список ещё не обновили. Проверяется
+    только ВХОД: выход из лонга — тоже SELL, но он маржи не требует.
+    """
+    return o.direction == "SHORT" and not inst.short_enabled
+
+
 # ── Конвертация дашборд-лотов → API-лотов ────────────────────────────────────
 
 
@@ -323,6 +337,15 @@ def place_limits(broker: BrokerClient, account_id: str, orders: list[Order], *,
             _logrow(writer, env=env, account_id=account_id, ticker=tk,
                     action="skip_duplicate", status="skipped",
                     info="active order/position/stop exists")
+            continue
+
+        if _short_blocked(o, inst):
+            print(f"[SKIP SHORT] {tk}: шорт недоступен у брокера "
+                  f"(shortEnabledFlag=false) — заявка не выставляется.")
+            log.info("[SKIP SHORT] %s: шорт недоступен у брокера", tk)
+            _logrow(writer, env=env, account_id=account_id, ticker=tk,
+                    action="skip_short", status="skipped",
+                    info="shortEnabledFlag=false")
             continue
 
         if inst.trading_status != "SECURITY_TRADING_STATUS_NORMAL_TRADING":
@@ -728,6 +751,11 @@ def sync_portfolio(broker: BrokerClient, account_id: str, orders: list[Order], *
             inst = broker.find_instrument(o.ticker)
         except BrokerError as e:
             print(f"[WARN]  {o.ticker}: пропуск в синхронизации — {e}")
+            continue
+        if _short_blocked(o, inst):
+            print(f"[SKIP SHORT] {o.ticker}: шорт недоступен у брокера "
+                  f"(shortEnabledFlag=false) — цель исключена из синхронизации.")
+            log.info("[SKIP SHORT] %s: шорт недоступен у брокера", o.ticker)
             continue
         targets[inst.instrument_uid] = (o, inst)
         uid2ticker[inst.instrument_uid] = o.ticker

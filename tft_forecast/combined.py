@@ -411,6 +411,7 @@ def select_top_rows(val_rows, forecasts, tickers, strats, *,
     fc = dict(forecasts or {})
     fc.pop("__meta__", None)
     rows = _build_rows(val_rows, fc, tickers, strats)
+    rows = _drop_blocked_shorts(rows)
     if not rows:
         return []
     rows = _apply_selection(rows, show_all)
@@ -440,6 +441,9 @@ def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False,
     meta = forecasts.pop("__meta__", None)
 
     rows = _build_rows(val_rows, forecasts, tickers, strats)
+    # Тот же фильтр, что и в select_top_rows: блок «ЛУЧШИЕ СДЕЛКИ» и реальные
+    # заявки строятся из одной выборки — расхождений быть не должно.
+    rows = _drop_blocked_shorts(rows)
     if not rows:
         return
     rows = _apply_selection(rows, show_all)
@@ -780,6 +784,41 @@ def _unavailable_tickers() -> set[str]:
     return _DEFAULT_UNAVAILABLE | set(extra)
 
 
+# Бумаги, по которым брокер не даёт маржинальный шорт (shortEnabledFlag=false в
+# InstrumentsService/ShareBy). Заявка SELL без позиции по ним отклоняется, а
+# сигнал intraday_short по ним заведомо неисполним.
+# Базовый список сверен с API по всем 46 тикерам config.TICKERS: ровно эти три.
+# Расширяется из окружения: NON_SHORTABLE_TICKERS="AKRN CBOM MVID XXXX".
+# Источник истины при выставлении — живой флаг Instrument.short_enabled
+# (см. services/place_orders.py); этот список нужен, чтобы отсечь сигнал раньше,
+# ещё до похода в API.
+_DEFAULT_NON_SHORTABLE: set[str] = {"AKRN", "CBOM", "MVID"}
+
+
+def non_shortable_tickers() -> set[str]:
+    """Тикеры, по которым шорт запрещён: базовый список + NON_SHORTABLE_TICKERS."""
+    extra = os.getenv("NON_SHORTABLE_TICKERS", "").upper().split()
+    return _DEFAULT_NON_SHORTABLE | set(extra)
+
+
+def _drop_blocked_shorts(rows: list[dict]) -> list[dict]:
+    """Убирает SHORT-сигналы по нешортабельным бумагам.
+
+    Вызывается ДО отбора лучшей дневной стратегии, поэтому бумага не выпадает
+    из дашборда целиком — по ней остаётся LONG-кандидат, если он есть.
+    """
+    blocked = non_shortable_tickers()
+    if not blocked:
+        return rows
+    kept = []
+    for r in rows:
+        if r.get("direction") == "SHORT" and r["ticker"].upper() in blocked:
+            log.info("[SKIP SHORT] %s: шорт недоступен у брокера", r["ticker"])
+            continue
+        kept.append(r)
+    return kept
+
+
 def _lot_size(ticker: str) -> tuple[int, bool]:
     """Возвращает (размер_лота, точно_известен). False → дефолт 1, надо проверить."""
     tk = ticker.upper()
@@ -940,10 +979,18 @@ def build_orders(top: list[dict], position_rub: float,
     без изменений.
     """
     unavail = _unavailable_tickers()
+    blocked_short = non_shortable_tickers()
 
     # ── проход 1: геометрия входа/стопа/тейка на каждую бумагу
     geoms: list[dict] = []
     for r in top:
+        # Вторая линия защиты: сюда строка могла прийти в обход дашборда
+        # (например из сохранённого топа) — шорт по нешортабельной бумаге
+        # помечаем неторгуемым, чтобы заявка не ушла брокеру.
+        if r["direction"] == "SHORT" and r["ticker"].upper() in blocked_short:
+            log.info("[SKIP SHORT] %s: шорт недоступен у брокера", r["ticker"])
+            r = dict(r)
+            r["_short_blocked"] = True
         anchor = r.get("anchor_price")
         down   = r.get("down")
         f_low  = r.get("f_low")
@@ -951,7 +998,7 @@ def build_orders(top: list[dict], position_rub: float,
         tk     = r["ticker"]
         lng    = (r["direction"] == "LONG")
         lot, lot_known = _lot_size(tk)
-        na = tk in unavail
+        na = tk in unavail or bool(r.get("_short_blocked"))
 
         entry, _src = _limit_entry_price(r["direction"], anchor, f_low, f_high, entry_frac)
         better = None
