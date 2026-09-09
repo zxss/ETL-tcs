@@ -15,6 +15,8 @@ Sprint 4.1 — юнит-тесты критических узлов испол�
 """
 from __future__ import annotations
 
+import contextlib
+import io
 import os
 import sys
 import unittest
@@ -33,6 +35,7 @@ from tft_forecast.combined import (                                   # noqa: E4
     _lot_size, _limit_entry_price, _take_profit_price,
     _risk_parity_alloc, _score_row, build_orders, select_top_rows,
     non_shortable_tickers, _drop_blocked_shorts, _DEFAULT_NON_SHORTABLE,
+    _apply_penalty, is_rejected, warn_unvalidated,
 )
 
 
@@ -558,143 +561,248 @@ class TestRiskParityAllocation(unittest.TestCase):
 # 4. FinalScore и риск-штрафы
 # ═══════════════════════════════════════════════════════════════════════════
 
-class TestFinalScore(unittest.TestCase):
-    """Штрафы и флаги _score_row.
+class TestRawAlphaScore(unittest.TestCase):
+    """Режим сырой альфы (USE_RAW_ALPHA_SCORE=1, дефолт).
 
-    NEUTRAL_SCORE — «золотое» значение для нейтральной строки: пин на формулу,
-    ловит непреднамеренное изменение весов.
+    Рейтинг = ExpPnL модели, скорректированный риск-штрафами. Основание —
+    квант-аудит: exp_pnl в одиночку даёт Rank IC +0.0544 (t 2.99), а прежняя
+    смесь из семи компонент — +0.0262 (t 1.30), то есть белый шум.
     """
 
-    NEUTRAL_SCORE = 0.505
+    def score(self, strict=False, hard_exclude=True, **over):
+        return _score_row(make_dashboard_row(**over), strict,
+                          raw_alpha=True, hard_exclude=hard_exclude)
 
-    def score(self, strict=False, **over):
-        return _score_row(make_dashboard_row(**over), strict)
-
-    def test_neutral_row_baseline(self):
-        final, allowed, flags = self.score()
-        self.assertAlmostEqual(final, self.NEUTRAL_SCORE, places=6)
+    def test_score_equals_exp_pnl_when_no_risk(self):
+        """Без риск-условий рейтинг равен ExpPnL — без примесей."""
+        final, allowed, flags = self.score(exp_pnl=0.42)
+        self.assertAlmostEqual(final, 0.42, places=9)
         self.assertTrue(allowed)
         self.assertEqual(flags, [])
 
-    def test_score_in_unit_range(self):
+    def test_ranking_follows_exp_pnl(self):
+        """Порядок кандидатов определяется только ExpPnL."""
+        vals = [-1.0, -0.2, 0.0, 0.3, 1.5]
+        scores = [self.score(exp_pnl=v)[0] for v in vals]
+        self.assertEqual(scores, sorted(scores))
+
+    def test_liquidity_and_prob_do_not_move_ranking(self):
+        """Шумовые компоненты больше не влияют на рейтинг."""
+        base, _, _ = self.score(exp_pnl=0.3)
+        for over in ({"liq_score": 0}, {"liq_score": 100},
+                     {"prob_profit": 0.0}, {"prob_profit": 1.0}):
+            final, _, _ = self.score(exp_pnl=0.3, **over)
+            self.assertAlmostEqual(final, base, places=9)
+
+    def test_rs_no_longer_ranks_but_still_filters_shorts(self):
+        """rs убран из рейтинга (IC -0.002), но остался риск-фильтром шорта."""
+        long_hi, _, flags = self.score(exp_pnl=0.3, rs=6.0)
+        long_lo, _, _ = self.score(exp_pnl=0.3, rs=-6.0)
+        self.assertAlmostEqual(long_hi, long_lo, places=9)
+        self.assertEqual(flags, [])
+
+        short, _, sflags = self.score(exp_pnl=0.3, direction="SHORT",
+                                      strategy="intraday_short", rs=6.0)
+        self.assertIn("High Risk Short", sflags)
+        self.assertAlmostEqual(short, 0.3 * 0.75, places=9)
+
+    def test_rs_removed_from_long_overnight(self):
+        """На long_overnight rs прямо вредил (IC -0.0371, t -4.30) — его нет."""
+        for rs in (-8.0, 0.0, 8.0):
+            final, _, _ = self.score(exp_pnl=0.25, strategy="long_overnight",
+                                     direction="LONG", rs=rs)
+            self.assertAlmostEqual(final, 0.25, places=9)
+
+    def test_regime_no_longer_ranks_within_direction(self):
+        """regime_score убран: NEUTRAL и BULL для LONG дают один рейтинг.
+
+        regime как КОМПОНЕНТ неотличим от нуля (IC +0.0088, t +0.26): в день он
+        принимает всего два значения — одно на все LONG, другое на все SHORT.
+        """
+        neutral, _, _ = self.score(exp_pnl=0.3, regime="NEUTRAL")
+        bull, _, _ = self.score(exp_pnl=0.3, regime="BULL")
+        self.assertAlmostEqual(neutral, bull, places=9)
+
+    def test_regime_penalty_survives_as_direction_tilt(self):
+        """Штраф за контртренд остаётся: он наклоняет LONG против SHORT."""
+        final, _, _ = self.score(exp_pnl=0.3, regime="BEAR")
+        self.assertAlmostEqual(final, 0.3 * 0.70, places=9)
+
+    # ── знак-безопасность штрафов ───────────────────────────────────────────
+
+    def test_penalty_never_improves_a_negative_score(self):
+        """Ключевая ловушка: -0.5 x 0.70 = -0.35 подняло бы плохой сигнал."""
+        clean, _, _ = self.score(exp_pnl=-0.5)
+        penalised, _, _ = self.score(exp_pnl=-0.5, regime="BEAR")
+        self.assertLess(penalised, clean,
+                        "штраф обязан ухудшать рейтинг и на отрицательной стороне")
+        self.assertAlmostEqual(penalised, -0.5 / 0.70, places=9)
+
+    def test_penalty_direction_is_consistent_across_sign(self):
+        for exp in (-2.0, -0.1, 0.0, 0.1, 2.0):
+            clean, _, _ = self.score(exp_pnl=exp)
+            pen, _, _ = self.score(exp_pnl=exp, regime="BEAR")
+            self.assertLessEqual(pen, clean, f"ExpPnL={exp}")
+
+    def test_apply_penalty_helper(self):
+        self.assertAlmostEqual(_apply_penalty(1.0, 0.7), 0.7)
+        self.assertAlmostEqual(_apply_penalty(-1.0, 0.7), -1.0 / 0.7)
+        self.assertAlmostEqual(_apply_penalty(0.0, 0.7), 0.0)
+        self.assertAlmostEqual(_apply_penalty(5.0, 1.0), 5.0)
+
+    # ── жёсткое отсечение тяжёлых рисков ────────────────────────────────────
+
+    def test_volume_climax_excludes_when_hard(self):
+        _, allowed, flags = self.score(exp_pnl=1.0, vol_spike=5.0)
+        self.assertFalse(allowed)
+        self.assertIn("⚠ Volume Climax", flags)
+
+    def test_volume_climax_only_penalises_when_soft(self):
+        final, allowed, _ = self.score(exp_pnl=1.0, vol_spike=5.0, hard_exclude=False)
+        self.assertTrue(allowed)
+        self.assertAlmostEqual(final, 0.70, places=9)
+
+    def test_volume_climax_threshold_is_strict(self):
+        _, allowed_at, _ = self.score(exp_pnl=1.0, vol_spike=4.0)
+        _, allowed_above, _ = self.score(exp_pnl=1.0, vol_spike=4.01)
+        self.assertTrue(allowed_at)
+        self.assertFalse(allowed_above)
+
+    def test_gap_risk_excludes_overnight_only(self):
+        _, allowed, flags = self.score(exp_pnl=1.0, strategy="long_overnight",
+                                       gap_down_prob=0.55)
+        self.assertFalse(allowed)
+        self.assertIn("⚠ High Overnight Risk", flags)
+
+        _, allowed_intraday, iflags = self.score(exp_pnl=1.0,
+                                                 strategy="intraday_long",
+                                                 gap_down_prob=0.9)
+        self.assertTrue(allowed_intraday)
+        self.assertEqual(iflags, [])
+
+    def test_strict_market_filter_still_blocks(self):
+        _, allowed, _ = self.score(exp_pnl=1.0, strict=True, regime="BEAR")
+        self.assertFalse(allowed)
+
+    def test_missing_exp_pnl_scores_zero(self):
+        final, _, _ = self.score(exp_pnl=None)
+        self.assertEqual(final, 0.0)
+
+
+class TestHeuristicScoreReweighted(unittest.TestCase):
+    """Режим USE_RAW_ALPHA_SCORE=0: веса exp 0.70 / prob 0.20 / liq 0.10."""
+
+    def score(self, strict=False, **over):
+        return _score_row(make_dashboard_row(**over), strict,
+                          raw_alpha=False, hard_exclude=False)
+
+    NEUTRAL = 0.70 * 0.5 + 0.20 * 0.5 + 0.10 * 0.5   # = 0.5
+
+    def test_neutral_row_baseline(self):
+        final, allowed, flags = self.score()
+        self.assertAlmostEqual(final, self.NEUTRAL, places=9)
+        self.assertTrue(allowed)
+        self.assertEqual(flags, [])
+
+    def test_weights_sum_to_one(self):
+        """Максимум по всем трём компонентам даёт ровно 1.0 — веса нормированы."""
+        final, _, _ = self.score(exp_pnl=1.0, prob_profit=1.0, liq_score=100)
+        self.assertAlmostEqual(final, 1.0, places=9)
+
+    def test_exp_dominates(self):
+        """Вес exp 0.70 больше суммы остальных."""
+        exp_only, _, _ = self.score(exp_pnl=1.0, prob_profit=0.5, liq_score=50)
+        rest_only, _, _ = self.score(exp_pnl=0.0, prob_profit=1.0, liq_score=100)
+        self.assertGreater(exp_only, rest_only)
+
+    def test_score_stays_in_unit_range(self):
         for over in ({}, {"exp_pnl": 5.0, "prob_profit": 1.0, "liq_score": 100},
                      {"exp_pnl": -5.0, "prob_profit": 0.0, "liq_score": 0,
-                      "regime": "BEAR", "vol_spike": 9.0}):
+                      "vol_spike": 9.0}):
             final, _, _ = self.score(**over)
             self.assertGreaterEqual(final, 0.0)
             self.assertLessEqual(final, 1.0)
 
-    # ── штраф контртренда к IMOEX ───────────────────────────────────────────
+    def test_no_rs_no_regime_no_vol_in_formula(self):
+        base, _, _ = self.score()
+        for over in ({"rs": 9.0}, {"rs": -9.0}, {"regime": "BULL"},
+                     {"vol_spike": 1.9}, {"vol_spike": 0.5}):
+            final, _, _ = self.score(**over)
+            self.assertAlmostEqual(final, base, places=9,
+                                   msg=f"{over} не должен влиять на рейтинг")
 
-    def test_long_in_bear_is_penalised(self):
-        """LONG против медвежьего рынка: regime_score 0.5→0.2, затем ×0.70."""
-        final, _, _ = self.score(regime="BEAR")
-        expected = (self.NEUTRAL_SCORE - 0.10 * (0.5 - 0.2)) * 0.70
-        self.assertAlmostEqual(final, expected, places=6)
-        self.assertLess(final, self.NEUTRAL_SCORE)
 
-    def test_short_in_bull_is_penalised(self):
-        final, _, _ = self.score(direction="SHORT", strategy="intraday_short",
-                                 regime="BULL")
-        expected = (self.NEUTRAL_SCORE - 0.10 * (0.5 - 0.2)) * 0.70
-        self.assertAlmostEqual(final, expected, places=6)
+class TestValidationGate(unittest.TestCase):
+    """Гейт по вердикту контура валидации (задача 2.2)."""
 
-    def test_trend_following_is_not_penalised(self):
-        """LONG в BULL — по тренду: только рост суб-скора, без множителя."""
-        final, _, _ = self.score(regime="BULL")
-        self.assertAlmostEqual(final, self.NEUTRAL_SCORE + 0.10 * 0.5, places=6)
+    @staticmethod
+    def _rows(verdicts):
+        return [make_dashboard_row(ticker=f"T{i}", verdict=v, exp_pnl=1.0 - i * 0.1)
+                for i, v in enumerate(verdicts)]
 
-    def test_strict_filter_blocks_counter_trend(self):
-        _, allowed, _ = self.score(strict=True, regime="BEAR")
-        self.assertFalse(allowed)
-        _, allowed, _ = self.score(strict=True, direction="SHORT",
-                                   strategy="intraday_short", regime="BULL")
-        self.assertFalse(allowed)
+    def test_is_rejected(self):
+        self.assertTrue(is_rejected({"verdict": "REJECTED"}))
+        self.assertFalse(is_rejected({"verdict": "CANDIDATE EDGE"}))
+        self.assertFalse(is_rejected({"verdict": None}))
+        self.assertFalse(is_rejected({}))
 
-    def test_strict_filter_allows_trend_following(self):
-        _, allowed, _ = self.score(strict=True, regime="BULL")
-        self.assertTrue(allowed)
+    def test_warn_counts_rejected(self):
+        rows = self._rows(["REJECTED", "WEAK / INCONCLUSIVE", "REJECTED"])
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            n = warn_unvalidated(rows)
+        self.assertEqual(n, 2)
+        self.assertIn("REJECTED", buf.getvalue())
 
-    # ── High Risk Short ─────────────────────────────────────────────────────
+    def test_warn_silent_when_all_validated(self):
+        rows = self._rows(["CANDIDATE EDGE", "WEAK / INCONCLUSIVE"])
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            n = warn_unvalidated(rows)
+        self.assertEqual(n, 0)
+        self.assertEqual(buf.getvalue(), "")
 
-    def test_high_risk_short_flag_and_penalty(self):
-        """SHORT по сильной бумаге (RS > +5%): rs_score→0, затем ×0.75."""
-        final, _, flags = self.score(direction="SHORT", strategy="intraday_short",
-                                     rs=6.0)
-        self.assertIn("High Risk Short", flags)
-        expected = (self.NEUTRAL_SCORE - 0.10 * 0.5) * 0.75
-        self.assertAlmostEqual(final, expected, places=6)
+    def test_warn_mentions_prod(self):
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            warn_unvalidated(self._rows(["REJECTED"]), env="PROD")
+        self.assertIn("БОЕВОЙ", buf.getvalue())
 
-    def test_high_risk_short_threshold(self):
-        """Порог строгий: ровно +5.0% ещё не High Risk Short."""
-        _, _, flags = self.score(direction="SHORT", strategy="intraday_short", rs=5.0)
-        self.assertNotIn("High Risk Short", flags)
-        _, _, flags = self.score(direction="SHORT", strategy="intraday_short", rs=5.01)
-        self.assertIn("High Risk Short", flags)
+    def test_gate_off_keeps_rejected(self):
+        """Дефолт: вердикт не блокирует — прежнее поведение сохранено."""
+        rows = _select(["REJECTED", "REJECTED"], gate=False)
+        self.assertEqual(len(rows), 2)
 
-    def test_long_with_high_rs_is_not_penalised(self):
-        """Тот же RS для LONG — это сила по тренду, а не риск."""
-        _, _, flags = self.score(rs=6.0)
-        self.assertNotIn("High Risk Short", flags)
+    def test_gate_on_drops_rejected(self):
+        rows = _select(["REJECTED", "CANDIDATE EDGE"], gate=True)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["verdict"], "CANDIDATE EDGE")
 
-    # ── Volume Climax ───────────────────────────────────────────────────────
+    def test_gate_on_can_empty_the_book(self):
+        """138 из 138 комбинаций REJECTED — гейт останавливает торговлю целиком.
+        Это ожидаемое поведение, а не сбой."""
+        self.assertEqual(_select(["REJECTED"] * 5, gate=True), [])
 
-    def test_volume_climax_flag_threshold(self):
-        self.assertNotIn("⚠ Volume Climax", self.score(vol_spike=2.5)[2])
-        self.assertIn("⚠ Volume Climax", self.score(vol_spike=2.51)[2])
 
-    def test_volume_climax_penalty_only_above_four(self):
-        """Порог 4.0x строгий. За ним меняются СРАЗУ две вещи: корзина объёма
-        (0.4 → 0.2) и множитель ×0.70 — поэтому проверяем абсолютные значения,
-        а не отношение."""
-        at_4, _, _ = self.score(vol_spike=4.0)
-        above_4, _, _ = self.score(vol_spike=4.01)
-        self.assertAlmostEqual(at_4, self.NEUTRAL_SCORE - 0.05 * (0.7 - 0.4), places=6)
-        self.assertAlmostEqual(
-            above_4, (self.NEUTRAL_SCORE - 0.05 * (0.7 - 0.2)) * 0.70, places=6)
-        self.assertLess(above_4, at_4)
-
-    def test_volume_climax_absolute_value(self):
-        final, _, flags = self.score(vol_spike=5.0)
-        expected = (self.NEUTRAL_SCORE - 0.05 * (0.7 - 0.2)) * 0.70
-        self.assertAlmostEqual(final, expected, places=6)
-        self.assertIn("⚠ Volume Climax", flags)
-
-    def test_low_volume_lowers_score_without_flag(self):
-        final, _, flags = self.score(vol_spike=0.5)
-        self.assertLess(final, self.NEUTRAL_SCORE)
-        self.assertEqual(flags, [])
-
-    # ── Overnight gap risk ──────────────────────────────────────────────────
-
-    def test_overnight_gap_penalty_is_pure_multiplier(self):
-        """gap_down_prob не входит в суб-скоры, поэтому 0.45 → 0.55 даёт
-        ровно ×0.70."""
-        low, _, flags_low = self.score(strategy="long_overnight", gap_down_prob=0.45)
-        high, _, flags_high = self.score(strategy="long_overnight", gap_down_prob=0.55)
-        self.assertIn("⚠ High Overnight Risk", flags_low)
-        self.assertIn("⚠ High Overnight Risk", flags_high)
-        self.assertAlmostEqual(high / low, 0.70, places=6)
-
-    def test_gap_risk_ignored_for_intraday(self):
-        """GapRisk относится только к long_overnight."""
-        final, _, flags = self.score(strategy="intraday_long", gap_down_prob=0.9)
-        self.assertEqual(flags, [])
-        self.assertAlmostEqual(final, self.NEUTRAL_SCORE, places=6)
-
-    # ── накопление штрафов ──────────────────────────────────────────────────
-
-    def test_penalties_compound(self):
-        """Несколько рисков сразу перемножаются, а не берётся худший."""
-        final, _, flags = self.score(direction="SHORT", strategy="intraday_short",
-                                     regime="BULL", rs=6.0, vol_spike=5.0)
-        self.assertIn("High Risk Short", flags)
-        self.assertIn("⚠ Volume Climax", flags)
-        base = (self.NEUTRAL_SCORE
-                - 0.10 * (0.5 - 0.2)      # regime_score BULL для SHORT
-                - 0.10 * 0.5              # rs_score → 0
-                - 0.05 * (0.7 - 0.2))     # vol_score → 0.2
-        self.assertAlmostEqual(final, base * 0.70 * 0.75 * 0.70, places=6)
+def _select(verdicts, gate: bool):
+    """Прогоняет select_top_rows на синтетическом прогнозе с заданными вердиктами."""
+    tickers = [f"T{i}" for i in range(len(verdicts))]
+    val_rows = [{"ticker": tk, "strategy": "long_overnight", "verdict": v,
+                 "white_rc_p": 0.5, "spa_p": 0.5, "pbo": 0.1, "fdr_pass": True,
+                 "ruin30": 0.1, "lb_struct": True}
+                for tk, v in zip(tickers, verdicts)]
+    forecasts = {
+        tk: {"ForecastLow": 98.0, "ForecastHigh": 104.0, "RangePct": 6.0,
+             "CoverageProb": 0.8, "anchor_price": 100.0, "LiqScore": 50,
+             "Regime": "NEUTRAL", "RS": 0.0, "VolSpike": 1.0, "ATRpctl": 50,
+             "GapDownProb": 0.1,
+             "directional": {"long_overnight": {
+                 "ExpPnL": 1.0 - i * 0.1, "ProbProfit": 0.5,
+                 "Downside": -2.0, "Upside": 3.0}}}
+        for i, tk in enumerate(tickers)
+    }
+    return select_top_rows(val_rows, forecasts, tickers, ["long_overnight"],
+                           top_n=10, strict=False, validation_gate=gate)
 
 
 if __name__ == "__main__":

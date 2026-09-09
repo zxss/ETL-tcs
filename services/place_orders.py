@@ -79,7 +79,9 @@ from services.broker import (
     TinkoffSandboxClient,
     new_order_id,
 )
-from tft_forecast.combined import Order, build_orders, select_top_rows
+from tft_forecast.combined import (
+    Order, build_orders, select_top_rows, warn_unvalidated,
+)
 
 log = logging.getLogger("place_orders")
 
@@ -119,9 +121,11 @@ def compute_orders(top_n: int, position_rub: float, entry_frac: float,
     )
     orders = build_orders(top_rows, position_rub, entry_frac, tp_frac=tp_frac,
                           budget_rub=budget_rub)
+    rejected = sum(1 for r in top_rows if r.get("verdict") == "REJECTED")
     meta.update(forecast_universe=len(universe), top_n_requested=top_n,
                 orders_built=len(orders), data_last_date=str(last_date),
-                budget_rub=budget_rub)
+                budget_rub=budget_rub, top_rows=top_rows,
+                rejected_candidates=rejected)
     return orders, meta
 
 
@@ -958,6 +962,12 @@ def main(argv: Optional[list[str]] = None) -> int:
     p.add_argument("--force", action="store_true",
                    help="ФАЗА 1: отключить защиту от задвоения (ставить лимитку, "
                         "даже если по инструменту уже есть заявка/позиция/стоп).")
+    p.add_argument("--force-trade-unvalidated", action="store_true",
+                   help="Подтвердить торговлю стратегиями с вердиктом REJECTED. "
+                        "Без флага при STRICT_VALIDATION_GATE=0 печатается "
+                        "предупреждение и (в интерактивном режиме) спрашивается "
+                        "подтверждение; при STRICT_VALIDATION_GATE=1 такие "
+                        "сигналы отсекаются ещё в select_top_rows.")
     args = p.parse_args(argv)
 
     _guard_unattended_prod(args.prod, args.no_confirm)
@@ -992,6 +1002,22 @@ def main(argv: Optional[list[str]] = None) -> int:
         if not orders:
             print("Нет торговых сигналов.")
             return 0
+
+        # Гейт валидации: если среди кандидатов есть REJECTED, об этом обязаны
+        # сказать вслух. Раньше такие заявки уходили в стакан молча.
+        n_rejected = warn_unvalidated(_meta.get("top_rows") or [], env=env,
+                                      force=args.force_trade_unvalidated)
+        if n_rejected and not args.force_trade_unvalidated and not args.dry_run:
+            if args.no_confirm:
+                print("[ОТКАЗ] Есть сигналы с вердиктом REJECTED, а --no-confirm "
+                      "не оставляет возможности подтвердить их вручную.",
+                      file=sys.stderr)
+                print("        Добавьте --force-trade-unvalidated (осознанно) "
+                      "или включите STRICT_VALIDATION_GATE=1.", file=sys.stderr)
+                return 3
+            if not confirm("Торговать непроверенными стратегиями? (y/n): "):
+                print("[INFO] Отменено: сигналы не прошли валидацию.")
+                return 0
 
         print_summary(account_id, env, orders, args.position, budget_rub=budget_rub)
 

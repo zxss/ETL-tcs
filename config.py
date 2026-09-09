@@ -387,3 +387,37 @@ INCLUDE_WEEKEND_TRADING: int = int(os.getenv("INCLUDE_WEEKEND_TRADING", "0"))
 # --- Dashboard 2.0: рыночный контекст и риск-фильтры -------------------------
 # Жёсткий рыночный фильтр: запрещать LONG при BEAR и SHORT при BULL.
 STRICT_MARKET_FILTER: bool = os.getenv("STRICT_MARKET_FILTER", "0") not in ("0", "false", "False")
+
+# --- Спринт 2: детоксикация рейтинга и гейт валидации -------------------------
+# Основание — квант-аудит (AUDIT-PROFITABILITY-REPORT.md, разделы 3 и 4).
+# Замер Rank IC по walk-forward реплею (456 дат, ~182 бумаги в кросс-секции):
+#
+#   сигнал          вес      Rank IC     t      вывод
+#   exp_score       0.30     +0.0544   +2.99    единственный работающий
+#   prob_score      0.15     +0.0404   +2.32    значим, но corr с exp = 0.881
+#   liq_score       0.15     +0.0020   +0.84    шум
+#   rs_score        0.10     -0.0020   -0.15    шум, а на long_overnight ВРЕДИТ
+#                                               (IC -0.0371, t -4.30)
+#   regime_score    0.10     +0.0088   +0.26    неотличим от нуля: принимает
+#                                               2 значения в день (LONG/SHORT)
+#   vol_score       0.05     -0.0025   -1.06    шум
+#   FinalScore       —       +0.0262   +1.30    ШУМ по порогу |t| >= 2
+#
+# Обёртка разбавляет единственный сигнал пятью шумовыми: 0.054 → 0.026.
+
+# USE_RAW_ALPHA_SCORE=1 — ранжировать строго по квантильной альфе модели:
+#   Score = exp_pnl, скорректированный риск-штрафами (знак-безопасно).
+# =0 — эвристика с пересчитанными весами exp 0.70 / prob 0.20 / liq 0.10.
+USE_RAW_ALPHA_SCORE: bool = os.getenv("USE_RAW_ALPHA_SCORE", "1") not in ("0", "false", "False")
+
+# В режиме сырой альфы жёстко отсекать бумаги с климаксом объёма (VolSpike > 4)
+# и высоким риском гэпа вниз (>0.5 для long_overnight), а не просто штрафовать.
+RAW_ALPHA_HARD_EXCLUDE: bool = os.getenv("RAW_ALPHA_HARD_EXCLUDE", "1") not in ("0", "false", "False")
+
+# STRICT_VALIDATION_GATE=1 — не торговать стратегии с вердиктом REJECTED.
+# ВНИМАНИЕ: на момент аудита REJECTED имеют 138 комбинаций из 138, поэтому
+# включение гейта останавливает торговлю полностью. Это осознанное состояние:
+# дефолт 0 сохраняет прежнее поведение, но теперь при торговле отвергнутыми
+# стратегиями печатается явное предупреждение (см. combined.warn_unvalidated).
+# Включать после перекалибровки валидатора на реальных издержках.
+STRICT_VALIDATION_GATE: bool = os.getenv("STRICT_VALIDATION_GATE", "0") not in ("0", "false", "False")

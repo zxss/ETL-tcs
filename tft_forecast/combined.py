@@ -209,85 +209,128 @@ def _clamp01(x: float) -> float:
     return 0.0 if x < 0 else (1.0 if x > 1 else x)
 
 
-def _score_row(r, strict: bool):
+def _apply_penalty(score: float, factor: float) -> float:
+    """Знак-безопасное применение риск-штрафа.
+
+    Штраф обязан УХУДШАТЬ рейтинг независимо от знака. Простое умножение это
+    свойство ломает на отрицательных значениях: −0.5 × 0.70 = −0.35, то есть
+    штраф ПОДНИМАЕТ плохой сигнал вверх по рейтингу. В режиме эвристики
+    (score ∈ [0,1]) проблемы нет, но в режиме сырой альфы score — это ExpPnL,
+    который регулярно отрицателен, поэтому штраф на отрицательной стороне
+    применяется делением.
     """
-    Считает FinalScore (0..1) с учётом рыночного контекста и риск-фильтров,
-    проставляет флаги предупреждений и допустимость сделки (strict-фильтр).
-    Возвращает (final_score, allowed, flags).
+    if factor <= 0:
+        return score
+    return score * factor if score >= 0 else score / factor
+
+
+def _risk_penalties(r, long: bool) -> tuple[float, list[str], bool]:
+    """Мультипликативные риск-штрафы и флаги — общие для обоих режимов.
+
+    Возвращает (множитель, флаги, severe): severe=True означает, что сработало
+    условие, по которому бумагу можно не просто штрафовать, а отсекать
+    (климакс объёма или высокий риск гэпа вниз).
+
+    Штраф за режим рынка сюда НЕ входит: см. _score_row.
     """
-    long = r["direction"] == "LONG"
-    regime = r["regime"]
     rs = r["rs"]
     vs = r["vol_spike"]
-    atr = r["atr_pctl"]
     gdp = r["gap_down_prob"]
-    flags = []
+    factor = 1.0
+    flags: list[str] = []
+    severe = False
 
-    # — суб-скоры (0..1) —
-    exp = r["exp_pnl"]
-    exp_score = _clamp01(0.5 + (exp or 0.0) / 2.0)          # ±1% → 0..1
-    prob_score = r["prob_profit"] if r["prob_profit"] is not None else 0.5
-
-    vmeta = _verdict_meta(r["verdict"])[1]
-    verdict_score = {0: 1.0, 1: 0.5, 2: 0.0}.get(vmeta, 0.4)
-    fdr_score = 1.0 if r["fdr"] else (0.0 if r["fdr"] is not None else 0.5)
-    pbo_score = _clamp01(1.0 - r["pbo"]) if r["pbo"] is not None else 0.5
-    validation_score = (verdict_score + fdr_score + pbo_score) / 3.0
-
-    liq_score = (r["liq_score"] or 50) / 100.0
-
-    rs_eff = (rs if long else -rs) if rs is not None else 0.0
-    rs_score = _clamp01(0.5 + rs_eff / 10.0)                # ±5% → 0..1
-
-    if regime is None:
-        regime_score = 0.5
-    elif long:
-        regime_score = {"BULL": 1.0, "NEUTRAL": 0.5, "BEAR": 0.2}.get(regime, 0.5)
-    else:
-        regime_score = {"BEAR": 1.0, "NEUTRAL": 0.5, "BULL": 0.2}.get(regime, 0.5)
-
-    if vs is None:
-        vol_score = 0.5
-    elif vs > 4.0:
-        vol_score = 0.2
-    elif vs > 2.5:
-        vol_score = 0.4
-    elif vs < 0.8:
-        vol_score = 0.4
-    else:
-        vol_score = 0.7
-
-    final = (0.30 * exp_score + 0.15 * prob_score + 0.15 * validation_score +
-             0.15 * liq_score + 0.10 * rs_score + 0.10 * regime_score +
-             0.05 * vol_score)
-
-    # — множительные риск-штрафы и флаги —
-    # Market Regime penalty (−30%)
-    if long and regime == "BEAR":
-        final *= 0.70
-    if (not long) and regime == "BULL":
-        final *= 0.70
-    # High Risk Short: SHORT при сильной бумаге (RS > +5%) → −25%
+    # High Risk Short: SHORT при сильной бумаге (RS > +5%) → −25%.
+    # Здесь rs используется как РИСК-ФИЛЬТР одного края, а не как компонент
+    # рейтинга: как компонент он шум (IC −0.002), а на long_overnight вреден.
     if (not long) and rs is not None and rs > 5.0:
-        final *= 0.75
+        factor *= 0.75
         flags.append("High Risk Short")
-    # Volume climax / аномальный объём
+
+    # Климакс объёма.
     if vs is not None and vs > 2.5:
         flags.append("⚠ Volume Climax")
     if vs is not None and vs > 4.0:
-        final *= 0.70   # ExpPnL Confidence × 0.7
-    # Overnight gap risk — только long_overnight
+        factor *= 0.70
+        severe = True
+
+    # Риск гэпа вниз — только для ночной стратегии.
     if r["strategy"] == "long_overnight" and gdp is not None:
         if gdp > 0.40:
             flags.append("⚠ High Overnight Risk")
         if gdp > 0.50:
-            final *= 0.70   # OvernightScore × 0.7
+            factor *= 0.70
+            severe = True
 
-    # — жёсткий рыночный фильтр —
+    return factor, flags, severe
+
+
+def _score_row(r, strict: bool, raw_alpha: bool | None = None,
+               hard_exclude: bool | None = None):
+    """
+    Считает итоговый рейтинг строки, флаги риска и допустимость сделки.
+    Возвращает (final_score, allowed, flags).
+
+    ДВА РЕЖИМА (config.USE_RAW_ALPHA_SCORE).
+
+    1. Сырая альфа (default). Рейтинг = ExpPnL модели, скорректированный
+       риск-штрафами:  Score = ExpPnL ⊗ RiskPenalty.
+       Основание: exp_pnl в одиночку даёт Rank IC +0.0544 (t 2.99), а после
+       смешивания с пятью прочими компонентами падает до +0.0262 (t 1.30) —
+       то есть до белого шума по порогу |t| >= 2. Обёртка не усиливала сигнал,
+       а разбавляла его.
+       Замечание про масштаб: Score здесь в ПРОЦЕНТАХ доходности и может быть
+       отрицательным — это не 0..1, как раньше. Для ранжирования это неважно
+       (порядок сохраняется), но печать и любые сравнения с порогами обязаны
+       это учитывать.
+
+    2. Эвристика с пересчитанными весами (USE_RAW_ALPHA_SCORE=0):
+       exp 0.70 / prob 0.20 / liq 0.10. Компоненты rs, regime и vol из
+       ранжирования убраны — их измеренный вклад неотличим от нуля
+       (rs IC −0.002 t −0.15; regime IC +0.009 t +0.26; vol IC −0.003 t −1.06),
+       а на long_overnight rs прямо вредит (IC −0.0371, t −4.30).
+       validation_score из формулы тоже убран: вердикт теперь работает
+       не слагаемым весом 0.05, а отдельным гейтом (см. select_top_rows).
+
+    Что общего у режимов: риск-штрафы и флаги (_risk_penalties) и жёсткий
+    рыночный фильтр strict.
+    """
+    import config as _cfg
+    if raw_alpha is None:
+        raw_alpha = bool(getattr(_cfg, "USE_RAW_ALPHA_SCORE", True))
+    if hard_exclude is None:
+        hard_exclude = bool(getattr(_cfg, "RAW_ALPHA_HARD_EXCLUDE", True))
+
+    long = r["direction"] == "LONG"
+    regime = r["regime"]
+    exp = r["exp_pnl"]
+
+    penalty, flags, severe = _risk_penalties(r, long)
+
+    if raw_alpha:
+        # Ранжируем строго по ожидаемой доходности модели.
+        final = _apply_penalty(exp if exp is not None else 0.0, penalty)
+    else:
+        exp_score = _clamp01(0.5 + (exp or 0.0) / 2.0)      # ±1% → 0..1
+        prob_score = r["prob_profit"] if r["prob_profit"] is not None else 0.5
+        liq_score = (r["liq_score"] or 50) / 100.0
+        final = 0.70 * exp_score + 0.20 * prob_score + 0.10 * liq_score
+        final = _apply_penalty(final, penalty)
+
+    # Штраф за режим рынка остаётся: в отличие от regime_score, он не
+    # ранжирует бумаги между собой, а наклоняет весь блок LONG против блока
+    # SHORT — это осмысленный направленный фильтр, а не компонент рейтинга.
+    if (long and regime == "BEAR") or ((not long) and regime == "BULL"):
+        final = _apply_penalty(final, 0.70)
+
+    # — допустимость сделки —
     allowed = True
-    if strict:
-        if (long and regime == "BEAR") or ((not long) and regime == "BULL"):
-            allowed = False
+    if strict and ((long and regime == "BEAR") or ((not long) and regime == "BULL")):
+        allowed = False
+    # В режиме сырой альфы тяжёлые риск-условия отсекают бумагу, а не
+    # штрафуют: штраф на отрицательном ExpPnL слишком слабо влияет на порядок.
+    if raw_alpha and hard_exclude and severe:
+        allowed = False
 
     return final, allowed, flags
 
@@ -396,18 +439,74 @@ def _price_time_txt(r):
     return "—"
 
 
+REJECTED_VERDICT = "REJECTED"
+
+
+def is_rejected(row: dict) -> bool:
+    """Вердикт контура валидации — REJECTED («отличие от случайности не доказано»)."""
+    return row.get("verdict") == REJECTED_VERDICT
+
+
+def warn_unvalidated(rows: list[dict], *, env: str = "", force: bool = False) -> int:
+    """Печатает предупреждение, если среди кандидатов есть REJECTED-стратегии.
+
+    Возвращает число таких кандидатов. Ничего не блокирует — блокировка живёт
+    в select_top_rows под STRICT_VALIDATION_GATE. Смысл предупреждения: до
+    аудита система молча отправляла в стакан заявки по стратегиям, которые её
+    собственный контур валидации отверг, и об этом нигде не говорилось.
+    """
+    bad = [r for r in rows if is_rejected(r)]
+    if not bad:
+        return 0
+    head = f"{_BOLD}{_RED}" if _color_enabled() else ""
+    tail = _RESET if _color_enabled() else ""
+    print(f"\n{head}{'!' * 88}{tail}")
+    print(f"{head}!!  ВНИМАНИЕ: {len(bad)} из {len(rows)} сигналов имеют вердикт "
+          f"REJECTED{tail}")
+    print(f"{head}!!  Контур валидации не смог отличить эти стратегии от "
+          f"случайности.{tail}")
+    if env == "PROD":
+        print(f"{head}!!  КОНТУР БОЕВОЙ — это реальные деньги на непроверенном "
+              f"сигнале.{tail}")
+    if force:
+        print(f"{head}!!  Передан --force-trade-unvalidated — торговля продолжится.{tail}")
+    else:
+        print(f"{head}!!  STRICT_VALIDATION_GATE=1 остановит торговлю такими "
+              f"сигналами.{tail}")
+    for r in bad[:10]:
+        print(f"{head}!!    {r['ticker']:<6} {r['strategy']:<16} "
+              f"ExpPnL={_f(r.get('exp_pnl'), '+.3f')}%{tail}")
+    if len(bad) > 10:
+        print(f"{head}!!    … ещё {len(bad) - 10}{tail}")
+    print(f"{head}{'!' * 88}{tail}\n")
+    return len(bad)
+
+
 def select_top_rows(val_rows, forecasts, tickers, strats, *,
                     show_all: bool = False, top_n: int = 10,
-                    strict: bool | None = None) -> list[dict]:
+                    strict: bool | None = None,
+                    validation_gate: bool | None = None) -> list[dict]:
     """Та же пайплайн-логика, что в print_combined → _print_best_trades,
-    но без печати. Возвращает топ-N строк-кандидатов (сортированы по FinalScore).
+    но без печати. Возвращает топ-N строк-кандидатов (сортированы по рейтингу).
 
     Используется services/place_orders.py: для выставления заявок нужна
     ТА ЖЕ выборка, что показана пользователю в блоке «ЛУЧШИЕ СДЕЛКИ».
+
+    ГЕЙТ ВАЛИДАЦИИ (config.STRICT_VALIDATION_GATE, по умолчанию выключен).
+    При включении из кандидатов исключаются стратегии с вердиктом REJECTED.
+    До аудита вердикт вообще не участвовал в отборе: он влиял только на
+    слагаемое validation_score весом 0.15 (то есть менял рейтинг на ~0.05) и
+    не мог помешать сделке. На момент аудита REJECTED имели 138 комбинаций из
+    138, поэтому включение гейта останавливает торговлю полностью — это
+    ожидаемое поведение, а не сбой: см. AUDIT-PROFITABILITY-REPORT.md, §4.1.
+    Пока гейт выключен, вызывающий обязан показать warn_unvalidated().
     """
+    import config as _cfg
     if strict is None:
-        import config as _cfg
         strict = bool(getattr(_cfg, "STRICT_MARKET_FILTER", False))
+    if validation_gate is None:
+        validation_gate = bool(getattr(_cfg, "STRICT_VALIDATION_GATE", False))
+
     fc = dict(forecasts or {})
     fc.pop("__meta__", None)
     rows = _build_rows(val_rows, fc, tickers, strats)
@@ -427,6 +526,17 @@ def select_top_rows(val_rows, forecasts, tickers, strats, *,
     scored.sort(key=lambda x: x["final_score"], reverse=True)
     cand = [r for r in scored
             if r["exp_pnl"] is not None and r["selected"] is not False]
+
+    if validation_gate:
+        before = len(cand)
+        cand = [r for r in cand if not is_rejected(r)]
+        if before and not cand:
+            log.warning("STRICT_VALIDATION_GATE=1: все %d кандидатов отвергнуты "
+                        "контуром валидации (REJECTED) — сделок нет.", before)
+        elif before != len(cand):
+            log.info("STRICT_VALIDATION_GATE=1: отсеяно %d кандидатов с вердиктом "
+                     "REJECTED, осталось %d.", before - len(cand), len(cand))
+
     if top_n and top_n > 0:
         cand = cand[:top_n]
     return cand
