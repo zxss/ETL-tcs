@@ -133,6 +133,7 @@ def _build_rows(val_rows, forecasts, tickers, strats):
                 "rs": cor.get("RS") if isinstance(cor, dict) else None,
                 "vol_spike": cor.get("VolSpike") if isinstance(cor, dict) else None,
                 "atr_pctl": cor.get("ATRpctl") if isinstance(cor, dict) else None,
+                "atr_pct": cor.get("ATRpct") if isinstance(cor, dict) else None,
                 "gap_down_prob": cor.get("GapDownProb") if isinstance(cor, dict) else None,
             })
     return rows
@@ -265,71 +266,127 @@ def _risk_penalties(r, long: bool) -> tuple[float, list[str], bool]:
     return factor, flags, severe
 
 
+SCORE_MODES = ("heuristic", "raw_alpha", "trade_score")
+
+# Пол для знаменателя нормировки на волатильность: ниже 0.2% ATR не бывает у
+# ликвидных бумаг, а деление на околонулевую величину даёт выбросы в рейтинге.
+_MIN_ATR_PCT = 0.2
+
+
+def _trade_score(r) -> float | None:
+    """Прогноз, нормированный на волатильность: ExpPnL / ATR%.
+
+    Смысл: бумага с ожиданием +0,8% при ATR 1% должна стоять выше бумаги с
+    ожиданием +1,2% при ATR 3% — вторая просто шумнее, а не лучше.
+
+    ВАЖНО: издержки здесь ВТОРОЙ РАЗ НЕ ВЫЧИТАЮТСЯ. ExpPnL уже приходит нетто
+    round-trip (см. directional.strategy_pnl: exp_net = med - cost_rt), поэтому
+    формула вида (exp_pnl - CostRT) / ATR% вычла бы издержки дважды.
+
+    Знаменатель — ATR(14)/close*100 (market._atr_pct), а НЕ ATRpctl: перцентиль
+    сравнивает бумагу с её собственной историей и между бумагами несопоставим.
+    При отсутствии ATR% откатываемся на ширину прогнозного коридора RangePct —
+    это тоже волатильность в процентах, только оценённая моделью.
+    """
+    exp = r.get("exp_pnl")
+    if exp is None:
+        return None
+    vol = r.get("atr_pct")
+    if vol is None or not vol or vol != vol:
+        rng = r.get("range_pct")
+        # Коридор q0.1..q0.9 примерно вчетверо шире дневного ATR — приводим
+        # к сопоставимому масштабу, чтобы режим не менял смысл при откате.
+        vol = (rng / 4.0) if rng else None
+    if vol is None or vol != vol:
+        return None
+    return exp / max(float(vol), _MIN_ATR_PCT)
+
+
+def _resolve_mode(raw_alpha, mode):
+    """Обратная совместимость: булев raw_alpha старше строкового mode."""
+    if raw_alpha is True:
+        return "raw_alpha"
+    if raw_alpha is False and mode is None:
+        return "heuristic"
+    if mode:
+        m = str(mode).strip().lower()
+        return m if m in SCORE_MODES else "heuristic"
+    import config as _cfg
+    m = str(getattr(_cfg, "SCORE_MODE", "heuristic")).strip().lower()
+    return m if m in SCORE_MODES else "heuristic"
+
+
 def _score_row(r, strict: bool, raw_alpha: bool | None = None,
-               hard_exclude: bool | None = None):
+               hard_exclude: bool | None = None,
+               mode: str | None = None,
+               apply_penalties: bool | None = None):
     """
     Считает итоговый рейтинг строки, флаги риска и допустимость сделки.
     Возвращает (final_score, allowed, flags).
 
-    ДВА РЕЖИМА (config.USE_RAW_ALPHA_SCORE).
+    ТРИ РЕЖИМА (config.SCORE_MODE):
 
-    1. Сырая альфа (default). Рейтинг = ExpPnL модели, скорректированный
-       риск-штрафами:  Score = ExpPnL ⊗ RiskPenalty.
-       Основание: exp_pnl в одиночку даёт Rank IC +0.0544 (t 2.99), а после
-       смешивания с пятью прочими компонентами падает до +0.0262 (t 1.30) —
-       то есть до белого шума по порогу |t| >= 2. Обёртка не усиливала сигнал,
-       а разбавляла его.
-       Замечание про масштаб: Score здесь в ПРОЦЕНТАХ доходности и может быть
-       отрицательным — это не 0..1, как раньше. Для ранжирования это неважно
-       (порядок сохраняется), но печать и любые сравнения с порогами обязаны
-       это учитывать.
+      heuristic (ДЕФОЛТ) — exp 0.70 / prob 0.20 / liq 0.10, результат в [0,1].
+        Веса пересчитаны после аудита: из формулы убраны rs, regime и vol,
+        чей измеренный вклад неотличим от нуля, и validation_score (вердикт
+        теперь работает отдельным гейтом, а не слагаемым весом 0.05).
 
-    2. Эвристика с пересчитанными весами (USE_RAW_ALPHA_SCORE=0):
-       exp 0.70 / prob 0.20 / liq 0.10. Компоненты rs, regime и vol из
-       ранжирования убраны — их измеренный вклад неотличим от нуля
-       (rs IC −0.002 t −0.15; regime IC +0.009 t +0.26; vol IC −0.003 t −1.06),
-       а на long_overnight rs прямо вредит (IC −0.0371, t −4.30).
-       validation_score из формулы тоже убран: вердикт теперь работает
-       не слагаемым весом 0.05, а отдельным гейтом (см. select_top_rows).
+      raw_alpha — Score = ExpPnL. Даёт максимальный Rank IC (+0.054 против
+        +0.051 у эвристики), но ХУДШИЙ портфель: модуль ExpPnL связан с
+        волатильностью (корреляция с шириной коридора +0.285), поэтому топ-10
+        набирается из бумаг с широким размахом.
 
-    Что общего у режимов: риск-штрафы и флаги (_risk_penalties) и жёсткий
-    рыночный фильтр strict.
+      trade_score — Score = ExpPnL / ATR%. Нормировка прогноза на риск.
+        Измеренный результат: волатильность топ-10 действительно снижается,
+        но доходность падает (альфа -5.2% против +2.1% у эвристики), и режим
+        неустойчив при расколе выборки. Оставлен как доступный режим, но не
+        рекомендован — см. таблицу в config.py.
+
+    Общее для всех режимов: риск-штрафы (_risk_penalties), штраф за контртренд
+    и жёсткий рыночный фильтр strict. Штрафы отключаются
+    config.APPLY_RISK_PENALTIES=0 (на реплее они ухудшают результат).
     """
     import config as _cfg
-    if raw_alpha is None:
-        raw_alpha = bool(getattr(_cfg, "USE_RAW_ALPHA_SCORE", True))
+    mode = _resolve_mode(raw_alpha, mode)
     if hard_exclude is None:
         hard_exclude = bool(getattr(_cfg, "RAW_ALPHA_HARD_EXCLUDE", True))
+    if apply_penalties is None:
+        apply_penalties = bool(getattr(_cfg, "APPLY_RISK_PENALTIES", True))
 
     long = r["direction"] == "LONG"
     regime = r["regime"]
     exp = r["exp_pnl"]
 
     penalty, flags, severe = _risk_penalties(r, long)
+    if not apply_penalties:
+        penalty = 1.0
 
-    if raw_alpha:
-        # Ранжируем строго по ожидаемой доходности модели.
-        final = _apply_penalty(exp if exp is not None else 0.0, penalty)
+    if mode == "raw_alpha":
+        final = exp if exp is not None else 0.0
+    elif mode == "trade_score":
+        ts = _trade_score(r)
+        final = ts if ts is not None else 0.0
     else:
         exp_score = _clamp01(0.5 + (exp or 0.0) / 2.0)      # ±1% → 0..1
         prob_score = r["prob_profit"] if r["prob_profit"] is not None else 0.5
         liq_score = (r["liq_score"] or 50) / 100.0
         final = 0.70 * exp_score + 0.20 * prob_score + 0.10 * liq_score
-        final = _apply_penalty(final, penalty)
 
-    # Штраф за режим рынка остаётся: в отличие от regime_score, он не
-    # ранжирует бумаги между собой, а наклоняет весь блок LONG против блока
-    # SHORT — это осмысленный направленный фильтр, а не компонент рейтинга.
-    if (long and regime == "BEAR") or ((not long) and regime == "BULL"):
+    final = _apply_penalty(final, penalty)
+
+    # Штраф за контртренд остаётся: в отличие от regime_score, он не ранжирует
+    # бумаги между собой, а наклоняет весь блок LONG против блока SHORT.
+    counter_trend = (long and regime == "BEAR") or ((not long) and regime == "BULL")
+    if apply_penalties and counter_trend:
         final = _apply_penalty(final, 0.70)
 
     # — допустимость сделки —
     allowed = True
-    if strict and ((long and regime == "BEAR") or ((not long) and regime == "BULL")):
+    if strict and counter_trend:
         allowed = False
-    # В режиме сырой альфы тяжёлые риск-условия отсекают бумагу, а не
-    # штрафуют: штраф на отрицательном ExpPnL слишком слабо влияет на порядок.
-    if raw_alpha and hard_exclude and severe:
+    # В режимах, где рейтинг может быть отрицательным, множительный штраф слабо
+    # меняет порядок — тяжёлые риск-условия отсекают бумагу целиком.
+    if mode in ("raw_alpha", "trade_score") and hard_exclude and severe:
         allowed = False
 
     return final, allowed, flags

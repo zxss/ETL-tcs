@@ -529,6 +529,7 @@ def run(conn, quiet: bool = False) -> dict | None:
             forecasts[tk]["RS"] = tm.rs
             forecasts[tk]["VolSpike"] = tm.vol_spike
             forecasts[tk]["ATRpctl"] = tm.atr_pctl
+            forecasts[tk]["ATRpct"] = tm.atr_pct
             forecasts[tk]["GapDownProb"] = tm.gap_down_prob
             # Риск-фильтр волатильности: сжимаем максимальную позицию.
             mp = forecasts[tk].get("MaxPos")

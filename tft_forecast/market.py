@@ -51,7 +51,8 @@ _GAP_THRESH = -0.005     # -0.5%
 class TickerMarket:
     rs: float | None = None            # относительная сила, %
     vol_spike: float | None = None     # кратность к SMA20
-    atr_pctl: float | None = None      # 0..100
+    atr_pctl: float | None = None      # 0..100 — ПЕРЦЕНТИЛЬ, не величина
+    atr_pct: float | None = None       # ATR(14) / close * 100 — величина, %
     gap_down_prob: float | None = None # 0..1
 
 
@@ -91,19 +92,41 @@ def _load(conn, ticker: str) -> pd.DataFrame | None:
 
 # ── Метрики на тикер ───────────────────────────────────────────────────────────
 
-def _atr_pctl(df: pd.DataFrame) -> float | None:
+def _atr_series(df: pd.DataFrame) -> pd.Series | None:
     if len(df) < _ATR_WIN + 5:
         return None
     h, l, c = df["high"], df["low"], df["close"]
     prev_c = c.shift(1)
     tr = pd.concat([(h - l), (h - prev_c).abs(), (l - prev_c).abs()], axis=1).max(axis=1)
     atr = tr.rolling(_ATR_WIN).mean().dropna()
-    if atr.empty:
+    return None if atr.empty else atr
+
+
+def _atr_pctl(df: pd.DataFrame) -> float | None:
+    """Перцентиль текущего ATR за 252 дня (0..100) — насколько бумага
+    волатильна ОТНОСИТЕЛЬНО СВОЕЙ истории."""
+    atr = _atr_series(df)
+    if atr is None:
         return None
     hist = atr.tail(_ATR_HIST)
     cur = float(atr.iloc[-1])
-    pctl = float((hist <= cur).mean() * 100.0)
-    return pctl
+    return float((hist <= cur).mean() * 100.0)
+
+
+def _atr_pct(df: pd.DataFrame) -> float | None:
+    """ATR(14) в процентах от цены — АБСОЛЮТНАЯ величина волатильности.
+
+    Отличается от _atr_pctl принципиально: перцентиль сравнивает бумагу с ней
+    самой (SBER на 30-м перцентиле своей истории), а atr_pct сравним МЕЖДУ
+    бумагами и годится как знаменатель для нормировки прогноза на риск.
+    """
+    atr = _atr_series(df)
+    if atr is None:
+        return None
+    close = float(df["close"].iloc[-1])
+    if close <= 0:
+        return None
+    return float(atr.iloc[-1]) / close * 100.0
 
 
 def _vol_spike(df: pd.DataFrame) -> float | None:
@@ -206,6 +229,7 @@ def compute(conn, tickers: list[str]) -> MarketContext2:
                 rs=rs,
                 vol_spike=_vol_spike(df),
                 atr_pctl=_atr_pctl(df),
+                atr_pct=_atr_pct(df),
                 gap_down_prob=_gap_down_prob(df),
             )
             ctx.per[tk] = tm

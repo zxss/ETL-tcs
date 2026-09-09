@@ -732,6 +732,120 @@ class TestHeuristicScoreReweighted(unittest.TestCase):
                                    msg=f"{over} не должен влиять на рейтинг")
 
 
+class TestTradeScoreMode(unittest.TestCase):
+    """Режим trade_score: ExpPnL, нормированный на волатильность."""
+
+    def score(self, **over):
+        return _score_row(make_dashboard_row(**over), False, mode="trade_score",
+                          apply_penalties=False, hard_exclude=False)
+
+    def test_normalises_by_atr(self):
+        """+0.8% при ATR 1% должно стоять выше +1.2% при ATR 3%."""
+        calm, _, _ = self.score(exp_pnl=0.8, atr_pct=1.0)
+        wild, _, _ = self.score(exp_pnl=1.2, atr_pct=3.0)
+        self.assertGreater(calm, wild)
+        self.assertAlmostEqual(calm, 0.8, places=9)
+        self.assertAlmostEqual(wild, 0.4, places=9)
+
+    def test_costs_are_not_subtracted_twice(self):
+        """ExpPnL приходит уже нетто round-trip — вычитать издержки нельзя.
+
+        Регрессия на формулу (exp_pnl - CostRT)/ATR%: она вычла бы издержки
+        второй раз, см. directional.strategy_pnl (exp_net = med - cost_rt).
+        """
+        final, _, _ = self.score(exp_pnl=0.5, atr_pct=1.0)
+        self.assertAlmostEqual(final, 0.5, places=9)
+
+    def test_falls_back_to_range_when_atr_missing(self):
+        """Без ATR% знаменателем становится ширина коридора, делённая на 4."""
+        final, _, _ = self.score(exp_pnl=1.0, atr_pct=None, range_pct=8.0)
+        self.assertAlmostEqual(final, 1.0 / 2.0, places=9)
+
+    def test_denominator_floor_prevents_blowup(self):
+        """Околонулевой ATR не должен давать бесконечный рейтинг."""
+        final, _, _ = self.score(exp_pnl=1.0, atr_pct=0.0001)
+        self.assertAlmostEqual(final, 1.0 / 0.2, places=9)
+
+    def test_sign_is_preserved(self):
+        neg, _, _ = self.score(exp_pnl=-1.0, atr_pct=2.0)
+        self.assertLess(neg, 0.0)
+
+    def test_missing_exp_pnl_scores_zero(self):
+        final, _, _ = self.score(exp_pnl=None, atr_pct=1.0)
+        self.assertEqual(final, 0.0)
+
+
+class TestScoreModeResolution(unittest.TestCase):
+    """Выбор режима и обратная совместимость со старым булевым флагом."""
+
+    def row(self, **over):
+        base = dict(exp_pnl=0.4, prob_profit=0.5, liq_score=50, atr_pct=1.0)
+        base.update(over)
+        return make_dashboard_row(**base)
+
+    def test_explicit_mode_wins(self):
+        raw, _, _ = _score_row(self.row(), False, mode="raw_alpha",
+                               apply_penalties=False)
+        self.assertAlmostEqual(raw, 0.4, places=9)
+
+    def test_legacy_true_maps_to_raw_alpha(self):
+        legacy, _, _ = _score_row(self.row(), False, raw_alpha=True,
+                                  apply_penalties=False)
+        explicit, _, _ = _score_row(self.row(), False, mode="raw_alpha",
+                                    apply_penalties=False)
+        self.assertAlmostEqual(legacy, explicit, places=9)
+
+    def test_legacy_false_maps_to_heuristic(self):
+        legacy, _, _ = _score_row(self.row(), False, raw_alpha=False,
+                                  apply_penalties=False)
+        explicit, _, _ = _score_row(self.row(), False, mode="heuristic",
+                                    apply_penalties=False)
+        self.assertAlmostEqual(legacy, explicit, places=9)
+
+    def test_unknown_mode_falls_back_to_heuristic(self):
+        bad, _, _ = _score_row(self.row(), False, mode="нет-такого",
+                               apply_penalties=False)
+        good, _, _ = _score_row(self.row(), False, mode="heuristic",
+                                apply_penalties=False)
+        self.assertAlmostEqual(bad, good, places=9)
+
+    def test_config_default_is_heuristic(self):
+        import importlib
+        import config
+        importlib.reload(config)
+        self.assertEqual(config.SCORE_MODE, "heuristic")
+        self.assertFalse(config.USE_RAW_ALPHA_SCORE)
+
+    def test_modes_actually_differ(self):
+        r = self.row(exp_pnl=1.2, atr_pct=3.0)
+        scores = {m: _score_row(r, False, mode=m, apply_penalties=False)[0]
+                  for m in ("heuristic", "raw_alpha", "trade_score")}
+        self.assertEqual(len(set(round(v, 9) for v in scores.values())), 3)
+
+
+class TestPenaltyToggle(unittest.TestCase):
+    """APPLY_RISK_PENALTIES отключает мультипликативные штрафы."""
+
+    def test_penalties_off_leaves_score_clean(self):
+        r = make_dashboard_row(exp_pnl=0.5, direction="SHORT",
+                               strategy="intraday_short", rs=6.0, regime="BULL")
+        on, _, flags_on = _score_row(r, False, mode="raw_alpha",
+                                     apply_penalties=True, hard_exclude=False)
+        off, _, flags_off = _score_row(r, False, mode="raw_alpha",
+                                       apply_penalties=False, hard_exclude=False)
+        self.assertAlmostEqual(off, 0.5, places=9)
+        self.assertLess(on, off)
+        # флаги остаются в обоих случаях — они информируют, а не наказывают
+        self.assertIn("High Risk Short", flags_on)
+        self.assertIn("High Risk Short", flags_off)
+
+    def test_hard_exclusion_independent_of_penalty_toggle(self):
+        r = make_dashboard_row(exp_pnl=1.0, vol_spike=5.0)
+        _, allowed, _ = _score_row(r, False, mode="raw_alpha",
+                                   apply_penalties=False, hard_exclude=True)
+        self.assertFalse(allowed)
+
+
 class TestValidationGate(unittest.TestCase):
     """Гейт по вердикту контура валидации (задача 2.2)."""
 
