@@ -1,0 +1,47 @@
+ticker,name,lot,min_price_increment,short_enabled,buy_available,sell_available,api_trade,liquidity_flag,for_qual,dlong,dshort,dlong_client,dshort_client,sector,trading_status,weekend,tick
+SBER,Сбербанк,1,"{'units': '0', 'nano': 10000000}",True,True,True,True,True,False,0.1666,0.2,0.125,0.1428,financial,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.01
+VTBR,Банк ВТБ,1,"{'units': '0', 'nano': 5000000}",True,True,True,True,True,False,0.2222,0.3333,0.1666,0.2222,financial,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.005
+GAZP,Газпром,10,"{'units': '0', 'nano': 10000000}",True,True,True,True,True,False,0.2,0.2767,0.1818,0.1818,energy,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.01
+ROSN,Роснефть,1,"{'units': '0', 'nano': 50000000}",True,True,True,True,True,False,0.2,0.22,0.1538,0.1666,energy,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.05
+LKOH,ЛУКОЙЛ,1,"{'units': '0', 'nano': 500000000}",True,True,True,True,True,False,0.1616,0.22,0.125,0.1666,energy,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.5
+NVTK,НОВАТЭК,1,"{'units': '0', 'nano': 100000000}",True,True,True,True,True,False,0.1616,0.2144,0.125,0.1886,energy,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.1
+TATN,Татнефть,1,"{'units': '0', 'nano': 100000000}",True,True,True,True,True,False,0.1783,0.231,0.125,0.1428,energy,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.1
+SNGS,Сургутнефтегаз,100,"{'units': '0', 'nano': 5000000}",True,True,True,True,True,False,0.1616,0.2288,0.125,0.1428,energy,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.005
+SNGSP,Сургутнефтегаз - привилегированные акции,10,"{'units': '0', 'nano': 5000000}",True,True,True,True,True,False,0.1616,0.2058,0.125,0.1428,energy,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.005
+GMKN,Норильский никель,10,"{'units': '0', 'nano': 20000000}",True,True,True,True,True,False,0.1616,0.2,0.125,0.1428,materials,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.02
+PLZL,Полюс,1,"{'units': '0', 'nano': 200000000}",True,True,True,True,True,False,0.2857,0.2501,0.1666,0.1818,materials,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.2
+MAGN,Магнитогорский металлургический комбинат,10,"{'units': '0', 'nano': 5000000}",True,True,True,True,True,False,0.1692,0.2281,0.125,0.1428,materials,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.005
+CHMF,Северсталь,1,"{'units': '0', 'nano': 200000000}",True,True,True,True,True,False,0.1681,0.223,0.125,0.1428,materials,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.2
+ALRS,АЛРОСА,10,"{'units': '0', 'nano': 10000000}",True,True,True,True,True,False,0.167,0.2,0.125,0.1428,materials,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.01
+IRAO,Интер РАО,100,"{'units': '0', 'nano': 500000}",True,True,True,True,True,False,0.1616,0.25,0.125,0.1666,utilities,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.0005
+FEES,ФСК Россети,10000,"{'units': '0', 'nano': 20000}",True,True,True,True,True,False,0.186,0.25,0.1389,0.1666,utilities,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,2e-05
+HYDR,РусГидро,1000,"{'units': '0', 'nano': 100000}",True,True,True,True,True,False,0.1818,0.2115,0.1428,0.1428,utilities,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.0001
+UPRO,Юнипро,1000,"{'units': '0', 'nano': 500000}",True,True,True,True,True,False,0.1688,0.2406,0.125,0.1428,utilities,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.0005
+MSNG,Мосэнерго,1000,"{'units': '0', 'nano': 500000}",True,True,True,True,True,False,0.3,0.3,0.25,0.25,utilities,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.0005
+TGKA,ТГК-1,100000,"{'units': '0', 'nano': 2000}",True,True,True,True,True,False,0.3,0.3,0.25,0.25,utilities,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,2e-06
+OGKB,Вторая генерирующая компания оптового рынка электроэнергии,1000,"{'units': '0', 'nano': 100000}",True,True,True,True,True,False,0.3,0.3023,0.25,0.25,utilities,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.0001
+PHOR,ФосАгро,1,"{'units': '1', 'nano': 0}",True,True,True,True,True,False,0.1616,0.2,0.125,0.1428,materials,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,1.0
+AKRN,Акрон,1,"{'units': '2', 'nano': 0}",False,True,True,True,True,False,,,,,materials,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,2.0
+MOEX,Московская Биржа,10,"{'units': '0', 'nano': 10000000}",True,True,True,True,True,False,0.1616,0.2,0.125,0.1428,financial,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.01
+MTSS,МТС,10,"{'units': '0', 'nano': 50000000}",True,True,True,True,True,False,0.1616,0.25,0.125,0.1666,telecom,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.05
+RTKM,Ростелеком,10,"{'units': '0', 'nano': 10000000}",True,True,True,True,True,False,0.1616,0.2069,0.125,0.1428,telecom,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.01
+AFLT,Аэрофлот,10,"{'units': '0', 'nano': 10000000}",True,True,True,True,True,False,0.25,0.2199,0.1666,0.18,industrials,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.01
+FLOT,Совкомфлот,10,"{'units': '0', 'nano': 10000000}",True,True,True,True,True,False,0.1818,0.2,0.1428,0.1428,industrials,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.01
+NMTP,НМТП,100,"{'units': '0', 'nano': 5000000}",True,True,True,True,True,False,0.25,0.25,0.22,0.22,industrials,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.005
+MGNT,Магнит,1,"{'units': '0', 'nano': 500000000}",True,True,True,True,True,False,0.1818,0.2,0.1428,0.1428,consumer,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.5
+X5,Корпоративный Центр Икс 5,1,"{'units': '0', 'nano': 500000000}",True,True,True,True,True,False,0.1616,0.2,0.125,0.1818,consumer,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.5
+LENT,Лента,1,"{'units': '0', 'nano': 500000000}",True,True,True,True,True,False,0.3,0.55,0.25,0.5,consumer,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.5
+FIXR,Фикс Прайс,1000,"{'units': '0', 'nano': 100000}",True,True,True,True,True,False,0.3,0.3,0.2105,0.2105,consumer,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.0001
+YDEX,Яндекс,1,"{'units': '0', 'nano': 500000000}",True,True,True,True,True,False,0.1744,0.3689,0.125,0.2,it,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.5
+VKCO,ВК,1,"{'units': '0', 'nano': 50000000}",True,True,True,True,True,False,0.2391,0.251,0.1818,0.1728,it,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.05
+ASTR,Группа Астра,1,"{'units': '0', 'nano': 50000000}",True,True,True,True,True,False,0.2448,0.4064,0.131,0.1859,it,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.05
+POSI,Группа Позитив,1,"{'units': '0', 'nano': 200000000}",True,True,True,True,True,False,0.195,0.27,0.1428,0.25,it,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.2
+PIKK,ПИК-Специализированный застройщик,1,"{'units': '0', 'nano': 100000000}",True,True,True,True,True,False,0.217,0.2796,0.125,0.1385,real_estate,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.1
+SMLT,ГК Самолет,1,"{'units': '0', 'nano': 200000000}",True,True,True,True,True,False,0.6667,0.4431,0.25,0.3333,real_estate,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.2
+ETLN,Эталон Груп,1,"{'units': '0', 'nano': 20000000}",True,True,True,True,True,False,0.3,1.1,0.25,0.9999,real_estate,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.02
+RUAL,РУСАЛ,10,"{'units': '0', 'nano': 5000000}",True,True,True,True,True,False,0.2058,0.2589,0.125,0.1428,materials,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.005
+ENPG,Эн+,1,"{'units': '0', 'nano': 50000000}",True,True,True,True,True,False,0.2247,0.2731,0.1428,0.1428,materials,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.05
+SELG,Селигдар,10,"{'units': '0', 'nano': 10000000}",True,True,True,True,True,False,0.1818,0.3509,0.1428,0.2,materials,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.01
+BSPB,Банк Санкт-Петербург,10,"{'units': '0', 'nano': 10000000}",True,True,True,True,True,False,0.2,0.2555,0.1666,0.2222,financial,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.01
+CBOM,МКБ,100,"{'units': '0', 'nano': 1000000}",False,True,True,True,True,False,0.4,,0.35,,financial,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.001
+MVID,М.Видео,1,"{'units': '0', 'nano': 50000000}",False,True,True,True,True,False,0.55,,0.5,,consumer,SECURITY_TRADING_STATUS_NORMAL_TRADING,True,0.05

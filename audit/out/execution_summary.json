@@ -1,0 +1,77 @@
+{
+ "entry0.2_tp1.0": {
+  "signals": 2571,
+  "filled": 1469,
+  "fill_rate": 0.5713730066122131,
+  "adverse_share": 0.6172839506172839,
+  "adverse_n": 1458,
+  "mean_move_30m_pct": -0.27110209564955806,
+  "gross_mean_pct": -0.14911248906607674,
+  "net_mean_pct": -0.28034916206990285,
+  "net_total_pct": -411.83291908068725,
+  "win_rate": 0.3805309734513274,
+  "exit_mix": {
+   "session_close": 0.7937372362151123,
+   "stop": 0.18720217835262082,
+   "target": 0.01906058543226685
+  },
+  "mean_overshoot_pct": 0.28281653130231665,
+  "median_fill_bar": 6.0
+ },
+ "entry0.2_tp0.5": {
+  "signals": 2571,
+  "filled": 1469,
+  "fill_rate": 0.5713730066122131,
+  "adverse_share": 0.6172839506172839,
+  "adverse_n": 1458,
+  "mean_move_30m_pct": -0.27110209564955806,
+  "gross_mean_pct": -0.16229619587335922,
+  "net_mean_pct": -0.2935328688771853,
+  "net_total_pct": -431.19978438058524,
+  "win_rate": 0.3859768550034037,
+  "exit_mix": {
+   "session_close": 0.7025187202178352,
+   "stop": 0.18584070796460178,
+   "target": 0.11164057181756297
+  },
+  "mean_overshoot_pct": 0.28281653130231665,
+  "median_fill_bar": 6.0
+ },
+ "entry0.8_tp1.0": {
+  "signals": 2571,
+  "filled": 363,
+  "fill_rate": 0.1411901983663944,
+  "adverse_share": 0.6264367816091954,
+  "adverse_n": 348,
+  "mean_move_30m_pct": -0.28088370220867853,
+  "gross_mean_pct": -0.23734380112604272,
+  "net_mean_pct": -0.369178137858152,
+  "net_total_pct": -134.01166404250918,
+  "win_rate": 0.18181818181818182,
+  "exit_mix": {
+   "stop": 0.7465564738292011,
+   "session_close": 0.2534435261707989
+  },
+  "mean_overshoot_pct": 0.278188191993051,
+  "median_fill_bar": 37.0
+ },
+ "market_entry": {
+  "signals": 2571,
+  "filled": 2113,
+  "fill_rate": 0.8218591987553481,
+  "adverse_share": 0.7110266159695817,
+  "adverse_n": 2104,
+  "mean_move_30m_pct": -0.372703035562817,
+  "gross_mean_pct": -0.30855409049227434,
+  "net_mean_pct": -0.43970686422122796,
+  "net_total_pct": -929.1006040994547,
+  "win_rate": 0.32938949361097963,
+  "exit_mix": {
+   "session_close": 0.8466635115948887,
+   "stop": 0.13109323237103643,
+   "target": 0.022243256034074774
+  },
+  "mean_overshoot_pct": 0.380530436195719,
+  "median_fill_bar": 0.0
+ }
+}

@@ -1,0 +1,1542 @@
+[
+ {
+  "ticker": "SBER",
+  "name": "Сбербанк",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 10000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 166600000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 200000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 125000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "sector": "financial",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "VTBR",
+  "name": "Банк ВТБ",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 5000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 222200000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 333300000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 166600000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 222200000
+  },
+  "sector": "financial",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "GAZP",
+  "name": "Газпром",
+  "lot": 10,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 10000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 200000000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 276700000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 181800000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 181800000
+  },
+  "sector": "energy",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "ROSN",
+  "name": "Роснефть",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 50000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 200000000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 220000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 153800000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 166600000
+  },
+  "sector": "energy",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "LKOH",
+  "name": "ЛУКОЙЛ",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 500000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 161600000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 220000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 125000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 166600000
+  },
+  "sector": "energy",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "NVTK",
+  "name": "НОВАТЭК",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 100000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 161600000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 214400000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 125000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 188600000
+  },
+  "sector": "energy",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "TATN",
+  "name": "Татнефть",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 100000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 178300000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 231000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 125000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "sector": "energy",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "SNGS",
+  "name": "Сургутнефтегаз",
+  "lot": 100,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 5000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 161600000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 228800000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 125000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "sector": "energy",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "SNGSP",
+  "name": "Сургутнефтегаз - привилегированные акции",
+  "lot": 10,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 5000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 161600000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 205800000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 125000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "sector": "energy",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "GMKN",
+  "name": "Норильский никель",
+  "lot": 10,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 20000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 161600000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 200000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 125000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "sector": "materials",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "PLZL",
+  "name": "Полюс",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 200000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 285700000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 250100000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 166600000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 181800000
+  },
+  "sector": "materials",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "MAGN",
+  "name": "Магнитогорский металлургический комбинат",
+  "lot": 10,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 5000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 169200000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 228100000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 125000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "sector": "materials",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "CHMF",
+  "name": "Северсталь",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 200000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 168100000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 223000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 125000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "sector": "materials",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "ALRS",
+  "name": "АЛРОСА",
+  "lot": 10,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 10000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 167000000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 200000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 125000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "sector": "materials",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "IRAO",
+  "name": "Интер РАО",
+  "lot": 100,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 500000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 161600000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 250000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 125000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 166600000
+  },
+  "sector": "utilities",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "FEES",
+  "name": "ФСК Россети",
+  "lot": 10000,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 20000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 186000000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 250000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 138900000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 166600000
+  },
+  "sector": "utilities",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "HYDR",
+  "name": "РусГидро",
+  "lot": 1000,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 100000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 181800000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 211500000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "sector": "utilities",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "UPRO",
+  "name": "Юнипро",
+  "lot": 1000,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 500000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 168800000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 240600000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 125000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "sector": "utilities",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "MSNG",
+  "name": "Мосэнерго",
+  "lot": 1000,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 500000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 300000000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 300000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 250000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 250000000
+  },
+  "sector": "utilities",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "TGKA",
+  "name": "ТГК-1",
+  "lot": 100000,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 2000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 300000000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 300000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 250000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 250000000
+  },
+  "sector": "utilities",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "OGKB",
+  "name": "Вторая генерирующая компания оптового рынка электроэнергии",
+  "lot": 1000,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 100000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 300000000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 302300000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 250000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 250000000
+  },
+  "sector": "utilities",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "PHOR",
+  "name": "ФосАгро",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "1",
+   "nano": 0
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 161600000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 200000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 125000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "sector": "materials",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "AKRN",
+  "name": "Акрон",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "2",
+   "nano": 0
+  },
+  "short_enabled": false,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": null,
+  "dshort": null,
+  "dlong_client": null,
+  "dshort_client": null,
+  "sector": "materials",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "MOEX",
+  "name": "Московская Биржа",
+  "lot": 10,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 10000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 161600000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 200000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 125000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "sector": "financial",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "MTSS",
+  "name": "МТС",
+  "lot": 10,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 50000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 161600000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 250000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 125000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 166600000
+  },
+  "sector": "telecom",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "RTKM",
+  "name": "Ростелеком",
+  "lot": 10,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 10000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 161600000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 206900000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 125000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "sector": "telecom",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "AFLT",
+  "name": "Аэрофлот",
+  "lot": 10,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 10000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 250000000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 219900000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 166600000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 180000000
+  },
+  "sector": "industrials",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "FLOT",
+  "name": "Совкомфлот",
+  "lot": 10,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 10000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 181800000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 200000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "sector": "industrials",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "NMTP",
+  "name": "НМТП",
+  "lot": 100,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 5000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 250000000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 250000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 220000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 220000000
+  },
+  "sector": "industrials",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "MGNT",
+  "name": "Магнит",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 500000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 181800000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 200000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "sector": "consumer",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "X5",
+  "name": "Корпоративный Центр Икс 5",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 500000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 161600000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 200000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 125000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 181800000
+  },
+  "sector": "consumer",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "LENT",
+  "name": "Лента",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 500000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 300000000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 550000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 250000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 500000000
+  },
+  "sector": "consumer",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "FIXR",
+  "name": "Фикс Прайс",
+  "lot": 1000,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 100000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 300000000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 300000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 210500000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 210500000
+  },
+  "sector": "consumer",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "YDEX",
+  "name": "Яндекс",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 500000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 174400000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 368900000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 125000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 200000000
+  },
+  "sector": "it",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "VKCO",
+  "name": "ВК",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 50000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 239100000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 251000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 181800000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 172800000
+  },
+  "sector": "it",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "ASTR",
+  "name": "Группа Астра",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 50000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 244800000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 406400000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 131000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 185900000
+  },
+  "sector": "it",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "POSI",
+  "name": "Группа Позитив",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 200000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 195000000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 270000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 250000000
+  },
+  "sector": "it",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "PIKK",
+  "name": "ПИК-Специализированный застройщик",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 100000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 217000000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 279600000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 125000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 138500000
+  },
+  "sector": "real_estate",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "SMLT",
+  "name": "ГК Самолет",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 200000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 666700000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 443100000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 250000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 333300000
+  },
+  "sector": "real_estate",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "ETLN",
+  "name": "Эталон Груп",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 20000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 300000000
+  },
+  "dshort": {
+   "units": "1",
+   "nano": 100000000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 250000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 999900000
+  },
+  "sector": "real_estate",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "RUAL",
+  "name": "РУСАЛ",
+  "lot": 10,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 5000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 205800000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 258900000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 125000000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "sector": "materials",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "ENPG",
+  "name": "Эн+",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 50000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 224700000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 273100000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "sector": "materials",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "SELG",
+  "name": "Селигдар",
+  "lot": 10,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 10000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 181800000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 350900000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 142800000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 200000000
+  },
+  "sector": "materials",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "BSPB",
+  "name": "Банк Санкт-Петербург",
+  "lot": 10,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 10000000
+  },
+  "short_enabled": true,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 200000000
+  },
+  "dshort": {
+   "units": "0",
+   "nano": 255500000
+  },
+  "dlong_client": {
+   "units": "0",
+   "nano": 166600000
+  },
+  "dshort_client": {
+   "units": "0",
+   "nano": 222200000
+  },
+  "sector": "financial",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "CBOM",
+  "name": "МКБ",
+  "lot": 100,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 1000000
+  },
+  "short_enabled": false,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 400000000
+  },
+  "dshort": null,
+  "dlong_client": {
+   "units": "0",
+   "nano": 350000000
+  },
+  "dshort_client": null,
+  "sector": "financial",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ },
+ {
+  "ticker": "MVID",
+  "name": "М.Видео",
+  "lot": 1,
+  "min_price_increment": {
+   "units": "0",
+   "nano": 50000000
+  },
+  "short_enabled": false,
+  "buy_available": true,
+  "sell_available": true,
+  "api_trade": true,
+  "liquidity_flag": true,
+  "for_qual": false,
+  "dlong": {
+   "units": "0",
+   "nano": 550000000
+  },
+  "dshort": null,
+  "dlong_client": {
+   "units": "0",
+   "nano": 500000000
+  },
+  "dshort_client": null,
+  "sector": "consumer",
+  "trading_status": "SECURITY_TRADING_STATUS_NORMAL_TRADING",
+  "weekend": true
+ }
+]
