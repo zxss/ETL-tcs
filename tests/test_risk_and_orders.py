@@ -402,6 +402,91 @@ class TestTakeProfitPrice(unittest.TestCase):
         self.assertIsNone(_take_profit_price("LONG", None, 96.0, 104.0, 1.0))
 
 
+class TestTakeProfitDefault(unittest.TestCase):
+    """Дефолт LIMIT_TP_FRACTION = 0.5 и его смысл.
+
+    Основание для значения — моделирование исполнения на 5-минутном пути цены
+    (2 577 сигналов): при 1.0 цель достигалась в 1,9% сделок, при 0.5 — в 11,2%.
+    См. AUDIT-PROFITABILITY-REPORT.md, раздел 6.
+    """
+
+    def test_config_default_is_half(self):
+        import importlib
+        import config
+        importlib.reload(config)
+        self.assertAlmostEqual(config.LIMIT_TP_FRACTION, 0.5)
+
+    def test_build_orders_uses_config_not_hardcoded_one(self):
+        """tp_frac не передан → берётся из конфигурации, а не 1.0 из сигнатуры.
+
+        Регрессия: раньше в build_orders и compute_orders стояла захардкоженная
+        1.0, которая молча побеждала LIMIT_TP_FRACTION при вызове без аргумента.
+        """
+        import config
+        row = make_dashboard_row(anchor_price=100.0, f_low=98.0, f_high=104.0)
+        o = build_orders([row], position_rub=100_000.0, entry_frac=0.2)[0]
+
+        entry = o.entry_price
+        expected = _take_profit_price("LONG", entry, 98.0, 104.0,
+                                      config.LIMIT_TP_FRACTION)
+        self.assertAlmostEqual(o.tp_price, expected)
+        far_edge = _take_profit_price("LONG", entry, 98.0, 104.0, 1.0)
+        self.assertLess(o.tp_price, far_edge,
+                        "дефолтный тейк обязан быть ближе входа, чем дальняя граница")
+
+    def test_explicit_argument_still_wins(self):
+        row = make_dashboard_row(anchor_price=100.0, f_low=98.0, f_high=104.0)
+        o = build_orders([row], position_rub=100_000.0, entry_frac=0.2,
+                         tp_frac=1.0)[0]
+        self.assertAlmostEqual(o.tp_price, 104.0)
+
+    def test_target_is_midpoint_between_entry_and_far_edge(self):
+        """0.5 — это середина отрезка ВХОД→ДАЛЬНЯЯ ГРАНИЦА, а не медиана прогноза.
+
+        Различие существенное и легко теряется при чтении конфигурации.
+        Дальняя граница коридора — это q0.9 (для LONG) и q0.1 (для SHORT), а
+        не q0.5, поэтому tp_frac=0.5 ставит цель ВЫШЕ медианы прогноза,
+        примерно на 40% пути от якоря к верхней границе.
+        """
+        entry, f_low, f_high = 99.0, 96.0, 104.0
+        tp = _take_profit_price("LONG", entry, f_low, f_high, 0.5)
+        self.assertAlmostEqual(tp, (entry + f_high) / 2.0)
+
+        anchor = 100.0                      # медиана прогноза ≈ якорь
+        self.assertGreater(tp, anchor,
+                           "0.5 ставит цель выше медианы прогноза, а не на неё")
+
+    def test_closer_target_is_monotonically_easier_to_reach(self):
+        """Чем меньше tp_frac, тем ближе цель ко входу — и тем достижимее.
+
+        Именно это свойство и есть причина смены дефолта: при 1.0 механизм
+        take-profit практически не участвовал в сделке.
+        """
+        entry, f_low, f_high = 99.0, 96.0, 104.0
+        longs = [_take_profit_price("LONG", entry, f_low, f_high, f)
+                 for f in (0.2, 0.4, 0.5, 0.8, 1.0)]
+        self.assertEqual(longs, sorted(longs), "цель LONG должна расти вместе с frac")
+        for tp in longs:
+            self.assertGreater(tp, entry)
+
+        shorts = [_take_profit_price("SHORT", 101.0, f_low, f_high, f)
+                  for f in (0.2, 0.4, 0.5, 0.8, 1.0)]
+        self.assertEqual(shorts, sorted(shorts, reverse=True),
+                         "цель SHORT должна опускаться вместе с ростом frac")
+        for tp in shorts:
+            self.assertLess(tp, 101.0)
+
+    def test_default_tp_is_reachable_within_forecast_corridor(self):
+        """Дефолтная цель лежит строго внутри прогнозного коридора."""
+        import config
+        row = make_dashboard_row(anchor_price=100.0, f_low=98.0, f_high=104.0)
+        o = build_orders([row], position_rub=100_000.0, entry_frac=0.2)[0]
+        self.assertGreater(o.tp_price, o.entry_price)
+        self.assertLess(o.tp_price, 104.0)
+        self.assertGreater(config.LIMIT_TP_FRACTION, 0.0)
+        self.assertLessEqual(config.LIMIT_TP_FRACTION, 1.0)
+
+
 class TestStopGeometry(unittest.TestCase):
     """Стоп ставится от ВХОДА (не от спота) и в правильную сторону."""
 

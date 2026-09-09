@@ -90,11 +90,19 @@ _LOG_DIR = Path(__file__).resolve().parent.parent / "data" / "order_log"
 
 
 def compute_orders(top_n: int, position_rub: float, entry_frac: float,
-                   *, tp_frac: float = 1.0, quiet: bool = True,
+                   *, tp_frac: float | None = None, quiet: bool = True,
                    refresh: bool = True,
                    budget_rub: float | None = None) -> tuple[list[Order], dict]:
     """От подключения к БД до готового списка Order (+meta для журнала).
-    Перед расчётом догружает свечи и проверяет их свежесть (StaleDataError)."""
+    Перед расчётом догружает свечи и проверяет их свежесть (StaleDataError).
+
+    tp_frac=None → берётся config.LIMIT_TP_FRACTION. Раньше здесь стояла
+    захардкоженная 1.0, из-за чего программный вызов (в обход CLI) целился в
+    дальнюю границу коридора независимо от конфигурации: цель достигалась
+    в 1,9% сделок. Источник значения по умолчанию должен быть один.
+    """
+    if tp_frac is None:
+        tp_frac = float(getattr(config, "LIMIT_TP_FRACTION", 0.5))
     conn = database.get_connection()
     try:
         last_date = ensure_fresh_data(conn, refresh=refresh)
@@ -929,7 +937,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     p.add_argument("--entry-frac", type=float,
                    default=float(getattr(config, "LIMIT_ENTRY_FRACTION", 0.8)))
     p.add_argument("--tp-frac", type=float,
-                   default=float(getattr(config, "LIMIT_TP_FRACTION", 1.0)),
+                   default=float(getattr(config, "LIMIT_TP_FRACTION", 0.5)),
                    help="Цель take-profit как доля пути до дальней границы коридора (0..1).")
     p.add_argument("--dry-run", action="store_true",
                    help="Пройти pipeline без реальной отправки в брокер.")

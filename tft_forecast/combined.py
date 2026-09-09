@@ -959,7 +959,7 @@ def _risk_parity_alloc(geoms: list[dict], budget_rub: float) -> list[float]:
 
 
 def build_orders(top: list[dict], position_rub: float,
-                 entry_frac: float, tp_frac: float = 1.0,
+                 entry_frac: float, tp_frac: float | None = None,
                  budget_rub: float | None = None) -> list[Order]:
     """Чистая функция: top-N рейтинга → список структурированных Order.
 
@@ -977,7 +977,15 @@ def build_orders(top: list[dict], position_rub: float,
 
     Прочее (цена входа в коридоре, стоп от входа, take-profit по диапазону) —
     без изменений.
+
+    tp_frac=None → config.LIMIT_TP_FRACTION. Значение по умолчанию не
+    дублируется в сигнатурах: раньше здесь и в compute_orders стояла
+    захардкоженная 1.0, и она молча побеждала конфигурацию при вызове без
+    явного аргумента.
     """
+    if tp_frac is None:
+        import config as _cfg
+        tp_frac = float(getattr(_cfg, "LIMIT_TP_FRACTION", 0.5))
     unavail = _unavailable_tickers()
     blocked_short = non_shortable_tickers()
 
@@ -1071,7 +1079,7 @@ def _print_order_instructions(top: list[dict], position_rub: float,
                               entry_frac: float) -> None:
     """Печатает блок «ИНСТРУКЦИИ ДЛЯ АВТОЗАЯВОК» из подготовленных Order."""
     import config as _cfg
-    tp_frac = float(getattr(_cfg, "LIMIT_TP_FRACTION", 1.0))
+    tp_frac = float(getattr(_cfg, "LIMIT_TP_FRACTION", 0.5))
     W = 176
     pos_k = position_rub / 1000.0
     orders = build_orders(top, position_rub, entry_frac, tp_frac=tp_frac)
