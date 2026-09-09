@@ -37,6 +37,10 @@ from models.market_data import (
     CREATE_FORECASTS_SQL, UPSERT_FORECAST_SQL, FORECAST_COLUMNS,
     MIGRATE_MARKET_DATA_SOURCE_SQL,
 )
+from models.instruments import (
+    CREATE_INSTRUMENTS_SQL, UPSERT_INSTRUMENT_SQL, SELECT_LOTS_SQL,
+    SELECT_INSTRUMENTS_SQL,
+)
 
 log = logging.getLogger("database")
 
@@ -149,11 +153,13 @@ def init_db(conn=None) -> None:
             cur.execute(CREATE_TABLE_SQL)
             cur.execute(CREATE_TABLE_5M_SQL)
             cur.execute(CREATE_FORECASTS_SQL)
+            cur.execute(CREATE_INSTRUMENTS_SQL)
             # Миграции существующих баз (идемпотентны).
             cur.execute(MIGRATE_MARKET_DATA_SOURCE_SQL)
         if conn is not None:
             c.commit()   # DDL у владельца коннекта фиксируем сразу
-    log.info("Схема БД инициализирована (market_data + market_data_5m + forecasts)")
+    log.info("Схема БД инициализирована "
+             "(market_data + market_data_5m + forecasts + instruments)")
 
 
 # --- Свечи -------------------------------------------------------------------
@@ -233,6 +239,75 @@ def save_forecasts(rows: list[dict], conn=None) -> int:
         with c.cursor() as cur:
             psycopg2.extras.execute_batch(cur, UPSERT_FORECAST_SQL, payload, page_size=200)
     return len(payload)
+
+
+# --- Справочник инструментов -------------------------------------------------
+
+def save_instruments(rows: list[dict], conn=None) -> int:
+    """Upsert справочника инструментов по ключу ticker.
+
+    rows — список dict с ключами колонок instruments; отсутствующие поля → NULL.
+    Возвращает число записанных строк.
+    """
+    if not rows:
+        return 0
+    cols = ("ticker", "figi", "uid", "name", "class_code", "lot",
+            "min_price_increment", "short_enabled", "buy_available",
+            "sell_available", "api_trade_available", "for_qual_investor",
+            "dlong_client", "dshort_client", "trading_status", "sector")
+    payload = []
+    for r in rows:
+        rec = {k: r.get(k) for k in cols}
+        if not rec.get("ticker"):
+            continue
+        rec["ticker"] = str(rec["ticker"]).upper()
+        try:
+            rec["lot"] = int(rec.get("lot") or 1)
+        except (TypeError, ValueError):
+            rec["lot"] = 1
+        payload.append(rec)
+    if not payload:
+        return 0
+    with _tx(conn) as c:
+        with c.cursor() as cur:
+            psycopg2.extras.execute_batch(cur, UPSERT_INSTRUMENT_SQL, payload,
+                                          page_size=100)
+    return len(payload)
+
+
+def get_instrument_lots(conn=None) -> dict[str, int]:
+    """{TICKER: lot} из кэша справочника. Пустой словарь, если кэш не наполнен.
+
+    Вызывающий обязан различать «лот неизвестен» и «лот = 1»: молча подставлять
+    единицу нельзя, потому что для TGKA это ошибка в 100 000 раз.
+    """
+    try:
+        with _tx(conn) as c:
+            with c.cursor() as cur:
+                cur.execute(SELECT_LOTS_SQL)
+                rows = cur.fetchall()
+    except Exception as e:  # noqa: BLE001 — кэша может ещё не быть
+        log.warning("Не удалось прочитать кэш инструментов: %s", e)
+        return {}
+    return {str(tk).upper(): int(lot) for tk, lot, _ in rows if lot}
+
+
+def get_instruments(conn=None) -> dict[str, dict]:
+    """Полный кэш справочника: {TICKER: {lot, tick, short_enabled, ...}}."""
+    try:
+        with _tx(conn) as c:
+            with c.cursor() as cur:
+                cur.execute(SELECT_INSTRUMENTS_SQL)
+                rows = cur.fetchall()
+                names = [d[0] for d in cur.description]
+    except Exception as e:  # noqa: BLE001
+        log.warning("Не удалось прочитать кэш инструментов: %s", e)
+        return {}
+    out = {}
+    for row in rows:
+        rec = dict(zip(names, row))
+        out[str(rec["ticker"]).upper()] = rec
+    return out
 
 
 def query_forecasts(asof_date, ticker: str | None = None, conn=None) -> list[dict]:

@@ -31,7 +31,7 @@ import database
 from services.load_history import run
 from services import run_validation
 from services import backfill_daily
-from services import load_index
+from services import load_index, load_instruments
 from services.data_freshness import StaleDataError, ensure_fresh_data
 from services import calendar as trading_calendar_svc
 import config
@@ -122,6 +122,12 @@ def main() -> None:
     try:
         with st.stage("etl", "ETL"):
             run(conn)
+
+        # Справочник инструментов (лотность, шаг цены, доступность шорта).
+        # Нужен слою ликвидности: market_data.volume приходит В ЛОТАХ, и без
+        # размера лота рублёвый оборот занижается — для TGKA в 100 000 раз.
+        with st.stage("instruments", "Instruments"):
+            load_instruments.run(conn)
 
         # Индексы (IMOEX) — отдельный шаг для слоя рыночного контекста.
         log.info("Загрузка биржевых индексов (IMOEX)...")
