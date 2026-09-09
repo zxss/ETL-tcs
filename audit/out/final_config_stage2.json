@@ -1,0 +1,103 @@
+{
+ "final_config_stage2": {
+  "TRADING_MODE": "sandbox",
+  "SCORE_MODE": "heuristic",
+  "APPLY_RISK_PENALTIES": 0,
+  "TRADING_STRATEGIES": [
+   "intraday_short",
+   "long_overnight"
+  ],
+  "SELLER_MOMENTUM_SHORT_ENABLED": 1,
+  "SHORT_IMOEX_MAX_TREND": "EMA50",
+  "OVERNIGHT_MAX_MARKET_ATR_PCTL": 70,
+  "OVERNIGHT_MIN_EDGE_X_COST": 0.5,
+  "LIMIT_ENTRY_FRACTION": 0.2,
+  "LIMIT_TP_FRACTION": 0.5,
+  "ORDER_FILL_WAIT_SEC": 60,
+  "INTRADAY_SQUARE_OFF_ENABLED": 1,
+  "INTRADAY_SQUARE_OFF_TIME": "18:35",
+  "FIXED_POSITION_OVERFLOW_MODE": "skip",
+  "BEST_TRADES_TOP_N": 5,
+  "BEST_TRADES_POSITION_RUB": 10000
+ },
+ "backtest_455d": {
+  "исходная_top10": {
+   "актив_дней": 455,
+   "cagr": -2.821,
+   "sharpe": -0.035,
+   "pf": 0.993,
+   "mdd": -25.184,
+   "alpha": 2.233,
+   "h1": -0.69,
+   "h2": 0.533
+  },
+  "итоговая_top5": {
+   "актив_дней": 151,
+   "cagr": 20.964,
+   "sharpe": 1.106,
+   "pf": 1.673,
+   "mdd": -9.508,
+   "alpha": 23.352,
+   "h1": 0.676,
+   "h2": 1.598
+  },
+  "сигналов": {
+   "до": 62319,
+   "после": 2108,
+   "состав": {
+    "intraday_short": 1816,
+    "long_overnight": 292
+   }
+  }
+ },
+ "stage1_gates": {
+  "Sharpe": {
+   "факт": 1.106,
+   "порог": 1.3,
+   "итог": "НЕ ПРОЙДЕН"
+  },
+  "ProfitFactor": {
+   "факт": 1.673,
+   "порог": 1.45,
+   "итог": "ПРОЙДЕН"
+  },
+  "MaxDrawdown": {
+   "факт": -9.508,
+   "порог": -12.0,
+   "итог": "ПРОЙДЕН"
+  },
+  "Alpha": {
+   "факт": 23.352,
+   "порог": 15.0,
+   "итог": "ПРОЙДЕН"
+  },
+  "итог": "3 из 4 (Win Rate не применим: 2/3 дней в кэше)"
+ },
+ "new_guards_measured": {
+  "SHORT_IMOEX_MAX_TREND": {
+   "cagr_до": 12.363,
+   "cagr_после": 9.285,
+   "sharpe_до": 0.661,
+   "sharpe_после": 0.53,
+   "mdd_без_изменений": -22.04,
+   "вывод": "страховка, стоит ~3 п.п. CAGR; защищает от режима, которого в выборке нет"
+  },
+  "OVERNIGHT_MAX_MARKET_ATR_PCTL": {
+   "cagr_до": 12.363,
+   "cagr_после": 12.347,
+   "вывод": "почти нулевое влияние; дешёвый предохранитель"
+  },
+  "BEST_TRADES_TOP_N": {
+   "top10": {
+    "cagr": 9.27,
+    "mdd": -22.065
+   },
+   "top5": {
+    "cagr": 10.445,
+    "mdd": -19.695
+   },
+   "вывод": "концентрация слегка помогает"
+  }
+ },
+ "caveat": "Конфигурация отобрана примерно по 15 вариантам фильтров и режимов на ОДНОЙ выборке 455 дней из одного медвежьего рынка. Прирост с -2.8% до +21.0% CAGR получен на тех же данных, на которых измеряется. Ключевой компонент — фильтр импульса продавцов — по проверке является таймингом падения рынка (бета +52.9% годовых), а не отбором бумаг. Честная оценка требует живого форварда: это и есть Этап 2."
+}

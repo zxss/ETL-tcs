@@ -62,6 +62,7 @@ class MarketContext2:
     regime: str = "NEUTRAL"            # BULL / BEAR / NEUTRAL
     imoex_ret10: float | None = None   # доходность индекса за 10 дней, %
     breadth: float | None = None       # доля бумаг выше EMA50 (0..1)
+    index_above_ema50: bool | None = None  # индекс выше своей EMA50 (риск шорт-сквиза)
     atr_pctl_market: float | None = None  # медиана ATR_Pctl по рынку
     risk_level: str = "NORMAL"         # NORMAL / ELEVATED / HIGH
     source: str = "proxy"              # "IMOEX" | "proxy"
@@ -188,6 +189,19 @@ def _build_index(frames: dict[str, pd.DataFrame]) -> pd.Series | None:
     return level if len(level) >= 11 else None
 
 
+def _above_ema(level: pd.Series, span: int = 50) -> bool | None:
+    """Индекс выше своей EMA — предохранитель от шорт-сквиза.
+
+    Отличается от режима BULL/BEAR: тот требует ещё и EMA50 > EMA200, то есть
+    подтверждённого тренда. Здесь нужен более чувствительный признак — рынок
+    уже развернулся вверх относительно среднесрочной средней, и шортить в такой
+    день опаснее, даже если формально режим ещё не BULL.
+    """
+    if level is None or len(level) < 50:
+        return None
+    return bool(level.iloc[-1] > _ema(level, span).iloc[-1])
+
+
 def _regime(level: pd.Series) -> str:
     if level is None or len(level) < 5:
         return "NEUTRAL"
@@ -224,6 +238,7 @@ def compute(conn, tickers: list[str]) -> MarketContext2:
             ctx.source = "proxy"
 
         ctx.regime = _regime(level)
+        ctx.index_above_ema50 = _above_ema(level, 50)
         r10 = _ret10(level) if level is not None else None
         ctx.imoex_ret10 = r10 * 100.0 if r10 is not None else None
 

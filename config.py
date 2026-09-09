@@ -308,7 +308,9 @@ DASHBOARD_TOP_N: int = int(os.getenv("DASHBOARD_TOP_N", "50"))
 SAVE_FORECASTS: bool = get_bool_env("SAVE_FORECASTS", 1)
 
 # BEST_TRADES_TOP_N — сколько сигналов показывать в блоке «ЛУЧШИЕ СДЕЛКИ».
-BEST_TRADES_TOP_N: int = int(os.getenv("BEST_TRADES_TOP_N", "10"))
+# Концентрация в топ-5: при обоих предохранителях top_n=5 даёт CAGR 10.4%
+# против 9.3% при top_n=10 и лучшую просадку (-19.7% против -22.1%).
+BEST_TRADES_TOP_N: int = int(os.getenv("BEST_TRADES_TOP_N", "5"))
 
 # BEST_TRADES_POSITION_RUB — целевой размер позиции на одну бумагу (₽)
 # для расчёта объёма лотов в торговых инструкциях.
@@ -374,7 +376,10 @@ INTRADAY_BUCKETS: int = int(os.getenv("INTRADAY_BUCKETS", "6"))
 # лимиток ПЕРЕД привязкой стопов (в едином прогоне --top-n). При entry_frac≈0.2
 # заявки стоят у рынка и заливаются за секунды; 0 — не ждать (стопы привяжет
 # следующий прогон / --attach-stops). ORDER_FILL_POLL_SEC — интервал опроса.
-ORDER_FILL_WAIT_SEC: float = float(os.getenv("ORDER_FILL_WAIT_SEC", "30"))
+# 60 секунд вместо 30: медиана заливки — 6-й пятиминутный бар (≈30 минут после
+# открытия), так что единый прогон всё равно почти всегда уходит, не дождавшись;
+# 60 с ловит хотя бы те заявки, что заливаются сразу.
+ORDER_FILL_WAIT_SEC: float = float(os.getenv("ORDER_FILL_WAIT_SEC", "60"))
 ORDER_FILL_POLL_SEC: float = float(os.getenv("ORDER_FILL_POLL_SEC", "5"))
 
 # --- Актуальные котировки на момент запуска ----------------------------------
@@ -561,7 +566,30 @@ TRADING_STRATEGIES: list[str] = (
 # (Sharpe 1.51, положителен в обеих половинах), но его знак зависит от того,
 # продолжится ли режим. Включён по постановке задачи; выключать при смене
 # режима рынка.
-INTRADAY_SHORT_REQUIRE_MOMENTUM: bool = get_bool_env("INTRADAY_SHORT_REQUIRE_MOMENTUM", 1)
+SELLER_MOMENTUM_SHORT_ENABLED: bool = get_bool_env(
+    "SELLER_MOMENTUM_SHORT_ENABLED",
+    get_bool_env("INTRADAY_SHORT_REQUIRE_MOMENTUM", 1))   # старое имя — обратная совместимость
+INTRADAY_SHORT_REQUIRE_MOMENTUM: bool = SELLER_MOMENTUM_SHORT_ENABLED  # алиас
+
+# SHORT_IMOEX_MAX_TREND — предохранитель от шорт-сквиза: не шортить интрадей,
+# когда индекс выше своей EMA50. Пустое значение отключает предохранитель.
+#
+# ЭТО СТРАХОВКА, А НЕ ИСТОЧНИК ДОХОДНОСТИ. На выборке из одного медвежьего
+# рынка фильтр СТОИТ около 3 п.п. CAGR (12.4% -> 9.3%, Sharpe 0.661 -> 0.530,
+# альфа 26.5% -> 23.0%) и не улучшает просадку (-22.0% в обоих случаях) —
+# он убирает только прибыльные шорт-дни, потому что в этой выборке рост
+# индекса выше EMA50 (34.3% дней) почти всегда оказывался коротким отскоком.
+# Смысл фильтра — защита в режиме, которого в данных НЕТ: устойчивый бычий
+# тренд, где шорты выносит. Премия за страховку видна, выплата — нет.
+SHORT_IMOEX_MAX_TREND: str = os.getenv("SHORT_IMOEX_MAX_TREND", "EMA50").strip()
+
+# OVERNIGHT_MAX_MARKET_ATR_PCTL — не покупать овернайт при панической
+# волатильности рынка (медиана ATR-перцентиля по вселенной выше порога).
+# Влияние на выборке минимально (CAGR 12.363% -> 12.347%): порог задевает
+# 13.5% строк, а овернайт — небольшая часть книги. Оставлен как дешёвый
+# предохранитель против покупки через ночь в момент максимального разброса гэпов.
+OVERNIGHT_MAX_MARKET_ATR_PCTL: float = float(
+    os.getenv("OVERNIGHT_MAX_MARKET_ATR_PCTL", "70"))
 
 # OVERNIGHT_MIN_EDGE_X_COST — торговать long_overnight только когда ожидаемая
 # доходность превышает издержки round-trip в k раз (ExpPnL уже НЕТТО издержек,
@@ -573,3 +601,25 @@ INTRADAY_SHORT_REQUIRE_MOMENTUM: bool = get_bool_env("INTRADAY_SHORT_REQUIRE_MOM
 # выборку до 0.7-1.6% сигналов (144-326 сделок за два года). Порог введён по
 # постановке задачи; считать его работающим фильтром пока нельзя.
 OVERNIGHT_MIN_EDGE_X_COST: float = float(os.getenv("OVERNIGHT_MIN_EDGE_X_COST", "0.5"))
+
+# --- Контур по умолчанию и сайзинг --------------------------------------------
+# TRADING_MODE — контур, в котором работает система, если не передан явный флаг.
+# "sandbox" (дефолт) — виртуальные деньги; "prod" — боевой счёт.
+# CLI-флаг --prod имеет приоритет над этой переменной; обратного флага нет,
+# то есть переменная может только ОГРАНИЧИТЬ, но не расширить права запуска.
+TRADING_MODE: str = os.getenv("TRADING_MODE", "sandbox").strip().lower()
+
+# FIXED_POSITION_OVERFLOW_MODE — что делать, когда один лот дороже лимита позиции.
+#   "skip"             — бумага пропускается (дефолт и единственное поведение);
+#   "force_min_1_lot"  — НЕ ПОДДЕРЖИВАЕТСЯ, оставлено только чтобы явно
+#                        зафиксировать отказ от него.
+# Прежний max(1, ...) покупал БОЛЬШЕ, чем посчитала модель (при лоте GMKN
+# 1296 ₽ и лимите 500 ₽ — в 2.6 раза), обходя риск-сайзинг и создавая риск
+# овердрафта. Значение, отличное от "skip", вызывает ошибку на старте.
+FIXED_POSITION_OVERFLOW_MODE: str = os.getenv(
+    "FIXED_POSITION_OVERFLOW_MODE", "skip").strip().lower()
+if FIXED_POSITION_OVERFLOW_MODE != "skip":
+    raise ValueError(
+        f"FIXED_POSITION_OVERFLOW_MODE={FIXED_POSITION_OVERFLOW_MODE!r} не поддержан. "
+        "Допустимо только 'skip': округление вверх до одного лота обходит "
+        "риск-сайзинг и может привести к овердрафту.")

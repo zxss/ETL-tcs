@@ -534,6 +534,8 @@ def run(conn, quiet: bool = False) -> dict | None:
             # Волатильность РЫНКА (медиана ATR-перцентиля по вселенной) —
             # нужна фильтру импульса продавцов для intraday_short.
             forecasts[tk]["MarketATRpctl"] = mctx.atr_pctl_market
+            # Индекс выше своей EMA50 — предохранитель от шорт-сквиза.
+            forecasts[tk]["IndexAboveEMA50"] = mctx.index_above_ema50
             forecasts[tk]["GapDownProb"] = tm.gap_down_prob
             # Риск-фильтр волатильности: сжимаем максимальную позицию.
             mp = forecasts[tk].get("MaxPos")

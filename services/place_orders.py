@@ -1077,6 +1077,26 @@ def _guard_unattended_prod(prod: bool, no_confirm: bool) -> None:
             "ALLOW_UNATTENDED_PROD=1")
 
 
+def _resolve_env(prod_flag: bool) -> bool:
+    """Итоговый контур: config.TRADING_MODE плюс флаг --prod.
+
+    TRADING_MODE может только ОГРАНИЧИТЬ права запуска, но не расширить:
+    при TRADING_MODE=sandbox флаг --prod отклоняется, а при TRADING_MODE=prod
+    боевой контур всё равно требует явного --prod. Обратного флага (--sandbox,
+    включающего боевой режим) не существует по построению.
+    """
+    mode = str(getattr(config, "TRADING_MODE", "sandbox")).strip().lower()
+    if mode not in ("sandbox", "prod"):
+        raise RuntimeError(
+            f"TRADING_MODE={mode!r} не распознан: допустимо sandbox или prod.")
+    if prod_flag and mode != "prod":
+        raise RuntimeError(
+            "Флаг --prod отклонён: TRADING_MODE=sandbox. Боевой контур требует "
+            "И переменной TRADING_MODE=prod, И флага --prod — два независимых "
+            "подтверждения намерения торговать реальными деньгами.")
+    return prod_flag
+
+
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
 
@@ -1142,10 +1162,15 @@ def main(argv: Optional[list[str]] = None) -> int:
                         "сигналы отсекаются ещё в select_top_rows.")
     args = p.parse_args(argv)
 
-    _guard_unattended_prod(args.prod, args.no_confirm)
+    try:
+        use_prod = _resolve_env(args.prod)
+    except RuntimeError as e:
+        print(f"[ОТКАЗ] {e}", file=sys.stderr)
+        return 1
+    _guard_unattended_prod(use_prod, args.no_confirm)
 
     try:
-        broker, account_id, env = _make_broker_and_account(args.prod)
+        broker, account_id, env = _make_broker_and_account(use_prod)
     except (BrokerError, ValueError) as e:
         print(f"[ERROR] Счёт/контур: {e}", file=sys.stderr)
         return 1

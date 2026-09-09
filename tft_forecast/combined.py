@@ -137,6 +137,8 @@ def _build_rows(val_rows, forecasts, tickers, strats):
                 "ret1": cor.get("Ret1") if isinstance(cor, dict) else None,
                 "market_atr_pctl": (cor.get("MarketATRpctl")
                                     if isinstance(cor, dict) else None),
+                "index_above_ema50": (cor.get("IndexAboveEMA50")
+                                      if isinstance(cor, dict) else None),
                 "cost_rt": cor.get("CostRT") if isinstance(cor, dict) else None,
                 "gap_down_prob": cor.get("GapDownProb") if isinstance(cor, dict) else None,
             })
@@ -544,17 +546,46 @@ def _overnight_edge_ok(r: dict, k: float) -> bool | None:
     return bool(exp > k * float(cost))
 
 
+def _short_squeeze_risk(r: dict) -> bool | None:
+    """Индекс выше своей EMA50 — шортить опасно (риск шорт-сквиза).
+
+    None — признак недоступен.
+    """
+    v = r.get("index_above_ema50")
+    return None if v is None else bool(v)
+
+
+def _overnight_market_too_hot(r: dict, cap: float) -> bool | None:
+    """Волатильность рынка выше потолка — овернайт-лонги запрещены.
+
+    Покупка через ночь на панической волатильности — это ставка на гэп вверх
+    в момент, когда распределение гэпов шире всего.
+    """
+    v = r.get("market_atr_pctl")
+    return None if v is None else bool(float(v) > cap)
+
+
 def apply_strategy_specialisation(rows: list[dict], *,
                                   allowed: set[str] | None = None,
                                   require_momentum: bool | None = None,
                                   overnight_k: float | None = None,
+                                  block_short_uptrend: bool | None = None,
+                                  overnight_max_market_atr: float | None = None,
                                   verbose: bool = True) -> list[dict]:
     """Фильтр Пути А: оставить только те сигналы, где есть преимущество.
 
       1. Торгуются только стратегии из TRADING_STRATEGIES (intraday_long убрана:
          её средняя доходность -0.2393% при t -17.26).
       2. intraday_short — только при подтверждённом импульсе продавцов.
-      3. long_overnight — только когда ExpPnL превышает издержки в k раз.
+      3. intraday_short запрещён, когда индекс выше своей EMA50 (шорт-сквиз).
+      4. long_overnight — только когда ExpPnL превышает издержки в k раз.
+      5. long_overnight запрещён при рыночной волатильности выше потолка.
+
+    Пункты 3 и 5 — ПРЕДОХРАНИТЕЛИ, а не источники доходности. На выборке из
+    одного медвежьего рынка запрет шорта при растущем индексе стоит около
+    3 п.п. CAGR (12.4% -> 9.3%), потому что убирает только прибыльные шорт-дни;
+    его смысл — защита в режиме, которого в выборке нет. Потолок волатильности
+    для овернайта почти ни на что не влияет (12.363% -> 12.347%).
 
     Строки, по которым не хватает данных для решения, ПРОПУСКАЮТСЯ (остаются),
     а не отбрасываются: отсутствие признака не есть отрицательный сигнал.
@@ -562,30 +593,45 @@ def apply_strategy_specialisation(rows: list[dict], *,
     import config as _cfg
     allowed = allowed if allowed is not None else trading_strategies()
     if require_momentum is None:
-        require_momentum = bool(getattr(_cfg, "INTRADAY_SHORT_REQUIRE_MOMENTUM", True))
+        require_momentum = bool(getattr(_cfg, "SELLER_MOMENTUM_SHORT_ENABLED", True))
     if overnight_k is None:
         overnight_k = float(getattr(_cfg, "OVERNIGHT_MIN_EDGE_X_COST", 0.5))
+    if block_short_uptrend is None:
+        block_short_uptrend = bool(getattr(_cfg, "SHORT_IMOEX_MAX_TREND", "EMA50"))
+    if overnight_max_market_atr is None:
+        overnight_max_market_atr = float(
+            getattr(_cfg, "OVERNIGHT_MAX_MARKET_ATR_PCTL", 70.0))
 
-    out, dropped = [], {"strategy": 0, "momentum": 0, "edge": 0}
+    out = []
+    dropped = {"strategy": 0, "momentum": 0, "squeeze": 0, "edge": 0, "hot": 0}
     for r in rows:
         st = r.get("strategy")
         if st not in allowed:
             dropped["strategy"] += 1
             continue
-        if require_momentum and st == "intraday_short":
-            if _seller_momentum(r) is False:
+        if st == "intraday_short":
+            if require_momentum and _seller_momentum(r) is False:
                 dropped["momentum"] += 1
                 continue
-        if overnight_k > 0 and st == "long_overnight":
-            if _overnight_edge_ok(r, overnight_k) is False:
+            if block_short_uptrend and _short_squeeze_risk(r) is True:
+                dropped["squeeze"] += 1
+                continue
+        if st == "long_overnight":
+            if overnight_k > 0 and _overnight_edge_ok(r, overnight_k) is False:
                 dropped["edge"] += 1
+                continue
+            if (overnight_max_market_atr
+                    and _overnight_market_too_hot(r, overnight_max_market_atr) is True):
+                dropped["hot"] += 1
                 continue
         out.append(r)
 
     if verbose and any(dropped.values()):
-        log.info("Специализация: отсеяно %d по стратегии, %d без импульса продавцов, "
-                 "%d ниже порога преимущества; осталось %d.",
-                 dropped["strategy"], dropped["momentum"], dropped["edge"], len(out))
+        log.info("Специализация: отсеяно по стратегии %d, без импульса %d, "
+                 "риск шорт-сквиза %d, ниже порога %d, рынок перегрет %d; "
+                 "осталось %d.",
+                 dropped["strategy"], dropped["momentum"], dropped["squeeze"],
+                 dropped["edge"], dropped["hot"], len(out))
     return out
 
 
