@@ -36,6 +36,7 @@ from models.market_data import (
     CREATE_TABLE_5M_SQL, UPSERT_5M_SQL, LAST_TS_5M_SQL,
     CREATE_FORECASTS_SQL, UPSERT_FORECAST_SQL, FORECAST_COLUMNS,
     MIGRATE_MARKET_DATA_SOURCE_SQL,
+    CREATE_EXECUTION_AUDIT_SQL,
 )
 from models.instruments import (
     CREATE_INSTRUMENTS_SQL, UPSERT_INSTRUMENT_SQL, SELECT_LOTS_SQL,
@@ -154,12 +155,13 @@ def init_db(conn=None) -> None:
             cur.execute(CREATE_TABLE_5M_SQL)
             cur.execute(CREATE_FORECASTS_SQL)
             cur.execute(CREATE_INSTRUMENTS_SQL)
+            cur.execute(CREATE_EXECUTION_AUDIT_SQL)
             # Миграции существующих баз (идемпотентны).
             cur.execute(MIGRATE_MARKET_DATA_SOURCE_SQL)
         if conn is not None:
             c.commit()   # DDL у владельца коннекта фиксируем сразу
-    log.info("Схема БД инициализирована "
-             "(market_data + market_data_5m + forecasts + instruments)")
+    log.info("Схема БД инициализирована (market_data + market_data_5m + "
+             "forecasts + instruments + execution_audit)")
 
 
 # --- Свечи -------------------------------------------------------------------

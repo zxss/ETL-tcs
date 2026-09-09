@@ -246,7 +246,10 @@ VALIDATION_BOOT: int = int(os.getenv("VALIDATION_BOOT", "2000"))
 # 0.08% = 2×0.04% — оптимистичная оценка для ликвидных голубых фишек. Для мид-капов
 # (ETLN/SELG/SMLT) реальный round-trip ближе к 0.15–0.25% из-за спреда. Переопределяется
 # по тикеру через VALIDATION_COST_RT_MAP="ETLN:0.20 SELG:0.18 SMLT:0.20".
-VALIDATION_COST_RT: float = float(os.getenv("VALIDATION_COST_RT", "0.08"))
+# 0.128% — round-trip по переаудиту: комиссия 0.04%×2 + half-spread + проскальзывание.
+# Дефолт 0.08 занижал издержки в 1,6 раза, и расхождение с .env.example приводило
+# к тому, что без явного .env система считала альфу по заниженной планке.
+VALIDATION_COST_RT: float = float(os.getenv("VALIDATION_COST_RT", "0.128"))
 VALIDATION_COST_RT_MAP: dict[str, float] = {
     kv.split(":")[0].upper(): float(kv.split(":")[1])
     for kv in os.getenv("VALIDATION_COST_RT_MAP", "").split() if ":" in kv
@@ -257,7 +260,7 @@ VALIDATION_COST_RT_MAP: dict[str, float] = {
 # отобранным VALIDATION_TICKERS) и применяет BH-FDR по полной сетке — это
 # корректирует data snooping при выборе тикеров. Отчёт по-прежнему печатается
 # только по VALIDATION_TICKERS. Тяжелее (выгрузка всех тикеров в CSV).
-VALIDATION_FULL_UNIVERSE: bool = get_bool_env("VALIDATION_FULL_UNIVERSE", 0)
+VALIDATION_FULL_UNIVERSE: bool = get_bool_env("VALIDATION_FULL_UNIVERSE", 1)
 
 # --- Винзоризация ex-div / новостных гэпов (PR-4) ---------------------------
 # T-Invest свечи НЕ скорректированы на дивиденды: в ex-div дату overnight/total
@@ -283,7 +286,8 @@ TFT_EPOCHS: int = int(os.getenv("TFT_EPOCHS", "30"))
 TFT_HIDDEN: int = int(os.getenv("TFT_HIDDEN", "32"))
 # Издержки round-trip (%) для направленного прогноза PnL стратегий.
 # По умолчанию 0.08% = 2 × 0.04% (как cost-side в контуре валидации).
-TFT_COST_RT: float = float(os.getenv("TFT_COST_RT", "0.08"))
+# Та же планка, что и в контуре валидации: источник значения должен быть один.
+TFT_COST_RT: float = float(os.getenv("TFT_COST_RT", "0.128"))
 
 # --- Сводная итоговая таблица ------------------------------------------------
 # COMBINED_TABLE=1 — вместо четырёх отдельных таблиц (валидация, диапазон по
@@ -513,8 +517,10 @@ APPLY_RISK_PENALTIES: bool = get_bool_env("APPLY_RISK_PENALTIES", 0)
 INTRADAY_SQUARE_OFF_ENABLED: bool = get_bool_env("INTRADAY_SQUARE_OFF_ENABLED", 1)
 
 # Время закрытия внутридневных позиций (МСК). Аукцион закрытия основной сессии
-# идёт 18:40–18:50, поэтому выходить нужно до него.
-INTRADAY_SQUARE_OFF_TIME: str = os.getenv("INTRADAY_SQUARE_OFF_TIME", "18:35")
+# идёт 18:40–18:50, поэтому выходить нужно до него. 18:20, а не 18:35: фаза
+# OVERNIGHT Этапа 2 выставляет ночные заявки в 18:35, и при cleanup в 18:35
+# овернайт попадал бы в последние три минуты сессии — худшая ликвидность дня.
+INTRADAY_SQUARE_OFF_TIME: str = os.getenv("INTRADAY_SQUARE_OFF_TIME", "18:20")
 
 # В режиме сырой альфы жёстко отсекать бумаги с климаксом объёма (VolSpike > 4)
 # и высоким риском гэпа вниз (>0.5 для long_overnight), а не просто штрафовать.
@@ -623,3 +629,33 @@ if FIXED_POSITION_OVERFLOW_MODE != "skip":
         f"FIXED_POSITION_OVERFLOW_MODE={FIXED_POSITION_OVERFLOW_MODE!r} не поддержан. "
         "Допустимо только 'skip': округление вверх до одного лота обходит "
         "риск-сайзинг и может привести к овердрафту.")
+
+
+# --- Этап 2: функциональный тест на демо-счёте (STAGE2-DEMO-TZ.md) -----------
+# Оркестратор четырёх фаз: PREP (расчёт и заморозка плана) → ORDER (исполнение
+# замороженного плана) → CLEANUP (закрытие интрадея) → OVERNIGHT (ночные заявки).
+# Времена берутся ОТСЮДА, а не из планировщика: cron только вызывает фазу.
+STAGE2_ENABLED: bool = get_bool_env("STAGE2_ENABLED", 1)
+STAGE2_TEST_ID: str = os.getenv("STAGE2_TEST_ID", "stage2-demo-15d")
+STAGE2_TARGET_DAYS: int = int(os.getenv("STAGE2_TARGET_DAYS", "15"))
+
+STAGE2_PREP_TIME: str = os.getenv("STAGE2_PREP_TIME", "09:45")
+STAGE2_ORDER_TIME: str = os.getenv("STAGE2_ORDER_TIME", "10:05")
+STAGE2_CLEANUP_TIME: str = os.getenv("STAGE2_CLEANUP_TIME", "18:20")
+STAGE2_OVERNIGHT_TIME: str = os.getenv("STAGE2_OVERNIGHT_TIME", "18:35")
+
+# Между PREP и ORDER проходит 20 минут, за которые догружаются 5-минутки.
+# 0 — ORDER отказывается исполнять план, если датасет изменился (по умолчанию:
+# план должен исполняться ровно на тех данных, на которых считался).
+STAGE2_ALLOW_DATASET_DRIFT: bool = get_bool_env("STAGE2_ALLOW_DATASET_DRIFT", 0)
+
+# Критический FAIL останавливает тест: следующие фазы не выполняются до
+# ручного снятия блокировки командой `stage2_demo resume`.
+STAGE2_HALT_ON_FAIL: bool = get_bool_env("STAGE2_HALT_ON_FAIL", 1)
+
+STAGE2_START_BALANCE_RUB: float = float(os.getenv("STAGE2_START_BALANCE_RUB", "100000"))
+
+# Каталог результатов теста. Ничего отсюда не удаляется, в том числе по завершении.
+STAGE2_DIR: str = os.getenv(
+    "STAGE2_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                               "audit", "stage2-demo"))

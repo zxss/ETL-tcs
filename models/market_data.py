@@ -3,6 +3,7 @@ DDL и SQL для таблиц:
   market_data      — дневные свечи
   market_data_5m   — 5-минутные свечи
   forecasts        — рассчитанные прогнозы и сигналы дашбордов
+  execution_audit  — намерение → факт по каждой заявке (проскальзывание, PnL)
 
 Схема отключённого контура новостей (news_sentiment + view news_with_candles)
 живёт отдельно: contrib/experimental_news/news_schema.py — штатный init_db()
@@ -164,4 +165,61 @@ ON CONFLICT (asof_date, ticker, strategy) DO UPDATE SET
     verdict      = EXCLUDED.verdict,
     raw_payload  = EXCLUDED.raw_payload,
     created_at   = NOW();
+"""
+
+
+# --- Аудит исполнения заявок --------------------------------------------------
+# Одна строка на заявку: что модель хотела (цена, стоп, цель, ожидаемые издержки)
+# и что получилось (цена заливки, фактическое проскальзывание, выход, PnL).
+# Заполняется через audit/execution_audit.py: record_intent → record_fill →
+# record_exit. Источник истины по исполнению; JSON в каталоге запуска Этапа 2 —
+# лишь автономный снимок этой таблицы.
+CREATE_EXECUTION_AUDIT_SQL = """
+CREATE TABLE IF NOT EXISTS execution_audit (
+    id             BIGSERIAL PRIMARY KEY,
+    order_id       VARCHAR(64) NOT NULL,
+    account_env    VARCHAR(10) NOT NULL,        -- SANDBOX | PROD
+    asof_date      DATE        NOT NULL,        -- дата прогноза, породившего заявку
+    ticker         VARCHAR(10) NOT NULL,
+    strategy       VARCHAR(30) NOT NULL,
+    side           VARCHAR(5)  NOT NULL,        -- BUY | SELL
+
+    -- Намерение: что модель хотела
+    final_score    NUMERIC(6, 4),
+    exp_pnl_pct    NUMERIC(10, 4),              -- ожидаемый нетто-PnL, %
+    anchor_price   NUMERIC(18, 4),              -- цена, на которой строился прогноз
+    requested_price NUMERIC(18, 4) NOT NULL,    -- цена лимитной заявки
+    expected_slippage_pct NUMERIC(10, 4),       -- расчётное проскальзывание модели
+    expected_cost_pct     NUMERIC(10, 4),       -- расчётные издержки RT, %
+    stop_price     NUMERIC(18, 4),
+    target_price   NUMERIC(18, 4),
+    qty_lots       INTEGER,
+    lot_size       INTEGER,
+
+    -- Факт: что получилось
+    filled         BOOLEAN     NOT NULL DEFAULT FALSE,
+    filled_price   NUMERIC(18, 4),
+    filled_at      TIMESTAMPTZ,
+    slippage_rub   NUMERIC(18, 4),
+    slippage_pct   NUMERIC(10, 4),
+    fee_rub        NUMERIC(18, 4),
+    exit_price     NUMERIC(18, 4),
+    exit_at        TIMESTAMPTZ,
+    exit_reason    VARCHAR(20),                 -- target | stop | manual | eod
+    hold_time_sec  INTEGER,
+    pnl_gross_rub  NUMERIC(18, 4),
+    pnl_net_rub    NUMERIC(18, 4),
+
+    -- Этап 2: привязка к фазе оркестратора (STAGE2-DEMO-TZ §5-§7)
+    run_id         VARCHAR(64),                 -- <YYYYMMDD-HHMMSS>-<PHASE>
+    phase          VARCHAR(16),                 -- PREP | ORDER | CLEANUP | OVERNIGHT
+
+    raw_payload    JSONB,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (order_id)
+);
+CREATE INDEX IF NOT EXISTS idx_exec_audit_date   ON execution_audit (asof_date DESC);
+CREATE INDEX IF NOT EXISTS idx_exec_audit_ticker ON execution_audit (ticker, asof_date DESC);
+CREATE INDEX IF NOT EXISTS idx_exec_audit_run    ON execution_audit (run_id);
 """

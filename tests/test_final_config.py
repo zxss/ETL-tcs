@@ -129,7 +129,11 @@ class TestCanonicalValues(unittest.TestCase):
         self.assertAlmostEqual(c.LIMIT_TP_FRACTION, 0.5)
         self.assertAlmostEqual(c.ORDER_FILL_WAIT_SEC, 60.0)
         self.assertTrue(c.INTRADAY_SQUARE_OFF_ENABLED)
-        self.assertEqual(c.INTRADAY_SQUARE_OFF_TIME, "18:35")
+        # 18:20, а не 18:35: фаза OVERNIGHT Этапа 2 выставляет ночные заявки
+        # в 18:35, и cleanup должен освободить окно до неё (STAGE2-DEMO-TZ §13).
+        self.assertEqual(c.INTRADAY_SQUARE_OFF_TIME, "18:20")
+        self.assertLess(c.INTRADAY_SQUARE_OFF_TIME, c.STAGE2_OVERNIGHT_TIME,
+                        "cleanup обязан идти раньше выставления овернайта")
 
     def test_sizing_block(self):
         c = _cfg()
@@ -202,7 +206,11 @@ class TestEnvExampleMatchesCode(unittest.TestCase):
                 if not line or line.startswith("#") or "=" not in line:
                     continue
                 k, v = line.split("=", 1)
-                cls.env[k.strip()] = v.strip()
+                # inline-комментарий: python-dotenv срезает " #" у незакавыченных
+                # значений — парсер теста обязан вести себя так же, иначе
+                # осмысленный комментарий в .env.example ломает сверку.
+                v = v.split(" #", 1)[0]
+                cls.env[k.strip()] = v.strip().strip('"').strip("'")
 
     def test_declared_defaults_match_config(self):
         c = _cfg()

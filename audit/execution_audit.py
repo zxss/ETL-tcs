@@ -26,62 +26,21 @@ import logging
 
 log = logging.getLogger("audit.execution")
 
-CREATE_EXECUTION_AUDIT_SQL = """
-CREATE TABLE IF NOT EXISTS execution_audit (
-    id             BIGSERIAL PRIMARY KEY,
-    order_id       VARCHAR(64) NOT NULL,
-    account_env    VARCHAR(10) NOT NULL,        -- SANDBOX | PROD
-    asof_date      DATE        NOT NULL,        -- дата прогноза, породившего заявку
-    ticker         VARCHAR(10) NOT NULL,
-    strategy       VARCHAR(30) NOT NULL,
-    side           VARCHAR(5)  NOT NULL,        -- BUY | SELL
-
-    -- Намерение: что модель хотела
-    final_score    NUMERIC(6, 4),
-    exp_pnl_pct    NUMERIC(10, 4),              -- ожидаемый нетто-PnL, %
-    anchor_price   NUMERIC(18, 4),              -- цена, на которой строился прогноз
-    requested_price NUMERIC(18, 4) NOT NULL,    -- цена лимитной заявки
-    expected_slippage_pct NUMERIC(10, 4),       -- расчётное проскальзывание модели
-    expected_cost_pct     NUMERIC(10, 4),       -- расчётные издержки RT, %
-    stop_price     NUMERIC(18, 4),
-    target_price   NUMERIC(18, 4),
-    qty_lots       INTEGER,
-    lot_size       INTEGER,
-
-    -- Факт: что получилось
-    filled         BOOLEAN     NOT NULL DEFAULT FALSE,
-    filled_price   NUMERIC(18, 4),
-    filled_at      TIMESTAMPTZ,
-    slippage_rub   NUMERIC(18, 4),
-    slippage_pct   NUMERIC(10, 4),
-    fee_rub        NUMERIC(18, 4),
-    exit_price     NUMERIC(18, 4),
-    exit_at        TIMESTAMPTZ,
-    exit_reason    VARCHAR(20),                 -- target | stop | manual | eod
-    hold_time_sec  INTEGER,
-    pnl_gross_rub  NUMERIC(18, 4),
-    pnl_net_rub    NUMERIC(18, 4),
-
-    raw_payload    JSONB,
-    created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (order_id)
-);
-CREATE INDEX IF NOT EXISTS idx_exec_audit_date   ON execution_audit (asof_date DESC);
-CREATE INDEX IF NOT EXISTS idx_exec_audit_ticker ON execution_audit (ticker, asof_date DESC);
-"""
+# DDL живёт в models/market_data.py вместе с остальной схемой проекта —
+# здесь только импорт, чтобы источник истины был один.
+from models.market_data import CREATE_EXECUTION_AUDIT_SQL  # noqa: E402
 
 _INSERT_INTENT_SQL = """
 INSERT INTO execution_audit (
     order_id, account_env, asof_date, ticker, strategy, side,
     final_score, exp_pnl_pct, anchor_price, requested_price,
     expected_slippage_pct, expected_cost_pct, stop_price, target_price,
-    qty_lots, lot_size, raw_payload)
+    qty_lots, lot_size, run_id, phase, raw_payload)
 VALUES (%(order_id)s, %(account_env)s, %(asof_date)s, %(ticker)s, %(strategy)s,
         %(side)s, %(final_score)s, %(exp_pnl_pct)s, %(anchor_price)s,
         %(requested_price)s, %(expected_slippage_pct)s, %(expected_cost_pct)s,
         %(stop_price)s, %(target_price)s, %(qty_lots)s, %(lot_size)s,
-        %(raw_payload)s)
+        %(run_id)s, %(phase)s, %(raw_payload)s)
 ON CONFLICT (order_id) DO NOTHING;
 """
 
@@ -134,6 +93,8 @@ def record_intent(conn, *, order_id: str, account_env: str, asof_date: dt.date,
         "target_price": opt.get("target_price"),
         "qty_lots": opt.get("qty_lots"),
         "lot_size": opt.get("lot_size"),
+        "run_id": opt.get("run_id"),
+        "phase": opt.get("phase"),
         "raw_payload": json.dumps(opt.get("raw") or {}, ensure_ascii=False),
     }
     try:
