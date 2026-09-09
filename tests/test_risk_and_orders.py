@@ -569,9 +569,12 @@ class TestRawAlphaScore(unittest.TestCase):
     смесь из семи компонент — +0.0262 (t 1.30), то есть белый шум.
     """
 
-    def score(self, strict=False, hard_exclude=True, **over):
+    def score(self, strict=False, hard_exclude=True, apply_penalties=True, **over):
+        # Штрафы включаются ЯВНО: этот класс проверяет их механику, а
+        # канонический дефолт config.APPLY_RISK_PENALTIES теперь 0.
         return _score_row(make_dashboard_row(**over), strict,
-                          raw_alpha=True, hard_exclude=hard_exclude)
+                          raw_alpha=True, hard_exclude=hard_exclude,
+                          apply_penalties=apply_penalties)
 
     def test_score_equals_exp_pnl_when_no_risk(self):
         """Без риск-условий рейтинг равен ExpPnL — без примесей."""
@@ -821,6 +824,51 @@ class TestScoreModeResolution(unittest.TestCase):
         scores = {m: _score_row(r, False, mode=m, apply_penalties=False)[0]
                   for m in ("heuristic", "raw_alpha", "trade_score")}
         self.assertEqual(len(set(round(v, 9) for v in scores.values())), 3)
+
+
+class TestCanonicalDefaults(unittest.TestCase):
+    """Канонические дефолты по итогам Спринта 2 — пин, чтобы их не сдвинули молча."""
+
+    @staticmethod
+    def cfg():
+        import importlib
+        import config
+        return importlib.reload(config)
+
+    def test_score_mode(self):
+        """Победитель теста на устойчивость: первый в ОБЕИХ половинах выборки."""
+        self.assertEqual(self.cfg().SCORE_MODE, "heuristic")
+
+    def test_risk_penalties_disabled(self):
+        """Штрафы вредят во всех режимах: альфа эвристики -1.2% -> +2.1%."""
+        self.assertFalse(self.cfg().APPLY_RISK_PENALTIES)
+
+    def test_take_profit_fraction(self):
+        self.assertAlmostEqual(self.cfg().LIMIT_TP_FRACTION, 0.5)
+
+    def test_intraday_square_off_enabled(self):
+        self.assertTrue(self.cfg().INTRADAY_SQUARE_OFF_ENABLED)
+
+    def test_square_off_time_is_before_closing_auction(self):
+        """Аукцион закрытия основной сессии 18:40-18:50 — выходить нужно раньше."""
+        import datetime as dt
+        t = dt.datetime.strptime(self.cfg().INTRADAY_SQUARE_OFF_TIME, "%H:%M").time()
+        self.assertLess(t, dt.time(18, 40))
+        self.assertGreater(t, dt.time(10, 0))
+
+    def test_penalties_off_means_no_penalty_applied(self):
+        """Сквозная проверка: при дефолтах штраф действительно не применяется."""
+        r = make_dashboard_row(exp_pnl=0.5, direction="SHORT",
+                               strategy="intraday_short", rs=6.0, regime="BULL",
+                               vol_spike=5.0)
+        clean, allowed, flags = _score_row(r, False, mode="raw_alpha",
+                                           apply_penalties=self.cfg().APPLY_RISK_PENALTIES,
+                                           hard_exclude=False)
+        self.assertAlmostEqual(clean, 0.5, places=9)
+        # флаги остаются — они информируют, но больше не наказывают
+        self.assertIn("High Risk Short", flags)
+        self.assertIn("⚠ Volume Climax", flags)
+
 
 
 class TestPenaltyToggle(unittest.TestCase):
