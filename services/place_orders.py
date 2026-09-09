@@ -17,6 +17,14 @@ services/place_orders.py — автозаявки в T-Invest Sandbox по то�
     ЗАЛИВШЕЙСЯ позиции из реестра, у которой ещё нет стопа, выставляет STOP_LOSS.
     Незалитые лимитки остаются в реестре до следующего прохода.
 
+  ФАЗА 3 (перед концом сессии):  python3 -m services.place_orders --square-off
+    Закрывает по рынку ВНУТРИДНЕВНЫЕ позиции (intraday_long / intraday_short),
+    предварительно сняв их SL и TP. Позиции long_overnight не трогает.
+    Без этой фазы 79,1% внутридневных позиций доживают до закрытия сессии и
+    переносятся через ночь: торгуется не та стратегия, которую валидировали,
+    плюс 0,0575% за ночь на перенос шорта. Цена дефекта на реплее — 14,6 п.п.
+    итоговой доходности. Cron: 35 18 * * 1-5 (см. INTRADAY_SQUARE_OFF_TIME).
+
 Риск раннего стопа (ТЗ §7.5.3) решён архитектурно: стоп физически не может
 появиться раньше факта исполнения входа, т.к. ставится отдельной фазой по
 факту наличия позиции.
@@ -49,6 +57,7 @@ CLI:
   python3 -m services.place_orders --top-n 10 --wait-fill 60   # ждать заливки до 60s
   python3 -m services.place_orders --top-n 10 --place-only     # только выставить заявки
   python3 -m services.place_orders --attach-stops        # только привязать SL/TP
+  python3 -m services.place_orders --square-off          # закрыть внутридневные
   python3 -m services.place_orders --prod --top-n 10     # БОЕВОЙ контур
 """
 from __future__ import annotations
@@ -415,6 +424,7 @@ def place_limits(broker: BrokerClient, account_id: str, orders: list[Order], *,
         rec = {
             "order_id":       order_id,
             "ticker":         tk,
+            "strategy":       o.strategy,
             "instrument_uid": inst.instrument_uid,
             "lot":            inst.lot,
             "api_qty":        api_q,
@@ -602,6 +612,159 @@ def _reconcile_closed(broker: BrokerClient, account_id: str, r: dict,
             print(f"[WARN]  {tk}: не снять {s.kind} {s.stop_order_id[:8]}…: {e}")
     r["closed"] = True
     print(f"[DONE]  {tk}: сделка закрыта, запись архивирована.")
+
+
+# ── ФАЗА 3: закрытие внутридневных позиций перед концом сессии ────────────────
+
+# Стратегии, которые ПО ОПРЕДЕЛЕНИЮ не переносятся через ночь.
+INTRADAY_STRATEGIES = frozenset({"intraday_long", "intraday_short"})
+
+MSK = dt.timezone(dt.timedelta(hours=3))
+
+
+def _square_off_time() -> dt.time:
+    raw = str(getattr(config, "INTRADAY_SQUARE_OFF_TIME", "18:35")).strip()
+    try:
+        hh, mm = raw.split(":")
+        return dt.time(int(hh), int(mm))
+    except (ValueError, AttributeError):
+        log.warning("INTRADAY_SQUARE_OFF_TIME=%r не разобрано — беру 18:35.", raw)
+        return dt.time(18, 35)
+
+
+def _is_intraday(rec: dict) -> bool | None:
+    """True/False по записи реестра; None — стратегия неизвестна (старая запись).
+
+    Различать важно: молча считать запись без стратегии внутридневной нельзя —
+    так можно закрыть позицию long_overnight, которая обязана жить через ночь.
+    """
+    st = rec.get("strategy")
+    if not st:
+        return None
+    return st in INTRADAY_STRATEGIES
+
+
+def square_off_intraday(broker: BrokerClient, account_id: str, *,
+                        dry_run: bool = False, no_confirm: bool = False,
+                        writer: csv.DictWriter, env: str,
+                        force: bool = False, now: dt.datetime | None = None) -> int:
+    """Закрывает по рынку внутридневные позиции перед закрытием основной сессии.
+
+    Зачем: в двухфазной модели позиция выходит ТОЛЬКО по STOP_LOSS или
+    TAKE_PROFIT. На симуляции 5-минутного пути цены 79,1% внутридневных заливок
+    не достигают ни того, ни другого и переносятся через ночь. Это ломает две
+    вещи сразу: торгуется не та стратегия, которую валидировали (intraday_long
+    определена как close/open-1, а с переносом реализуется close_{t+1}/open_t-1),
+    и добавляется незаложенная стоимость переноса шорта 0,0575% за ночь.
+
+    Позиции long_overnight НЕ ТРОГАЮТСЯ — они держатся через ночь по замыслу.
+    Записи без поля strategy (созданные до этой версии) тоже не трогаются:
+    закрыть по ошибке ночную позицию хуже, чем не закрыть дневную.
+
+    Перед закрытием снимаются связанные SL и TP — иначе останется висящая
+    условная заявка, которая при касании своей цены откроет ОБРАТНУЮ позицию.
+
+    Возвращает число закрытых позиций.
+    """
+    if not getattr(config, "INTRADAY_SQUARE_OFF_ENABLED", True) and not force:
+        print("INTRADAY_SQUARE_OFF_ENABLED=0 — закрытие по концу сессии отключено.")
+        return 0
+
+    now = now or dt.datetime.now(MSK)
+    target = _square_off_time()
+    if now.time() < target and not force:
+        print(f"Сейчас {now:%H:%M} МСК, закрытие назначено на {target:%H:%M} — рано. "
+              f"--force чтобы закрыть сейчас.")
+        return 0
+
+    pending = _load_pending()
+    acc_list = pending.get(account_id, [])
+    active = [r for r in acc_list if not r.get("closed")]
+
+    positions = {p.instrument_uid: p for p in broker.get_positions(account_id) if p.is_open}
+    if not positions:
+        print("Открытых позиций нет — закрывать нечего.")
+        return 0
+    try:
+        stop_orders = broker.get_active_stop_orders(account_id)
+    except NotSupportedError:
+        stop_orders = []
+        print("[WARN]  GetStopOrders не поддержан — стопы снять не смогу.")
+
+    targets, skipped_overnight, unknown = [], [], []
+    seen_uids = set()
+    for r in active:
+        uid = r.get("instrument_uid")
+        pos = positions.get(uid)
+        if pos is None:
+            continue
+        seen_uids.add(uid)
+        flag = _is_intraday(r)
+        if flag is True:
+            targets.append((r, pos))
+        elif flag is False:
+            skipped_overnight.append(r)
+        else:
+            unknown.append(r)
+
+    orphan = [uid for uid in positions if uid not in seen_uids]
+
+    if skipped_overnight:
+        print(f"[KEEP]  {len(skipped_overnight)} ночных позиций остаются открытыми: "
+              + ", ".join(r["ticker"] for r in skipped_overnight))
+    if unknown:
+        print(f"[SKIP]  {len(unknown)} записей без стратегии (созданы до этой версии) — "
+              f"не трогаю: " + ", ".join(r["ticker"] for r in unknown))
+    if orphan:
+        print(f"[SKIP]  {len(orphan)} открытых позиций нет в реестре — не трогаю.")
+    if not targets:
+        print("Внутридневных позиций к закрытию нет.")
+        return 0
+
+    print(f"\nЗАКРЫТИЕ ВНУТРИДНЕВНЫХ ПОЗИЦИЙ ({now:%H:%M} МСК, контур {env})")
+    print("-" * 78)
+    for r, pos in targets:
+        stops = [s for s in stop_orders if s.instrument_uid == r["instrument_uid"]]
+        kinds = "+".join(sorted({s.kind for s in stops})) or "нет"
+        print(f"  {r['ticker']:<7} {r.get('strategy',''):<16} "
+              f"{abs(pos.balance_shares):>10.0f} шт  снять стопы: {kinds}")
+    print("-" * 78)
+
+    if dry_run:
+        print("[DRY-RUN] реальные заявки не отправляются.")
+        return 0
+    if not no_confirm:
+        prompt = ("ЗАКРЫТЬ по рынку на БОЕВОМ счёте? (y/n): " if env == "PROD"
+                  else "Закрыть по рынку? (y/n): ")
+        if not confirm(prompt):
+            print("[INFO] Закрытие отменено пользователем.")
+            return 0
+
+    closed = 0
+    for r, pos in targets:
+        tk = r["ticker"]
+        # 1) сначала снимаем условные заявки — иначе после закрытия позиции
+        #    оставшийся стоп при касании откроет обратную.
+        for s in [s for s in stop_orders if s.instrument_uid == r["instrument_uid"]]:
+            try:
+                broker.cancel_stop_order(account_id=account_id,
+                                         stop_order_id=s.stop_order_id)
+                print(f"[CANCEL] {tk}: снят {s.kind} {s.stop_order_id[:8]}…")
+                _logrow(writer, env=env, account_id=account_id, ticker=tk,
+                        action="squareoff_cancel_stop", order_id=s.stop_order_id,
+                        status="cancelled", info=s.kind)
+            except BrokerError as e:
+                print(f"[WARN]  {tk}: не снять {s.kind}: {e}")
+
+        # 2) затем закрываем позицию по рынку
+        if _market_close(broker, account_id, pos, tk, writer, env):
+            r["closed"] = True
+            r["closed_reason"] = "square_off"
+            closed += 1
+
+    _save_pending(pending)
+    print(f"\nЗакрыто внутридневных позиций: {closed} из {len(targets)}.")
+    return closed
 
 
 # ── СИНХРОНИЗАЦИЯ ПОРТФЕЛЯ К СИГНАЛАМ (ТЗ) ────────────────────────────────────
@@ -930,6 +1093,12 @@ def main(argv: Optional[list[str]] = None) -> int:
                             "В связке с --no-confirm требует ALLOW_UNATTENDED_PROD=1.")
     p.add_argument("--attach-stops", action="store_true",
                    help="ФАЗА 2: привязать STOP_LOSS к залившимся позициям из реестра.")
+    p.add_argument("--square-off", action="store_true",
+                   help="ФАЗА 3: закрыть по рынку ВНУТРИДНЕВНЫЕ позиции перед "
+                        "концом основной сессии (снимает SL/TP, затем закрывает). "
+                        "Позиции long_overnight не трогаются. По умолчанию "
+                        "срабатывает только после INTRADAY_SQUARE_OFF_TIME; "
+                        "--force закрывает немедленно.")
     p.add_argument("--top-n", type=int,
                    default=int(getattr(config, "BEST_TRADES_TOP_N", 10)))
     p.add_argument("--position", type=float,
@@ -980,6 +1149,14 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     writer, fp = _open_log()
     try:
+        # ── ФАЗА 3: закрытие внутридневных позиций ──
+        if args.square_off:
+            print(f"Контур: {env} | Счёт №{account_id} | ФАЗА 3: закрытие внутридневных")
+            square_off_intraday(broker, account_id, dry_run=args.dry_run,
+                                no_confirm=args.no_confirm, writer=writer, env=env,
+                                force=args.force)
+            return 0
+
         # ── ФАЗА 2 ──
         if args.attach_stops:
             print(f"Контур: {env} | Счёт №{account_id} | ФАЗА 2: привязка стопов")

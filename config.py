@@ -8,6 +8,27 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
+def get_bool_env(name: str, default: bool | str | int = False) -> bool:
+    """Канонический парсер булевых переменных окружения.
+
+    Единственная точка, где решается, что считать «выключено». Раньше по файлу
+    было рассыпано 17 копий идиомы `os.getenv(...) not in ("0","false","False")`,
+    и любая правка списка ложных значений в одном месте не доезжала до
+    остальных.
+
+    Ложью считаются (без учёта регистра и пробелов): 0, false, no, off, n, f
+    и пустая строка. Всё остальное — истина. Вариант через int(os.getenv(...))
+    сознательно не используется: он падает с ValueError на значении вида
+    «false», а боевой конфиг не должен ронять процесс из-за опечатки в .env.
+    """
+    raw = os.getenv(name)
+    if raw is None:
+        raw = default
+    if isinstance(raw, bool):
+        return raw
+    return str(raw).strip().lower() not in ("0", "false", "no", "off", "n", "f", "")
+
 # --- T-Invest API -----------------------------------------------------------
 # Токен НЕ обязателен на этапе импорта: аналитические скрипты и работа с БД
 # должны импортировать config без него. Наличие токена проверяют сетевые
@@ -64,7 +85,7 @@ SANDBOX_PAYIN_CURRENCY: str = os.getenv("SANDBOX_PAYIN_CURRENCY", "rub")
 # ставится отдельной фазой --attach-stops по факту наличия позиции, поэтому
 # флаг влияет только на режим --immediate-stop.
 ORDER_STOP_MODE_WAIT_FILL: bool = (
-    os.getenv("ORDER_STOP_MODE_WAIT_FILL", "1") not in ("0", "false", "False")
+    get_bool_env("ORDER_STOP_MODE_WAIT_FILL", 1)
 )
 
 # --- PostgreSQL -------------------------------------------------------------
@@ -159,7 +180,7 @@ INITIAL_MONTHS_5M:    int = 6    # 5-мин свечи   —  6 мес
 
 # Биржевые индексы (грузятся отдельным шагом services/load_index.py).
 # Нужны слою рыночного контекста (режим рынка по IMOEX, относительная сила).
-LOAD_INDEX: bool = os.getenv("LOAD_INDEX", "1") not in ("0", "false", "False")
+LOAD_INDEX: bool = get_bool_env("LOAD_INDEX", 1)
 INDEX_TICKERS: list[str] = (
     os.getenv("INDEX_TICKERS").split() if os.getenv("INDEX_TICKERS") else ["IMOEX"]
 )
@@ -192,7 +213,7 @@ ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
 # После загрузки данных main.py может прогнать статистический контур валидации
 # стратегий (validation/verdict.py из скила strategy-edge-validator).
 # RUN_VALIDATION=0 — отключить шаг расчёта.
-RUN_VALIDATION: bool = os.getenv("RUN_VALIDATION", "1") not in ("0", "false", "False")
+RUN_VALIDATION: bool = get_bool_env("RUN_VALIDATION", 1)
 
 # Каталог с движком валидации: advanced_stats.py, pnl_engine.py и пакет
 # validation/. По умолчанию используется локальная копия внутри проекта
@@ -236,14 +257,14 @@ VALIDATION_COST_RT_MAP: dict[str, float] = {
 # отобранным VALIDATION_TICKERS) и применяет BH-FDR по полной сетке — это
 # корректирует data snooping при выборе тикеров. Отчёт по-прежнему печатается
 # только по VALIDATION_TICKERS. Тяжелее (выгрузка всех тикеров в CSV).
-VALIDATION_FULL_UNIVERSE: bool = os.getenv("VALIDATION_FULL_UNIVERSE", "0") not in ("0", "false", "False")
+VALIDATION_FULL_UNIVERSE: bool = get_bool_env("VALIDATION_FULL_UNIVERSE", 0)
 
 # --- Винзоризация ex-div / новостных гэпов (PR-4) ---------------------------
 # T-Invest свечи НЕ скорректированы на дивиденды: в ex-div дату overnight/total
 # показывают ложный гэп вниз. При True экстремальные overnight-гэпы винзоризуются
 # (прокси истинной total-return корректировки; для точного учёта нужен дивидендный
 # фид). По умолчанию выключено, чтобы не менять результаты молча.
-VALIDATION_WINSORIZE_GAPS: bool = os.getenv("VALIDATION_WINSORIZE_GAPS", "0") not in ("0", "false", "False")
+VALIDATION_WINSORIZE_GAPS: bool = get_bool_env("VALIDATION_WINSORIZE_GAPS", 0)
 
 # --- Walk-forward OOS (PR-5) ------------------------------------------------
 # Доля хвоста ряда, отводимая под честный хронологический out-of-sample тест.
@@ -253,7 +274,7 @@ VALIDATION_OOS_FRACTION: float = float(os.getenv("VALIDATION_OOS_FRACTION", "0.3
 # Единый Temporal Fusion Transformer на ВСЕХ тикерах прогнозирует диапазон
 # цены следующего торгового дня (ForecastLow/High, RangePct, CoverageProb).
 # Запускается из main.py после контура валидации. TFT_FORECAST=0 — отключить.
-TFT_FORECAST: bool = os.getenv("TFT_FORECAST", "1") not in ("0", "false", "False")
+TFT_FORECAST: bool = get_bool_env("TFT_FORECAST", 1)
 # Тикеры для обучения общей модели (по умолчанию — весь список TICKERS).
 TFT_TICKERS: list[str] = (
     os.getenv("TFT_TICKERS").split() if os.getenv("TFT_TICKERS") else TICKERS
@@ -269,12 +290,12 @@ TFT_COST_RT: float = float(os.getenv("TFT_COST_RT", "0.08"))
 # тикерам, диапазон по стратегиям, направленный PnL) вывести ОДНУ сводную
 # таблицу «ticker + strategy» со всеми метриками + расшифровкой столбцов и
 # топ-5 кандидатов. COMBINED_TABLE=0 — старое поведение (отдельные таблицы).
-COMBINED_TABLE: bool = os.getenv("COMBINED_TABLE", "1") not in ("0", "false", "False")
+COMBINED_TABLE: bool = get_bool_env("COMBINED_TABLE", 1)
 
 # SHOW_ALL_INTRADAY=1 — подробный режим: показывать обе дневные стратегии
 # (intraday_short и intraday_long) с флагом Selected ✓/-. По умолчанию (0)
 # в таблице остаётся только лучшая дневная стратегия по каждому тикеру.
-SHOW_ALL_INTRADAY: bool = os.getenv("SHOW_ALL_INTRADAY", "0") not in ("0", "false", "False")
+SHOW_ALL_INTRADAY: bool = get_bool_env("SHOW_ALL_INTRADAY", 0)
 
 # DASHBOARD_TOP_N — сколько строк (бумаг × стратегий) выводить в сводном
 # дашборде, отсортированных по итоговому рейтингу FinalScore. По умолчанию 50.
@@ -284,7 +305,7 @@ DASHBOARD_TOP_N: int = int(os.getenv("DASHBOARD_TOP_N", "50"))
 # SAVE_FORECASTS=1 (по умолчанию) — сохранять строки дневного и недельного
 # дашбордов в таблицу forecasts (upsert по asof_date+ticker+strategy), чтобы
 # потом сверять прогноз с фактом. =0 — только печать, без записи в БД.
-SAVE_FORECASTS: bool = os.getenv("SAVE_FORECASTS", "1") not in ("0", "false", "False")
+SAVE_FORECASTS: bool = get_bool_env("SAVE_FORECASTS", 1)
 
 # BEST_TRADES_TOP_N — сколько сигналов показывать в блоке «ЛУЧШИЕ СДЕЛКИ».
 BEST_TRADES_TOP_N: int = int(os.getenv("BEST_TRADES_TOP_N", "10"))
@@ -345,7 +366,7 @@ WEEK_TARGET_COVERAGE: float = float(os.getenv("WEEK_TARGET_COVERAGE", "0.80"))
 # τ и реализованного движения (из market_data_5m), а не арифметикой remaining =
 # predicted − realized. =0 → прежняя арифметика. Валидация покрытия по времени
 # суток пишется в лог (см. intraday.log_report).
-INTRADAY_ADJUST: bool = os.getenv("INTRADAY_ADJUST", "1") not in ("0", "false", "False")
+INTRADAY_ADJUST: bool = get_bool_env("INTRADAY_ADJUST", 1)
 INTRADAY_LOOKBACK_DAYS: int = int(os.getenv("INTRADAY_LOOKBACK_DAYS", "60"))
 INTRADAY_BUCKETS: int = int(os.getenv("INTRADAY_BUCKETS", "6"))
 
@@ -360,7 +381,7 @@ ORDER_FILL_POLL_SEC: float = float(os.getenv("ORDER_FILL_POLL_SEC", "5"))
 # TFT_USE_LIVE_PRICE=1 — перед расчётом получить последнюю цену (Last Price) по
 # каждому тикеру и якорить прогноз диапазона/PnL на ней, а не на вчерашнем
 # закрытии. =0 — считать на последней цене закрытия (Previous Close).
-TFT_USE_LIVE_PRICE: bool = os.getenv("TFT_USE_LIVE_PRICE", "1") not in ("0", "false", "False")
+TFT_USE_LIVE_PRICE: bool = get_bool_env("TFT_USE_LIVE_PRICE", 1)
 # Возраст котировки (сек), после которого выводится предупреждение об устаревании.
 TFT_STALE_SECONDS: int = int(os.getenv("TFT_STALE_SECONDS", "900"))
 
@@ -386,7 +407,7 @@ INCLUDE_WEEKEND_TRADING: int = int(os.getenv("INCLUDE_WEEKEND_TRADING", "0"))
 
 # --- Dashboard 2.0: рыночный контекст и риск-фильтры -------------------------
 # Жёсткий рыночный фильтр: запрещать LONG при BEAR и SHORT при BULL.
-STRICT_MARKET_FILTER: bool = os.getenv("STRICT_MARKET_FILTER", "0") not in ("0", "false", "False")
+STRICT_MARKET_FILTER: bool = get_bool_env("STRICT_MARKET_FILTER", 0)
 
 # --- Спринт 2: детоксикация рейтинга и гейт валидации -------------------------
 # Основание — квант-аудит (AUDIT-PROFITABILITY-REPORT.md, разделы 3 и 4).
@@ -439,7 +460,7 @@ SCORE_MODE: str = os.getenv("SCORE_MODE", "heuristic").strip().lower()
 
 # Обратная совместимость: USE_RAW_ALPHA_SCORE=1 эквивалентен SCORE_MODE=raw_alpha.
 # Явно заданный SCORE_MODE имеет приоритет.
-USE_RAW_ALPHA_SCORE: bool = os.getenv("USE_RAW_ALPHA_SCORE", "0") not in ("0", "false", "False")
+USE_RAW_ALPHA_SCORE: bool = get_bool_env("USE_RAW_ALPHA_SCORE", 0)
 if USE_RAW_ALPHA_SCORE and not os.getenv("SCORE_MODE"):
     SCORE_MODE = "raw_alpha"
 
@@ -465,7 +486,7 @@ if USE_RAW_ALPHA_SCORE and not os.getenv("SCORE_MODE"):
 # ОГОВОРКА: вывод получен сравнением девяти вариантов на одной выборке в
 # 455 дней и сам подвержен переобучению на отбор. Устойчиво лишь то, что ни
 # один риск-фильтр не показал пользы ни в одной половине выборки.
-APPLY_RISK_PENALTIES: bool = os.getenv("APPLY_RISK_PENALTIES", "0") not in ("0", "false", "False")
+APPLY_RISK_PENALTIES: bool = get_bool_env("APPLY_RISK_PENALTIES", 0)
 
 # INTRADAY_SQUARE_OFF_ENABLED — принудительно закрывать внутридневные позиции
 # (intraday_long / intraday_short) перед закрытием основной сессии.
@@ -484,8 +505,7 @@ APPLY_RISK_PENALTIES: bool = os.getenv("APPLY_RISK_PENALTIES", "0") not in ("0",
 #     статьи нет ни в VALIDATION_COST_RT, ни в TFT_COST_RT.
 # Цена дефекта на реплее — 14,6 п.п. итоговой доходности (-17,8% против -32,4%)
 # и удвоение отрицательного Sharpe.
-INTRADAY_SQUARE_OFF_ENABLED: bool = os.getenv(
-    "INTRADAY_SQUARE_OFF_ENABLED", "1") not in ("0", "false", "False")
+INTRADAY_SQUARE_OFF_ENABLED: bool = get_bool_env("INTRADAY_SQUARE_OFF_ENABLED", 1)
 
 # Время закрытия внутридневных позиций (МСК). Аукцион закрытия основной сессии
 # идёт 18:40–18:50, поэтому выходить нужно до него.
@@ -493,7 +513,7 @@ INTRADAY_SQUARE_OFF_TIME: str = os.getenv("INTRADAY_SQUARE_OFF_TIME", "18:35")
 
 # В режиме сырой альфы жёстко отсекать бумаги с климаксом объёма (VolSpike > 4)
 # и высоким риском гэпа вниз (>0.5 для long_overnight), а не просто штрафовать.
-RAW_ALPHA_HARD_EXCLUDE: bool = os.getenv("RAW_ALPHA_HARD_EXCLUDE", "1") not in ("0", "false", "False")
+RAW_ALPHA_HARD_EXCLUDE: bool = get_bool_env("RAW_ALPHA_HARD_EXCLUDE", 1)
 
 # STRICT_VALIDATION_GATE=1 — не торговать стратегии с вердиктом REJECTED.
 # ВНИМАНИЕ: на момент аудита REJECTED имеют 138 комбинаций из 138, поэтому
@@ -501,4 +521,4 @@ RAW_ALPHA_HARD_EXCLUDE: bool = os.getenv("RAW_ALPHA_HARD_EXCLUDE", "1") not in (
 # дефолт 0 сохраняет прежнее поведение, но теперь при торговле отвергнутыми
 # стратегиями печатается явное предупреждение (см. combined.warn_unvalidated).
 # Включать после перекалибровки валидатора на реальных издержках.
-STRICT_VALIDATION_GATE: bool = os.getenv("STRICT_VALIDATION_GATE", "0") not in ("0", "false", "False")
+STRICT_VALIDATION_GATE: bool = get_bool_env("STRICT_VALIDATION_GATE", 0)
