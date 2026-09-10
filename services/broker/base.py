@@ -154,6 +154,11 @@ class OrderState:
     lots_requested:         int
     lots_executed:          int
     raw:                    dict  # полный ответ для логов
+    # Факт исполнения. Без этих полей проскальзывание (цена заявки против цены
+    # заливки) посчитать нечем: API их отдаёт, а раньше парсер выбрасывал.
+    executed_price:      float | None = None   # средняя цена исполнения за штуку
+    executed_amount:     float | None = None   # исполненная сумма заявки
+    executed_commission: float | None = None   # удержанная комиссия
 
     @property
     def is_filled(self) -> bool:

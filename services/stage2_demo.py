@@ -625,8 +625,12 @@ def phase_order(*, now: dt.datetime | None = None, prod: bool = False,
             placed = place_limits(broker, account_id, orders, dry_run=dry_run,
                                   immediate_stop=False, force=False,
                                   writer=writer, env=env) or []
-            _record_intents(conn, placed, accepted, run_id=run_id, phase="ORDER",
-                            env=env, day=day)
+            ensure_execution_audit(conn)
+            miss = _record_intents(conn, placed, accepted, run_id=run_id,
+                                   phase="ORDER", env=env, day=day)
+            res.check(miss == 0,
+                      f"журнал исполнения: не записано намерений {miss} из "
+                      f"{len(placed)}", critical=False)
 
         _write_json(os.path.join(run_dir, "orders.json"),
                     {"accepted": accepted, "rejected": rejected, "placed": placed})
@@ -641,6 +645,12 @@ def phase_order(*, now: dt.datetime | None = None, prod: bool = False,
 
         fills = _collect_fills(broker, account_id, placed)
         _write_json(os.path.join(run_dir, "fills.json"), fills)
+        if not dry_run and fills:
+            done, miss = _record_fills(conn, fills, accepted)
+            res.check(miss == 0,
+                      f"журнал исполнения: не записано заливок {miss}",
+                      critical=False)
+            log.info("[ORDER] в журнал исполнения записано заливок %d", done)
         _snapshot_account(broker, account_id, run_dir, run_id, "ORDER", "after")
 
         res.data.update(orders_count=len(accepted), placed_count=len(placed),
@@ -671,10 +681,34 @@ def _order_from_plan(po: dict, Order):
     )
 
 
-def _record_intents(conn, placed: list[dict], plan_orders: list[dict], *,
-                    run_id: str, phase: str, env: str, day: dt.date) -> None:
-    """Журналирует намерения в execution_audit (§5.5, §7.6)."""
+def ensure_execution_audit(conn) -> bool:
+    """Создаёт execution_audit, если её нет. Идемпотентно.
+
+    Таблица есть в DDL database.init_db, но init_db вызывается только из
+    load_instruments и в кроновом пути Этапа 2 не участвует — сама она бы не
+    появилась никогда. Поднимаем её там, где в неё пишут.
+    """
     from audit import execution_audit as ea
+    try:
+        ea.init(conn)
+        return True
+    except Exception as e:                       # noqa: BLE001
+        conn.rollback()
+        log.warning("execution_audit: схема недоступна: %s", e)
+        return False
+
+
+def _record_intents(conn, placed: list[dict], plan_orders: list[dict], *,
+                    run_id: str, phase: str, env: str, day: dt.date) -> int:
+    """Журналирует намерения в execution_audit (§5.5, §7.6).
+
+    Возвращает число НЕзаписанных строк — вызывающий обязан отразить это в
+    вердикте фазы: журнал исполнения, который молча не пишется, оставляет
+    критерий ТЗ про проскальзывание непроверяемым, а по артефактам это
+    неотличимо от дня без сделок.
+    """
+    from audit import execution_audit as ea
+    failed = 0
     by_ticker = {p["ticker"]: p for p in plan_orders}
     for rec in placed:
         po = by_ticker.get(rec.get("ticker")) or {}
@@ -682,7 +716,7 @@ def _record_intents(conn, placed: list[dict], plan_orders: list[dict], *,
         oid = rec.get("order_id")
         if not oid:
             continue
-        ea.record_intent(
+        ok = ea.record_intent(
             conn, order_id=oid, account_env=env, asof_date=day,
             ticker=rec.get("ticker", "?"), strategy=strategy,
             side="SELL" if po.get("direction") == "SHORT" else "BUY",
@@ -691,10 +725,45 @@ def _record_intents(conn, placed: list[dict], plan_orders: list[dict], *,
             final_score=po.get("final_score"), exp_pnl_pct=po.get("exp_pnl_pct"),
             anchor_price=po.get("anchor_price"),
             expected_cost_pct=po.get("expected_cost_pct"),
+            expected_slippage_pct=float(getattr(config, "EXPECTED_SLIPPAGE_PCT", 0.024)),
             stop_price=po.get("stop_price"), target_price=po.get("tp_price"),
             qty_lots=po.get("quantity_lots"), lot_size=po.get("lot_size"),
             raw={"signal_id": po.get("signal_id"), "verdict": po.get("verdict")},
         )
+        failed += 0 if ok else 1
+    return failed
+
+
+def _record_fills(conn, fills: list[dict], plan_orders: list[dict]) -> tuple[int, int]:
+    """Замыкает намерение фактом: цена заливки, комиссия, проскальзывание.
+
+    Возвращает (записано, не записано). Без этого вызова строка журнала вечно
+    остаётся с filled=FALSE, и обе половины критерия «факт против расчёта»
+    оказываются пустыми — сравнивать нечего.
+    """
+    from audit import execution_audit as ea
+    by_ticker = {p["ticker"]: p for p in plan_orders}
+    now = dt.datetime.now(MSK)
+    done = failed = 0
+    for f in fills:
+        price = f.get("executed_price")
+        lots = int(f.get("lots_executed") or 0)
+        # Частичное исполнение тоже фиксируем: заливка на половину объёма —
+        # это факт со своей ценой, а не «не исполнено».
+        if not price or lots <= 0:
+            continue
+        po = by_ticker.get(f.get("ticker")) or {}
+        requested = float(po.get("entry_price") or 0.0)
+        lot_size = int(po.get("lot_size") or 0)
+        ok = ea.record_fill(
+            conn, order_id=f.get("order_id"), filled_price=float(price),
+            filled_at=now, requested_price=requested,
+            side="SELL" if po.get("direction") == "SHORT" else "BUY",
+            fee_rub=f.get("executed_commission"),
+            qty_shares=(lots * lot_size) or None)
+        done += 1 if ok else 0
+        failed += 0 if ok else 1
+    return done, failed
 
 
 def _collect_fills(broker, account_id: str, placed: list[dict]) -> list[dict]:
@@ -709,7 +778,13 @@ def _collect_fills(broker, account_id: str, placed: list[dict]) -> list[dict]:
             out.append({"order_id": oid, "ticker": rec.get("ticker"),
                         "status": st.execution_report_status,
                         "lots_requested": st.lots_requested,
-                        "lots_executed": st.lots_executed})
+                        "lots_executed": st.lots_executed,
+                        "executed_price": st.executed_price,
+                        "executed_commission": st.executed_commission,
+                        # Сырой ответ — страховка: если я ошибся в том, какое
+                        # поле API считать ценой заливки, пересчитать можно
+                        # будет по файлу, не потеряв день.
+                        "raw": st.raw})
         except Exception as e:                   # noqa: BLE001
             out.append({"order_id": oid, "ticker": rec.get("ticker"), "error": str(e)})
     return out
@@ -880,8 +955,12 @@ def phase_overnight(*, now: dt.datetime | None = None, prod: bool = False,
                                   [o for o in night if o.ticker in keep],
                                   dry_run=dry_run, immediate_stop=False, force=False,
                                   writer=writer, env=env) or []
-            _record_intents(conn, placed, accepted, run_id=run_id, phase="OVERNIGHT",
-                            env=env, day=day)
+            ensure_execution_audit(conn)
+            miss = _record_intents(conn, placed, accepted, run_id=run_id,
+                                   phase="OVERNIGHT", env=env, day=day)
+            res.check(miss == 0,
+                      f"журнал исполнения: не записано намерений {miss} из "
+                      f"{len(placed)}", critical=False)
 
         # 5. отдельный файл — не смешивать с интрадеем
         _write_json(os.path.join(run_dir, "overnight_orders.json"),
@@ -918,12 +997,16 @@ def _execution_stats(day: dt.date) -> dict:
             with c.cursor() as cur:
                 cur.execute(sql, (day,))
                 n, filled, fact, exp = cur.fetchone()
-        return {"orders": int(n or 0), "filled": int(filled or 0),
+        return {"available": True,
+                "orders": int(n or 0), "filled": int(filled or 0),
                 "slippage_fact_pct": float(fact) if fact is not None else None,
                 "slippage_expected_pct": float(exp) if exp is not None else None}
     except Exception as e:                       # noqa: BLE001
         log.warning("execution_audit недоступен: %s", e)
-        return {"orders": 0, "filled": 0}
+        # available=False — не то же самое, что orders=0. Ноль без этого флага
+        # неотличим от честного дня без сделок, и через две недели по
+        # артефактам уже не понять, был журнал сломан или торговли не было.
+        return {"available": False, "orders": 0, "filled": 0}
 
 
 def build_daily_audit(day: dt.date, res: PhaseResult) -> dict:
@@ -947,6 +1030,14 @@ def build_daily_audit(day: dt.date, res: PhaseResult) -> dict:
 
     prep = meta.get("PREP", {})
     stats = _execution_stats(day)
+
+    placed_today = len(orders.get("accepted") or []) + len(night.get("accepted") or [])
+    if not stats.get("available"):
+        warnings.append("журнал исполнения недоступен — проскальзывание за день "
+                        "проверить нечем")
+    elif placed_today and not stats.get("orders"):
+        warnings.append(f"заявок за день {placed_today}, а в журнале исполнения "
+                        f"пусто — расхождение источников")
     audit = {
         "trading_day": day.isoformat(),
         **{f"{p.lower()}_run_id": meta.get(p, {}).get("run_id") for p in PHASES},
@@ -954,7 +1045,11 @@ def build_daily_audit(day: dt.date, res: PhaseResult) -> dict:
         "orders_count": len(orders.get("accepted") or []),
         "fills_count": sum(1 for f in fills if (f.get("lots_executed") or 0) > 0),
         "overnight_orders": len(night.get("accepted") or []),
+        "execution_audit_available": bool(stats.get("available")),
         "execution_audit_count": stats.get("orders", 0),
+        "execution_audit_filled": stats.get("filled", 0),
+        "slippage_fact_pct": stats.get("slippage_fact_pct"),
+        "slippage_expected_pct": stats.get("slippage_expected_pct"),
         "dataset_hash": prep.get("dataset_hash"),
         "config_hash": prep.get("config_hash"),
         "checks": {

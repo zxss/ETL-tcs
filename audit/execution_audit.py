@@ -78,8 +78,13 @@ def init(conn) -> None:
 
 def record_intent(conn, *, order_id: str, account_env: str, asof_date: dt.date,
                   ticker: str, strategy: str, side: str,
-                  requested_price: float, **opt) -> None:
-    """Пишет намерение сразу после отправки заявки брокеру."""
+                  requested_price: float, **opt) -> bool:
+    """Пишет намерение сразу после отправки заявки брокеру.
+
+    Возвращает True при успехе. Возврат, а не только лог: журнал, который
+    молча не пишется, хуже отсутствующего — вызывающий обязан иметь
+    возможность отразить сбой в вердикте фазы.
+    """
     payload = {
         "order_id": order_id, "account_env": account_env, "asof_date": asof_date,
         "ticker": ticker, "strategy": strategy, "side": side,
@@ -101,16 +106,28 @@ def record_intent(conn, *, order_id: str, account_env: str, asof_date: dt.date,
         with conn.cursor() as cur:
             cur.execute(_INSERT_INTENT_SQL, payload)
         conn.commit()
+        return True
     except Exception as e:  # noqa: BLE001 — журнал не должен ронять торговлю
         conn.rollback()
         log.warning("execution_audit: не удалось записать намерение %s: %s", order_id, e)
+        return False
 
 
 def record_fill(conn, *, order_id: str, filled_price: float,
                 filled_at: dt.datetime, requested_price: float,
                 side: str, fee_rub: float | None = None,
-                qty_shares: float | None = None) -> None:
-    """Фиксирует факт исполнения и фактическое проскальзывание."""
+                qty_shares: float | None = None) -> bool:
+    """Фиксирует факт исполнения и фактическое проскальзывание.
+
+    Знак: для покупки проскальзывание положительно, когда залили ДОРОЖЕ
+    заявки, для продажи — когда ДЕШЕВЛЕ. Поэтому множитель по стороне сделки,
+    иначе шорты давали бы зеркальный знак и среднее по портфелю схлопывалось
+    бы к нулю на ровном месте.
+    """
+    if not requested_price:
+        log.warning("execution_audit: нулевая цена заявки %s — проскальзывание "
+                    "не считается", order_id)
+        return False
     sign = 1.0 if side.upper() == "BUY" else -1.0
     slip_pct = (filled_price / requested_price - 1.0) * 100.0 * sign
     slip_rub = ((filled_price - requested_price) * sign *
@@ -122,9 +139,11 @@ def record_fill(conn, *, order_id: str, filled_price: float,
                 "filled_at": filled_at, "slippage_rub": slip_rub,
                 "slippage_pct": slip_pct, "fee_rub": fee_rub})
         conn.commit()
+        return True
     except Exception as e:  # noqa: BLE001
         conn.rollback()
         log.warning("execution_audit: не удалось записать заливку %s: %s", order_id, e)
+        return False
 
 
 def record_exit(conn, *, order_id: str, exit_price: float,

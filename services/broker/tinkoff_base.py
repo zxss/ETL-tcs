@@ -34,6 +34,20 @@ from services.broker.base import (
 log = logging.getLogger("broker.tinkoff")
 
 
+def _money(d: dict[str, Any], key: str) -> float | None:
+    """MoneyValue/Quotation → float. None, если поля нет или оно нулевое.
+
+    Ноль трактуется как «не заполнено», а не как «цена ноль»: T-Invest
+    возвращает нулевой MoneyValue для неисполненной заявки, и записать такую
+    цену в журнал исполнения означало бы посчитать проскальзывание −100%.
+    """
+    v = d.get(key)
+    if not isinstance(v, dict):
+        return None
+    f = Quotation.from_payload(v).as_float()
+    return f if f else None
+
+
 def parse_order_state(d: dict[str, Any]) -> OrderState:
     return OrderState(
         order_id=d.get("orderId", ""),
@@ -41,6 +55,9 @@ def parse_order_state(d: dict[str, Any]) -> OrderState:
         lots_requested=int(d.get("lotsRequested", 0) or 0),
         lots_executed=int(d.get("lotsExecuted", 0) or 0),
         raw=d,
+        executed_price=_money(d, "averagePositionPrice"),
+        executed_amount=_money(d, "executedOrderPrice") or _money(d, "totalOrderAmount"),
+        executed_commission=_money(d, "executedCommission"),
     )
 
 
