@@ -94,7 +94,9 @@ def send(text: str, *, parse_mode: str | None = "HTML", silent: bool = False) ->
     }
     if parse_mode:
         payload["parse_mode"] = parse_mode
-    body = json.dumps(payload).encode("utf-8")
+    # ensure_ascii=False: кириллица уходит как UTF-8, а не \uXXXX —
+    # тело запроса вшестеро короче, Telegram принимает UTF-8 штатно.
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
 
     # Публичный УЦ: api.telegram.org не имеет отношения к брокерскому корню
     # из INVEST_CA_BUNDLE, поэтому системного хранилища достаточно.
