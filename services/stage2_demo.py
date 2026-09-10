@@ -245,6 +245,89 @@ def _run_dirs_for_day(day: dt.date) -> dict[str, str]:
     return out
 
 
+# ── Уведомления в Telegram (§ отчётность) ────────────────────────────────────
+
+_VERDICT_ICON = {PASS: "\u2705", PASS_WARN: "\u26a0\ufe0f", FAIL: "\u26d4"}
+
+# Что показывать по каждой фазе: ключ в res.data → подпись.
+_PHASE_FIELDS = {
+    "PREP": (("signals_count", "сигналов"), ("plan_orders", "заявок в плане")),
+    "ORDER": (("orders_count", "принято"), ("placed_count", "выставлено"),
+              ("rejected_count", "отклонено"), ("fills_count", "заливок")),
+    "CLEANUP": (("intraday_before", "было интрадея"), ("positions_closed", "закрыто"),
+                ("orders_cancelled", "снято лимиток")),
+    "OVERNIGHT": (("overnight_orders", "ночных принято"), ("placed_count", "выставлено")),
+}
+
+
+def _rub(value) -> str:
+    """Денежный формат: пробел-разделитель тысяч, запятая-разделитель дробной."""
+    if value is None:
+        return "\u2014"
+    return f"{float(value):+,.2f}".replace(",", "\u00a0").replace(".", ",") + "\u00a0\u20bd"
+
+
+def _notify_phase(res: "PhaseResult", state: dict) -> None:
+    """Карточка итога фазы в Telegram. Ошибки отправки игнорируются.
+
+    Вызывается из _finish — единственного места, через которое проходят все
+    четыре фазы, поэтому добавлять уведомление в каждую фазу отдельно не нужно.
+    """
+    try:
+        from services import notify
+        if not notify.enabled():
+            return
+
+        icon = _VERDICT_ICON.get(res.verdict, "")
+        lines = [f"{icon} <b>{notify.esc(res.phase)}</b> \u2014 {notify.esc(res.verdict)}",
+                 f"<code>{notify.esc(res.run_id)}</code>"]
+
+        facts = [f"{cap}: <b>{notify.esc(res.data[key])}</b>"
+                 for key, cap in _PHASE_FIELDS.get(res.phase, ())
+                 if res.data.get(key) is not None]
+        if facts:
+            lines.append("")
+            lines += facts
+
+        day = res.data.get("day_summary")
+        if day:
+            lines.append("")
+            lines.append("\u2500\u2500 <b>итог дня</b> \u2500\u2500")
+            lines.append(f"день {notify.esc(day.get('completed'))} из "
+                         f"{notify.esc(day.get('target'))}")
+            if day.get("closing") is not None:
+                lines.append(f"баланс: <b>{notify.esc(_rub(day['closing']).lstrip('+'))}</b>")
+            lines.append(f"за день: <b>{notify.esc(_rub(day.get('change')))}</b>"
+                         + (f" ({notify.esc(_pct(day.get('change_pct')))})"
+                            if day.get("change_pct") is not None else ""))
+            if day.get("cum_pct") is not None:
+                lines.append(f"нарастающим: <b>{notify.esc(_pct(day['cum_pct']))}</b>")
+            if day.get("positions") is not None:
+                lines.append(f"позиций в ночь: {notify.esc(day['positions'])}")
+
+        for e in res.errors[:5]:
+            lines.append(f"\u26d4 {notify.esc(e)}")
+        for w in res.warnings[:5]:
+            lines.append(f"\u26a0\ufe0f {notify.esc(w)}")
+        if state.get("status") == "halted":
+            lines.append("")
+            lines.append("<b>ТЕСТ ОСТАНОВЛЕН.</b> Снять блокировку: "
+                         "<code>python3 -m services.stage2_demo resume</code>")
+
+        # Рутинный PASS приходит без звука, всё остальное — со звуком.
+        quiet = (res.verdict == PASS and res.phase != "OVERNIGHT"
+                 and bool(getattr(config, "TELEGRAM_SILENT_PHASES", True)))
+        notify.send("\n".join(lines), silent=quiet)
+    except Exception as e:                       # noqa: BLE001 — отчётность не роняет фазу
+        log.warning("уведомление не отправлено: %s", e)
+
+
+def _pct(value) -> str:
+    if value is None:
+        return "\u2014"
+    return f"{float(value):+.2f}%".replace(".", ",")
+
+
 def _finish(res: PhaseResult, state: dict) -> int:
     """Записывает итог фазы, при FAIL останавливает тест."""
     _write_json(os.path.join(res.run_dir, "run_meta.json"), {
@@ -268,6 +351,7 @@ def _finish(res: PhaseResult, state: dict) -> int:
     for w in res.warnings:
         log.warning("[%s] %s", res.phase, w)
     log.info("[%s] вердикт: %s", res.phase, res.verdict)
+    _notify_phase(res, state)
     return res.exit_code()
 
 
@@ -913,6 +997,24 @@ def _close_trading_day(day: dt.date, state: dict, res: PhaseResult) -> dict:
         log.info("[OVERNIGHT] день засчитан: %d из %d",
                  state["completed_trading_days"], state["target_trading_days"])
     res.data["daily_verdict"] = audit["verdict"]
+
+    # Сводка для уведомления: нарастающий итог считается от баланса открытия
+    # ПЕРВОГО дня теста, а не от STAGE2_START_BALANCE_RUB — стартовая сумма в
+    # конфиге декларативна и может разойтись с фактическим состоянием счёта.
+    first = _read_json(_p("balance", f"{state['days'][0]}.json"), {}) \
+        if state.get("days") else summary
+    base = (first or {}).get("opening_balance_rub")
+    closing = summary.get("closing_balance_rub")
+    res.data["day_summary"] = {
+        "completed": state.get("completed_trading_days", 0),
+        "target": state.get("target_trading_days", 15),
+        "closing": closing,
+        "change": summary.get("day_change_rub"),
+        "change_pct": summary.get("day_change_pct"),
+        "cum_pct": ((closing / base - 1.0) * 100.0
+                    if (closing is not None and base) else None),
+        "positions": summary.get("positions_overnight"),
+    }
     return state
 
 

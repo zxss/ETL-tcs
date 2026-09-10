@@ -659,3 +659,23 @@ STAGE2_START_BALANCE_RUB: float = float(os.getenv("STAGE2_START_BALANCE_RUB", "1
 STAGE2_DIR: str = os.getenv(
     "STAGE2_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                "audit", "stage2-demo"))
+
+
+# ── Уведомления в Telegram (services/notify.py) ───────────────────────────────
+# Транспорт отчётности Этапа 2: статус каждой фазы и дневная сводка приходят
+# в чат сразу после отработки крона.
+#
+# TELEGRAM_BOT_TOKEN — СЕКРЕТ. Живёт только в .env (chmod 600, вне git), сюда
+# не подставляется дефолтом сознательно: пустой токен просто выключает
+# уведомления, а не роняет запуск.
+#
+# TELEGRAM_CHAT_ID — кому слать. Токен говорит, ОТ ЧЬЕГО имени, но не КОМУ:
+# без chat_id отправка невозможна. Узнать: написать боту любое сообщение и
+# вызвать getUpdates.
+#
+# TELEGRAM_SILENT_PHASES=1 — рутинные PASS приходят без звука; FAIL и дневная
+# сводка звучат всегда.
+TELEGRAM_ENABLED: bool = get_bool_env("TELEGRAM_ENABLED", 0)
+TELEGRAM_BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID: str = os.getenv("TELEGRAM_CHAT_ID", "")
+TELEGRAM_SILENT_PHASES: bool = get_bool_env("TELEGRAM_SILENT_PHASES", 1)
