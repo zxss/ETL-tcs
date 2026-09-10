@@ -47,6 +47,11 @@ from models.news_tg import (ALL_NEWS_DDL,                # noqa: E402
 log = logging.getLogger("news.tg")
 
 _BASE = "https://t.me/s"
+# Сессия PostgreSQL живёт в UTC, весь остальной проект — в MSK.
+# Хранится absolute time (timestamptz), приводится только показ:
+# расхождение вывода на три часа с cron.log стоит потерянного часа
+# при первом же разборе «почему новость пришла раньше свечи».
+MSK = dt.timezone(dt.timedelta(hours=3))
 _LOCK = "/tmp/etl-tcs-news-tg.lock"
 
 
@@ -337,12 +342,16 @@ def _stat(conn) -> None:
             SELECT channel, started_at, ok, posts_new, coalesce(error, '')
             FROM news.tg_fetch_runs ORDER BY started_at DESC LIMIT 5;""")
         runs = cur.fetchall()
-    print(f"\n{'канал':<20}{'постов':>9}{'за 24ч':>9}   период")
+    def msk(t):
+        return t.astimezone(MSK) if t is not None else None
+
+    print(f"\n{'канал':<20}{'постов':>9}{'за 24ч':>9}   период (MSK)")
     for ch, n, lo, hi, d in rows:
-        print(f"{ch:<20}{n:>9}{d:>9}   {lo:%Y-%m-%d %H:%M} → {hi:%Y-%m-%d %H:%M}")
-    print(f"\nпоследние опросы:")
+        print(f"{ch:<20}{n:>9}{d:>9}   "
+              f"{msk(lo):%Y-%m-%d %H:%M} → {msk(hi):%Y-%m-%d %H:%M}")
+    print("\nпоследние опросы (MSK):")
     for ch, ts, ok, new, err in runs:
-        print(f"  {ts:%Y-%m-%d %H:%M:%S}  {ch:<16}"
+        print(f"  {msk(ts):%Y-%m-%d %H:%M:%S}  {ch:<16}"
               f"{'ok' if ok else 'СБОЙ':<6}+{new:<4}{err}")
 
 
