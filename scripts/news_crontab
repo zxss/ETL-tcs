@@ -1,0 +1,22 @@
+# Сбор новостей из Telegram-каналов → схема news.
+#
+# Установка (от root):
+#   install -o root -g root -m 644 scripts/news_crontab /etc/cron.d/etl-news
+# Проверка:  cat /etc/cron.d/etl-news
+# Снять:     rm /etc/cron.d/etl-news
+#
+# Отдельный файл в /etc/cron.d, а не строка в `crontab -u etl`: расписание
+# Этапа 2 снимается целиком через `crontab -r`, и сбор новостей не должен
+# умирать вместе с ним — это независимые контуры.
+#
+# Раз в 10 минут круглосуточно, без привязки к торговым дням: новости идут и
+# ночью, и в выходные, а разбирать их можно потом.
+#
+# Наложение опросов не страшно: services/news_tg берёт flock и второй процесс
+# сразу выходит, если предыдущий ещё висит на медленном ответе t.me.
+
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+MAILTO=""
+
+*/10 * * * *  etl  cd /opt/etl-tcs && /opt/etl-tcs/.venv/bin/python -m services.news_tg >> /opt/etl-tcs/logs/news_tg.log 2>&1
