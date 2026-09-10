@@ -157,9 +157,14 @@ class TestCollectPagination(unittest.TestCase):
         self.assertTrue(stat["ok"])
 
     def test_walks_back_over_a_gap(self):
-        stat, fp = self._run([self._page([200, 201]), self._page([100, 101])], known=99)
+        """Дыра закрывается ровно тогда, когда страница дотянулась до
+        известного id: known=100 и oldest=100 на второй странице — смыкание,
+        третий запрос уже тянул бы то, что в базе есть."""
+        stat, fp = self._run([self._page([200, 201]), self._page([100, 101]),
+                              self._page([90, 91])], known=100)
         self.assertEqual(fp.call_count, 2)
         self.assertEqual(stat["seen"], 4)
+        self.assertTrue(stat["ok"])
 
     def test_max_pages_caps_empty_table(self):
         """Пустая таблица не должна превращаться в выкачивание всего архива."""
