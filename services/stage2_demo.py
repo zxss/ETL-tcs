@@ -989,7 +989,9 @@ def _execution_stats(day: dt.date) -> dict:
         SELECT COUNT(*),
                COUNT(*) FILTER (WHERE filled),
                AVG(slippage_pct) FILTER (WHERE filled),
-               AVG(expected_slippage_pct)
+               -- Тот же FILTER, что и у факта: сравнивать половины критерия
+               -- по разным множествам строк — значит сравнивать разное.
+               AVG(expected_slippage_pct) FILTER (WHERE filled)
         FROM execution_audit WHERE asof_date = %s;
     """
     try:
