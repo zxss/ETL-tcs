@@ -679,3 +679,22 @@ TELEGRAM_ENABLED: bool = get_bool_env("TELEGRAM_ENABLED", 0)
 TELEGRAM_BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID: str = os.getenv("TELEGRAM_CHAT_ID", "")
 TELEGRAM_SILENT_PHASES: bool = get_bool_env("TELEGRAM_SILENT_PHASES", 1)
+
+
+# ── Сбор новостей из Telegram-каналов (services/news_tg.py) ───────────────────
+# Публичное веб-превью t.me/s/<канал>: авторизация не нужна вообще, в отличие
+# от Bot API (требует прав админа в канале) и MTProto (api_id + вход по номеру).
+#
+# ЭТО КОНТУР СБОРА. Данные складываются в схему news и НЕ участвуют в скоринге,
+# отборе бумаг и постановке заявок — решение вынести новости из торгового
+# пайплайна (contrib/experimental_news) остаётся в силе.
+#
+# NEWS_TG_MAX_PAGES — потолок страниц за один опрос. При опросе раз в 10 минут
+# хватает одной (20 постов ≈ 2 часа канала); запас нужен, чтобы подобрать дыру
+# после простоя сервера, но не выкачать весь архив при пустой таблице.
+NEWS_TG_ENABLED: bool = get_bool_env("NEWS_TG_ENABLED", 0)
+NEWS_TG_CHANNELS: str = os.getenv("NEWS_TG_CHANNELS", "markettwits")
+NEWS_TG_MAX_PAGES: int = int(os.getenv("NEWS_TG_MAX_PAGES", "3"))
+NEWS_TG_TIMEOUT: int = int(os.getenv("NEWS_TG_TIMEOUT", "20"))
+NEWS_TG_USER_AGENT: str = os.getenv(
+    "NEWS_TG_USER_AGENT", "Mozilla/5.0 (compatible; etl-tcs/1.0)")
