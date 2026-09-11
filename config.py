@@ -714,3 +714,25 @@ NEWS_TG_MAX_PAGES: int = int(os.getenv("NEWS_TG_MAX_PAGES", "3"))
 NEWS_TG_TIMEOUT: int = int(os.getenv("NEWS_TG_TIMEOUT", "20"))
 NEWS_TG_USER_AGENT: str = os.getenv(
     "NEWS_TG_USER_AGENT", "Mozilla/5.0 (compatible; etl-tcs/1.0)")
+
+
+# ── Хотфиксы 11.09: выход из овернайта, стопы, лимиты брокера ─────────────────
+# MIN_STOP_PCT — пол расстояния стопа от входа, %. Когда q0.10 прогноза выше
+# издержек, Downside положительный, и прежняя формула ставила стоп лонга ВЫШЕ
+# входа (ENPG 10.09: вход 310,81 → стоп 312,47). Теперь стоп всегда на
+# убыточной стороне и не ближе этого пола, как бы ни был оптимистичен квантиль.
+MIN_STOP_PCT: float = float(os.getenv("MIN_STOP_PCT", "1.0"))
+
+# STAGE2_CLOSE_TIME — утреннее закрытие позиций long_overnight (фаза CLOSE).
+# Первая минута основной сессии: рыночная заявка в аукционе открытия не нужна.
+STAGE2_CLOSE_TIME: str = os.getenv("STAGE2_CLOSE_TIME", "10:00")
+
+# STAGE2_START_DATE — день, с которого считается тест (ISO). До него фазы не
+# выполняются и даже каталог пропуска не создают. Пусто — без ограничения.
+STAGE2_START_DATE: str = os.getenv("STAGE2_START_DATE", "")
+
+# Лимиты запросов брокера. 10.09 четыре PostSandboxOrder ушли в одну секунду,
+# и брокер отбил два по HTTP 429. Между заявками — минимальный интервал, на
+# 429 — повтор с паузой 1 → 2 → 4 с.
+BROKER_ORDER_MIN_INTERVAL_SEC: float = float(os.getenv("BROKER_ORDER_MIN_INTERVAL_SEC", "0.25"))
+BROKER_429_RETRIES: int = int(os.getenv("BROKER_429_RETRIES", "3"))

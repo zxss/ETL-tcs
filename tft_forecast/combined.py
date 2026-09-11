@@ -1233,7 +1233,7 @@ class Order:
     entry_price:     Optional[float]  # лимитная цена входа
     better_pct:      Optional[float]  # насколько entry выгоднее спота
     stop_price:      Optional[float]
-    stop_pct:        Optional[float]  # |down_pct|
+    stop_pct:        Optional[float]  # расстояние стопа, % (>= MIN_STOP_PCT)
     tp_price:        Optional[float]  # take-profit (цель по диапазону)
     tp_pct:          Optional[float]  # |прибыль%| от входа до tp_price
     lot_size:        int
@@ -1283,6 +1283,24 @@ def _risk_parity_alloc(geoms: list[dict], budget_rub: float) -> list[float]:
         if mp:
             alloc[i] = min(alloc[i], mp)
     return alloc
+
+
+def stop_distance_pct(down: float) -> float:
+    """Расстояние стопа от входа, %: всегда положительное и не меньше MIN_STOP_PCT.
+
+    down — Downside стратегии: q0.10 знаковой доходности минус издержки. Для
+    уверенного прогноза q0.10 бывает выше издержек, и тогда down > 0. Прежняя
+    формула entry·(1 + down/100) давала лонгу стоп ВЫШЕ входа (ENPG 10.09:
+    вход 310,81, стоп 312,47) — при постановке он сработал бы сразу.
+
+    Убыточный хвост (down < 0) задаёт расстояние, оптимистичный (down ≥ 0) —
+    нет, и тогда действует пол. Именно max(−down, 0), а не |down|: при
+    down = +3% модуль дал бы стоп в 3%, то есть расстояние, растущее вместе с
+    оптимизмом модели, — ровно то, от чего пол должен защищать.
+    """
+    import config as _cfg
+    floor = float(getattr(_cfg, "MIN_STOP_PCT", 1.0))
+    return max(max(-float(down), 0.0), floor)
 
 
 def build_orders(top: list[dict], position_rub: float,
@@ -1343,8 +1361,8 @@ def build_orders(top: list[dict], position_rub: float,
                 better = -better
 
         if entry and entry > 0 and down is not None:
-            stop_p   = entry * (1.0 + down / 100.0) if lng else entry * (1.0 - down / 100.0)
-            stop_pct = abs(down)
+            stop_pct = stop_distance_pct(down)
+            stop_p   = entry * (1.0 - stop_pct / 100.0) if lng else entry * (1.0 + stop_pct / 100.0)
         else:
             stop_p = stop_pct = None
 

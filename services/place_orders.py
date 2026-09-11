@@ -315,7 +315,8 @@ def _occupied_uids(broker: BrokerClient, account_id: str) -> tuple[set[str], lis
 
 def place_limits(broker: BrokerClient, account_id: str, orders: list[Order], *,
                  dry_run: bool, immediate_stop: bool, force: bool,
-                 writer: csv.DictWriter, env: str) -> list[dict]:
+                 writer: csv.DictWriter, env: str,
+                 report: list | None = None) -> list[dict]:
     """Ставит лимитные заявки. Если immediate_stop=False (по умолчанию) —
     записывает будущий стоп в реестр ожидающих. Если True — ставит стоп сразу.
 
@@ -323,10 +324,18 @@ def place_limits(broker: BrokerClient, account_id: str, orders: list[Order], *,
     стоп — заявка ПРОПУСКАЕТСЯ (если не передан force=True).
 
     Возвращает список записей реестра, выставленных В ЭТОМ прогоне (для ожидания
-    исполнения и последующей привязки стопов)."""
+    исполнения и последующей привязки стопов).
+
+    report — необязательный список, куда дописывается (тикер, исход) по каждой
+    заявке: placed / skip_* / error_*. Нужен вызывающему, чтобы отличить отказ
+    брокера (частичный провал фазы) от намеренного пропуска дубля."""
     pending = _load_pending()
     acc_list = pending.setdefault(account_id, [])
     placed: list[dict] = []  # записи, выставленные именно в этом прогоне
+
+    def _rep(tk: str, status: str) -> None:
+        if report is not None:
+            report.append((tk, status))
 
     # снимок занятых инструментов (один раз перед циклом)
     if force:
@@ -343,6 +352,7 @@ def place_limits(broker: BrokerClient, account_id: str, orders: list[Order], *,
                   f"qty={o.quantity_lots}, entry={o.entry_price}).")
             _logrow(writer, env=env, account_id=account_id, ticker=tk,
                     action="skip", info=f"unavailable={o.unavailable}")
+            _rep(tk, "skip_unplaceable")
             continue
 
         # инструмент
@@ -352,6 +362,7 @@ def place_limits(broker: BrokerClient, account_id: str, orders: list[Order], *,
             print(f"[ERROR] {tk}: инструмент недоступен: {e}")
             _logrow(writer, env=env, account_id=account_id, ticker=tk,
                     action="find_instrument", status="error", info=str(e))
+            _rep(tk, "error_instrument")
             continue
 
         # защита от задвоения
@@ -361,6 +372,7 @@ def place_limits(broker: BrokerClient, account_id: str, orders: list[Order], *,
             _logrow(writer, env=env, account_id=account_id, ticker=tk,
                     action="skip_duplicate", status="skipped",
                     info="active order/position/stop exists")
+            _rep(tk, "skip_duplicate")
             continue
 
         if _short_blocked(o, inst):
@@ -370,6 +382,7 @@ def place_limits(broker: BrokerClient, account_id: str, orders: list[Order], *,
             _logrow(writer, env=env, account_id=account_id, ticker=tk,
                     action="skip_short", status="skipped",
                     info="shortEnabledFlag=false")
+            _rep(tk, "skip_short")
             continue
 
         if inst.trading_status != "SECURITY_TRADING_STATUS_NORMAL_TRADING":
@@ -378,6 +391,7 @@ def place_limits(broker: BrokerClient, account_id: str, orders: list[Order], *,
         api_q, shares, qwarns = _api_quantity(o, inst)
         if api_q <= 0:
             print(f"[ERROR] {tk}: количество 0.")
+            _rep(tk, "error_quantity")
             continue
         for w in qwarns:
             print(f"[WARN]  {tk}: {w}")
@@ -400,6 +414,7 @@ def place_limits(broker: BrokerClient, account_id: str, orders: list[Order], *,
                     direction=o.order_direction, action="limit",
                     qty_lots_api=api_q, qty_shares=shares,
                     price=entry_q.as_float(), status="dry-run")
+            _rep(tk, "dry_run")
             continue
 
         order_id = new_order_id()
@@ -414,6 +429,7 @@ def place_limits(broker: BrokerClient, account_id: str, orders: list[Order], *,
                     direction=o.order_direction, action="limit",
                     qty_lots_api=api_q, price=entry_q.as_float(),
                     status="error", info=str(e))
+            _rep(tk, "error_broker")
             continue
         order_id = st.order_id or order_id
         occupied.add(inst.instrument_uid)  # не задвоить тем же тикером в этом же прогоне
@@ -453,6 +469,7 @@ def place_limits(broker: BrokerClient, account_id: str, orders: list[Order], *,
                 rec["tp_placed"], rec["tp_order_id"] = bool(tid), tid
         acc_list.append(rec)
         placed.append(rec)
+        _rep(tk, "placed")
 
     if not dry_run:
         _save_pending(pending)

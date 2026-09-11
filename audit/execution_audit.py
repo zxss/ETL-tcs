@@ -148,7 +148,7 @@ def record_fill(conn, *, order_id: str, filled_price: float,
 
 def record_exit(conn, *, order_id: str, exit_price: float,
                 exit_at: dt.datetime, exit_reason: str,
-                pnl_gross_rub: float, pnl_net_rub: float) -> None:
+                pnl_gross_rub: float, pnl_net_rub: float) -> bool:
     """Закрывает строку: цена выхода, причина, время удержания, PnL."""
     try:
         with conn.cursor() as cur:
@@ -157,9 +157,11 @@ def record_exit(conn, *, order_id: str, exit_price: float,
                 "exit_at": exit_at, "exit_reason": exit_reason,
                 "pnl_gross_rub": pnl_gross_rub, "pnl_net_rub": pnl_net_rub})
         conn.commit()
+        return True
     except Exception as e:  # noqa: BLE001
         conn.rollback()
         log.warning("execution_audit: не удалось записать выход %s: %s", order_id, e)
+        return False
 
 
 # ── Отчёты Этапа 3 ───────────────────────────────────────────────────────────

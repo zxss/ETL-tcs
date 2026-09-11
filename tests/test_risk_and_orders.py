@@ -560,6 +560,46 @@ class TestStopGeometry(unittest.TestCase):
             self.assertAlmostEqual(abs(o.stop_price - o.entry_price) / o.entry_price * 100,
                                    2.0, places=6)
 
+    # ── хотфикс 11.09: стоп выше входа при положительном q0.10 ─────────────
+    DOWNS = (-5.0, -2.0, -1.0, -0.5, 0.0, 0.3, 0.535, 2.0, 5.0)
+
+    def test_stop_price_always_below_entry(self):
+        """Стоп лонга строго ниже входа при ЛЮБОМ Downside. 10.09 у ENPG
+        q0.10 оказался выше издержек (down = +0,535), и прежняя формула дала
+        стоп 312,47 при входе 310,81 — при постановке он сработал бы сразу.
+        Прежние тесты гоняли только down = -2.0 и этого не видели."""
+        for down in self.DOWNS:
+            o = build_orders([make_dashboard_row(direction="LONG", strategy="long_overnight",
+                                                 down=down)],
+                             position_rub=100_000.0, entry_frac=0.2)[0]
+            self.assertLess(o.stop_price, o.entry_price, f"down={down}")
+            self.assertGreaterEqual(o.stop_pct, config.MIN_STOP_PCT - 1e-12, f"down={down}")
+
+    def test_short_stop_always_above_entry(self):
+        for down in self.DOWNS:
+            o = build_orders([make_dashboard_row(direction="SHORT", strategy="intraday_short",
+                                                 down=down)],
+                             position_rub=100_000.0, entry_frac=0.2)[0]
+            self.assertGreater(o.stop_price, o.entry_price, f"down={down}")
+
+    def test_optimistic_downside_falls_back_to_floor(self):
+        o = build_orders([make_dashboard_row(direction="LONG", strategy="long_overnight",
+                                             down=0.535)],
+                         position_rub=100_000.0, entry_frac=0.2)[0]
+        self.assertAlmostEqual(o.stop_pct, config.MIN_STOP_PCT)
+        self.assertAlmostEqual(o.stop_price, o.entry_price * (1 - config.MIN_STOP_PCT / 100))
+
+    def test_floor_does_not_grow_with_optimism(self):
+        """max(-down, 0), а не |down|: при down = +3% модуль дал бы стоп в 3%,
+        то есть расстояние, растущее вместе с оптимизмом модели."""
+        from tft_forecast.combined import stop_distance_pct
+        self.assertAlmostEqual(stop_distance_pct(3.0), config.MIN_STOP_PCT)
+
+    def test_wide_loss_tail_is_kept(self):
+        from tft_forecast.combined import stop_distance_pct
+        self.assertAlmostEqual(stop_distance_pct(-2.0), 2.0)
+        self.assertAlmostEqual(stop_distance_pct(-0.4), config.MIN_STOP_PCT)
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 3. Риск-паритет

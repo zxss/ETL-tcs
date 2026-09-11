@@ -24,7 +24,7 @@ from services import account_status
 log = logging.getLogger("stage2.balance")
 
 MSK = dt.timezone(dt.timedelta(hours=3))
-PHASES = ("PREP", "ORDER", "CLEANUP", "OVERNIGHT")
+PHASES = ("PREP", "CLOSE", "ORDER", "CLEANUP", "OVERNIGHT")
 
 
 def _money(m: dict | None) -> float:
@@ -170,7 +170,7 @@ def build_report(*, start_balance: float | None = None,
     L.append(f"Счёт: SANDBOX {account}   Стартовый баланс: {start_txt} ₽")
     L.append(f"Торговых дней пройдено: {len(summaries)} из {target}")
     L.append("")
-    L.append(f"{'День':<12}{'Открытие':>12}{'PREP':>10}{'ORDER':>10}"
+    L.append(f"{'День':<12}{'Открытие':>12}{'PREP':>10}{'CLOSE':>10}{'ORDER':>10}"
              f"{'CLEANUP':>10}{'OVERNIGHT':>11}{'Δ день':>11}{'Δ нараст.':>11}{'Поз.':>6}")
 
     cum_base = summaries[0].get("opening_balance_rub") if summaries else start
@@ -181,7 +181,8 @@ def build_report(*, start_balance: float | None = None,
         L.append(
             f"{s['trading_day']:<12}"
             f"{_fmt(s.get('opening_balance_rub'), 12)}"
-            f"{_fmt(ph.get('PREP'), 10, 0)}{_fmt(ph.get('ORDER'), 10, 0)}"
+            f"{_fmt(ph.get('PREP'), 10, 0)}{_fmt(ph.get('CLOSE'), 10, 0)}"
+            f"{_fmt(ph.get('ORDER'), 10, 0)}"
             f"{_fmt(ph.get('CLEANUP'), 10, 0)}{_fmt(ph.get('OVERNIGHT'), 11, 0)}"
             f"{_fmt(s.get('day_change_rub'), 11)}"
             f"{(f'{cum_pct:>10.2f}%'.replace('.', ',') if cum_pct is not None else '         —')}"
@@ -191,7 +192,7 @@ def build_report(*, start_balance: float | None = None,
     total = None
     if summaries and summaries[-1].get("closing_balance_rub") is not None and cum_base:
         total = summaries[-1]["closing_balance_rub"] - cum_base
-        L.append(f"{'ИТОГО':<12}{'':>53}{_fmt(total, 11)}"
+        L.append(f"{'ИТОГО':<12}{'':>63}{_fmt(total, 11)}"
                  f"{(total / cum_base * 100.0):>10.2f}%".replace(".", ","))
 
     def _sum(key):

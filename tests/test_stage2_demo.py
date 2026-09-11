@@ -91,11 +91,16 @@ class Stage2TestCase(unittest.TestCase):
         self.tmp = tempfile.mkdtemp(prefix="stage2-")
         self._saved = {k: getattr(config, k, None)
                        for k in ("STAGE2_DIR", "STAGE2_ENABLED", "STAGE2_TARGET_DAYS",
-                                 "STAGE2_HALT_ON_FAIL", "TRADING_MODE", "PROD_ACCOUNT_ID")}
+                                 "STAGE2_HALT_ON_FAIL", "TRADING_MODE", "PROD_ACCOUNT_ID",
+                                 "TELEGRAM_ENABLED", "STAGE2_START_DATE")}
         config.STAGE2_DIR = self.tmp
         config.STAGE2_ENABLED = True
         config.TRADING_MODE = "sandbox"
         config.PROD_ACCOUNT_ID = ""
+        # На сервере .env включает уведомления и задаёт дату старта: без сброса
+        # тесты фаз слали бы настоящие сообщения и пропускались бы до старта.
+        config.TELEGRAM_ENABLED = False
+        config.STAGE2_START_DATE = ""
         self.addCleanup(self._restore)
 
     def _restore(self):
@@ -365,7 +370,7 @@ class TestBalanceAcrossPhases(Stage2TestCase):
         day = dt.date(2026, 9, 11)
         runs = self._make_day(day, {"PREP": 100.0, "ORDER": 99.0})
         s = s2b.collect_day(day, runs)
-        self.assertEqual(s["incomplete_phases"], ["CLEANUP", "OVERNIGHT"])
+        self.assertEqual(s["incomplete_phases"], ["CLOSE", "CLEANUP", "OVERNIGHT"])
 
     def test_10c_report_has_no_performance_metrics(self):
         """§1: отчёт намеренно не содержит Sharpe, CAGR и Profit Factor."""

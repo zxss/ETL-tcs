@@ -1,21 +1,25 @@
 # stage2-demo-15d — функциональный тест на демо-счёте (STAGE2-DEMO-TZ.md §14)
 #
-# Установка:   crontab scripts/stage2_crontab
-# Проверка:    crontab -l
-# Снять:       crontab -r
+# Установка:   crontab -u etl scripts/stage2_crontab
+# Проверка:    crontab -u etl -l
+# Снять:       crontab -u etl -r
 #
-# Четыре ОТДЕЛЬНЫХ задания, а не один общий запуск: если одна фаза упала,
+# Пять ОТДЕЛЬНЫХ фаз и монитор, а не один общий запуск: если одна фаза упала,
 # остальные должны отработать самостоятельно и попасть в дневной аудит.
 #
-# Cron не знает о биржевых праздниках — проверку торгового дня делает сам
-# оркестратор через services/calendar. В праздник фаза выходит с кодом 0 и
-# отметкой skipped, каталог запуска всё равно создаётся.
+# Cron не знает о биржевых праздниках и о дате старта теста — это проверяет сам
+# оркестратор (services/calendar, STAGE2_START_DATE). В праздник фаза выходит с
+# кодом 0 и отметкой skipped; до даты старта — выходит молча, без каталога.
 #
-# Времена ДУБЛИРУЮТ config.STAGE2_*_TIME. При изменении конфигурацииэтот файл
+# Времена ДУБЛИРУЮТ config.STAGE2_*_TIME. При изменении конфигурации этот файл
 # нужно перевыпустить: cron не читает .env.
 #
 # ВАЖНО: 1-5 — это Пн-Пт. Биржа торгует и по выходным, но модель при
 # INCLUDE_WEEKEND_TRADING=0 работает по календарю Пн-Пт, и тест следует ему же.
+#
+# Хотфикс 11.09: добавлены CLOSE (выход из long_overnight утром) и PROTECT
+# (стопы на ночные заливки вечером). Старый таймер etl-square-off снят —
+# закрытие интрадея делает только CLEANUP.
 
 SHELL=/bin/bash
 PATH=/usr/local/bin:/usr/bin:/bin
@@ -25,6 +29,9 @@ PY=/opt/etl-tcs/.venv/bin/python
 # PREP 09:45 — считает сигналы и замораживает план, заявок не ставит
 45  9 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo prep      >> audit/stage2-demo/cron.log 2>&1
 
+# CLOSE 10:00 — продаёт по рынку ночные позиции long_overnight (выход стратегии)
+ 0 10 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo close     >> audit/stage2-demo/cron.log 2>&1
+
 # ORDER 10:05 — исполняет замороженный план (только intraday_*)
  5 10 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo order     >> audit/stage2-demo/cron.log 2>&1
 
@@ -33,3 +40,9 @@ PY=/opt/etl-tcs/.venv/bin/python
 
 # OVERNIGHT 18:35 — ночные заявки, дневной аудит, счётчик
 35 18 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo overnight >> audit/stage2-demo/cron.log 2>&1
+
+# PROTECT 18:50 и каждые 10 минут до конца вечерней сессии — SL/TP по факту
+# заливки ночных заявок (ставить стоп до заливки нельзя: SELL без позиции
+# при срабатывании открыл бы шорт)
+50 18 * * 1-5      cd $PROJECT && $PY -m services.stage2_demo protect >> audit/stage2-demo/cron.log 2>&1
+*/10 19-23 * * 1-5 cd $PROJECT && $PY -m services.stage2_demo protect >> audit/stage2-demo/cron.log 2>&1
