@@ -23,6 +23,8 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import config  # noqa: E402 — пол стопа MIN_STOP_PCT в тестах хотфикса 11.09
+
 try:
     from tests.conftest import (make_dashboard_row, make_instrument, make_order,
                                 make_geom)

@@ -354,9 +354,9 @@ class TestBalanceAcrossPhases(Stage2TestCase):
             runs[ph] = d
         return runs
 
-    def test_10_all_four_phases_aggregated(self):
+    def test_10_all_phases_aggregated(self):
         day = dt.date(2026, 9, 10)
-        runs = self._make_day(day, {"PREP": 100000.0, "ORDER": 99994.1,
+        runs = self._make_day(day, {"PREP": 100000.0, "CLOSE": 100000.0, "ORDER": 99994.1,
                                     "CLEANUP": 99880.2, "OVERNIGHT": 99871.4})
         s = s2b.collect_day(day, runs, prev_closing=100000.0)
         self.assertEqual(set(s["by_phase"]), set(s2b.PHASES))
