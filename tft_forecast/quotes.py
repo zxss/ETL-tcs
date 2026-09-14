@@ -58,11 +58,17 @@ class MarketContext:
 # ── Часы торгов MOEX (приближённо) ─────────────────────────────────────────────
 
 def is_market_open(now_msk: datetime) -> bool:
-    """MOEX TQBR: будни, основная + вечерняя сессии (~10:00–23:50 MSK)."""
+    """MOEX TQBR: будни, основная + вечерняя сессии (~09:10–23:50 MSK).
+
+    С 14.09.2026 основная сессия начинается в 09:10 после аукциона открытия
+    09:00 (T-Invest TradingSchedules); раньше порог стоял 09:55 под открытие
+    10:00. Функция решает только, живые ли котировки СЕЙЧАС, — историю она не
+    размечает, поэтому переключение по дате не нужно.
+    """
     if now_msk.weekday() >= 5:           # сб/вс
         return False
     t = now_msk.time()
-    return (t >= datetime.strptime("09:55", "%H:%M").time()
+    return (t >= datetime.strptime("09:10", "%H:%M").time()
             and t <= datetime.strptime("23:50", "%H:%M").time())
 
 

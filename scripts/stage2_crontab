@@ -26,14 +26,17 @@ PATH=/usr/local/bin:/usr/bin:/bin
 PROJECT=/opt/etl-tcs
 PY=/opt/etl-tcs/.venv/bin/python
 
-# PREP 09:45 — считает сигналы и замораживает план, заявок не ставит
-45  9 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo prep      >> audit/stage2-demo/cron.log 2>&1
+# Утро привязано к открытию Мосбиржи: с 14.09.2026 аукцион 09:00, торги с 09:10
+# (T-Invest TradingSchedules). До этого: PREP 09:45, CLOSE 10:00, ORDER 10:05.
 
-# CLOSE 10:00 — продаёт по рынку ночные позиции long_overnight (выход стратегии)
- 0 10 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo close     >> audit/stage2-demo/cron.log 2>&1
+# PREP 08:45 — считает сигналы и замораживает план, заявок не ставит (до аукциона)
+45  8 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo prep      >> audit/stage2-demo/cron.log 2>&1
 
-# ORDER 10:05 — исполняет замороженный план (только intraday_*)
- 5 10 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo order     >> audit/stage2-demo/cron.log 2>&1
+# CLOSE 09:10 — продаёт по рынку ночные позиции long_overnight (выход стратегии)
+10  9 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo close     >> audit/stage2-demo/cron.log 2>&1
+
+# ORDER 09:15 — исполняет замороженный план (только intraday_*)
+15  9 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo order     >> audit/stage2-demo/cron.log 2>&1
 
 # CLEANUP 18:20 — закрывает интрадей до аукциона 18:40-18:50
 20 18 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo cleanup   >> audit/stage2-demo/cron.log 2>&1

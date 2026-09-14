@@ -655,8 +655,12 @@ STAGE2_ENABLED: bool = get_bool_env("STAGE2_ENABLED", 1)
 STAGE2_TEST_ID: str = os.getenv("STAGE2_TEST_ID", "stage2-demo-15d")
 STAGE2_TARGET_DAYS: int = int(os.getenv("STAGE2_TARGET_DAYS", "15"))
 
-STAGE2_PREP_TIME: str = os.getenv("STAGE2_PREP_TIME", "09:45")
-STAGE2_ORDER_TIME: str = os.getenv("STAGE2_ORDER_TIME", "10:05")
+# С 14.09.2026 Мосбиржа открывается аукционом в 09:00, непрерывные торги с 09:10
+# (T-Invest TradingSchedules). Утро сдвинуто вслед за открытием с тем же шагом,
+# что при открытии в 10:00: PREP — до аукциона (план от вчерашнего закрытия, как
+# задумано), CLOSE — первая минута торгов, ORDER — через 5 минут после CLOSE.
+STAGE2_PREP_TIME: str = os.getenv("STAGE2_PREP_TIME", "08:45")
+STAGE2_ORDER_TIME: str = os.getenv("STAGE2_ORDER_TIME", "09:15")
 STAGE2_CLEANUP_TIME: str = os.getenv("STAGE2_CLEANUP_TIME", "18:20")
 STAGE2_OVERNIGHT_TIME: str = os.getenv("STAGE2_OVERNIGHT_TIME", "18:35")
 
@@ -724,8 +728,9 @@ NEWS_TG_USER_AGENT: str = os.getenv(
 MIN_STOP_PCT: float = float(os.getenv("MIN_STOP_PCT", "1.0"))
 
 # STAGE2_CLOSE_TIME — утреннее закрытие позиций long_overnight (фаза CLOSE).
-# Первая минута основной сессии: рыночная заявка в аукционе открытия не нужна.
-STAGE2_CLOSE_TIME: str = os.getenv("STAGE2_CLOSE_TIME", "10:00")
+# Первая минута непрерывных торгов после аукциона открытия 09:00–09:10:
+# рыночная заявка в аукционе не нужна. До 14.09.2026 было 10:00.
+STAGE2_CLOSE_TIME: str = os.getenv("STAGE2_CLOSE_TIME", "09:10")
 
 # STAGE2_START_DATE — день, с которого считается тест (ISO). До него фазы не
 # выполняются и даже каталог пропуска не создают. Пусто — без ограничения.
