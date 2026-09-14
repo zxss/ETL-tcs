@@ -84,3 +84,16 @@ ON CONFLICT (channel, message_id) DO UPDATE SET
                       THEN NOW() ELSE news.tg_posts.updated_at END
 RETURNING (xmax = 0) AS inserted;
 """
+
+# Импорт истории из выгрузки Telegram Desktop (services/news_tg_import.py).
+# DO NOTHING, а не DO UPDATE: свежие посты — зона сборщика, у него просмотры и
+# правки, которых в выгрузке нет; перезаписать их архивной версией — потерять
+# данные. Пачкой через execute_values: 100 тысяч постов по одному INSERT'у
+# шли бы минутами. RETURNING отдаёт только реально вставленные строки.
+INSERT_TG_POST_HISTORY_SQL = """
+INSERT INTO news.tg_posts (channel, message_id, posted_at, text, views,
+                           links, has_media)
+VALUES %s
+ON CONFLICT (channel, message_id) DO NOTHING
+RETURNING message_id;
+"""
