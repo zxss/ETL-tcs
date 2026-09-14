@@ -110,6 +110,9 @@ class Instrument:
     # брокером, заявка SELL без позиции будет отклонена. Default True, чтобы не
     # ломать конструирование Instrument там, где флаг не важен.
     short_enabled:        bool = True
+    # Класс листинга (TQBR, SPBRU…). Один фонд торгуется на разных биржах, и
+    # доступ через API у листингов разный — казначейству важно, какой выбран.
+    class_code:           str = ""
 
 
 # ── Состояние заявки ─────────────────────────────────────────────────────────
@@ -279,3 +282,17 @@ class BrokerClient(ABC):
         """instrument_uid инструментов с активной (неисполненной) заявкой —
         для защиты от задвоения лимиток. Производное от get_active_orders."""
         return {o.instrument_uid for o in self.get_active_orders(account_id)}
+
+    # ----- Казначейство (services/treasury.py) -----
+
+    def get_money_rub(self, account_id: str) -> float:
+        """Свободные рубли на счёте (без заблокированных под заявки)."""
+        raise NotSupportedError("get_money_rub не реализован для этого контура")
+
+    def get_last_price(self, instrument_uid: str) -> float | None:
+        """Цена последней сделки по инструменту, за штуку."""
+        raise NotSupportedError("get_last_price не реализован для этого контура")
+
+    def find_instrument_listings(self, query: str) -> list[dict]:
+        """Все листинги по запросу (тикер, класс, uid, доступ через API)."""
+        raise NotSupportedError("find_instrument_listings не реализован для этого контура")

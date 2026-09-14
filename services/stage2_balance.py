@@ -35,15 +35,19 @@ def _money(m: dict | None) -> float:
 
 
 def capture(broker, account_id: str, *, run_id: str, phase: str,
-            sandbox: bool = True) -> dict:
+            sandbox: bool = True, exclude_uids=()) -> dict:
     """Снимок баланса на текущей фазе → структура для balance.json.
 
     Источник — OperationsService/GetPortfolio через account_status.snapshot().
+    exclude_uids — паи фонда казначейства: это припаркованный кэш, а не
+    торговая позиция, в счётчик открытых позиций они не входят.
     """
     snap = account_status.snapshot(broker, account_id, sandbox=sandbox)
     pf = snap.get("portfolio", {}) or {}
+    skip = set(exclude_uids or ())
     positions = [p for p in (snap.get("positions", {}) or {}).get("securities", []) or []
-                 if int(p.get("balance", 0) or 0) != 0]
+                 if int(p.get("balance", 0) or 0) != 0
+                 and p.get("instrumentUid") not in skip]
     return {
         "run_id": run_id,
         "phase": phase,
@@ -52,6 +56,7 @@ def capture(broker, account_id: str, *, run_id: str, phase: str,
         "total_portfolio_rub": round(_money(pf.get("totalAmountPortfolio")), 4),
         "free_cash_rub": round(_money(pf.get("totalAmountCurrencies")), 4),
         "shares_value_rub": round(_money(pf.get("totalAmountShares")), 4),
+        "etf_value_rub": round(_money(pf.get("totalAmountEtf")), 4),
         "unrealised_pnl_rub": round(_money(pf.get("expectedYield")), 4),
         "open_positions": len(positions),
         "active_orders": len(snap.get("orders", []) or []),

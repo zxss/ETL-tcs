@@ -7,6 +7,11 @@
     ORDER     10:05  исполняет замороженный план; ничего не пересчитывает
     CLEANUP   18:20  закрывает внутридневные позиции, снимает незалившиеся лимитки
     OVERNIGHT 18:35  пересчитывает только long_overnight и ставит ночные заявки
+    CLOSE     10:00  закрывает ночные позиции (хотфикс 11.09)
+
+Казначейство (services/treasury.py): CLOSE паркует свободный кэш сверх буфера
+в фонд денежного рынка, CLEANUP гасит минус по рублям продажей паёв, OVERNIGHT
+продаёт паи ровно под ночную корзину до заявок по акциям.
 
 Почему план замораживается (§3): между PREP и ORDER проходит 20 минут, за
 которые меняются якорная цена, реализованная часть дневного хода и результат
@@ -120,6 +125,8 @@ _CONFIG_KEYS = (
     "VALIDATION_COST_RT", "TFT_COST_RT", "VALIDATION_FULL_UNIVERSE",
     "TFT_EPOCHS", "TFT_HIDDEN", "WEEK_HORIZON_DAYS", "INCLUDE_WEEKEND_TRADING",
     "STAGE2_TARGET_DAYS", "STAGE2_ALLOW_DATASET_DRIFT",
+    "TREASURY_ENABLED", "TREASURY_TICKER", "TREASURY_CLASS_CODE",
+    "TREASURY_CASH_BUFFER_RUB", "TREASURY_MIN_SWEEP_RUB",
 )
 
 
@@ -266,10 +273,12 @@ _PHASE_FIELDS = {
               ("rejected_count", "отклонено"), ("fills_count", "заливок")),
     "CLEANUP": (("intraday_before", "было интрадея"), ("positions_closed", "закрыто"),
                 ("orders_cancelled", "снято лимиток")),
-    "OVERNIGHT": (("overnight_orders", "ночных принято"), ("placed_count", "выставлено")),
+    "OVERNIGHT": (("overnight_orders", "ночных принято"), ("placed_count", "выставлено"),
+                  ("treasury_released_lots", "продано паёв фонда")),
     "CLOSE": (("overnight_before", "ночных позиций"), ("positions_closed", "закрыто"),
               ("orders_cancelled", "снято ночных лимиток"),
-              ("registry_reconciled", "сверено записей реестра")),
+              ("registry_reconciled", "сверено записей реестра"),
+              ("treasury_parked_rub", "припарковано в фонд, ₽")),
 }
 
 
@@ -301,6 +310,9 @@ def _notify_phase(res: "PhaseResult", state: dict) -> None:
         if facts:
             lines.append("")
             lines += facts
+        if res.data.get("treasury"):
+            from services.treasury import card_line
+            lines.append(notify.esc(card_line(res.data["treasury"])))
 
         day = res.data.get("day_summary")
         if day:
@@ -543,9 +555,64 @@ def _snapshot_account(broker, account_id: str, run_dir: str, run_id: str,
     from services import account_status
     snap = account_status.snapshot(broker, account_id, sandbox=True)
     _write_json(os.path.join(run_dir, f"positions_{when}.json"), snap)
-    bal = stage2_balance.capture(broker, account_id, run_id=run_id, phase=phase)
+    bal = stage2_balance.capture(broker, account_id, run_id=run_id, phase=phase,
+                                 exclude_uids=_treasury_uids(broker))
     _write_json(os.path.join(run_dir, "balance.json"), bal)
     return bal
+
+
+# ── Казначейство (ТЗ Treasury, services/treasury.py) ─────────────────────────
+
+def _treasury_enabled() -> bool:
+    return bool(getattr(config, "TREASURY_ENABLED", True))
+
+
+def _treasury(broker, account_id: str, env: str, conn, writer, run_id: str):
+    """Сервис казначейства с виртуальным реестром на соединении фазы."""
+    from services.treasury import TreasuryService, VirtualLedger
+    ledger = None
+    if conn is not None:
+        ledger = VirtualLedger(conn)
+        try:
+            ledger.init()
+        except Exception as e:                   # noqa: BLE001
+            try:
+                conn.rollback()
+            except Exception:                    # noqa: BLE001
+                pass
+            log.warning("treasury_ledger: схема недоступна: %s", e)
+            ledger = None
+    return TreasuryService(broker, account_id, env=env, ledger=ledger,
+                           writer=writer, run_id=run_id)
+
+
+def _treasury_brief(st: dict) -> dict:
+    """Срез состояния казначейства для run_meta, дневного аудита и карточки."""
+    return {k: st.get(k) for k in ("ticker", "tmon_lots", "tmon_price", "tmon_value_rub",
+                                   "free_cash_rub", "cash_rub", "virtual_lots", "mode")}
+
+
+def _treasury_uids(broker) -> set[str]:
+    if not _treasury_enabled():
+        return set()
+    from services.treasury import treasury_uids
+    return treasury_uids(broker)
+
+
+def _treasury_lots_at(day: dt.date, phase: str) -> int | None:
+    """Паёв фонда по итогу фазы этого дня (из её run_meta); None — нет данных."""
+    d = _run_dirs_for_day(day).get(phase)
+    meta = _read_json(os.path.join(d, "run_meta.json"), {}) if d else {}
+    return ((meta or {}).get("treasury") or {}).get("tmon_lots")
+
+
+def _money_rub(broker, account_id: str) -> float | None:
+    """Свободные рубли на счёте; None — контур их не отдаёт."""
+    try:
+        return float(broker.get_money_rub(account_id))
+    except Exception as e:                       # noqa: BLE001
+        log.warning("свободные рубли недоступны: %s", e)
+        return None
 
 
 # ── Фаза ORDER (§5) ──────────────────────────────────────────────────────────
@@ -871,6 +938,7 @@ def phase_cleanup(*, now: dt.datetime | None = None, prod: bool = False,
     log.info("[CLEANUP] %s, торговый день %s", run_id, day)
 
     writer, fp = _open_log()
+    conn = None
     try:
         broker, account_id, env = _make_broker_and_account(prod)
         preflight(res, env=env, prod_flag=prod)
@@ -888,6 +956,33 @@ def phase_cleanup(*, now: dt.datetime | None = None, prod: bool = False,
         # 4. снять дневные лимитки, не залившиеся за день
         cancelled = _cancel_stale_intraday_orders(broker, account_id, dry_run=dry_run)
 
+        # Казначейство (ТЗ Treasury, §5 п.1–2): интрадей паи фонда не трогает,
+        # а после закрытия интрадея маржинального долга нет. Рубли ушли в минус
+        # (убыток интрадея сверх буфера, комиссии) — паи продаются до буфера.
+        if _treasury_enabled() and not dry_run:
+            try:
+                conn = database.get_connection()
+            except Exception as e:               # noqa: BLE001
+                log.warning("[CLEANUP] БД недоступна, виртуальный реестр не учтён: %s", e)
+            try:
+                tr = _treasury(broker, account_id, env, conn, writer, run_id)
+                st = tr.get_treasury_state()
+                ref = _treasury_lots_at(day, "CLOSE")
+                if ref is not None:
+                    res.check(st["tmon_lots"] == ref,
+                              f"паи {tr.ticker} изменились за день без участия "
+                              f"казначейства: {ref} → {st['tmon_lots']}", critical=False)
+                if st["free_cash_rub"] < 0:
+                    tr.restore_buffer()
+                    st = tr.get_treasury_state()
+                res.data["treasury"] = _treasury_brief(st)
+            except Exception as e:               # noqa: BLE001
+                res.check(False, f"казначейство: {e}", critical=False)
+        if not dry_run:
+            cash = _money_rub(broker, account_id)
+            if cash is not None:
+                res.check(cash >= 0, f"маржинальный долг после CLEANUP: {cash:.2f} ₽")
+
         _snapshot_account(broker, account_id, run_dir, run_id, "CLEANUP", "after")
         res.data.update(intraday_before=len(before), positions_closed=closed,
                         orders_cancelled=cancelled)
@@ -897,6 +992,8 @@ def phase_cleanup(*, now: dt.datetime | None = None, prod: bool = False,
         res.check(False, f"{type(e).__name__}: {e}")
     finally:
         fp.close()
+        if conn is not None:
+            conn.close()
     return _finish(res, state)
 
 
@@ -1127,8 +1224,12 @@ def close_overnight_positions(broker, account_id: str, conn, *, dry_run: bool,
         oid = new_order_id()
         try:
             inst = broker.find_instrument_by_uid(uid)
-            broker.post_market_order(account_id=account_id, instrument=inst,
-                                     direction=edir, quantity_lots=lots, order_id=oid)
+            posted = broker.post_market_order(account_id=account_id, instrument=inst,
+                                              direction=edir, quantity_lots=lots, order_id=oid)
+            # Состояние — по id заявки у брокера, а не по нашему ключу
+            # идемпотентности: по ключу GetOrderState отвечает 404 (песочница,
+            # 14.09). Иначе первое же утреннее закрытие упало бы и остановило тест.
+            oid = getattr(posted, "order_id", None) or oid
             st = _wait_terminal(broker, account_id, oid)
         except Exception as e:                   # noqa: BLE001
             out["failed"].append(f"{tk}: рыночная заявка не прошла ({e})")
@@ -1193,6 +1294,23 @@ def phase_close(*, now: dt.datetime | None = None, prod: bool = False,
             res.check(False, f"ночная позиция не закрыта: {f}")
         after = [] if dry_run else _open_overnight(broker, account_id)
         res.check(not after, f"после CLOSE остались ночные позиции: {', '.join(after)}")
+
+        # SWEEP (ТЗ Treasury, задача 2): выручка от ночных бумаг и весь свободный
+        # кэш сверх буфера — в фонд денежного рынка. Продажи выше уже дождались
+        # исполнения. Сбой парковки торговлю не останавливает: кэш просто лежит.
+        if _treasury_enabled():
+            try:
+                tr = _treasury(broker, account_id, env, conn, writer, run_id)
+                if dry_run:
+                    log.info("[CLOSE][DRY] парковка: свободно %.2f ₽, буфер %.0f ₽",
+                             tr.get_treasury_state()["free_cash_rub"], tr.buffer)
+                else:
+                    park = tr.park_idle_cash()
+                    res.data["treasury_parked_rub"] = park["amount_rub"]
+                res.data["treasury"] = _treasury_brief(tr.get_treasury_state())
+            except Exception as e:               # noqa: BLE001
+                res.check(False, f"казначейство: парковка не выполнена ({e})",
+                          critical=False)
 
         _write_json(os.path.join(run_dir, "overnight_close.json"), out)
         _snapshot_account(broker, account_id, run_dir, run_id, "CLOSE", "after")
@@ -1322,6 +1440,38 @@ def phase_overnight(*, now: dt.datetime | None = None, prod: bool = False,
             used.add(po["signal_id"])
             accepted.append(po)
 
+        # UNPARK (ТЗ Treasury, задача 3): паи фонда продаются ровно под ночную
+        # корзину и ДО заявок по акциям. Не хватило паёв — корзина урезается под
+        # фактический кэш: держать акции ночью на заёмные деньги нельзя.
+        tr = None
+        if accepted and _treasury_enabled():
+            from services.treasury import fit_budget, order_cost_rub
+            required = sum(order_cost_rub(a) for a in accepted)
+            available = 0.0
+            try:
+                tr = _treasury(broker, account_id, env, conn, writer, run_id)
+                if dry_run:
+                    log.info("[OVERNIGHT][DRY] под корзину нужно %.2f ₽ — паи не продаются",
+                             required)
+                else:
+                    tr.release_cash_for_overnight(required)
+                    res.data["treasury_released_lots"] = tr.last_release.get("sold_lots", 0)
+                    available = tr.get_treasury_state()["free_cash_rub"] - tr.buffer
+            except Exception as e:               # noqa: BLE001
+                res.check(False, f"казначейство: кэш под ночные покупки не высвобожден "
+                                 f"({e})", critical=False)
+                cash = _money_rub(broker, account_id)
+                available = (cash or 0.0) - float(getattr(config, "TREASURY_CASH_BUFFER_RUB",
+                                                          1000.0))
+            if not dry_run:
+                accepted, cut = fit_budget(accepted, available)
+                for c in cut:
+                    rejected.append({**c, "skip_reason": f"не хватило кэша после продажи "
+                                                         f"паёв: доступно {available:.2f} ₽"})
+                if cut:
+                    res.check(False, "ночная корзина урезана под кэш: без "
+                              + ", ".join(c["ticker"] for c in cut), critical=False)
+
         placed = []
         if accepted:
             keep = {a["ticker"] for a in accepted}
@@ -1337,6 +1487,25 @@ def phase_overnight(*, now: dt.datetime | None = None, prod: bool = False,
                       f"журнал исполнения: не записано намерений {miss} из "
                       f"{len(placed)}", critical=False)
             _check_placement(res, rep, placed, accepted)
+
+        # Критерий приёмки казначейства (§5 п.3): ночь без плеча — свободных
+        # рублей после постановки ночных заявок не меньше нуля.
+        if not dry_run:
+            cash = _money_rub(broker, account_id)
+            if cash is not None:
+                res.check(cash >= 0, f"после OVERNIGHT свободных рублей {cash:.2f} ₽ < 0 "
+                                     f"— ночные лонги в плечо")
+        if _treasury_enabled():
+            try:
+                tr = tr or _treasury(broker, account_id, env, conn, writer, run_id)
+                st = tr.get_treasury_state()
+                res.data["treasury"] = _treasury_brief(st)
+                if not dry_run and st["virtual_lots"]:
+                    res.check(st["free_cash_rub"] >= 0,
+                              f"после OVERNIGHT свободный кэш за вычетом виртуальной "
+                              f"парковки {st['free_cash_rub']:.2f} ₽ < 0")
+            except Exception as e:               # noqa: BLE001
+                res.check(False, f"казначейство: состояние недоступно ({e})", critical=False)
 
         # 5. отдельный файл — не смешивать с интрадеем
         _write_json(os.path.join(run_dir, "overnight_orders.json"),
@@ -1438,6 +1607,7 @@ def build_daily_audit(day: dt.date, res: PhaseResult) -> dict:
         "execution_audit_filled": stats.get("filled", 0),
         "slippage_fact_pct": stats.get("slippage_fact_pct"),
         "slippage_expected_pct": stats.get("slippage_expected_pct"),
+        "treasury": res.data.get("treasury") if res is not None else None,
         "dataset_hash": prep.get("dataset_hash"),
         "config_hash": prep.get("config_hash"),
         "checks": {

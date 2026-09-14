@@ -195,6 +195,35 @@ class TestOvernightClose(Base):
         self.assertIn("CLOSE", s2.PHASES)
 
 
+class StrictIdBroker(Broker):
+    """Как песочница 14.09: состояние заявки отдаётся только по id брокера,
+    по нашему ключу идемпотентности — 404."""
+
+    def post_market_order(self, *, account_id, instrument, direction, quantity_lots, order_id):
+        super().post_market_order(account_id=account_id, instrument=instrument,
+                                  direction=direction, quantity_lots=quantity_lots,
+                                  order_id=order_id)
+        return OrderState(order_id="exch-" + order_id,
+                          execution_report_status="EXECUTION_REPORT_STATUS_NEW",
+                          lots_requested=quantity_lots, lots_executed=0, raw={})
+
+    def get_order_state(self, *, account_id, order_id):
+        if not str(order_id).startswith("exch-"):
+            raise po.BrokerError("HTTP 404 Order not found")
+        return super().get_order_state(account_id=account_id, order_id=order_id)
+
+
+class TestCloseUsesBrokerOrderId(Base):
+    def test_close_polls_state_by_broker_id(self):
+        """Регрессия 14.09: CLOSE ждал исполнения по ключу идемпотентности,
+        брокер отвечал 404, и закрытие считалось несостоявшимся → FAIL."""
+        b = StrictIdBroker(positions=[Pos("u1", 32)])
+        self.registry(self.rec("u1"))
+        out, _ = self.close(b)
+        self.assertEqual(out["failed"], [])
+        self.assertEqual(out["closed"], ["ENPG"])
+
+
 class TestProtect(Base):
     def test_protect_attaches_stops_and_places_no_entries(self):
         used = _calls(s2.cmd_protect)

@@ -215,7 +215,26 @@ class TinkoffRestBase(BrokerClient):
             trading_status=inst.get("tradingStatus", ""),
             api_trade_available=bool(inst.get("apiTradeAvailableFlag", False)),
             short_enabled=bool(inst.get("shortEnabledFlag", False)),
+            class_code=inst.get("classCode", ""),
         )
+
+    def find_instrument_listings(self, query: str) -> list[dict]:
+        """InstrumentsService.FindInstrument — все листинги по запросу.
+
+        Нужен казначейству: один фонд (TMON) торгуется в нескольких классах, и
+        доступ через API у них разный — ShareBy по TQBR этого не покажет.
+        """
+        data = self._post("InstrumentsService/FindInstrument", {"query": query})
+        return list(data.get("instruments") or [])
+
+    def get_last_price(self, instrument_uid: str) -> float | None:
+        """MarketDataService.GetLastPrices — цена последней сделки, за штуку."""
+        data = self._post("MarketDataService/GetLastPrices",
+                          {"instrumentId": [instrument_uid]})
+        for p in data.get("lastPrices") or []:
+            if p.get("instrumentUid") in (None, "", instrument_uid):
+                return _money(p, "price")
+        return None
 
     # ── Стоп-заявки (StopOrdersService — общий сервис) ───────────────────────
 

@@ -223,3 +223,29 @@ CREATE INDEX IF NOT EXISTS idx_exec_audit_date   ON execution_audit (asof_date D
 CREATE INDEX IF NOT EXISTS idx_exec_audit_ticker ON execution_audit (ticker, asof_date DESC);
 CREATE INDEX IF NOT EXISTS idx_exec_audit_run    ON execution_audit (run_id);
 """
+
+
+# --- Казначейство: сделки с фондом денежного рынка -----------------------------
+# Одна строка на покупку или продажу паёв (services/treasury.py). mode='broker' —
+# реальная заявка, след для аудита; mode='virtual' — виртуальное владение в
+# песочнице, когда брокер отказал в заявке по фонду (ТЗ Treasury, задача 4).
+# Виртуальная позиция = Σ BUY − Σ SELL по строкам mode='virtual'.
+CREATE_TREASURY_LEDGER_SQL = """
+CREATE TABLE IF NOT EXISTS treasury_ledger (
+    id          BIGSERIAL PRIMARY KEY,
+    ts          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    account_env VARCHAR(10) NOT NULL,          -- SANDBOX | PROD
+    account_id  VARCHAR(64) NOT NULL,
+    ticker      VARCHAR(16) NOT NULL,          -- TREASURY_TICKER, не тикер листинга
+    mode        VARCHAR(10) NOT NULL,          -- broker | virtual
+    side        VARCHAR(5)  NOT NULL,          -- BUY | SELL
+    lots        INTEGER     NOT NULL CHECK (lots > 0),
+    price       NUMERIC(18, 6) NOT NULL,       -- цена лота, ₽
+    amount_rub  NUMERIC(18, 4) NOT NULL,
+    reason      VARCHAR(20),                   -- sweep | overnight | cover
+    run_id      VARCHAR(64),
+    order_id    VARCHAR(64)
+);
+CREATE INDEX IF NOT EXISTS idx_treasury_ledger_account
+    ON treasury_ledger (account_id, ticker, ts);
+"""

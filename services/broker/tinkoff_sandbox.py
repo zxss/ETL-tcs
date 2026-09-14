@@ -123,6 +123,13 @@ class TinkoffSandboxClient(TinkoffRestBase):
                                     blocked_shares=float(s.get("blocked", 0) or 0)))
         return out
 
+    def get_money_rub(self, account_id: str) -> float:
+        """Свободные рубли. Поле money уже без заблокированных под заявки:
+        10.09 после двух лимиток money 80 166,99 + blocked 19 833,01 = 100 000."""
+        data = self._post("SandboxService/GetSandboxPositions", {"accountId": account_id})
+        return sum(Quotation.from_payload(m).as_float()
+                   for m in (data.get("money") or []) if m.get("currency") == "rub")
+
     def get_active_orders(self, account_id: str) -> list[ActiveOrder]:
         data = self._post("SandboxService/GetSandboxOrders", {"accountId": account_id})
         out: list[ActiveOrder] = []

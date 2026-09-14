@@ -736,3 +736,20 @@ STAGE2_START_DATE: str = os.getenv("STAGE2_START_DATE", "")
 # 429 — повтор с паузой 1 → 2 → 4 с.
 BROKER_ORDER_MIN_INTERVAL_SEC: float = float(os.getenv("BROKER_ORDER_MIN_INTERVAL_SEC", "0.25"))
 BROKER_429_RETRIES: int = int(os.getenv("BROKER_429_RETRIES", "3"))
+
+
+# =====================================================================
+# КАЗНАЧЕЙСТВО И ДЕНЕЖНЫЙ РЫНОК (TMON) — services/treasury.py
+# =====================================================================
+# Свободный кэш сверх буфера утром паркуется в фонд денежного рынка, вечером
+# паи продаются ровно под ночные лонги. Интрадей-шорты паи не трогают.
+TREASURY_ENABLED = get_bool_env("TREASURY_ENABLED", default=True)
+TREASURY_TICKER = os.getenv("TREASURY_TICKER", "TMON")
+# Класс листинга. Пусто — первый листинг фонда, доступный через API: у TMON на
+# Мосбирже (TQBR, TQTF) apiTradeAvailableFlag=false, через API торгуется TMON@
+# на СПБ бирже (SPBRU). Недоступный класс в песочнице → виртуальный реестр.
+TREASURY_CLASS_CODE = os.getenv("TREASURY_CLASS_CODE", "")
+# Неснижаемый остаток свободного кэша на комиссии, округление лотов и вариационку
+TREASURY_CASH_BUFFER_RUB = float(os.getenv("TREASURY_CASH_BUFFER_RUB", "1000.0"))
+# Минимальная сумма для покупки TMON (не гонять ордера ради 100 рублей)
+TREASURY_MIN_SWEEP_RUB = float(os.getenv("TREASURY_MIN_SWEEP_RUB", "2000.0"))
