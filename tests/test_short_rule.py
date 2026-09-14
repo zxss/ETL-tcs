@@ -139,11 +139,12 @@ class TestStats(unittest.TestCase):
             g = 5.0 if i < 2 else -0.1
             for tk in ("X", "Y"):
                 rows.append({"date": d, "ticker": tk, "status": "ok", "gross_none": g,
-                             "mae_none": 1.0, "gross_atr": g, "mae_atr": 1.0, "stopped_atr": False})
+                             "mae_none": 1.0, "gross_atr": g, "mae_atr": 1.0, "stopped_atr": False,
+                             "cost_base": 0.128})
         tr = pd.DataFrame(rows)
         days = pd.DataFrame({"date": sorted(tr["date"].unique()),
                              "imoex_move": np.linspace(-1, 1, 12)})
-        st = sr.variant_stats(tr, days, "none", 0.128)
+        st = sr.variant_stats(tr, days, "none", "base")
         self.assertEqual((st["n"], st["days"]), (24, 12))           # t — по 12 дням, не по 24 сделкам
         self.assertAlmostEqual(st["sum_wo_top5"], st["sum_days"] - (2 * 4.872 + 3 * -0.228))
         self.assertGreater(st["top5_share"], 1.0)                   # весь результат — два дня

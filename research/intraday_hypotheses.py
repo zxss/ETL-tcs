@@ -11,7 +11,10 @@
     18:15 (фаза 18:20). Плата за перенос непокрытой позиции не возникает: по
     тарифу позиция, закрытая до конца торгового дня, бесплатна.
   * Сигнал известен на close бара, вход — open следующего бара.
-  * Издержки 0,128 % на круг на ногу, чувствительность 0,20 %.
+  * Издержки — research/cost_model: комиссия тарифа «Премиум» 0,04 % за сделку
+    (круг 0,08 %) + спред бумаги; основной сценарий base, чувствительность
+    stress, нижняя граница fee (только комиссия). Пересчёт 15.09.2026: плоские
+    0,128/0,20 % заменены тарифом пользователя, правила гипотез не менялись.
   * Бумаги с шагом хранения цены грубее 0,05 % (NUMERIC(18,4): TGKA, FEES)
     исключены по цене. Шорт — только по шортуемым (не AKRN, CBOM, MVID).
   * t — по дням (сделки одного дня связаны общим шоком); бета к IMOEX в окне
@@ -81,6 +84,7 @@ import pandas as pd
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
+from research import cost_model as cm                    # noqa: E402
 from research import news_event_study as ns              # noqa: E402
 from research import session_calendar as sc              # noqa: E402
 from research import short_rule as sr                    # noqa: E402
@@ -88,7 +92,7 @@ from research import short_rule as sr                    # noqa: E402
 log = logging.getLogger("research.intraday")
 
 INDEX = "IMOEX"
-COSTS = (0.128, 0.20)
+SCENARIOS = cm.SCENARIOS                   # издержки — research/cost_model (тариф «Премиум»)
 POSITION_RUB = 10_000.0
 DEV_FROM = dt.date(2025, 12, 1)
 LAST_BAR = dt.time(18, 15)
@@ -458,14 +462,15 @@ def h4_trades(bars: pd.DataFrame, idx: pd.DataFrame, last: pd.DataFrame, prev_cl
 
 # ── Статистика ───────────────────────────────────────────────────────────────
 
-def stats(tr: pd.DataFrame, cost_per_leg: float) -> dict:
+def stats(tr: pd.DataFrame, scenario: str) -> dict:
+    """Метрики гипотезы; нетто = валовой доход − издержки сценария (колонка cost_<сценарий>)."""
     if tr.empty or "gross" not in tr:
         return {"n": 0}
     ok = tr[tr["status"].fillna("ok") == "ok"] if "status" in tr else tr
     ok = ok.dropna(subset=["gross"]).copy()
     if ok.empty:
         return {"n": 0}
-    ok["net"] = ok["gross"] - cost_per_leg * ok["legs"]
+    ok["net"] = ok["gross"] - ok[f"cost_{scenario}"]
     per_day = ok.groupby("date")["net"].mean().sort_index()
     t, p = sr._t_p(per_day)
     total = float(per_day.sum())
@@ -493,7 +498,7 @@ def dor(st: dict, st_hi: dict) -> dict:
     if not st.get("n"):
         return {}
     return {"1. ср./день > 0 и t ≥ 2,5": bool(st["mean_day"] > 0 and (st["t_day"] or 0) >= 2.5),
-            "1'. при 0,20 % ср./день > 0": bool(st_hi.get("mean_day", -1) > 0),
+            "1'. при стресс-спреде ср./день > 0": bool(st_hi.get("mean_day", -1) > 0),
             "2. без 5 лучших дней > 0": bool(st["sum_wo_top5"] > 0),
             "2'. доля 5 лучших ≤ 50 %": bool(st["top5_share"] is not None and st["top5_share"] <= 0.5),
             "3. медиана сделки ≥ +0,20 %": bool(st["median_trade"] >= 0.20)}
@@ -517,15 +522,17 @@ def report(res: dict, meta: dict) -> str:
     L = ["# Внутридневные гипотезы при «90 % в TMON»", "",
          f"Сформировано {meta['created']}. Код заморожен коммитом `{meta['revision']}`. "
          "Только исследование: r3 и торговый контур не затронуты.", "",
-         "Нетто в % на сделку после издержек (на ногу 10 000 ₽; у пар — две ноги), t — по дням. "
+         "Нетто в % на сделку после издержек тарифа «Премиум» (комиссия 0,04 % за сделку) и спреда "
+         "бумаги; на ногу 10 000 ₽, у пар — две ноги; t — по дням. Холм и DoR — по сценарию "
+         f"«{cm.LABELS[cm.PRIMARY]}». "
          "«Превышение над индексом» — доход сделки минус направление × ход IMOEX в том же окне. "
          "Перенос не платится: всё закрывается до 18:20.", ""]
     for per in ("holdout", "dev"):
         pm = meta["periods"][per]
         L += [f"## {'Отложенная выборка (вердикт)' if per == 'holdout' else 'Повтор'}: "
               f"{pm['from']} … {pm['to']} ({pm['days']} дней)", ""]
-        for cost in COSTS:
-            L += [f"### Издержки {str(cost).replace('.', ',')} % на ногу", "",
+        for cost in SCENARIOS:
+            L += [f"### Издержки: {cm.LABELS[cost]}", "",
                   "| гипотеза | сделок | дней | ср. сделка | медиана | доля + | ср. день | t | p Холма | "
                   "доля 5 лучших | без топ-5 | худший день | бета | превышение над индексом (t) | ₽/год на 10 000 ₽ |",
                   "|" + "---|" * 15]
@@ -572,7 +579,7 @@ def report(res: dict, meta: dict) -> str:
 def evaluate(trades: pd.DataFrame, d_from, d_to, n_days) -> tuple[dict, dict]:
     tr = trades[(trades["date"] >= d_from) & (trades["date"] <= d_to)]
     out = {}
-    for cost in COSTS:
+    for cost in SCENARIOS:
         out[cost] = {h: stats(tr[tr["hyp"] == h], cost) for h in HYPOTHESES}
         for h in HYPOTHESES:
             out[cost][h]["rub_year"] = rub_per_year(out[cost][h], n_days)
@@ -583,14 +590,14 @@ def evaluate(trades: pd.DataFrame, d_from, d_to, n_days) -> tuple[dict, dict]:
     h1 = tr[tr["hyp"] == "H1"]
     if len(h1):
         for how in ("vwap", "time"):
-            cuts[f"H1 выход по {'VWAP' if how == 'vwap' else 'времени'}"] = stats(h1[h1["exit"] == how], COSTS[0])
+            cuts[f"H1 выход по {'VWAP' if how == 'vwap' else 'времени'}"] = stats(h1[h1["exit"] == how], cm.PRIMARY)
     h2 = tr[tr["hyp"] == "H2"]
     if len(h2):
-        cuts["H2 гэп вниз → лонг"] = stats(h2[h2["dir"] > 0], COSTS[0])
-        cuts["H2 гэп вверх → шорт"] = stats(h2[h2["dir"] < 0], COSTS[0])
+        cuts["H2 гэп вниз → лонг"] = stats(h2[h2["dir"] > 0], cm.PRIMARY)
+        cuts["H2 гэп вверх → шорт"] = stats(h2[h2["dir"] < 0], cm.PRIMARY)
     h3 = tr[tr["hyp"] == "H3"]
     for cl in sorted(h3["cluster"].dropna().unique()) if len(h3) else []:
-        cuts[f"H3 {cl}"] = stats(h3[h3["cluster"] == cl], COSTS[0])
+        cuts[f"H3 {cl}"] = stats(h3[h3["cluster"] == cl], cm.PRIMARY)
     return out, cuts
 
 
@@ -629,6 +636,9 @@ def main(argv: list[str] | None = None) -> int:
     if "status" not in tr:
         tr["status"] = "ok"
     tr["status"] = tr["status"].fillna("ok")
+    spreads = cm.load_spreads()
+    for s in SCENARIOS:
+        tr[f"cost_{s}"] = [cm.trade_cost(t, s, spreads) for t in tr["ticker"]]
 
     res, meta = {"cuts": {}}, {"periods": {}}
     hold_to = DEV_FROM - dt.timedelta(days=1)
@@ -636,7 +646,7 @@ def main(argv: list[str] | None = None) -> int:
         n = sum(1 for d in days if lo <= d <= hi)
         res[per], res["cuts"][per] = evaluate(tr, lo, hi, n)
         meta["periods"][per] = {"from": str(lo), "to": str(hi), "days": n}
-    res["dor"] = {f"{h} {NAMES[h]}": dor(res["holdout"][0.128][h], res["holdout"][0.20][h])
+    res["dor"] = {f"{h} {NAMES[h]}": dor(res["holdout"][cm.PRIMARY][h], res["holdout"][cm.SENSITIVITY][h])
                   for h in HYPOTHESES}
     d4 = pd.DataFrame(d4)
     sig = d4[d4["signal"] == True] if len(d4) else d4                # noqa: E712
@@ -657,7 +667,7 @@ def main(argv: list[str] | None = None) -> int:
         f.write(text)
     tr.to_csv(os.path.join(out, "trades.csv"), index=False)
     d4.to_csv(os.path.join(out, "h4_days.csv"), index=False)
-    flat = {per: {str(c): res[per][c] for c in COSTS} for per in ("holdout", "dev")}
+    flat = {per: {c: res[per][c] for c in SCENARIOS} for per in ("holdout", "dev")}
     with open(os.path.join(out, "summary.json"), "w", encoding="utf-8") as f:
         json.dump({"meta": meta, "results": flat, "cuts": res["cuts"], "dor": res["dor"]},
                   f, ensure_ascii=False, indent=1, default=str)

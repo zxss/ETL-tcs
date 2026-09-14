@@ -20,8 +20,8 @@ from research import news_event_study as ns              # noqa: E402
 class TestCarry(unittest.TestCase):
 
     def test_tariff(self):
-        self.assertAlmostEqual(nc.carry_pct(10_000, 1), 0.40)       # 40 ₽ в день
-        self.assertAlmostEqual(nc.carry_pct(10_000, 3), 1.20)       # выходные — календарные дни
+        self.assertAlmostEqual(nc.carry_pct(10_000, 1), 0.45)       # «Премиум»: от 45 ₽ в день
+        self.assertAlmostEqual(nc.carry_pct(10_000, 3), 1.35)       # выходные — календарные дни
         self.assertEqual(nc.carry_pct(5_000, 1), 0.0)               # до 5 000 ₽ бесплатно
         self.assertAlmostEqual(nc.carry_pct(200_000, 1), 0.095)
         with self.assertRaises(ValueError):
@@ -140,9 +140,9 @@ class TestVerdict(unittest.TestCase):
         p = pd.DataFrame({"date": [D1, D1, D2], "ticker": ["T1", "AKRN", "T1"],
                           "k1": [True, True, True], "raw_gap": [-1.0, -5.0, -1.0],
                           "nights": [1, 1, 3]})
-        e = nc.short_economics(p, "k1", 10_000)
+        e = nc.short_economics(p, "k1", 10_000, spreads={"__fallback__": (0.048, 0.1, 0.0)})
         self.assertEqual(e["n"], 2)                                  # AKRN не шортуется
-        self.assertAlmostEqual(e["net_day"], ((1 - 0.128 - 0.4) + (1 - 0.128 - 1.2)) / 2)
+        self.assertAlmostEqual(e["net_day"], ((1 - 0.128 - 0.45) + (1 - 0.128 - 1.35)) / 2)
 
 
 if __name__ == "__main__":

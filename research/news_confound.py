@@ -42,13 +42,14 @@
   закрыть ветку — |t(b1)| < 2 ИЛИ знак b1 разный в 05.2024–11.2025 и
   12.2025–09.2026;
   продолжать — только если b1 < 0, t ≤ −3, знак один в обеих частях И сырой
-  ход шорта на K1 − 0,128 % − плата за перенос > 0.
-Плата за перенос непокрытой позиции — тариф T-Инвестиций «Инвестор» (сверено
-14.09.2026, tbank.ru/invest/help/brokerage/account/margin/about): до 5 000 ₽
-бесплатно, до 50 000 ₽ — 40 ₽ в календарный день, до 100 000 ₽ — 80 ₽, до
-250 000 ₽ — 190 ₽, до 500 000 ₽ — 375 ₽, до 1 000 000 ₽ — 750 ₽. Позиция r3/r4
-— 10 000 ₽ (0,40 % за ночь, выходные ×3). Нешортуемые бумаги (AKRN, CBOM, MVID)
-в экономику шорта не входят.
+  ход шорта на K1 − издержки (комиссия 0,08 % + спред бумаги) − плата за
+  перенос > 0.
+Издержки и перенос — research/cost_model, тариф пользователя «Премиум»
+(подтверждён 15.09.2026): комиссия 0,04 % за сделку (круг 0,08 %) + спред
+бумаги; перенос непокрытой позиции до 5 000 ₽ бесплатно, свыше — от 45 ₽ в
+календарный день (10 000 ₽ → 0,45 % за ночь, выходные ×3). До 15.09 здесь
+стояли плоские 0,128 % и сетка тарифа «Инвестор» (40 ₽). Нешортуемые бумаги
+(AKRN, CBOM, MVID) в экономику шорта не входят.
 
 Запуск (на сервере):
     python -m research.news_confound --from 2024-05-21 --to 2026-09-11
@@ -69,20 +70,18 @@ import pandas as pd
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
+from research import cost_model as cm                    # noqa: E402
 from research import news_event_study as ns              # noqa: E402
 from research import session_calendar as sc              # noqa: E402
 
 log = logging.getLogger("research.news_confound")
 
-COST_RT_PCT = 0.128
 SPLIT = dt.date(2025, 12, 1)                  # 05.2024–11.2025 | 12.2025–09.2026
 MAX_GAP_DAYS = 5
 VOL_WIN = 20
 ENTRY_FROM = dt.time(18, 15)
 EXIT_TOL_MIN = 10
 PRICE_QUANTUM, MAX_QUANTUM_PCT = 1e-4, 0.05
-CARRY_TARIFF = ((5_000, 0.0), (50_000, 40.0), (100_000, 80.0), (250_000, 190.0),
-                (500_000, 375.0), (1_000_000, 750.0))
 MAIN_POSITION = 10_000.0
 POSITIONS = (5_000.0, 10_000.0, 200_000.0)
 NON_SHORTABLE = {"AKRN", "CBOM", "MVID"}
@@ -91,10 +90,7 @@ CONTROLS = ["ar_day", "abs_ar_day", "log_volspike"]
 
 def carry_pct(position_rub: float, nights: int) -> float:
     """Плата за перенос непокрытой позиции за nights календарных дней, % позиции."""
-    for cap, fee in CARRY_TARIFF:
-        if position_rub <= cap:
-            return fee * nights / position_rub * 100.0
-    raise ValueError(f"позиция {position_rub} ₽ вне таблицы тарифа")
+    return cm.carry_pct(position_rub, nights)
 
 
 # ── Панель ───────────────────────────────────────────────────────────────────
@@ -239,12 +235,14 @@ def holm(pvals: dict) -> dict:
 
 
 def short_economics(panel: pd.DataFrame, cohort: str, position: float,
-                    cost: float = COST_RT_PCT) -> dict:
-    """Голый ночной шорт бумаг когорты: −сырой ход − издержки − перенос; t по датам."""
+                    scenario: str = cm.PRIMARY, spreads: dict | None = None) -> dict:
+    """Голый ночной шорт бумаг когорты: −сырой ход − издержки бумаги − перенос; t по датам."""
     s = panel[panel[cohort] & ~panel["ticker"].isin(NON_SHORTABLE)].dropna(subset=["raw_gap"])
     if s.empty:
         return {"n": 0}
+    spreads = spreads if spreads is not None else cm.load_spreads()
     carry = s["nights"].map(lambda n: carry_pct(position, int(n)))
+    cost = s["ticker"].map(lambda t: cm.round_trip(t, scenario, spreads))
     net = -s["raw_gap"] - cost - carry
     per_day = net.groupby(s["date"]).mean()
     n = len(per_day)

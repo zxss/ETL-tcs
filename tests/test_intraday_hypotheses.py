@@ -182,13 +182,16 @@ class TestH4(unittest.TestCase):
 class TestStats(unittest.TestCase):
 
     def test_pairs_pay_two_legs_and_excess(self):
+        sp = {"__fallback__": (0.048, 0.1, 0.0)}
         tr = pd.DataFrame({"hyp": "H3", "date": [D, D + dt.timedelta(days=1)], "gross": [1.0, 1.0],
-                           "legs": [2, 2], "dir": [0, 0], "idx_move": [0.5, -0.5], "status": "ok"})
-        st = ih.stats(tr, 0.128)
-        self.assertAlmostEqual(st["mean_trade"], 1.0 - 0.256)
+                           "legs": [2, 2], "dir": [0, 0], "idx_move": [0.5, -0.5], "status": "ok",
+                           "ticker": "LKOH/ROSN"})
+        tr["cost_base"] = [ih.cm.trade_cost(t, "base", sp) for t in tr["ticker"]]
+        st = ih.stats(tr, "base")
+        self.assertAlmostEqual(st["mean_trade"], 1.0 - 2 * 0.128)     # две ноги × (0,08 + 0,048)
         self.assertAlmostEqual(st["excess_idx"], 1.0)                 # нейтральная: индекс не вычитается
-        lo = tr.assign(hyp="H2", legs=1, dir=1)
-        self.assertAlmostEqual(ih.stats(lo, 0.128)["excess_idx"], 1.0)  # (1−0,5 + 1+0,5)/2
+        lo = tr.assign(hyp="H2", legs=1, dir=1, cost_base=0.128)
+        self.assertAlmostEqual(ih.stats(lo, "base")["excess_idx"], 1.0)  # (1−0,5 + 1+0,5)/2
 
     def test_prev_close_map(self):
         last = pd.DataFrame({"ticker": "A", "d": [dt.date(2025, 3, 1), dt.date(2025, 3, 3)],

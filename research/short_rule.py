@@ -42,7 +42,10 @@ PREP. «Фильтры ликвидности прода» в режиме heuri
                       open бара пересечения) — гэп сквозь стоп не прощается;
               боевой стоп — только справка по книге r3 (audit/out/book_r3.csv):
                       без TFT нет q10.
-  издержки:   0,128 % и 0,20 % на круг. P&L без TMON.
+  издержки:   research/cost_model — комиссия тарифа «Премиум» 0,04 % за сделку
+              (круг 0,08 %) + спред бумаги (base), стресс-спред, только
+              комиссия (fee). Пересчёт 15.09.2026: плоские 0,128/0,20 %
+              заменены тарифом пользователя, правило не менялось. P&L без TMON.
 
 Статистика по дням: среднее сделок дня → t по активным дням. Бета — регрессия
 дня книги на ход IMOEX в том же окне; альфа над шортом индекса в те же дни.
@@ -69,6 +72,7 @@ import pandas as pd
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
+from research import cost_model as cm                    # noqa: E402
 from research import session_calendar as sc              # noqa: E402
 from research.news_event_study import UNIVERSE           # noqa: E402
 
@@ -83,7 +87,7 @@ MKT_ATR_MIN = 50.0
 STOP_ATR_K, STOP_FLOOR_PCT = 1.5, 3.5
 LIQ_WIN = 20
 ENTRY_TOL = dt.timedelta(minutes=10)
-COSTS = (0.128, 0.20)
+COSTS = cm.SCENARIOS                     # сценарии издержек research/cost_model
 DEV_FROM = dt.date(2025, 12, 1)
 PRICE_QUANTUM = 1e-4           # точность хранения цены в market_data / market_data_5m
 MAX_QUANTUM_PCT = 0.05         # шаг записи не грубее 0,05 % цены
@@ -313,12 +317,14 @@ def _t_p(x: pd.Series) -> tuple[float | None, float | None]:
     return t, p
 
 
-def variant_stats(tr: pd.DataFrame, days: pd.DataFrame, stop: str, cost: float) -> dict:
-    """Сделки одного варианта (selection уже отфильтрован) → метрики §4."""
+def variant_stats(tr: pd.DataFrame, days: pd.DataFrame, stop: str, cost: str) -> dict:
+    """Сделки одного варианта (selection уже отфильтрован) → метрики §4.
+
+    cost — сценарий издержек (колонка cost_<сценарий> у сделки)."""
     ok = tr[tr["status"] == "ok"].copy()
     if ok.empty:
         return {"n": 0}
-    ok["net"] = ok[f"gross_{stop}"] - cost
+    ok["net"] = ok[f"gross_{stop}"] - ok[f"cost_{cost}"]
     per_day = ok.groupby("date")["net"].mean().sort_index()
     t, p = _t_p(per_day)
     total = float(per_day.sum())
@@ -380,7 +386,7 @@ def dor(st: dict, st_hi: dict) -> dict:
         return {}
     return {
         "1. среднее/день > 0 и t ≥ 2,5": bool(st["mean_day"] > 0 and (st["t_day"] or 0) >= 2.5),
-        "1'. при 0,20 % среднее/день > 0": bool(st_hi.get("mean_day", -1) > 0),
+        "1'. при стресс-спреде среднее/день > 0": bool(st_hi.get("mean_day", -1) > 0),
         "2. без 5 лучших дней > 0": bool(st["sum_wo_top5"] > 0),
         "2'. доля 5 лучших ≤ 50 %": bool(st["top5_share"] is not None and st["top5_share"] <= 0.5),
         "3. медиана сделки ≥ +0,20 %": bool(st["median_trade"] >= 0.20),
@@ -472,7 +478,7 @@ def report(res: dict, meta: dict) -> str:
               f"({_f(pm['gate_share'], pct=True)}), не оценивались (предохранитель IMOEX без данных) "
               f"{pm['skipped']}; кандидатов в день ворот — медиана {pm['cand_median']}", ""]
         for cost in COSTS:
-            L += [f"### Издержки {str(cost).replace('.', ',')} %", "",
+            L += [f"### Издержки: {cm.LABELS[cost]}", "",
                   "| вариант | сделок | дней | ср. сделка | медиана | ср. день | t | p Холма | "
                   "стопов | MAE p95/p99/max | худшая сделка | худший день | доля 5 лучших | "
                   "без топ-5 | без топ-10 | бета | альфа/день (t) | книга − шорт IMOEX (t) |",
@@ -576,13 +582,16 @@ def main(argv: list[str] | None = None) -> int:
     edays = exec_days_from(paths)
     log.info("дней исполнения %d (%s … %s)", len(edays), edays[0], edays[-1])
     trades, days = run_rule(feats, mkt, above, tdates, paths, lots, blocked, edays)
+    spreads = cm.load_spreads()
+    for s in COSTS:
+        trades[f"cost_{s}"] = [cm.round_trip(t, s, spreads) for t in trades["ticker"]]
 
     res, meta = {}, {"periods": {}}
     hold_to = DEV_FROM - dt.timedelta(days=1)
     for per, lo, hi in (("holdout", d_from, hold_to), ("dev", DEV_FROM, d_to)):
         res[per], meta["periods"][per] = evaluate(trades, days, lo, hi)
-    res["dor"] = {f"{s}/{p}": dor(res["holdout"][0.128][(s, p)], res["holdout"][0.20][(s, p)])
-                  for s in SELECTIONS for p in STOPS if res["holdout"][0.128][(s, p)].get("n")}
+    res["dor"] = {f"{s}/{p}": dor(res["holdout"][cm.PRIMARY][(s, p)], res["holdout"][cm.SENSITIVITY][(s, p)])
+                  for s in SELECTIONS for p in STOPS if res["holdout"][cm.PRIMARY][(s, p)].get("n")}
     res["r3_ref"] = r3_combat_reference(os.path.join(ROOT, "audit", "out", "book_r3.csv"))
     try:
         with open(os.path.join(ROOT, "REVISION"), encoding="utf-8") as f:
@@ -598,7 +607,7 @@ def main(argv: list[str] | None = None) -> int:
         f.write(text)
     trades.to_csv(os.path.join(out, "trades.csv"), index=False)
     days.to_csv(os.path.join(out, "days.csv"), index=False)
-    flat = {per: {str(c): {f"{s}/{p}": v for (s, p), v in res[per][c].items()} for c in COSTS}
+    flat = {per: {c: {f"{s}/{p}": v for (s, p), v in res[per][c].items()} for c in COSTS}
             for per in ("holdout", "dev")}
     with open(os.path.join(out, "summary.json"), "w", encoding="utf-8") as f:
         json.dump({"meta": meta, "results": flat, "dor": res["dor"], "r3_ref": res["r3_ref"]},
