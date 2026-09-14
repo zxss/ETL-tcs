@@ -148,22 +148,32 @@ _HASHTAG = re.compile(r"#([A-Z][A-Z0-9]{1,5})(?![A-Za-z0-9_])")
 _PRICE_REPORT = re.compile(r"^[^\n]{0,40}(?:=\s*[+-−–]?\s*\d|[+-−–]\s*\d+(?:[.,]\d+)?\s*%)")
 
 
-def tickers_in(text: str | None) -> set[str]:
-    """Тикеры вселенной, о которых пост: хештеги и названия компаний."""
+def ticker_sources(text: str | None) -> dict[str, set[str]]:
+    """Тикеры вселенной, о которых пост, и откуда привязка: «hashtag» / «name»."""
     if not text:
-        return set()
-    found: set[str] = set()
+        return {}
+    found: dict[str, set[str]] = {}
+
+    def add(tk: str, how: str) -> None:
+        found.setdefault(tk, set()).add(how)
+
     for tag in _HASHTAG.findall(text):
         if tag in HASHTAG_ALIASES:
-            found.update(HASHTAG_ALIASES[tag])
+            for tk in HASHTAG_ALIASES[tag]:
+                add(tk, "hashtag")
         elif tag in UNIVERSE:
-            found.add(tag)
+            add(tag, "hashtag")
     for tk, rx in _NAME_RE.items():
         if rx.search(text):
-            found.add(tk)
+            add(tk, "name")
             if tk == "SNGS":
-                found.add("SNGSP")
+                add("SNGSP", "name")
     return found
+
+
+def tickers_in(text: str | None) -> set[str]:
+    """Тикеры вселенной, о которых пост: хештеги и названия компаний."""
+    return set(ticker_sources(text))
 
 
 def is_price_report(text: str | None) -> bool:

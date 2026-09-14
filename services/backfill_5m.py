@@ -281,8 +281,12 @@ async def backfill_index(conn, ticker: str, date_from: dt.date, date_to: dt.date
 
 
 def compare_bars(arch: list[tuple], db: list[tuple], tol: float = 1e-6) -> dict:
-    """Сверка архива со строками БД по общим меткам времени."""
-    a = {r[0]: r[1:] for r in arch}
+    """Сверка архива со строками БД по общим меткам времени.
+
+    Цены архива округляются до 4 знаков — точности market_data_5m
+    (NUMERIC(18,4)); иначе у копеечных бумаг (TGKA ≈ 0,006 ₽) расходится всё.
+    """
+    a = {r[0]: tuple(round(float(x), 4) for x in r[1:5]) + (r[5],) for r in arch}
     b = {r[0]: tuple(float(x) for x in r[1:]) for r in db}
     common = sorted(set(a) & set(b))
     ohlc = vol = 0
