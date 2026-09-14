@@ -19,13 +19,19 @@ Telegram Desktop — каталог с файлами messages.html, messages2.h
 
 ГРАНИЦА КОНТУРА та же, что у сборщика: это данные, в скоринг и заявки они не идут.
 
+CSV (id,date,sender,text,has_media,media_path) — выгрузка сторонним экспортёром:
+дата в ISO с «Z» (UTC), текст — сырой, с переносами строк. Текст приводится тем
+же _clean, ссылки берутся из текста (кроме t.me), просмотров нет.
+
 Запуск:
     python3 -m services.news_tg_import ~/Downloads/ChatExport_MarketTwits --channel markettwits
+    python3 -m services.news_tg_import ~/Downloads/messages.csv --channel markettwits
     python3 -m services.news_tg_import DIR --channel markettwits --dry-run
 """
 from __future__ import annotations
 
 import argparse
+import csv
 import datetime as dt
 import glob
 import logging
@@ -174,6 +180,40 @@ def parse_file(path: str, channel: str, tz: dt.tzinfo) -> tuple[list[dict], int]
     return p.posts, p.skipped_no_date
 
 
+_URL = re.compile(r"https?://[^\s<>\"'«»)\]]+")
+_TRUE = {"true", "1", "yes", "да"}
+
+
+def parse_csv(path: str, channel: str, tz: dt.tzinfo) -> tuple[list[dict], int]:
+    """Посты из CSV-выгрузки. Возвращает (посты, пропущено строк без id/даты)."""
+    csv.field_size_limit(sys.maxsize)
+    posts: list[dict] = []
+    skipped = 0
+    with open(path, encoding="utf-8-sig", newline="") as f:
+        for row in csv.DictReader(f):
+            try:
+                mid = int(row["id"])
+                ts = dt.datetime.fromisoformat(str(row["date"]).strip().replace("Z", "+00:00"))
+            except (KeyError, TypeError, ValueError):
+                skipped += 1
+                continue
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=tz)
+            raw = row.get("text") or ""
+            links = [u.rstrip(".,;:!?") for u in _URL.findall(raw) if "//t.me/" not in u]
+            posts.append({"channel": channel, "message_id": mid, "posted_at": ts,
+                          "text": _clean(raw), "views": None, "links": links,
+                          "has_media": str(row.get("has_media", "")).strip().lower() in _TRUE})
+    return posts, skipped
+
+
+def export_sources(path: str) -> list[str]:
+    """Файл .csv — сам по себе; каталог — его messages*.html."""
+    if os.path.isfile(path) and path.lower().endswith(".csv"):
+        return [path]
+    return export_files(path)
+
+
 def export_files(directory: str) -> list[str]:
     """messages.html, messages2.html, … в порядке номеров."""
     def num(path: str) -> int:
@@ -203,7 +243,7 @@ def save_history(conn, posts: list[dict], *, page_size: int = 1000) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Импорт выгрузки Telegram Desktop в news.tg_posts")
-    ap.add_argument("directory", help="каталог выгрузки с messages*.html")
+    ap.add_argument("directory", help="каталог выгрузки с messages*.html или файл .csv")
     ap.add_argument("--channel", required=True, help="имя канала, как в t.me (markettwits)")
     ap.add_argument("--tz", default="Europe/Moscow",
                     help="пояс времени выгрузки, если в title его нет (по умолчанию MSK)")
@@ -211,9 +251,9 @@ def main(argv: list[str] | None = None) -> int:
     a = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
-    files = export_files(os.path.expanduser(a.directory))
+    files = export_sources(os.path.expanduser(a.directory))
     if not files:
-        log.error("в %s нет файлов messages*.html", a.directory)
+        log.error("в %s нет файлов messages*.html (и это не файл .csv)", a.directory)
         return 1
     tz = ZoneInfo(a.tz)
     channel = a.channel.strip().lstrip("@")
@@ -229,14 +269,20 @@ def main(argv: list[str] | None = None) -> int:
     lo = hi = None
     try:
         for path in files:
-            posts, skipped = parse_file(path, channel, tz)
+            parse = parse_csv if path.lower().endswith(".csv") else parse_file
+            posts, skipped = parse(path, channel, tz)
             total += len(posts)
             no_date += skipped
             if posts:
                 ids = [p["message_id"] for p in posts]
                 lo = min(ids + ([lo] if lo is not None else []))
                 hi = max(ids + ([hi] if hi is not None else []))
-            n = 0 if a.dry_run else save_history(conn, posts)
+            n = 0
+            if not a.dry_run:
+                # CSV — один файл на 200 тысяч постов: пачками, чтобы транзакция
+                # и память не росли без предела.
+                for i in range(0, len(posts), 5000):
+                    n += save_history(conn, posts[i:i + 5000])
             new += n
             log.info("%s: постов %d%s", os.path.basename(path), len(posts),
                      "" if a.dry_run else f", новых {n}")

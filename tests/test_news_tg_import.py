@@ -170,5 +170,47 @@ class TestFilesAndSql(unittest.TestCase):
         self.assertIsNone(imp._row(posts[5])[5])        # пустой список → NULL
 
 
+CSV = ('id,date,sender,text,has_media,media_path\n'
+       '"384392","2026-09-10T20:51:30.000Z","MarketTwits","❗️🛢#нефть #логистика \n'
+       'ETF на ставки фрахта (#BWET) — https://example.com/a. и https://t.me/markettwits/1",'
+       '"true",""\n'
+       '"384391","2026-09-10T20:43:51.000Z","MarketTwits","","true",""\n'
+       '"oops","2026-09-10T20:00:00.000Z","MarketTwits","битая строка","false",""\n'
+       '"178855","2022-02-16 06:23:54","MarketTwits","КАЛЕНДАРЬ","false",""\n')
+
+
+class TestCsv(unittest.TestCase):
+
+    def parse(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "messages.csv")
+            with open(p, "w", encoding="utf-8") as f:
+                f.write(CSV)
+            self.assertEqual(imp.export_sources(p), [p])
+            return imp.parse_csv(p, "markettwits", MSK)
+
+    def test_rows_parsed_bad_row_skipped(self):
+        posts, skipped = self.parse()
+        self.assertEqual([p["message_id"] for p in posts], [384392, 384391, 178855])
+        self.assertEqual(skipped, 1)
+
+    def test_utc_z_and_naive_tz(self):
+        posts, _ = self.parse()
+        by = {p["message_id"]: p for p in posts}
+        self.assertEqual(by[384392]["posted_at"],
+                         dt.datetime(2026, 9, 10, 20, 51, 30, tzinfo=dt.timezone.utc))
+        # без пояса — берётся --tz (MSK): 06:23:54 MSK = 03:23:54 UTC
+        self.assertEqual(by[178855]["posted_at"].astimezone(dt.timezone.utc).hour, 3)
+
+    def test_text_links_media_like_collector(self):
+        posts, _ = self.parse()
+        by = {p["message_id"]: p for p in posts}
+        self.assertTrue(by[384392]["text"].startswith("❗️🛢#нефть #логистика\nETF"))
+        self.assertEqual(by[384392]["links"], ["https://example.com/a"])   # без t.me и точки
+        self.assertTrue(by[384392]["has_media"])
+        self.assertIsNone(by[384391]["text"])                              # пустой → NULL
+        self.assertFalse(by[178855]["has_media"])
+
+
 if __name__ == "__main__":
     unittest.main()
