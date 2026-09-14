@@ -207,6 +207,30 @@ class TestListing(unittest.TestCase):
         self.assertIsNone(tr.choose_listing([{"ticker": "LQDT", "uid": "x"}], "TMON"))
 
 
+class TestEnvParsing(unittest.TestCase):
+    """14.09: «TREASURY_CLASS_CODE=   # пусто …» — python-dotenv 1.2 отдал
+    комментарий как значение, листинг фонда не нашёлся."""
+
+    def test_class_code_ignores_inline_comment(self):
+        import importlib
+        try:
+            with mock.patch.dict(os.environ, {"TREASURY_CLASS_CODE": "# пусто — комментарий"}):
+                self.assertEqual(importlib.reload(config).TREASURY_CLASS_CODE, "")
+            with mock.patch.dict(os.environ, {"TREASURY_CLASS_CODE": "SPBRU  # явно"}):
+                self.assertEqual(importlib.reload(config).TREASURY_CLASS_CODE, "SPBRU")
+        finally:
+            importlib.reload(config)
+
+    def test_env_example_has_no_empty_value_with_inline_comment(self):
+        import re
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        with open(os.path.join(root, ".env.example"), encoding="utf-8") as f:
+            bad = [line.split("=", 1)[0] for line in f
+                   if re.match(r"^[A-Z0-9_]+=\s+#", line)]
+        self.assertEqual(bad, [], "пустое значение с комментарием в строке: "
+                                  "python-dotenv возьмёт комментарий как значение")
+
+
 class TestCardLine(unittest.TestCase):
 
     def test_format_from_spec(self):

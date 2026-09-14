@@ -748,7 +748,9 @@ TREASURY_TICKER = os.getenv("TREASURY_TICKER", "TMON")
 # Класс листинга. Пусто — первый листинг фонда, доступный через API: у TMON на
 # Мосбирже (TQBR, TQTF) apiTradeAvailableFlag=false, через API торгуется TMON@
 # на СПБ бирже (SPBRU). Недоступный класс в песочнице → виртуальный реестр.
-TREASURY_CLASS_CODE = os.getenv("TREASURY_CLASS_CODE", "")
+# «# …» отрезается: python-dotenv 1.2 при пустом значении с комментарием в той
+# же строке отдаёт сам комментарий как значение (14.09 листинг так и не нашёлся).
+TREASURY_CLASS_CODE = os.getenv("TREASURY_CLASS_CODE", "").split("#", 1)[0].strip()
 # Неснижаемый остаток свободного кэша на комиссии, округление лотов и вариационку
 TREASURY_CASH_BUFFER_RUB = float(os.getenv("TREASURY_CASH_BUFFER_RUB", "1000.0"))
 # Минимальная сумма для покупки TMON (не гонять ордера ради 100 рублей)
