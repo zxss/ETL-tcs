@@ -15,9 +15,11 @@
 | выход дневного шорта (фаза 18:20)       | close бара 18:15| close бара 18:15|
 | вход вечером (фаза 18:35)               | close бара 18:30| close бара 18:30|
 
-Утренняя сессия — по данным брокера (первая сделка дневного бара): с октября
-2024 около 07:00, с февраля 2025 — 06:50; с 14.09.2026 в расписании её нет
-(T-Invest TradingSchedules, сверено 14.09). Выходная сессия — факт наличия
+Утренняя сессия акций — по данным (research/session_timing, первая сделка по
+корзине из 10 бумаг): с 14.08.2024 около 07:00, с февраля 2025 — 06:50. С 14.09.2026
+TradingSchedules показывает только основную (аукцион 09:00, торги с 09:10), но
+сделки с 06:50 идут и 14–15.09 (5–24 % объёма дня до 09:00): утренняя сессия
+осталась, сдвинулось начало основной. Выходная сессия — факт наличия
 баров в субботу или воскресенье; регламент по датам здесь не зашит, потому что
 её наличие проверяется по данным.
 
@@ -29,7 +31,7 @@ import datetime as dt
 from dataclasses import dataclass
 
 NEW_SCHEDULE_FROM = dt.date(2026, 9, 14)
-_MORNING_FROM = dt.date(2024, 10, 1)
+_MORNING_FROM = dt.date(2024, 8, 14)
 
 SHORT_EXIT_BAR = dt.time(18, 15)       # close бара 18:15 — цена фазы 18:20
 EVENING_ENTRY_BAR = dt.time(18, 30)    # close бара 18:30 — цена фазы 18:35
@@ -68,7 +70,7 @@ def session(day: dt.date) -> Session:
     weekend = day.weekday() >= 5
     if day >= NEW_SCHEDULE_FROM:
         return Session(day, dt.time(9, 0), dt.time(9, 10), dt.time(18, 54),
-                       morning=False, weekend=weekend)
+                       morning=True, weekend=weekend)
     return Session(day, dt.time(9, 50), dt.time(10, 0), dt.time(18, 40),
                    morning=day >= _MORNING_FROM, weekend=weekend)
 

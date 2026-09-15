@@ -139,7 +139,7 @@ class TestSessionCalendar(unittest.TestCase):
     def test_morning_and_weekend_flags(self):
         self.assertFalse(sc.session(dt.date(2024, 6, 3)).morning)
         self.assertTrue(sc.session(dt.date(2025, 3, 3)).morning)
-        self.assertFalse(sc.session(dt.date(2026, 9, 14)).morning)
+        self.assertTrue(sc.session(dt.date(2026, 9, 14)).morning)      # сделки с 06:50 и после смены часов
         self.assertTrue(sc.session(dt.date(2025, 3, 1)).weekend)
 
     def test_expected_main_bars(self):
