@@ -1,0 +1,18 @@
+# Теневой журнал правила Спринта 1 (ветка r4, исследовательская копия /opt/etl-r4).
+#
+# Установка (от root):
+#   install -o root -g root -m 644 scripts/r4_shadow_crontab /etc/cron.d/etl-r4-shadow
+# Проверка:  cat /etc/cron.d/etl-r4-shadow
+# Снять:     rm /etc/cron.d/etl-r4-shadow
+#
+# Отдельный файл в /etc/cron.d: торговое расписание r3 (crontab -u etl) не
+# трогается. Только чтение БД и запись в audit/ исследовательской копии; заявок нет.
+#
+# 20:10 по будням: 5-минутки дня загружает etl-pipeline.timer (~19:31). Каждый
+# прогон добирает последние 5 дней, поэтому опоздавшие данные не теряются.
+
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+MAILTO=""
+
+10 20 * * 1-5  etl  cd /opt/etl-r4 && /opt/etl-tcs/.venv/bin/python -m research.sprint1_shadow >> /opt/etl-r4/audit/r4_research/sprint1/shadow/cron.log 2>&1
