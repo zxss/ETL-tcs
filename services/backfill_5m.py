@@ -60,9 +60,9 @@ RETURNING 1
 # Куда писать. research_bars_5m — отложенная история для исследований (Спринт 1,
 # 2022 → 20.05.2024): отдельно от market_data_5m, чтобы её никто не «видел»
 # до проверки и чтобы прод её не читал.
-TABLES = ("market_data_5m", "research_bars_5m")
+TABLES = ("market_data_5m", "research_bars_5m", "research_fut_5m")
 CREATE_RESEARCH_SQL = """
-CREATE TABLE IF NOT EXISTS research_bars_5m (
+CREATE TABLE IF NOT EXISTS {table} (
     id      BIGSERIAL PRIMARY KEY,
     ticker  VARCHAR(10)    NOT NULL,
     ts      TIMESTAMPTZ    NOT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS research_bars_5m (
     low     NUMERIC(18, 6) NOT NULL,
     close   NUMERIC(18, 6) NOT NULL,
     volume  BIGINT         NOT NULL DEFAULT 0,
-    CONSTRAINT uq_research_bars_5m UNIQUE (ticker, ts)
+    CONSTRAINT uq_{table} UNIQUE (ticker, ts)
 );
 """
 
@@ -88,9 +88,10 @@ def state_path_for(table: str) -> str:
 
 
 def ensure_table(conn, table: str) -> None:
-    if _table(table) == "research_bars_5m":
+    """Исследовательские таблицы (research_bars_5m, research_fut_5m) создаются по запросу."""
+    if _table(table) != "market_data_5m":
         with conn.cursor() as cur:
-            cur.execute(CREATE_RESEARCH_SQL)
+            cur.execute(CREATE_RESEARCH_SQL.format(table=table))
         conn.commit()
 
 
