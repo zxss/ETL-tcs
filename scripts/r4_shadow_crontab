@@ -16,3 +16,5 @@ PATH=/usr/local/bin:/usr/bin:/bin
 MAILTO=""
 
 10 20 * * 1-5  etl  cd /opt/etl-r4 && /opt/etl-tcs/.venv/bin/python -m research.sprint1_shadow >> /opt/etl-r4/audit/r4_research/sprint1/shadow/cron.log 2>&1
+# «Золотая ночь» (2B_gold, Спринт 2): сделка входа D пишется вечером дня выхода.
+15 20 * * 1-5  etl  cd /opt/etl-r4 && /opt/etl-tcs/.venv/bin/python -m research.sprint2_shadow >> /opt/etl-r4/audit/r4_research/sprint2/shadow/cron.log 2>&1

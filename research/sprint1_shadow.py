@@ -105,20 +105,20 @@ def _key(r: dict) -> tuple:
     return (str(r["message_id"]), r["ticker"], r["variant"])
 
 
-def merge_journal(rows: list[dict], path: str = JOURNAL) -> int:
+def merge_journal(rows: list[dict], path: str = JOURNAL, fields: list[str] = FIELDS, key=_key) -> int:
     """Дописывает новые строки; уже записанные (по ключу) пропускает."""
     seen = set()
     if os.path.exists(path):
         with open(path, encoding="utf-8") as f:
-            seen = {_key(r) for r in csv.DictReader(f)}
-    new = [r for r in rows if _key(r) not in seen]
+            seen = {key(r) for r in csv.DictReader(f)}
+    new = [r for r in rows if key(r) not in seen]
     if not new:
         return 0
     os.makedirs(os.path.dirname(path), exist_ok=True)
     fresh = not os.path.exists(path)
     now = dt.datetime.now().isoformat(timespec="seconds")
     with open(path, "a", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=FIELDS)
+        w = csv.DictWriter(f, fieldnames=fields)
         if fresh:
             w.writeheader()
         for r in new:
