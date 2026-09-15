@@ -5,7 +5,11 @@
 Сервис держит его в паях фонда денежного рынка (по умолчанию TMON) и
 высвобождает ровно столько, сколько нужно под покупки:
 
-    CLOSE     09:10  park_idle_cash()                  весь кэш сверх буфера → фонд
+    CLOSE     09:10  park_idle_cash()                  весь кэш сверх буфера → фонд (до 10:00
+                                                       TMON@ закрыт для API → виртуально)
+    PARK      10:05  park_limit()                      реальная покупка лимиткой после
+                                                       открытия СПБ; виртуальные паи CLOSE
+                                                       переводятся в реальные
     CLEANUP   18:20  restore_buffer()                  рубли ушли в минус → продать паи до буфера
     OVERNIGHT 18:35  release_cash_for_overnight(сумма) продать паи под ночные лонги
 
@@ -33,7 +37,7 @@ import math
 import time
 
 import config
-from services.broker.base import BrokerError, Instrument
+from services.broker.base import BrokerError, Instrument, Quotation
 from services.broker.tinkoff_base import new_order_id
 
 log = logging.getLogger("treasury")
@@ -65,6 +69,17 @@ def lots_to_sell(deficit_rub: float, lot_price_rub: float) -> int:
     if deficit_rub <= 0 or not lot_price_rub or lot_price_rub <= 0:
         return 0
     return math.ceil(deficit_rub * (1.0 + SELL_RESERVE) / lot_price_rub)
+
+
+def limit_buy_price(last_price: float, max_premium_pct: float, tick: float) -> float:
+    """Цена лимитной покупки: не выше последней сделки + max_premium_pct %,
+    округление ВНИЗ к шагу цены — чтобы лимит никогда не вышел за потолок."""
+    from decimal import ROUND_FLOOR, Decimal
+    if not last_price or last_price <= 0:
+        raise ValueError(f"нет последней цены: {last_price}")
+    cap = Decimal(str(last_price)) * (Decimal(1) + Decimal(str(max_premium_pct)) / Decimal(100))
+    step = Decimal(str(tick)) if tick and tick > 0 else Decimal("0.000000001")
+    return float((cap / step).to_integral_value(rounding=ROUND_FLOOR) * step)
 
 
 def order_cost_rub(o) -> float:
@@ -207,6 +222,10 @@ class TreasuryService:
         return float(getattr(config, "TREASURY_MIN_SWEEP_RUB", 2000.0))
 
     @property
+    def max_premium_pct(self) -> float:
+        return float(getattr(config, "TREASURY_LIMIT_MAX_PREMIUM_PCT", 0.05))
+
+    @property
     def sandbox(self) -> bool:
         return self.env == "SANDBOX"
 
@@ -294,6 +313,66 @@ class TreasuryService:
         log.info("[TREASURY] Припарковано %.2f ₽ в %s (%d шт)%s",
                  out["amount_rub"], self.ticker, done["lots"],
                  " — виртуально" if done["mode"] == "virtual" else "")
+        return out
+
+    # ── PARK 10:05: реальная покупка лимиткой ──
+
+    def _short_proceeds_rub(self) -> float:
+        """Выручка открытых шортов по акциям. Эти рубли уйдут брокеру при откупе
+        в CLEANUP — парковать их в фонд нельзя."""
+        fund = self.instrument().instrument_uid
+        total = 0.0
+        for p in self.broker.get_positions(self.account_id):
+            if p.instrument_uid == fund or p.balance_shares >= 0:
+                continue
+            price = self.broker.get_last_price(p.instrument_uid)
+            if not price:
+                raise BrokerError(f"нет цены открытого шорта {p.instrument_uid}")
+            total += abs(float(p.balance_shares)) * float(price)
+        return total
+
+    def park_limit(self) -> dict:
+        """Шаг PARK (10:05, после открытия СПБ): реальная покупка паёв лимиткой.
+
+        Лимит — не дороже последней сделки + TREASURY_LIMIT_MAX_PREMIUM_PCT, вниз к
+        шагу цены: в первую минуту торгов бывают выбросы (15.09: 161,00–165,20 при
+        цене 164,3), рыночная заявка собрала бы их. Покупается весь реальный
+        свободный кэш сверх буфера, кроме выручки открытых шортов. Виртуальные паи,
+        записанные утром в CLOSE, после исполнения покупки списываются ПО
+        СЕБЕСТОИМОСТИ: их место заняли реальные, а виртуальный «доход» с 09:10 на
+        счёт не поступал. Виртуальной записи здесь нет: не исполнилось — рубли
+        остаются рублями, виртуальные паи — виртуальными.
+        """
+        out = {"requested_lots": 0, "lots": 0, "amount_rub": 0.0, "converted_lots": 0,
+               "limit_price": None, "reason": None}
+        inst = self.instrument()
+        if not self.tradable():
+            out["reason"] = f"{inst.ticker}: листинг недоступен через API"
+            return out
+        st = self.get_treasury_state()
+        last = self.broker.get_last_price(inst.instrument_uid)
+        if not last:
+            raise BrokerError(f"{inst.ticker}: нет последней цены")
+        limit = limit_buy_price(float(last), self.max_premium_pct,
+                                inst.min_price_increment.as_float())
+        free = st["cash_rub"] - self._short_proceeds_rub()
+        lots = sweep_lots(free, limit * int(inst.lot or 1),
+                          buffer_rub=self.buffer, min_sweep_rub=self.min_sweep)
+        out.update(limit_price=limit, requested_lots=lots)
+        if lots <= 0:
+            out["reason"] = (f"свободно {free:.2f} ₽ — сверх буфера {self.buffer:.0f} ₽ "
+                             f"меньше порога {self.min_sweep:.0f} ₽")
+            return out
+        done, price, oid = self._limit("BUY", lots, limit)
+        self._journal("broker", "BUY", done, price, "park", order_id=oid)
+        out.update(lots=done, amount_rub=round(done * price, 2))
+        vlots, vcost = st["virtual_lots"], st["virtual_cost_rub"]
+        if vlots > 0:
+            self._journal("virtual", "SELL", vlots, vcost / vlots, "convert")
+            out["converted_lots"] = vlots
+        log.info("[TREASURY] PARK: куплено %d из %d шт %s по лимиту %.2f (%.2f ₽); "
+                 "виртуальных списано %d", done, lots, self.ticker, limit,
+                 out["amount_rub"], out["converted_lots"])
         return out
 
     # ── UNPARK ──
@@ -395,6 +474,23 @@ class TreasuryService:
         key = new_order_id()
         st = self.broker.post_market_order(account_id=self.account_id, instrument=inst,
                                            direction=side, quantity_lots=lots, order_id=key)
+        return self._await_fill(st, key, side, lots)
+
+    def _limit(self, side: str, lots: int, price: float) -> tuple[int, float, str]:
+        """Лимитная заявка по цене price (за штуку, уже на шаге цены) и ожидание
+        исполнения до FILL_TIMEOUT_SEC; неисполненный остаток снимается."""
+        inst = self.instrument()
+        key = new_order_id()
+        st = self.broker.post_limit_order(
+            account_id=self.account_id, instrument=inst, direction=side,
+            quantity_lots=lots, price=Quotation.from_float(price, inst.min_price_increment),
+            order_id=key)
+        return self._await_fill(st, key, side, lots)
+
+    def _await_fill(self, st, key: str, side: str, lots: int) -> tuple[int, float, str]:
+        """Ожидание исполнения по id брокера; остаток снимается. Возвращает
+        (исполнено лотов, цена лота, id заявки у брокера)."""
+        inst = self.instrument()
         oid = getattr(st, "order_id", None) or key
         deadline = time.monotonic() + FILL_TIMEOUT_SEC
         while True:

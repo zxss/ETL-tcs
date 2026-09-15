@@ -6,6 +6,7 @@
     PREP      08:45  считает сигналы и ЗАМОРАЖИВАЕТ план на диске; заявок не ставит
     CLOSE     09:10  закрывает ночные позиции (хотфикс 11.09)
     ORDER     09:15  исполняет замороженный план; ничего не пересчитывает
+    PARK      10:05  казначейство после открытия СПБ: паи TMON@ лимиткой (15.09)
     CLEANUP   18:20  закрывает внутридневные позиции, снимает незалившиеся лимитки
     OVERNIGHT 18:35  пересчитывает только long_overnight и ставит ночные заявки
 
@@ -13,8 +14,10 @@
 (до этого PREP 09:45, CLOSE 10:00, ORDER 10:05 под открытие в 10:00).
 
 Казначейство (services/treasury.py): CLOSE паркует свободный кэш сверх буфера
-в фонд денежного рынка, CLEANUP гасит минус по рублям продажей паёв, OVERNIGHT
-продаёт паи ровно под ночную корзину до заявок по акциям.
+в фонд денежного рынка (до 10:00 листинг TMON@ закрыт для API — виртуально),
+PARK в 10:05 покупает паи реально лимитной заявкой и переводит виртуальные в
+реальные, CLEANUP гасит минус по рублям продажей паёв, OVERNIGHT продаёт паи
+ровно под ночную корзину до заявок по акциям.
 
 Почему план замораживается (§3): между PREP и ORDER проходит полчаса, за
 которые меняются якорная цена, реализованная часть дневного хода и результат
@@ -26,7 +29,7 @@
 сохранность данных и воспроизводимость, а не прибыльность.
 
 Запуск:
-    python3 -m services.stage2_demo prep|order|cleanup|overnight
+    python3 -m services.stage2_demo prep|close|order|park|cleanup|overnight
     python3 -m services.stage2_demo status
     python3 -m services.stage2_demo resume        # снять блокировку после FAIL
 """
@@ -51,6 +54,9 @@ log = logging.getLogger("stage2")
 
 MSK = dt.timezone(dt.timedelta(hours=3))
 PHASES = ("PREP", "CLOSE", "ORDER", "CLEANUP", "OVERNIGHT")
+# Вспомогательные фазы: их каталоги учитываются (_run_dirs_for_day), но их
+# отсутствие торговый день не портит — это казначейство, а не торговля.
+AUX_PHASES = ("PARK",)
 
 PASS, PASS_WARN, FAIL = "PASS", "PASS_WITH_WARNINGS", "FAIL"
 # Часть действий не выполнена (брокер отбил заявки), но фаза не провалена:
@@ -129,7 +135,7 @@ _CONFIG_KEYS = (
     "TFT_EPOCHS", "TFT_HIDDEN", "WEEK_HORIZON_DAYS", "INCLUDE_WEEKEND_TRADING",
     "STAGE2_TARGET_DAYS", "STAGE2_ALLOW_DATASET_DRIFT",
     "TREASURY_ENABLED", "TREASURY_TICKER", "TREASURY_CLASS_CODE",
-    "TREASURY_CASH_BUFFER_RUB", "TREASURY_MIN_SWEEP_RUB",
+    "TREASURY_CASH_BUFFER_RUB", "TREASURY_MIN_SWEEP_RUB", "TREASURY_LIMIT_MAX_PREMIUM_PCT",
 )
 
 
@@ -260,7 +266,7 @@ def _run_dirs_for_day(day: dt.date) -> dict[str, str]:
         if not name.startswith(prefix) or "-" not in name:
             continue
         phase = name.rsplit("-", 1)[-1]
-        if phase in PHASES:
+        if phase in PHASES or phase in AUX_PHASES:
             out[phase] = os.path.join(runs, name)      # последний по времени
     return out
 
@@ -282,6 +288,10 @@ _PHASE_FIELDS = {
               ("orders_cancelled", "снято ночных лимиток"),
               ("registry_reconciled", "сверено записей реестра"),
               ("treasury_parked_rub", "припарковано в фонд, ₽")),
+    "PARK": (("treasury_parked_lots", "куплено паёв"),
+             ("treasury_parked_rub", "припарковано в фонд, ₽"),
+             ("treasury_converted_lots", "переведено из виртуальных, паёв"),
+             ("treasury_limit_price", "лимит цены, ₽")),
 }
 
 
@@ -970,7 +980,10 @@ def phase_cleanup(*, now: dt.datetime | None = None, prod: bool = False,
             try:
                 tr = _treasury(broker, account_id, env, conn, writer, run_id)
                 st = tr.get_treasury_state()
-                ref = _treasury_lots_at(day, "CLOSE")
+                # сверка с последним утренним шагом казначейства: PARK, иначе CLOSE
+                ref = _treasury_lots_at(day, "PARK")
+                if ref is None:
+                    ref = _treasury_lots_at(day, "CLOSE")
                 if ref is not None:
                     res.check(st["tmon_lots"] == ref,
                               f"паи {tr.ticker} изменились за день без участия "
@@ -1326,6 +1339,80 @@ def phase_close(*, now: dt.datetime | None = None, prod: bool = False,
     except Exception as e:                       # noqa: BLE001
         log.exception("[CLOSE] сбой: %s", e)
         res.check(False, f"{type(e).__name__}: {e}")
+    finally:
+        fp.close()
+        conn.close()
+    return _finish(res, state)
+
+
+def phase_park(*, now: dt.datetime | None = None, prod: bool = False,
+               dry_run: bool = False) -> int:
+    """Казначейство после открытия СПБ (10:05, решение пользователя 15.09).
+
+    TMON@ — единственный листинг фонда, доступный через API, — торгуется на СПБ
+    с 10:00: в 09:10 CLOSE получает «через API: нет» и паркует виртуально. Здесь
+    паи покупаются реально, строго лимитной заявкой не дороже последней сделки +
+    TREASURY_LIMIT_MAX_PREMIUM_PCT, а виртуальные паи из CLOSE после исполнения
+    покупки списываются. Первая минута торгов пропускается: 15.09 в 10:00
+    проходили сделки 161,00–165,20 при цене 164,3.
+
+    Сбой казначейства торговлю не останавливает: паи не куплены — рубли лежат на
+    счёте, виртуальный учёт сохраняется. Критичны только предполётные проверки.
+    """
+    guard = _common_guards("PARK", now=now)
+    if isinstance(guard, int):
+        return guard
+    state, day = guard
+
+    from services.broker.base import BrokerError
+    from services.place_orders import _make_broker_and_account, _open_log
+
+    run_id = new_run_id("PARK", now)
+    run_dir = make_run_dir(run_id)
+    res = PhaseResult("PARK", run_id, run_dir)
+    log.info("[PARK] %s, торговый день %s", run_id, day)
+    if not _treasury_enabled():
+        res.skipped = "TREASURY_ENABLED=0"
+        return _finish(res, state)
+
+    conn = database.get_connection()
+    writer, fp = _open_log()
+    try:
+        broker, account_id, env = _make_broker_and_account(prod)
+        preflight(res, env=env, prod_flag=prod)
+        if res.errors:
+            return _finish(res, state)           # вне SANDBOX заявок не шлём
+        _snapshot_account(broker, account_id, run_dir, run_id, "PARK", "before")
+        try:
+            tr = _treasury(broker, account_id, env, conn, writer, run_id)
+            if dry_run:
+                st = tr.get_treasury_state()
+                log.info("[PARK][DRY] через API: %s, рублей %.2f, виртуальных паёв %d",
+                         "да" if tr.tradable() else "нет", st["cash_rub"], st["virtual_lots"])
+            elif not tr.tradable():
+                res.check(False, f"{tr.instrument().ticker}: листинг недоступен через API — "
+                                 "паи не куплены, виртуальный учёт сохранён", critical=False)
+            else:
+                try:
+                    out = tr.park_limit()
+                except BrokerError as e:
+                    res.partial_fail(f"покупка паёв не исполнена: {e}")
+                else:
+                    res.data.update(treasury_parked_lots=out["lots"],
+                                    treasury_parked_rub=out["amount_rub"],
+                                    treasury_converted_lots=out["converted_lots"],
+                                    treasury_limit_price=out["limit_price"])
+                    if out["reason"]:
+                        log.info("[PARK] %s", out["reason"])
+                    if out["requested_lots"] and out["lots"] < out["requested_lots"]:
+                        res.partial_fail(f"паёв куплено {out['lots']} из {out['requested_lots']}")
+            res.data["treasury"] = _treasury_brief(tr.get_treasury_state())
+        except Exception as e:                   # noqa: BLE001
+            res.check(False, f"казначейство: {e}", critical=False)
+        _snapshot_account(broker, account_id, run_dir, run_id, "PARK", "after")
+    except Exception as e:                       # noqa: BLE001
+        log.exception("[PARK] сбой: %s", e)
+        res.check(False, f"{type(e).__name__}: {e}", critical=False)
     finally:
         fp.close()
         conn.close()
@@ -1716,7 +1803,7 @@ def main(argv: list[str] | None = None) -> int:
         datefmt="%Y-%m-%d %H:%M:%S")
     p = argparse.ArgumentParser(
         description="Этап 2: функциональный тест на демо-счёте (STAGE2-DEMO-TZ.md)")
-    p.add_argument("phase", choices=["prep", "close", "order", "cleanup", "overnight",
+    p.add_argument("phase", choices=["prep", "close", "order", "park", "cleanup", "overnight",
                                      "protect", "status", "resume"])
     p.add_argument("--dry-run", action="store_true",
                    help="пройти фазу без отправки заявок брокеру")
@@ -1732,7 +1819,8 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_protect(prod=args.prod)
 
     fn = {"prep": phase_prep, "close": phase_close, "order": phase_order,
-          "cleanup": phase_cleanup, "overnight": phase_overnight}[args.phase]
+          "park": phase_park, "cleanup": phase_cleanup,
+          "overnight": phase_overnight}[args.phase]
     kw = {"prod": args.prod}
     if args.phase != "prep":
         kw["dry_run"] = args.dry_run
