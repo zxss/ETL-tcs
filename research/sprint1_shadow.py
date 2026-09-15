@@ -16,6 +16,8 @@
 Каждый прогон добирает последние 5 календарных дней: если 5-минутки дня
 загрузились поздно, сделка попадёт в журнал следующим вечером.
 Текстов постов в журнале нет (репозиторий публичный).
+IMOEX прод-конвейер в market_data_5m не пишет (там только ручная загрузка
+backfill_5m), поэтому 5-минутки индекса берутся из GetCandles в память.
 
 Запуск (на сервере): python -m research.sprint1_shadow [--day YYYY-MM-DD]
 Крон: scripts/r4_shadow_crontab → /etc/cron.d/etl-r4-shadow.
@@ -23,6 +25,7 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import csv
 import datetime as dt
 import json
@@ -52,6 +55,29 @@ SUMMARY = os.path.join(SHADOW_DIR, "summary.md")
 VARIANTS = (("main", es.LAG_REACTION), ("lag10", es.LAG_TRADE))
 FIELDS = ["date", "variant", "message_id", "ticker", "posted", "t0", "p0", "move", "ar",
           "cost", "net_short", "sentiment", "logged_at"]
+
+
+def bars_from_candles(rows: list[tuple]) -> es.Bars | None:
+    """Свечи GetCandles (ts ISO UTC, open, high, low, close, volume) → Bars по Москве."""
+    if not rows:
+        return None
+    msk = dt.timezone(dt.timedelta(hours=3))
+    tm = [dt.datetime.fromisoformat(r[0].replace("Z", "+00:00")).astimezone(msk).replace(tzinfo=None)
+          for r in rows]
+    return es.Bars(tm, [float(r[1]) for r in rows], [float(r[4]) for r in rows])
+
+
+async def _index_candles(d_from: dt.date, d_to: dt.date) -> list[tuple]:
+    from loaders import moex_loader
+    from services import backfill_5m as bf
+    end = min(dt.datetime.combine(d_to + dt.timedelta(days=1), dt.time(), bf.MSK), dt.datetime.now(bf.MSK))
+    async with bf._session() as s:
+        uid = await bf.find_uid(s, es.INDEX, index=True)
+        return await moex_loader.fetch_5m_candles(s, uid, dt.datetime.combine(d_from, dt.time(), bf.MSK), end)
+
+
+def index_bars(d_from: dt.date, d_to: dt.date) -> es.Bars | None:
+    return bars_from_candles(asyncio.run(_index_candles(d_from, d_to)))
 
 
 def day_trades(ev: pd.DataFrame, bars_of: dict, idx: es.Bars, tdays: list[dt.date],
@@ -142,9 +168,9 @@ def run(day: dt.date) -> int:
         tickers = sorted(set(ev["ticker"])) if len(ev) else []
         lo = days[0] - dt.timedelta(days=2 * LOOKBACK_DAYS)
         bars_of = es.load_bars(conn, "market_data_5m", tickers, lo, day) if tickers else {}
-        idx = es.load_bars(conn, "market_data_5m", [es.INDEX], lo, day).get(es.INDEX)
     finally:
         conn.close()
+    idx = index_bars(lo, day)
     if idx is None:
         log.warning("нет 5-минуток %s — прогон пропущен", es.INDEX)
         return 0

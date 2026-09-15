@@ -57,6 +57,16 @@ class TestDayTrades(unittest.TestCase):
         self.assertEqual({r["message_id"] for r in nxt if r["variant"] == "main"}, {4})
 
 
+class TestIndexCandles(unittest.TestCase):
+
+    def test_utc_candles_to_moscow_bars(self):
+        b = sh.bars_from_candles([("2026-09-16T06:10:00Z", 2900.0, 2905.0, 2899.0, 2901.0, 5),
+                                  ("2026-09-16T06:15:00Z", 2901.0, 2902.0, 2900.0, 2902.5, 3)])
+        self.assertEqual(b.price_at(dt.datetime(2026, 9, 16, 9, 10)), 2900.0)
+        self.assertEqual(b.close_at(dt.datetime(2026, 9, 16, 9, 15)), 2902.5)
+        self.assertIsNone(sh.bars_from_candles([]))
+
+
 class TestJournal(unittest.TestCase):
 
     def test_merge_is_idempotent_and_summary(self):
