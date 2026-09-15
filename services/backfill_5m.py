@@ -51,11 +51,47 @@ ARCHIVE_RETRIES = 5
 STATE_PATH = os.path.join(ROOT, "audit", "backfill_5m", "state.json")
 
 INSERT_5M_SQL = """
-INSERT INTO market_data_5m (ticker, ts, open, high, low, close, volume)
+INSERT INTO {table} (ticker, ts, open, high, low, close, volume)
 VALUES %s
 ON CONFLICT (ticker, ts) DO NOTHING
 RETURNING 1
 """
+
+# Куда писать. research_bars_5m — отложенная история для исследований (Спринт 1,
+# 2022 → 20.05.2024): отдельно от market_data_5m, чтобы её никто не «видел»
+# до проверки и чтобы прод её не читал.
+TABLES = ("market_data_5m", "research_bars_5m")
+CREATE_RESEARCH_SQL = """
+CREATE TABLE IF NOT EXISTS research_bars_5m (
+    id      BIGSERIAL PRIMARY KEY,
+    ticker  VARCHAR(10)    NOT NULL,
+    ts      TIMESTAMPTZ    NOT NULL,
+    open    NUMERIC(18, 6) NOT NULL,
+    high    NUMERIC(18, 6) NOT NULL,
+    low     NUMERIC(18, 6) NOT NULL,
+    close   NUMERIC(18, 6) NOT NULL,
+    volume  BIGINT         NOT NULL DEFAULT 0,
+    CONSTRAINT uq_research_bars_5m UNIQUE (ticker, ts)
+);
+"""
+
+
+def _table(name: str) -> str:
+    if name not in TABLES:
+        raise ValueError(f"таблица {name!r} не из списка {TABLES}")
+    return name
+
+
+def state_path_for(table: str) -> str:
+    return STATE_PATH if table == "market_data_5m" else \
+        os.path.join(os.path.dirname(STATE_PATH), f"state_{table}.json")
+
+
+def ensure_table(conn, table: str) -> None:
+    if _table(table) == "research_bars_5m":
+        with conn.cursor() as cur:
+            cur.execute(CREATE_RESEARCH_SQL)
+        conn.commit()
 
 
 # ── Разбор архива ────────────────────────────────────────────────────────────
@@ -161,15 +197,20 @@ def save_state(path: str, st: dict) -> None:
 
 # ── Запись ───────────────────────────────────────────────────────────────────
 
-def insert_bars(conn, ticker: str, bars: list[tuple]) -> int:
-    """Вставляет (ts, o, h, l, c, v); возвращает число новых строк."""
+def insert_bars(conn, ticker: str, bars: list[tuple], table: str = "market_data_5m") -> int:
+    """Вставляет (ts, o, h, l, c, v); возвращает число новых строк.
+
+    market_data_5m хранит 4 знака (как ETL); research_bars_5m — 6, чтобы копеечные
+    бумаги (TGKA ≈ 0,006 ₽) не превращались в шум округления."""
     if not bars:
         return 0
     from psycopg2.extras import execute_values
-    rows = [(ticker, ts, round(o, 4), round(h, 4), round(lo, 4), round(c, 4), int(v))
+    nd = 4 if _table(table) == "market_data_5m" else 6
+    rows = [(ticker, ts, round(o, nd), round(h, nd), round(lo, nd), round(c, nd), int(v))
             for ts, o, h, lo, c, v in bars]
     with conn.cursor() as cur:
-        got = execute_values(cur, INSERT_5M_SQL, rows, page_size=5000, fetch=True)
+        got = execute_values(cur, INSERT_5M_SQL.format(table=table), rows,
+                             page_size=5000, fetch=True)
     conn.commit()
     return len(got)
 
@@ -223,7 +264,9 @@ async def fetch_archive(session, uid: str, year: int) -> bytes | None:
 # ── Режимы ───────────────────────────────────────────────────────────────────
 
 async def backfill_shares(conn, tickers: list[str], date_from: dt.date,
-                          date_to: dt.date, state_path: str = STATE_PATH) -> list[dict]:
+                          date_to: dt.date, state_path: str | None = None,
+                          table: str = "market_data_5m") -> list[dict]:
+    state_path = state_path or state_path_for(table)
     st = load_state(state_path, date_from, date_to)
     stats = []
     async with _session() as s:
@@ -239,7 +282,7 @@ async def backfill_shares(conn, tickers: list[str], date_from: dt.date,
                 lo = max(date_from, dt.date(year, 1, 1))
                 hi = min(date_to, dt.date(year, 12, 31))
                 bars = archive_5m(blob, lo, hi) if blob else []
-                new = await asyncio.to_thread(insert_bars, conn, tk, bars)
+                new = await asyncio.to_thread(insert_bars, conn, tk, bars, table)
                 days = len({b[0].astimezone(MSK).date() for b in bars})
                 rec = {"ticker": tk, "year": year, "archive": blob is not None,
                        "bars": len(bars), "inserted": new, "days": days}
@@ -251,11 +294,12 @@ async def backfill_shares(conn, tickers: list[str], date_from: dt.date,
     return stats
 
 
-async def backfill_index(conn, ticker: str, date_from: dt.date, date_to: dt.date) -> int:
+async def backfill_index(conn, ticker: str, date_from: dt.date, date_to: dt.date,
+                         table: str = "market_data_5m") -> int:
     """Индекс через GetCandles по дню; продолжает с последнего загруженного бара."""
     from loaders import moex_loader
     with conn.cursor() as cur:
-        cur.execute("SELECT MAX(ts) FROM market_data_5m WHERE ticker = %s "
+        cur.execute(f"SELECT MAX(ts) FROM {_table(table)} WHERE ticker = %s "
                     "AND ts >= %s AND ts < %s",
                     (ticker, dt.datetime.combine(date_from, dt.time(), MSK),
                      dt.datetime.combine(date_to + dt.timedelta(days=1), dt.time(), MSK)))
@@ -272,7 +316,7 @@ async def backfill_index(conn, ticker: str, date_from: dt.date, date_to: dt.date
             rows = await moex_loader.fetch_5m_candles(s, uid, cur_dt, nxt)
             bars = [(dt.datetime.fromisoformat(ts.replace("Z", "+00:00")), o, h, lo, c, v)
                     for ts, o, h, lo, c, v in rows]
-            new = await asyncio.to_thread(insert_bars, conn, ticker, bars)
+            new = await asyncio.to_thread(insert_bars, conn, ticker, bars, table)
             total += new
             log.info("%s %s … %s: баров %d, новых %d", ticker, cur_dt.date(), nxt.date(),
                      len(bars), new)
@@ -420,6 +464,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--verify", default=None, help="тикер: сверить архив с БД, без записи")
     ap.add_argument("--year", type=int, default=None)
     ap.add_argument("--report", action="store_true", help="отчёт полноты (приёмка A)")
+    ap.add_argument("--table", default="market_data_5m", choices=TABLES,
+                    help="куда писать; research_bars_5m — отложенная история исследований")
     a = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -441,11 +487,13 @@ def main(argv: list[str] | None = None) -> int:
             print(text)
             log.info("отчёт: %s", out)
         elif a.index:
-            n = asyncio.run(backfill_index(conn, a.index.upper(), d_from, d_to))
+            ensure_table(conn, a.table)
+            n = asyncio.run(backfill_index(conn, a.index.upper(), d_from, d_to, table=a.table))
             log.info("%s: новых баров %d", a.index.upper(), n)
         else:
+            ensure_table(conn, a.table)
             tickers = [t.upper() for t in (a.tickers or config.TICKERS)]
-            stats = asyncio.run(backfill_shares(conn, tickers, d_from, d_to))
+            stats = asyncio.run(backfill_shares(conn, tickers, d_from, d_to, table=a.table))
             log.info("готово: запросов %d, новых баров %d", len(stats),
                      sum(s["inserted"] for s in stats))
     finally:

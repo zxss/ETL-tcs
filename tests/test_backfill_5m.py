@@ -104,6 +104,15 @@ class TestStateAndSql(unittest.TestCase):
         self.assertEqual(r["ohlc_equal_share"], 0.5)
         self.assertEqual(r["volume_equal_share"], 1.0)
 
+    def test_research_table_is_separate(self):
+        self.assertIn("INSERT INTO research_bars_5m",
+                      bf.INSERT_5M_SQL.format(table=bf._table("research_bars_5m")))
+        with self.assertRaises(ValueError):
+            bf._table("market_data; DROP TABLE x")
+        self.assertNotEqual(bf.state_path_for("research_bars_5m"), bf.STATE_PATH)
+        self.assertEqual(bf.state_path_for("market_data_5m"), bf.STATE_PATH)
+        self.assertIn("UNIQUE (ticker, ts)", bf.CREATE_RESEARCH_SQL)
+
     def test_gaps_longer_than_5_days(self):
         d = dt.date(2024, 7, 1)
         g = bf.gaps({"YDEX": {d, d + dt.timedelta(days=1), d + dt.timedelta(days=10)},
