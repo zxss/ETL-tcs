@@ -263,20 +263,29 @@ async def fetch_archive(session, uid: str, year: int) -> bytes | None:
 
 # ── Режимы ───────────────────────────────────────────────────────────────────
 
+def state_key(ticker: str, source: str, year: int) -> str:
+    """Ключ прогресса: при загрузке по старому коду — «ИСТОЧНИК->ТИКЕР:год»."""
+    return f"{ticker}:{year}" if source == ticker else f"{source}->{ticker}:{year}"
+
+
 async def backfill_shares(conn, tickers: list[str], date_from: dt.date,
                           date_to: dt.date, state_path: str | None = None,
-                          table: str = "market_data_5m") -> list[dict]:
+                          table: str = "market_data_5m",
+                          aliases: dict[str, str] | None = None) -> list[dict]:
+    """aliases: {тикер в БД: код-источник} — история по старому коду (YNDX для
+    YDEX, FIVE для X5) записывается под нынешним тикером."""
     state_path = state_path or state_path_for(table)
     st = load_state(state_path, date_from, date_to)
     stats = []
     async with _session() as s:
         for tk in tickers:
+            src = (aliases or {}).get(tk, tk)
             uid = None
             for year in range(date_from.year, date_to.year + 1):
-                key = f"{tk}:{year}"
+                key = state_key(tk, src, year)
                 if key in st["done"]:
                     continue
-                uid = uid or await find_uid(s, tk)
+                uid = uid or await find_uid(s, src)
                 blob = await fetch_archive(s, uid, year)
                 await asyncio.sleep(ARCHIVE_PAUSE_SEC)
                 lo = max(date_from, dt.date(year, 1, 1))
@@ -295,8 +304,12 @@ async def backfill_shares(conn, tickers: list[str], date_from: dt.date,
 
 
 async def backfill_index(conn, ticker: str, date_from: dt.date, date_to: dt.date,
-                         table: str = "market_data_5m") -> int:
-    """Индекс через GetCandles по дню; продолжает с последнего загруженного бара."""
+                         table: str = "market_data_5m", source: str | None = None,
+                         index: bool = True) -> int:
+    """GetCandles по дню; продолжает с последнего загруженного бара.
+
+    Индекс (архивом не отдаётся) или акция без годовых архивов (T до 2024,
+    ETLN): source — код-источник, index=False — искать акцию на TQBR."""
     from loaders import moex_loader
     with conn.cursor() as cur:
         cur.execute(f"SELECT MAX(ts) FROM {_table(table)} WHERE ticker = %s "
@@ -309,7 +322,7 @@ async def backfill_index(conn, ticker: str, date_from: dt.date, date_to: dt.date
     end = min(end, dt.datetime.now(MSK))
     total = 0
     async with _session() as s:
-        uid = await find_uid(s, ticker, index=True)
+        uid = await find_uid(s, source or ticker, index=index)
         cur_dt = dt.datetime.combine(start, dt.time(), MSK)
         while cur_dt < end:
             nxt = min(cur_dt + dt.timedelta(days=30), end)
@@ -466,6 +479,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--report", action="store_true", help="отчёт полноты (приёмка A)")
     ap.add_argument("--table", default="market_data_5m", choices=TABLES,
                     help="куда писать; research_bars_5m — отложенная история исследований")
+    ap.add_argument("--alias", nargs="*", default=None, metavar="ТИКЕР=ИСТОЧНИК",
+                    help="история по старому коду под нынешним тикером: YDEX=YNDX X5=FIVE")
+    ap.add_argument("--candles", action="store_true",
+                    help="с --alias: GetCandles по дню вместо годовых архивов (T, ETLN)")
     a = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -486,6 +503,19 @@ def main(argv: list[str] | None = None) -> int:
                 f.write(text)
             print(text)
             log.info("отчёт: %s", out)
+        elif a.alias:
+            ensure_table(conn, a.table)
+            pairs = {k.upper(): v.upper() for k, v in (p.split("=", 1) for p in a.alias)}
+            if a.candles:
+                for new, old in pairs.items():
+                    n = asyncio.run(backfill_index(conn, new, d_from, d_to, table=a.table,
+                                                   source=old, index=False))
+                    log.info("%s ← %s (GetCandles): новых баров %d", new, old, n)
+            else:
+                stats = asyncio.run(backfill_shares(conn, list(pairs), d_from, d_to,
+                                                    table=a.table, aliases=pairs))
+                log.info("готово: запросов %d, новых баров %d", len(stats),
+                         sum(s["inserted"] for s in stats))
         elif a.index:
             ensure_table(conn, a.table)
             n = asyncio.run(backfill_index(conn, a.index.upper(), d_from, d_to, table=a.table))

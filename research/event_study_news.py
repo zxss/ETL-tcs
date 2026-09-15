@@ -3,49 +3,47 @@ Event study новостей markettwits по категориям и тонал
 Только исследование: читает БД, в торговые таблицы не пишет, торговым контуром
 не импортируется.
 
+v2 (решение пользователя 15.09, после dev v1):
+  * дивиденды — DIVIDEND_ANNOUNCE (решения, суммы, отказы) и DIVIDEND_CALENDAR
+    (отсечки, реестр, даты заседаний); календарь в отбор правил не идёт;
+  * спам (видео, реклама) и дайджесты (календарь дня, > 5 тикеров) — вне ленты;
+  * снято правило «первый пост дня по бумаге»: реальная новость днём не
+    вытесняется утренним дайджестом. Против задвоения — повтор той же категории
+    по бумаге в течение 2 часов не открывает новое окно;
+  * вход по сессиям: новость в основную сессию (с её начала до 18:50) — первый
+    бар после публикации; ночью, в премаркет и в выходные — первая сделка
+    основной сессии следующего торгового дня (open бара 10:00, после аукциона
+    открытия). Внутридневные окна не выходят за 18:50: IMOEX вечером не считается;
+  * доходность с дивидендами: окно, пересекающее отсечку (первый торговый день
+    после последнего дня покупки с дивидендом), получает дивиденд к цене выхода
+    (GetDividends, research/fetch_dividends.py). IMOEX — ценовой индекс;
+  * добавлен T (TCSG), история старых кодов YNDX/FIVE/FIXP — под нынешними.
+
 ДИЗАЙН ЗАМОРОЖЕН коммитом этого файла до прогона на dev (21.05.2024–11.09.2026,
-market_data_5m). Правила, отобранные на dev, замораживаются отдельным коммитом
-(rules.json) до ЕДИНСТВЕННОГО прогона на отложенной выборке (01.01.2022–
-20.05.2024, research_bars_5m), которую никто не видел.
+market_data_5m); правила dev v2 — отдельным коммитом (rules.json) до ЕДИНСТВЕННОГО
+прогона на отложенной выборке (01.01.2022–20.05.2024, research_bars_5m).
+Испытания v1 и v2 суммируются в реестре audit/r4_research/trials.jsonl (для DSR).
 
-События. Пост × бумага по классификатору research/news_classify (словари
-заморожены): связь «объект», не отчёт о цене. На (бумага, категория, день)
-— первый пост; повторы в тот же день новое окно не открывают.
-
-Момент входа t0 — open первого 5-минутного бара бумаги, начавшегося не раньше
-публикации + LAG. Реакция рынка: LAG = 0. Торгуемые правила: LAG = 10 минут
-(период сборщика news_tg). Нет бара в течение 30 минут — события без цены
-входа, их число в отчёте. Бары любой сессии: канал пишет круглосуточно.
-
-Окна CAR (накопленная аномальная доходность, %):
-  5m   — close бара t0;
-  30m  — close бара, начавшегося в t0 + 25 минут;
-  eod  — close основной сессии дня входа (последний бар до 18:50, с 14.09.2026
-         до 18:59); если t0 после неё — следующего торгового дня;
+Окна CAR (накопленная аномальная доходность против IMOEX, %):
+  5m   — close бара входа;
+  30m  — close бара, начавшегося в t0 + 25 минут (не позже 18:45);
+  eod  — close основной сессии дня входа;
   1d   — close основной сессии следующего торгового дня;
   2d   — через два торговых дня.
-Аномальная = доходность бумаги − доходность IMOEX на тех же моментах (бета 1).
 
-Экономика (торгуемая версия, LAG = 10 мин, направление d):
-  лонг  net = сырая − издержки бумаги − порог фонда за удержание;
-  шорт  net = −сырая − издержки бумаги − плата за перенос (ночи, 10 000 ₽);
-издержки — research/cost_model (base: комиссия «Премиум» 0,08 % + спред бумаги);
-порог фонда — рост паёв TMON@ (с 25.02.2025) или LQDT (раньше) между датой
-входа и датой выхода (audit/r4_research/sprint1/hurdle_funds.csv). Внутри дня
-пай не дорожает — порог 0.
-
-Статистика по датам (среднее событий даты → t по датам). Когорта =
-категория × корзина тональности (neg ≤ −0,5, neu, pos ≥ +0,5).
-Дрейф или разворот — знак CAR(2d) против CAR(30m).
+Экономика (торгуемая версия: вход через 10 минут после публикации, направление d):
+  лонг  net = доходность − издержки бумаги − рост пая фонда за удержание;
+  шорт  net = −доходность − издержки бумаги − плата за перенос (ночи, 10 000 ₽);
+издержки — research/cost_model (base: комиссия «Премиум» 0,08 % + спред бумаги),
+фонд — TMON@ (с 25.02.2025) или LQDT (раньше).
 
 Отбор правил на dev (задан здесь, до прогона):
-  когорта (категория × neg/pos) × окно ∈ {30m, eod, 1d, 2d};
-  направление = знак средней CAR реакции на dev;
-  кандидат, если |t| ≥ 3 по датам, дат ≥ 30 и среднее нетто торгуемой версии > 0.
-  Плюс правило из ТЗ, заданное явно: DIVIDEND и тональность ≥ 0,8 → лонг 2 дня.
+  категории без DIVIDEND_CALENDAR × корзина neg/pos × окно ∈ {30m, eod, 1d, 2d};
+  направление = знак средней CAR реакции; кандидат, если |t| ≥ 3 по датам,
+  дат ≥ 30 и среднее нетто торгуемой версии > 0. Плюс правило из ТЗ:
+  DIVIDEND_ANNOUNCE и тональность ≥ 0,8 → лонг 2 дня.
 Отложенная выборка — только правила из rules.json; вердикт: тот же знак CAR,
-p Холма < 0,05 и среднее нетто > 0. IR к фонду и DSR (число испытаний — из
-реестра audit/r4_research/trials.jsonl) — в отчёте.
+p Холма < 0,05 и среднее нетто > 0; IR к фонду и DSR — в отчёте.
 
 Запуск (на сервере):
     python -m research.event_study_news dev
@@ -77,20 +75,25 @@ from research import short_rule as sr                    # noqa: E402
 
 log = logging.getLogger("research.event_study_news")
 
+VERSION = "v2"
 INDEX = "IMOEX"
 LAG_REACTION = dt.timedelta(0)
 LAG_TRADE = dt.timedelta(minutes=10)
 MAX_WAIT = dt.timedelta(minutes=30)
+CLUSTER = dt.timedelta(hours=2)
 WINDOWS = ("5m", "30m", "eod", "1d", "2d")
 RULE_WINDOWS = ("30m", "eod", "1d", "2d")
 BUCKETS = ("neg", "neu", "pos")
+RULE_CATEGORIES = tuple(c for c in ncl.CATEGORIES if c != "DIVIDEND_CALENDAR")
 PERIODS = {"dev": (dt.date(2024, 5, 21), dt.date(2026, 9, 11), "market_data_5m"),
            "holdout": (dt.date(2022, 1, 1), dt.date(2024, 5, 20), "research_bars_5m")}
 MIN_DATES, MIN_T = 30, 3.0
 POSITION_RUB = 10_000.0
-TZ_RULE = {"category": "DIVIDEND", "sentiment_min": 0.8, "window": "2d", "direction": 1,
+TZ_RULE = {"category": "DIVIDEND_ANNOUNCE", "sentiment_min": 0.8, "window": "2d", "direction": 1,
            "source": "ТЗ 50D, Спринт 1.2"}
-HURDLE_PATH = os.path.join(ROOT, "audit", "r4_research", "sprint1", "hurdle_funds.csv")
+SPRINT_DIR = os.path.join(ROOT, "audit", "r4_research", "sprint1")
+HURDLE_PATH = os.path.join(SPRINT_DIR, "hurdle_funds.csv")
+DIV_PATH = os.path.join(SPRINT_DIR, "dividends.csv")
 TRIALS_PATH = os.path.join(ROOT, "audit", "r4_research", "trials.jsonl")
 
 
@@ -150,32 +153,77 @@ def next_day(days: list[dt.date], d: dt.date | None) -> dt.date | None:
     return days[i] if i < len(days) else None
 
 
+def entry_moment(t: dt.datetime, tdays: list[dt.date], tset: set) -> dt.datetime | None:
+    """Когда можно войти: внутри основной сессии — сразу; иначе — её начало в
+    следующий торговый день (ночь, премаркет, аукцион открытия, выходные)."""
+    d = t.date()
+    if d in tset:
+        mo = dt.datetime.combine(d, sc.main_open(d))
+        cut = dt.datetime.combine(d, main_close_cut(d))
+        if t < mo:
+            return mo
+        if t < cut:
+            return t
+    nd = next_day(tdays, d)
+    return dt.datetime.combine(nd, sc.main_open(nd)) if nd else None
+
+
+# ── Дивиденды ────────────────────────────────────────────────────────────────
+
+def load_dividends(path: str, tdays: list[dt.date]) -> dict[str, list[tuple[dt.date, float]]]:
+    """ticker → [(дата отсечки = первый торговый день после последнего дня покупки, сумма)]."""
+    out: dict[str, list] = {}
+    if not os.path.exists(path):
+        log.warning("нет %s — доходности без дивидендов", path)
+        return out
+    with open(path, encoding="utf-8") as f:
+        for r in csv.DictReader(f):
+            ex = next_day(tdays, dt.date.fromisoformat(r["last_buy_date"]))
+            if ex:
+                out.setdefault(r["ticker"], []).append((ex, float(r["dividend_net"])))
+    return {k: sorted(v) for k, v in out.items()}
+
+
+def dividends_between(divs: list, d0: dt.date, d1: dt.date | None) -> float:
+    """Сумма дивидендов с отсечкой в (d0, d1]: держатель их получает."""
+    if not divs or d1 is None:
+        return 0.0
+    return sum(a for ex, a in divs if d0 < ex <= d1)
+
+
 def outcome(posted: dt.datetime, lag: dt.timedelta, bars: Bars, idx: Bars,
-            tdays: list[dt.date]) -> dict | None:
-    """Цены входа и выхода по окнам; сырая и аномальная доходность, %."""
-    i0 = bars.entry(posted + lag)
+            tdays: list[dt.date], divs: list | None = None) -> dict | None:
+    """Цены входа и выхода по окнам; доходность с дивидендами и аномальная, %."""
+    tset = set(tdays)
+    m = entry_moment(posted + lag, tdays, tset)
+    i0 = bars.entry(m) if m else None
+    if i0 is not None:
+        t0 = pd.Timestamp(bars.t[i0]).to_pydatetime()
+        if t0.date() not in tset or t0.time() >= main_close_cut(t0.date()):
+            m = entry_moment(t0, tdays, tset)                # бар входа вне основной сессии
+            i0 = bars.entry(m) if m else None
     if i0 is None:
         return None
     t0 = pd.Timestamp(bars.t[i0]).to_pydatetime()
     p0, x0 = float(bars.o[i0]), idx.price_at(t0)
     d0 = t0.date()
-    tset = set(tdays)
-    base = d0 if (d0 in tset and t0.time() < main_close_cut(d0)) else next_day(tdays, d0)
-    ends = {"5m": ("bar", t0), "30m": ("bar", t0 + dt.timedelta(minutes=25)),
-            "eod": ("day", base), "1d": ("day", next_day(tdays, base)),
-            "2d": ("day", next_day(tdays, next_day(tdays, base)))}
+    last_bar = dt.datetime.combine(d0, main_close_cut(d0)) - dt.timedelta(minutes=5)
+    ends = {"5m": ("bar", t0), "30m": ("bar", min(t0 + dt.timedelta(minutes=25), last_bar)),
+            "eod": ("day", d0), "1d": ("day", next_day(tdays, d0)),
+            "2d": ("day", next_day(tdays, next_day(tdays, d0)))}
     out = {"t0": t0, "p0": p0}
     for w, (kind, v) in ends.items():
         if v is None:
             p1 = x1 = float("nan")
+            end = None
         elif kind == "bar":
-            p1, x1 = bars.close_at(v), idx.close_at(v)
+            p1, x1, end = bars.close_at(v), idx.close_at(v), v.date()
         else:
-            p1, x1 = bars.day_close.get(v, float("nan")), idx.day_close.get(v, float("nan"))
-        raw = (p1 / p0 - 1.0) * 100.0 if p0 > 0 else float("nan")
+            p1, x1, end = bars.day_close.get(v, float("nan")), idx.day_close.get(v, float("nan")), v
+        div = dividends_between(divs or [], d0, end)
+        raw = ((p1 + div) / p0 - 1.0) * 100.0 if p0 > 0 else float("nan")
         ix = (x1 / x0 - 1.0) * 100.0 if x0 and x0 == x0 else float("nan")
-        out[f"raw_{w}"], out[f"ar_{w}"] = raw, raw - ix
-        out[f"end_{w}"] = (v.date() if isinstance(v, dt.datetime) else v)
+        out[f"raw_{w}"], out[f"ar_{w}"], out[f"end_{w}"], out[f"div_{w}"] = raw, raw - ix, end, div
     return out
 
 
@@ -227,27 +275,47 @@ def economics(o: dict, ticker: str, hurdle: Hurdle, spreads: dict) -> dict:
 
 # ── События ──────────────────────────────────────────────────────────────────
 
-def build_events(posts: pd.DataFrame, clf: ncl.Classifier) -> pd.DataFrame:
-    """Пост × бумага: объект, не отчёт о цене; первый пост на (бумага, категория, день)."""
-    rows, seen = [], set()
+def build_events(posts: pd.DataFrame, clf: ncl.Classifier) -> tuple[pd.DataFrame, dict]:
+    """Лента событий: без спама, дайджестов и отчётов о цене; связь «объект»;
+    повтор (бумага, категория) в течение 2 часов нового окна не открывает."""
+    rows, last = [], {}
+    cnt = {"posts": int(len(posts)), "spam": 0, "digest": 0, "pairs": 0, "not_object": 0,
+           "price_report": 0, "cluster_dup": 0}
     for r in posts.sort_values("msk").itertuples(index=False):
-        for c in clf.classify_post(r.text):
-            if c["relation"] != "объект" or c["price_report"]:
+        if clf.is_spam(r.text):
+            cnt["spam"] += 1
+            continue
+        src = clf.sources(r.text)
+        if not src:
+            continue
+        if clf.is_digest_post(r.text, src):
+            cnt["digest"] += 1
+            continue
+        posted = r.msk.to_pydatetime()
+        for tk in sorted(src):
+            c = clf.classify(r.text, tk, src)
+            cnt["pairs"] += 1
+            if c["price_report"]:
+                cnt["price_report"] += 1
                 continue
-            key = (c["ticker"], c["category"], r.msk.date())
-            if key in seen:
+            if c["relation"] != "объект":
+                cnt["not_object"] += 1
                 continue
-            seen.add(key)
-            rows.append({"message_id": r.message_id, "posted": r.msk.to_pydatetime(),
-                         "ticker": c["ticker"], "category": c["category"],
-                         "category2": c["category2"], "sentiment": c["sentiment"],
-                         "bucket": bucket(c["sentiment"])})
-    return pd.DataFrame(rows)
+            key = (tk, c["category"])
+            if key in last and posted - last[key] < CLUSTER:
+                cnt["cluster_dup"] += 1
+                continue
+            last[key] = posted
+            rows.append({"message_id": r.message_id, "posted": posted, "ticker": tk,
+                         "category": c["category"], "category2": c["category2"],
+                         "sentiment": c["sentiment"], "bucket": bucket(c["sentiment"])})
+    return pd.DataFrame(rows), cnt
 
 
 def attach_outcomes(events: pd.DataFrame, bars_of: dict, idx: Bars, tdays: list[dt.date],
-                    hurdle: Hurdle, spreads: dict) -> pd.DataFrame:
+                    hurdle: Hurdle, spreads: dict, divs: dict | None = None) -> pd.DataFrame:
     rows = []
+    divs = divs or {}
     for e in events.itertuples(index=False):
         b = bars_of.get(e.ticker)
         rec = e._asdict()
@@ -255,17 +323,19 @@ def attach_outcomes(events: pd.DataFrame, bars_of: dict, idx: Bars, tdays: list[
             rec["status"] = "нет баров"
             rows.append(rec)
             continue
-        react = outcome(e.posted, LAG_REACTION, b, idx, tdays)
-        trade = outcome(e.posted, LAG_TRADE, b, idx, tdays)
+        dv = divs.get(e.ticker, [])
+        react = outcome(e.posted, LAG_REACTION, b, idx, tdays, dv)
+        trade = outcome(e.posted, LAG_TRADE, b, idx, tdays, dv)
         if react is None or trade is None or not sr.quantum_ok(react["p0"]):
             rec["status"] = "нет цены входа" if (react is None or trade is None) else "шаг цены"
             rows.append(rec)
             continue
         rec["status"] = "ok"
         rec["date"] = react["t0"].date()
+        rec["t0"] = react["t0"]
         rec.update({f"ar_{w}": react[f"ar_{w}"] for w in WINDOWS})
         rec.update({f"raw_{w}": react[f"raw_{w}"] for w in WINDOWS})
-        rec.update({f"t_raw_{w}": trade[f"raw_{w}"] for w in WINDOWS})
+        rec["div_2d"] = react["div_2d"]
         rec.update(economics(trade, e.ticker, hurdle, spreads))
         rows.append(rec)
     return pd.DataFrame(rows)
@@ -284,10 +354,13 @@ def by_date(values: pd.Series, dates: pd.Series) -> dict:
 
 
 def cohorts(ev: pd.DataFrame):
-    """(категория, корзина) → строки; плюс «ВСЕ» по корзинам."""
+    """(категория, корзина) → строки; «ВСЕ» — без DIVIDEND_CALENDAR."""
     for cat in ncl.CATEGORIES + ("ВСЕ",):
         for b in BUCKETS:
-            m = (ev["bucket"] == b) & ((ev["category"] == cat) if cat != "ВСЕ" else True)
+            if cat == "ВСЕ":
+                m = (ev["bucket"] == b) & (ev["category"] != "DIVIDEND_CALENDAR")
+            else:
+                m = (ev["bucket"] == b) & (ev["category"] == cat)
             yield cat, b, ev[m]
 
 
@@ -308,7 +381,7 @@ def reaction_table(ev: pd.DataFrame) -> list[dict]:
 def select_rules(ev: pd.DataFrame) -> tuple[list[dict], int]:
     """Кандидаты по правилу отбора из докстринга; число испытаний — для DSR."""
     rules, trials = [], 0
-    for cat in ncl.CATEGORIES:
+    for cat in RULE_CATEGORIES:
         for b in ("neg", "pos"):
             sub = ev[(ev["category"] == cat) & (ev["bucket"] == b)]
             for w in RULE_WINDOWS:
@@ -403,15 +476,19 @@ def _f(x, nd=3):
     return "—" if x is None or (isinstance(x, float) and x != x) else f"{x:+.{nd}f}".replace(".", ",")
 
 
-def report_dev(ev: pd.DataFrame, table: list[dict], rules: list[dict], meta: dict) -> str:
-    L = ["# Event study новостей markettwits — dev (Спринт 1.2)", "",
+def report_dev(table: list[dict], rules: list[dict], meta: dict) -> str:
+    c = meta["counts"]
+    L = [f"# Event study новостей markettwits — dev {VERSION} (Спринт 1.2)", "",
          f"Сформировано {meta['created']}. Код `{meta['revision']}`, словари `{meta['dicts']}`. "
          "Только исследование.", "",
-         f"Период {meta['from']} … {meta['to']} ({meta['table']}). Событий «объект»: {meta['events']}; "
-         f"с ценами {meta['ok']}; без баров {meta['no_bars']}; без цены входа {meta['no_entry']}; "
-         f"шаг цены {meta['quantum']}.", "",
-         "CAR — аномальная доходность против IMOEX, %, реакция (вход — первый бар после "
-         "публикации). t — по датам. Корзины тональности: neg ≤ −0,5, neu, pos ≥ +0,5.", "",
+         f"Период {meta['from']} … {meta['to']} ({meta['table']}). Постов {c['posts']}: спам {c['spam']}, "
+         f"дайджесты {c['digest']}; пар пост × бумага {c['pairs']}: отчёты о цене {c['price_report']}, "
+         f"не «объект» {c['not_object']}, повтор в течение 2 часов {c['cluster_dup']}.", "",
+         f"Событий {meta['events']}; с ценами {meta['ok']}; без баров {meta['no_bars']}; без цены входа "
+         f"{meta['no_entry']}; шаг цены {meta['quantum']}; окон 2d с дивидендом {meta['div_windows']}.", "",
+         "CAR — аномальная доходность с дивидендами против IMOEX, %, реакция (вход — первый бар "
+         "основной сессии после публикации). t — по датам. Корзины: neg ≤ −0,5, neu, pos ≥ +0,5. "
+         "«ВСЕ» — без DIVIDEND_CALENDAR.", "",
          "| категория | тональность | " + " | ".join(f"CAR {w} (t)" for w in WINDOWS) + " | дат | картина |",
          "|---|---|" + "---|" * (len(WINDOWS) + 2)]
     for r in table:
@@ -421,8 +498,9 @@ def report_dev(ev: pd.DataFrame, table: list[dict], rules: list[dict], meta: dic
         L.append(f"| {r['category']} | {r['bucket']} | "
                  + " | ".join(f"{_f(r[w].get('mean'))} ({_f(r[w].get('t'), 1)})" for w in WINDOWS)
                  + f" | {dates} | {r['pattern']} |")
-    L += ["", f"## Правила-кандидаты (|t| ≥ {MIN_T:g}, дат ≥ {MIN_DATES}, нетто > 0) и правило из ТЗ", "",
-          f"Испытаний на dev: {meta['trials']} (накоплено в реестре: {meta['trials_total']}).", "",
+    L += ["", f"## Правила-кандидаты (|t| ≥ {MIN_T:g}, дат ≥ {MIN_DATES}, нетто > 0; без календаря) "
+          "и правило из ТЗ", "",
+          f"Испытаний в этом прогоне: {meta['trials']} (накоплено в реестре: {meta['trials_total']}).", "",
           "| правило | направление | окно | CAR dev (t) | дат | нетто dev, % (t) |", "|---|---|---|---|---|---|"]
     for r in rules:
         name = (f"{r['category']} & тональность ≥ {r['sentiment_min']}" if "sentiment_min" in r
@@ -432,16 +510,18 @@ def report_dev(ev: pd.DataFrame, table: list[dict], rules: list[dict], meta: dic
                  f"{_f(r['dev_net'].get('mean'))} ({_f(r['dev_net'].get('t'), 1)}) |")
     L += ["", "## Как читать", "",
           "- dev просмотрен; вывод только по отложенной выборке 2022–2024, куда идут лишь правила из rules.json.",
-          "- Нетто — торгуемая версия: вход через 10 минут после публикации, издержки «Премиум» + спред, "
-          "порог фонда за удержание (лонг) или плата за перенос (шорт через ночь).", ""]
+          "- Нетто — торгуемая версия: вход через 10 минут после публикации (в основную сессию), "
+          "издержки «Премиум» + спред, рост пая фонда за удержание (лонг) или плата за перенос (шорт).",
+          "- IMOEX — ценовой индекс: в дни отсечек крупных бумаг он падает без дивиденда, CAR остальных "
+          "бумаг в эти дни чуть завышен.", ""]
     return "\n".join(L)
 
 
 def report_holdout(results: list[dict], meta: dict) -> str:
-    L = ["# Event study новостей — отложенная выборка (Спринт 1.2)", "",
+    L = [f"# Event study новостей — отложенная выборка {VERSION} (Спринт 1.2)", "",
          f"Сформировано {meta['created']}. Код `{meta['revision']}`, правила `{meta['rules']}`. "
          f"Период {meta['from']} … {meta['to']} ({meta['table']}), единственный прогон.", "",
-         f"Событий «объект»: {meta['events']}, с ценами {meta['ok']}. Испытаний в реестре: {meta['trials_total']}.", "",
+         f"Событий {meta['events']}, с ценами {meta['ok']}. Испытаний в реестре: {meta['trials_total']}.", "",
          "| правило | направление | окно | CAR (t) | дат | p Холма | нетто, % (t) | IR к фонду | DSR | вердикт |",
          "|---|---|---|---|---|---|---|---|---|---|"]
     for r in results:
@@ -468,7 +548,7 @@ def run(stage: str, rules_path: str | None, out: str | None, channel: str = "mar
     try:
         posts = ns.load_posts(conn, channel, d_from)
         posts = posts[posts["msk"].dt.date <= d_to]
-        events = build_events(posts, clf)
+        events, counts = build_events(posts, clf)
         bars_of = load_bars(conn, table, sorted(set(events["ticker"])), d_from, d_to)
         idx = load_bars(conn, table, [INDEX], d_from, d_to).get(INDEX)
     finally:
@@ -476,7 +556,8 @@ def run(stage: str, rules_path: str | None, out: str | None, channel: str = "mar
     if idx is None:
         raise SystemExit(f"нет баров {INDEX} в {table}")
     tdays = sorted(d for d in idx.day_close if d_from <= d <= d_to + dt.timedelta(days=6) and d.weekday() < 5)
-    ev = attach_outcomes(events, bars_of, idx, tdays, Hurdle(), cm.load_spreads())
+    divs = load_dividends(DIV_PATH, tdays)
+    ev = attach_outcomes(events, bars_of, idx, tdays, Hurdle(), cm.load_spreads(), divs)
     ok = ev[ev["status"] == "ok"].copy()
     now = dt.datetime.now()
     rev = _revision()
@@ -484,25 +565,25 @@ def run(stage: str, rules_path: str | None, out: str | None, channel: str = "mar
             "from": str(d_from), "to": str(d_to), "table": table, "events": int(len(ev)),
             "ok": int(len(ok)), "no_bars": int((ev["status"] == "нет баров").sum()),
             "no_entry": int((ev["status"] == "нет цены входа").sum()),
-            "quantum": int((ev["status"] == "шаг цены").sum())}
-    out = out or os.path.join(ROOT, "audit", "r4_research", f"sprint1-{stage}-{now:%Y%m%d-%H%M}")
+            "quantum": int((ev["status"] == "шаг цены").sum()),
+            "div_windows": int((ok.get("div_2d", pd.Series(dtype=float)) > 0).sum()), "counts": counts}
+    out = out or os.path.join(ROOT, "audit", "r4_research", f"sprint1{VERSION}-{stage}-{now:%Y%m%d-%H%M}")
     os.makedirs(out, exist_ok=True)
-    keep = [c for c in ok.columns if c not in ("posted",)]
-    ok[keep].to_csv(os.path.join(out, "events.csv"), index=False)
     if stage == "dev":
+        ok[[c for c in ok.columns if c not in ("posted",)]].to_csv(os.path.join(out, "events.csv"), index=False)
         table_rows = reaction_table(ok)
         rules, trials = select_rules(ok)
         meta["trials"] = trials
-        meta["trials_total"] = register_trials("dev", trials, rev)
+        meta["trials_total"] = register_trials(f"dev-{VERSION}", trials, rev)
         with open(os.path.join(out, "rules.json"), "w", encoding="utf-8") as f:
-            json.dump({"revision": rev, "dicts": clf.version, "created": meta["created"],
+            json.dump({"version": VERSION, "revision": rev, "dicts": clf.version, "created": meta["created"],
                        "trials_dev": trials, "rules": rules}, f, ensure_ascii=False, indent=1, default=str)
-        text = report_dev(ok, table_rows, rules, meta)
+        text = report_dev(table_rows, rules, meta)
     else:
         with open(rules_path, encoding="utf-8") as f:
             spec = json.load(f)
         meta["rules"] = f"{os.path.basename(rules_path)} ({spec.get('revision')})"
-        meta["trials_total"] = register_trials("holdout", 0, rev)
+        meta["trials_total"] = register_trials(f"holdout-{VERSION}", 0, rev)
         days = [d for d in tdays if d <= d_to]
         results = []
         for r in spec["rules"]:
@@ -523,6 +604,11 @@ def run(stage: str, rules_path: str | None, out: str | None, channel: str = "mar
             same = x["ar"].get("mean") is not None and np.sign(x["ar"]["mean"]) == x["direction"]
             x["verdict"] = ("подтверждено" if same and (x["p_holm"] or 1) < 0.05
                             and (x["net"].get("mean") or -1) > 0 else "не подтверждено")
+        # на отложенной выборке сохраняются только события правил — остальное не смотрим
+        mask = np.zeros(len(ok), dtype=bool)
+        for r in spec["rules"]:
+            mask |= rule_mask(ok, r).to_numpy()
+        ok[mask][[c for c in ok.columns if c != "posted"]].to_csv(os.path.join(out, "rule_events.csv"), index=False)
         with open(os.path.join(out, "holdout_results.json"), "w", encoding="utf-8") as f:
             json.dump(results, f, ensure_ascii=False, indent=1, default=str)
         text = report_holdout(results, meta)

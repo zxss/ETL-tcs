@@ -113,6 +113,11 @@ class TestStateAndSql(unittest.TestCase):
         self.assertEqual(bf.state_path_for("market_data_5m"), bf.STATE_PATH)
         self.assertIn("UNIQUE (ticker, ts)", bf.CREATE_RESEARCH_SQL)
 
+    def test_alias_state_key_does_not_clash(self):
+        """Прогресс по YNDX→YDEX не путается с «архива нет» по YDEX."""
+        self.assertEqual(bf.state_key("YDEX", "YDEX", 2022), "YDEX:2022")
+        self.assertEqual(bf.state_key("YDEX", "YNDX", 2022), "YNDX->YDEX:2022")
+
     def test_gaps_longer_than_5_days(self):
         d = dt.date(2024, 7, 1)
         g = bf.gaps({"YDEX": {d, d + dt.timedelta(days=1), d + dt.timedelta(days=10)},
