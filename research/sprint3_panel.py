@@ -49,6 +49,7 @@ CONFIG_PATH = os.path.join(ROOT, "research", "sprint3_config.json")
 OUT_DIR = os.path.join(ROOT, "audit", "r4_research", "sprint3")
 MSK = dt.timezone(dt.timedelta(hours=3))
 T_DECISION = dt.time(18, 25)                 # последний бар до решения
+T_ENTRY = dt.time(18, 30)                    # бар цены входа и выхода (фаза OVERNIGHT)
 T_LATE = dt.time(18, 0)                      # бар цены старше — цена устарела
 SPLIT_RANGE = (0.5, 2.0)
 LIQ_BLACKOUT = 60
@@ -240,6 +241,37 @@ def news_features(events: pd.DataFrame, tickers: list[str], tdays: list[dt.date]
     return pd.concat(out, ignore_index=True)
 
 
+def market_legs(imx_entry: pd.Series, front_bars, tdays: list[dt.date], horizon: int,
+                root: str) -> pd.DataFrame:
+    """На день входа: доходность IMOEX и шорт-ноги (ближний фьючерс root на день входа,
+    тот же контракт на выходе) за horizon торговых дней, по close бара 18:30, %."""
+    rows = []
+    for i, d in enumerate(tdays):
+        j = i + horizon
+        if j >= len(tdays):
+            rows.append((np.nan, np.nan))
+            continue
+        a, b = imx_entry.get(d), imx_entry.get(tdays[j])
+        r_idx = (b / a - 1.0) * 100.0 if a and b and a == a and b == b else np.nan
+        fb = front_bars(root, d)
+        p0 = ll.close_on_day(fb, d, T_ENTRY) if fb is not None else None
+        p1 = ll.close_on_day(fb, tdays[j], T_ENTRY) if fb is not None else None
+        rows.append((r_idx, (p1 / p0 - 1.0) * 100.0 if p0 and p1 else np.nan))
+    return pd.DataFrame(rows, index=tdays, columns=["r_idx", "r_fut"])
+
+
+def add_relative_targets(panel: pd.DataFrame, cfg: dict) -> pd.DataFrame:
+    """v1: цель относительно IMOEX и результаты связки (см. evaluation в конфигурации)."""
+    p = panel.copy()
+    m, hc, fee = cfg["target"]["margin_pct"], cfg["hedge"]["cost_rt_pct"], 2.0 * cm.FEE_SIDE_PCT
+    p["alpha"] = p["R"] - p["r_idx"]
+    p["y_rel"] = np.where(p["alpha"].notna(), (p["alpha"] > p["cost"] + m).astype(float), np.nan)
+    p["net_alpha"] = p["alpha"] - p["cost"]
+    p["net_mn"] = p["R"] - p["r_fut"] - p["hurdle"] - p["cost"] - hc
+    p["net_mn_fee"] = p["R"] - p["r_fut"] - p["hurdle"] - fee - hc
+    return p
+
+
 # ── Сборка ───────────────────────────────────────────────────────────────────
 
 def ticker_panel(daily_tk: pd.DataFrame, tk: str, tdays: list[dt.date], imx: pd.Series, divs: list,
@@ -261,8 +293,10 @@ def build_panel(conn, cfg: dict, stage: str) -> pd.DataFrame:
     ix = daily[daily["ticker"] == es.INDEX].set_index("d")["c1830"]
     tdays = sorted(d for d in ix.dropna().index if d.weekday() < 5)
     imx = ix.reindex(tdays)
+    imx_entry = daily[daily["ticker"] == es.INDEX].set_index("d")["c1835"].reindex(tdays)
+    hedge = cfg["hedge"]["root"]
     exp, root_of = st.read_contracts()
-    fut_tk = [tk for tk, r in root_of.items() if r in COMMODITIES.values()]
+    fut_tk = [tk for tk, r in root_of.items() if r in set(COMMODITIES.values()) | {hedge}]
     fd = st.load_daily(conn, "research_fut_5m", fut_tk, lo - dt.timedelta(days=10), hi)
     fd["root"] = fd["ticker"].map(root_of)
     front = st.front_contracts(fd, ll.eligible_until(exp, 2))
@@ -289,6 +323,8 @@ def build_panel(conn, cfg: dict, stage: str) -> pd.DataFrame:
     panel = panel.merge(commodity_features(lambda r, d: fbars.get(fmap.get((r, d))), tdays)
                         .rename_axis("d").reset_index(), on="d", how="left")
     panel = panel.merge(news_features(events, tickers, tdays), on=["ticker", "d"], how="left")
+    legs = market_legs(imx_entry, lambda r, d: fbars.get(fmap.get((r, d))), tdays, tgt["horizon_days"], hedge)
+    panel = add_relative_targets(panel.merge(legs.rename_axis("d").reset_index(), on="d", how="left"), cfg)
     panel["cluster"] = panel["ticker"].map(clusters)
     panel = panel[(panel["d"] >= d_from) & (panel["d"] <= d_to) & panel["tradable"]]
     return panel.reset_index(drop=True)
@@ -299,8 +335,8 @@ def feature_list(cfg: dict) -> list[str]:
     return f["stock"] + f["market"] + f["commodity"] + f["news"]
 
 
-def panel_path(stage: str) -> str:
-    return os.path.join(OUT_DIR, f"panel_{stage}.csv.gz")
+def panel_path(stage: str, version: str) -> str:
+    return os.path.join(OUT_DIR, f"panel_{stage}_{version}.csv.gz")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -318,9 +354,10 @@ def main(argv: list[str] | None = None) -> int:
     finally:
         conn.close()
     os.makedirs(OUT_DIR, exist_ok=True)
-    panel.to_csv(panel_path(a.stage), index=False, float_format="%.6g")
-    log.info("панель %s: строк %d, бумаг %d, дат %d, доля y=1 %.3f", a.stage, len(panel),
-             panel["ticker"].nunique(), panel["d"].nunique(), panel["y"].mean())
+    panel.to_csv(panel_path(a.stage, cfg["version"]), index=False, float_format="%.6g")
+    y = cfg["target"].get("column", "y")
+    log.info("панель %s: строк %d, бумаг %d, дат %d, доля %s=1 %.3f", a.stage, len(panel),
+             panel["ticker"].nunique(), panel["d"].nunique(), y, panel[y].mean())
     return 0
 
 

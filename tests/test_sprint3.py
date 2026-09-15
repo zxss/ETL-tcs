@@ -96,7 +96,59 @@ class TestConfig(unittest.TestCase):
         f = sp.stock_features(frame(), pd.Series(1000.0, index=DAYS))
         self.assertTrue(set(cfg["features"]["stock"]) <= set(f.columns))
         self.assertTrue(set(cfg["features"]["market"]) <= set(sp.market_features(pd.Series(1000.0, index=DAYS)).columns))
-        self.assertFalse(cfg["samples"]["holdout"]["approved"])
+        self.assertTrue(cfg["samples"]["holdout"]["approved"])
+        self.assertEqual((cfg["target"]["column"], cfg["evaluation"]["net"], cfg["hedge"]["root"]),
+                         ("y_rel", "net_mn", "MX"))
+
+
+class TestRelative(unittest.TestCase):
+
+    def test_market_legs_same_contract(self):
+        from research import event_study_news as es
+        d = DAYS[:4]
+        b = es.Bars([dt.datetime.combine(x, dt.time(18, 30)) for x in d], [1, 1, 1, 1], [100.0, 101.0, 102.0, 99.0])
+        imx = pd.Series([1000.0, 1010.0, 1005.0, 990.0], index=d)
+        legs = sp.market_legs(imx, lambda r, day: b if r == "MX" else None, d, 2, "MX")
+        self.assertAlmostEqual(legs.at[d[0], "r_idx"], 0.5)
+        self.assertAlmostEqual(legs.at[d[0], "r_fut"], 2.0)
+        self.assertTrue(np.isnan(legs.at[d[2], "r_fut"]))            # выхода нет
+
+    def test_relative_target_and_bundle(self):
+        cfg = sp.load_config()
+        p = pd.DataFrame({"R": [1.0, 0.3], "r_idx": [0.4, 0.4], "r_fut": [0.3, 0.3], "hurdle": [0.1, 0.1],
+                          "cost": [0.2, 0.2]})
+        q = sp.add_relative_targets(p, cfg)
+        self.assertEqual(list(q["y_rel"]), [1.0, 0.0])             # альфа 0,6 > 0,2 + 0,1; −0,1 — нет
+        self.assertAlmostEqual(q["net_alpha"].iloc[0], 0.4)
+        self.assertAlmostEqual(q["net_mn"].iloc[0], 1.0 - 0.3 - 0.1 - 0.2 - 0.07)
+        self.assertAlmostEqual(q["net_mn_fee"].iloc[0], 1.0 - 0.3 - 0.1 - 0.08 - 0.07)
+
+
+@unittest.skipUnless(HAVE_SK, "нет sklearn")
+class TestHoldoutGuard(unittest.TestCase):
+
+    def test_guard(self):
+        import json
+        import tempfile
+        from research import sprint3_wf as wf
+        cfg = sp.load_config()
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(SystemExit):
+                wf.holdout_clusters(cfg, tmp)                          # нет результатов разработки
+            os.makedirs(os.path.join(tmp, "dev_v1"))
+            p = os.path.join(tmp, "dev_v1", "results.json")
+            for meta, passed in (({"config": "другая"}, ["FINANCIALS"]), ({"config": cfg["version"]}, [])):
+                with open(p, "w", encoding="utf-8") as f:
+                    json.dump({"meta": meta, "passed": passed}, f)
+                with self.assertRaises(SystemExit):
+                    wf.holdout_clusters(cfg, tmp)
+            with open(p, "w", encoding="utf-8") as f:
+                json.dump({"meta": {"config": cfg["version"]}, "passed": ["FINANCIALS"]}, f)
+            self.assertEqual(wf.holdout_clusters(cfg, tmp), ["FINANCIALS"])
+            os.makedirs(os.path.join(tmp, "holdout_v1"))
+            open(os.path.join(tmp, "holdout_v1", "results.json"), "w").close()
+            with self.assertRaises(SystemExit):
+                wf.holdout_clusters(cfg, tmp)                          # второй прогон запрещён
 
 
 @unittest.skipUnless(HAVE_SK, "нет sklearn")
