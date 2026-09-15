@@ -96,5 +96,15 @@ class TestTiming(unittest.TestCase):
         self.assertEqual(st.lead_by_day(stocks, fut).iloc[0]["lead_auction"], 120)   # аукцион 09:00
 
 
+class TestRegimes(unittest.TestCase):
+
+    def test_persistent_shift_only(self):
+        days = [dt.date(2023, 1, 2) + dt.timedelta(days=i) for i in range(31)]
+        vals = [600] * 10 + [540] + [600] * 10 + [540, 535, 540, 540, 535] + [540] * 5
+        chg = st.regime_changes(pd.Series(vals, index=days))
+        self.assertEqual([(c["from_day"], c["level"]) for c in chg],
+                         [(days[0], 600.0), (days[21], 540.0)])    # праздничный день 11 — не режим
+
+
 if __name__ == "__main__":
     unittest.main()

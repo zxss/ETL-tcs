@@ -28,6 +28,7 @@ import logging
 import os
 import sys
 
+import numpy as np
 import pandas as pd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -209,6 +210,30 @@ def roll_stats(r: pd.DataFrame, front: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def regime_changes(first: pd.Series, min_shift: int = 45, persist: int = 5) -> list[dict]:
+    """Режимы по ряду «первая сделка дня» (минуты, индекс — будние дни): новый режим —
+    сдвиг ≥ min_shift минут от текущего уровня, державшийся persist дней подряд
+    (укороченные праздничные дни режимом не считаются)."""
+    s = first.dropna().sort_index()
+    vals, days = s.to_numpy(float), list(s.index)
+    if len(vals) < persist:
+        return []
+    level = float(np.median(vals[:persist]))
+    out = [{"from_day": days[0], "level": level}]
+    i = persist
+    while i < len(vals):
+        win = vals[i:i + persist]
+        med = float(np.median(win))
+        if (len(win) == persist and abs(vals[i] - level) >= min_shift and abs(med - level) >= min_shift
+                and np.all(np.abs(win - med) < min_shift / 3)):
+            out.append({"from_day": days[i], "level": med})
+            level = med
+            i += persist
+            continue
+        i += 1
+    return out
+
+
 def read_contracts(path: str = fl.CONTRACTS_PATH) -> tuple[dict, dict]:
     exp, root = {}, {}
     with open(path, encoding="utf-8") as f:
@@ -222,7 +247,8 @@ def _pct(x) -> str:
     return "—" if x is None or pd.isna(x) else f"{x * 100:.0f} %"
 
 
-def report(tq: pd.DataFrame, lq: pd.DataFrame, rs: pd.DataFrame, series: list[str]) -> str:
+def report(tq: pd.DataFrame, lq: pd.DataFrame, rs: pd.DataFrame, series: list[str],
+           regimes: dict | None = None) -> str:
     t = tq.set_index(["series", "period"])
     periods = sorted(tq["period"].unique())
     lines = ["# Спринт 2 — тайминг сессий акций и фьючерсов (2022–2026)", "",
@@ -262,6 +288,14 @@ def report(tq: pd.DataFrame, lq: pd.DataFrame, rs: pd.DataFrame, series: list[st
         lines.append(f"| {r.root} | {r.days} | {r.rolls} | {r.backward} | {r.days_to_exp_med:.0f} | "
                      f"{r.basis_abs_med:.2f} / {r.basis_abs_max:.2f} | {_pct(r.front_share_med)} | "
                      f"{_pct(r.same_day_agree)} |")
+    if regimes:
+        lines += ["", "## Режимы: первая сделка дня (сдвиг ≥ 45 мин, держится ≥ 5 будних дней)", "",
+                  "Акции — медиана по корзине, фьючерс — ближний контракт.", "",
+                  "| ряд | режимы (с даты → первая сделка) |", "|---|---|"]
+        for s in series:
+            chg = regimes.get(s) or []
+            lines.append(f"| {s} | " + "; ".join(f"{c['from_day']:%d.%m.%Y} → {hhmm(c['level'])}"
+                                                   for c in chg) + " |")
     return "\n".join(lines) + "\n"
 
 
@@ -300,7 +334,12 @@ def main(argv: list[str] | None = None) -> int:
     r.to_csv(os.path.join(a.out, "rolls.csv"), index=False, float_format="%.4f")
     front.to_csv(os.path.join(a.out, "front.csv"), index=False, float_format="%.4f")
     series = [STOCK_GROUP] + [s for s in list(fl.ROOTS) + list(fl.SPOT) if s in set(fut_front["series"])]
-    text = report(timing_table(all_series, "Q"), lead_table(lead, "Q"), roll_stats(r, front), series)
+    weekday = lambda x: x[pd.to_datetime(x["d"]).dt.weekday < 5]          # noqa: E731
+    first_by = {STOCK_GROUP: weekday(stocks).groupby("d")["first_m"].median()}
+    for s, g in weekday(fut_front).groupby("series"):
+        first_by[s] = g.set_index("d")["first_m"]
+    regimes = {s: regime_changes(v) for s, v in first_by.items()}
+    text = report(timing_table(all_series, "Q"), lead_table(lead, "Q"), roll_stats(r, front), series, regimes)
     with open(os.path.join(a.out, "report.md"), "w", encoding="utf-8") as f:
         f.write(text)
     log.info("готово: %s", a.out)
