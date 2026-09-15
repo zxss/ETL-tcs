@@ -38,6 +38,11 @@ PY=/opt/etl-tcs/.venv/bin/python
 # ORDER 09:15 — исполняет замороженный план (только intraday_*)
 15  9 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo order     >> audit/stage2-demo/cron.log 2>&1
 
+# PARK 10:05 — казначейство: TMON@ торгуется через API только на СПБ, с 10:00.
+# Лимитная покупка паёв (не дороже последней сделки + 0,05 %), виртуальные паи
+# из CLOSE переводятся в реальные. Первая минута пропускается: выбросы цены.
+5  10 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo park      >> audit/stage2-demo/cron.log 2>&1
+
 # CLEANUP 18:20 — закрывает интрадей до аукциона 18:40-18:50
 20 18 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo cleanup   >> audit/stage2-demo/cron.log 2>&1
 

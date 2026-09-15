@@ -732,6 +732,12 @@ MIN_STOP_PCT: float = float(os.getenv("MIN_STOP_PCT", "1.0"))
 # рыночная заявка в аукционе не нужна. До 14.09.2026 было 10:00.
 STAGE2_CLOSE_TIME: str = os.getenv("STAGE2_CLOSE_TIME", "09:10")
 
+# STAGE2_PARK_TIME — казначейство после открытия СПБ (фаза PARK). TMON@ торгуется
+# через API только на СПБ бирже, ETF-сессия с 10:00 МСК; до этого листинг закрыт
+# для API, и CLOSE в 09:10 паркует виртуально. 10:05, а не 10:00: в первую
+# минуту бывают выбросы цены (15.09: 161,00–165,20 при цене 164,3).
+STAGE2_PARK_TIME: str = os.getenv("STAGE2_PARK_TIME", "10:05")
+
 # STAGE2_START_DATE — день, с которого считается тест (ISO). До него фазы не
 # выполняются и даже каталог пропуска не создают. Пусто — без ограничения.
 STAGE2_START_DATE: str = os.getenv("STAGE2_START_DATE", "")
@@ -760,3 +766,7 @@ TREASURY_CLASS_CODE = os.getenv("TREASURY_CLASS_CODE", "").split("#", 1)[0].stri
 TREASURY_CASH_BUFFER_RUB = float(os.getenv("TREASURY_CASH_BUFFER_RUB", "1000.0"))
 # Минимальная сумма для покупки TMON (не гонять ордера ради 100 рублей)
 TREASURY_MIN_SWEEP_RUB = float(os.getenv("TREASURY_MIN_SWEEP_RUB", "2000.0"))
+# Фаза PARK покупает паи только лимитной заявкой: не дороже последней сделки +
+# этот процент (округление вниз к шагу цены). Рыночная заявка на открытии СПБ
+# собрала бы выбросы первой минуты.
+TREASURY_LIMIT_MAX_PREMIUM_PCT = float(os.getenv("TREASURY_LIMIT_MAX_PREMIUM_PCT", "0.05"))

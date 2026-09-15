@@ -23,7 +23,7 @@ from tft_forecast.quotes import is_market_open           # noqa: E402
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MSK = dt.timezone(dt.timedelta(hours=3))
 MON = dt.date(2026, 9, 14)
-PHASES = ("prep", "close", "order", "cleanup", "overnight")
+PHASES = ("prep", "close", "order", "park", "cleanup", "overnight")
 
 
 def at(h, m, day=MON):
@@ -93,6 +93,13 @@ class TestPhaseSchedule(unittest.TestCase):
         self.assertLess(t["close"], t["order"])
         self.assertFalse(is_market_open(at(t["prep"].hour, t["prep"].minute)),
                          "PREP строит план от закрытия — рынок ещё закрыт")
+
+    def test_park_after_spb_open(self):
+        """TMON@ на СПБ торгуется через API с 10:00; первая минута — выбросы цены."""
+        t = {k: dt.time.fromisoformat(v) for k, v in crontab_times().items()}
+        self.assertGreater(t["park"], dt.time(10, 0))
+        self.assertLess(t["order"], t["park"])
+        self.assertLess(t["park"], t["cleanup"])
 
     def test_evening_unchanged(self):
         t = crontab_times()

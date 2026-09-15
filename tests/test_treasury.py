@@ -71,10 +71,16 @@ class FundBroker:
     """Брокер с одним фондом по фиксированной цене. Рыночные заявки исполняются
     сразу; состояние заявки — только по id брокера, как в песочнице."""
 
-    def __init__(self, cash=2_000_000.0, lots=0, price=PRICE, reject=False, events=None):
+    def __init__(self, cash=2_000_000.0, lots=0, price=PRICE, reject=False, events=None,
+                 limit_fill=True, partial=None, positions=None, prices=None):
         self.cash, self.lots, self.price, self.reject = cash, lots, price, reject
         self.orders: list[tuple[str, int]] = []
+        self.limits: list[tuple[str, int, float]] = []
+        self.cancelled: list[str] = []
         self.events = events if events is not None else []
+        self.limit_fill, self.partial = limit_fill, partial
+        self.extra_positions = positions or []
+        self.prices = prices or {}
         self._states: dict[str, OrderState] = {}
 
     def find_instrument_listings(self, query):
@@ -88,19 +94,46 @@ class FundBroker:
                           class_code="SPBRU" if spb else "TQBR")
 
     def get_last_price(self, uid):
-        return self.price
+        return self.prices.get(uid, self.price)
 
     def get_money_rub(self, account_id):
         return self.cash
 
     def get_positions(self, account_id):
-        return [Position("u-spb", float(self.lots), 0.0)] if self.lots else []
+        fund = [Position("u-spb", float(self.lots), 0.0)] if self.lots else []
+        return fund + list(self.extra_positions)
 
     def get_active_orders(self, account_id):
         return []
 
     def cancel_order(self, *, account_id, order_id):
-        pass
+        self.cancelled.append(order_id)
+
+    def post_limit_order(self, *, account_id, instrument, direction, quantity_lots, price,
+                         order_id):
+        """Лимитка исполняется по рыночной цене, если лимит её пересекает."""
+        px = price.as_float()
+        self.events.append(("fund_limit", direction, quantity_lots))
+        self.limits.append((direction, quantity_lots, px))
+        if self.reject:
+            raise BrokerError("HTTP 400: нет ликвидности")
+        crosses = px >= self.price if direction == "BUY" else px <= self.price
+        done = 0
+        if crosses and self.limit_fill:
+            done = min(self.partial, quantity_lots) if self.partial else quantity_lots
+        if done:
+            sign = 1 if direction == "BUY" else -1
+            self.lots += sign * done
+            self.cash -= sign * done * self.price
+        status = FILL if done == quantity_lots else (
+            "EXECUTION_REPORT_STATUS_PARTIALLYFILL" if done else "EXECUTION_REPORT_STATUS_NEW")
+        oid = "exch-" + order_id
+        st = OrderState(order_id=oid, execution_report_status=status,
+                        lots_requested=quantity_lots, lots_executed=done, raw={},
+                        executed_price=self.price if done else None,
+                        executed_amount=done * self.price if done else None)
+        self._states[oid] = st
+        return st
 
     def post_market_order(self, *, account_id, instrument, direction, quantity_lots, order_id):
         self.events.append(("fund", direction, quantity_lots))
@@ -375,6 +408,108 @@ class TestSandboxFallback(unittest.TestCase):
         self.assertEqual(led.rows, [])
 
 
+# ── PARK 10:05: лимитная покупка и перевод виртуальных паёв ───────────────────
+
+TMON_NOW = 164.31
+VLOTS = 12169
+
+
+def virtual_parked(led, lots=VLOTS, price=164.26):
+    """Утренняя виртуальная парковка CLOSE (как 15.09)."""
+    led.record(account_env="SANDBOX", account_id=ACC, ticker="TMON", mode="virtual",
+               side="BUY", lots=lots, price=price, amount_rub=lots * price,
+               reason="sweep", run_id="CLOSE", order_id=None)
+
+
+class TestLimitPrice(unittest.TestCase):
+
+    def test_cap_rounded_down_to_tick(self):
+        self.assertAlmostEqual(tr.limit_buy_price(164.31, 0.05, 0.01), 164.39)
+        self.assertAlmostEqual(tr.limit_buy_price(100.0, 0.05, 0.01), 100.05)
+
+    def test_never_above_cap(self):
+        for last in (0.37, 1.2345, 99.99, 164.31, 5123.7):
+            p = tr.limit_buy_price(last, 0.05, 0.01)
+            self.assertLessEqual(p, last * 1.0005 + 1e-9)
+            self.assertAlmostEqual(round(p / 0.01), p / 0.01, places=6)
+
+    def test_no_price_is_error(self):
+        with self.assertRaises(ValueError):
+            tr.limit_buy_price(0.0, 0.05, 0.01)
+
+
+class TestParkLimit(unittest.TestCase):
+
+    def setUp(self):
+        _patch_config(self, TREASURY_LIMIT_MAX_PREMIUM_PCT=0.05)
+
+    def expected_lots(self, cash):
+        return int((cash - 1000) // tr.limit_buy_price(TMON_NOW, 0.05, 0.01))
+
+    def test_converts_virtual_to_real(self):
+        b, led = FundBroker(cash=2_000_000, price=TMON_NOW), MemoryLedger()
+        virtual_parked(led)
+        out = service(b, ledger=led).park_limit()
+        n = self.expected_lots(2_000_000)
+        self.assertEqual(b.orders, [])                                  # рыночных заявок нет
+        self.assertEqual(b.limits, [("BUY", n, 164.39)])                # только лимитка
+        self.assertEqual((out["lots"], out["converted_lots"]), (n, VLOTS))
+        st = service(b, ledger=led).get_treasury_state()
+        self.assertEqual((st["real_lots"], st["virtual_lots"], st["mode"]), (n, 0, "broker"))
+        self.assertAlmostEqual(st["virtual_cost_rub"], 0.0, places=4)   # списано по себестоимости
+        self.assertAlmostEqual(st["free_cash_rub"], b.cash, places=4)
+        self.assertGreaterEqual(b.cash, 1000)                           # буфер цел
+        rows = [(r["mode"], r["side"], r["reason"]) for r in led.rows[1:]]
+        self.assertEqual(rows, [("broker", "BUY", "park"), ("virtual", "SELL", "convert")])
+
+    def test_listing_closed_keeps_virtual_and_sends_nothing(self):
+        with mock.patch.object(config, "TREASURY_CLASS_CODE", "TQBR"):
+            b, led = FundBroker(cash=2_000_000, price=TMON_NOW), MemoryLedger()
+            virtual_parked(led)
+            out = service(b, ledger=led).park_limit()
+        self.assertIn("недоступен через API", out["reason"])
+        self.assertEqual(b.events, [])
+        self.assertEqual(led.position(ACC, "TMON")[0], VLOTS)
+
+    def test_rejected_keeps_virtual(self):
+        b, led = FundBroker(cash=2_000_000, price=TMON_NOW, reject=True), MemoryLedger()
+        virtual_parked(led)
+        with self.assertRaises(BrokerError):
+            service(b, ledger=led).park_limit()
+        self.assertEqual(led.position(ACC, "TMON")[0], VLOTS)
+        self.assertEqual(len(led.rows), 1)
+
+    def test_unfilled_limit_cancelled_virtual_kept(self):
+        b, led = FundBroker(cash=2_000_000, price=TMON_NOW, limit_fill=False), MemoryLedger()
+        virtual_parked(led)
+        with mock.patch.object(tr, "FILL_TIMEOUT_SEC", 0.0), self.assertRaises(BrokerError):
+            service(b, ledger=led).park_limit()
+        self.assertEqual(len(b.cancelled), 1)
+        self.assertEqual(led.position(ACC, "TMON")[0], VLOTS)
+
+    def test_partial_fill_reported(self):
+        b, led = FundBroker(cash=2_000_000, price=TMON_NOW, partial=5000), MemoryLedger()
+        virtual_parked(led)
+        with mock.patch.object(tr, "FILL_TIMEOUT_SEC", 0.0):
+            out = service(b, ledger=led).park_limit()
+        self.assertEqual(out["lots"], 5000)
+        self.assertEqual(out["requested_lots"], self.expected_lots(2_000_000))
+        self.assertEqual(len(b.cancelled), 1)                           # остаток снят
+
+    def test_short_proceeds_are_not_parked(self):
+        short = Position("u-shr", -100.0, 0.0)
+        b = FundBroker(cash=2_050_000, price=TMON_NOW, positions=[short],
+                       prices={"u-shr": 500.0})
+        out = service(b, ledger=MemoryLedger()).park_limit()
+        self.assertEqual(out["lots"], self.expected_lots(2_000_000))     # 50 000 выручки шорта в стороне
+
+    def test_nothing_to_park(self):
+        b = FundBroker(cash=2_500, price=TMON_NOW)
+        out = service(b, ledger=MemoryLedger()).park_limit()
+        self.assertEqual((out["lots"], b.limits), (0, []))
+        self.assertIn("меньше порога", out["reason"])
+
+
 # ── Интеграция в фазы Этапа 2 ────────────────────────────────────────────────
 
 def _calls(func) -> set[str]:
@@ -462,6 +597,55 @@ class TestPhaseClose(PhaseBase):
         self.assertEqual(b.orders, [])
 
 
+class TestPhasePark(PhaseBase):
+
+    def setUp(self):
+        super().setUp()
+        p = mock.patch.object(config, "TREASURY_LIMIT_MAX_PREMIUM_PCT", 0.05, create=True)
+        p.start()
+        self.addCleanup(p.stop)
+
+    def test_park_converts_virtual_and_passes(self):
+        virtual_parked(self.ledger)
+        b = self.broker(FundBroker(cash=2_000_000, price=TMON_NOW))
+        rc = s2.phase_park(now=self.at(10, 5))
+        self.assertEqual(rc, 0)
+        m = self.meta("PARK")
+        self.assertEqual(m["verdict"], s2.PASS)
+        self.assertEqual(m["treasury_converted_lots"], VLOTS)
+        self.assertEqual(m["treasury_limit_price"], 164.39)
+        self.assertEqual(m["treasury"]["mode"], "broker")
+        self.assertEqual(m["treasury"]["tmon_lots"], b.lots)
+        self.assertEqual(b.orders, [])                                  # только лимитная заявка
+
+    def test_listing_closed_warns_without_halting(self):
+        virtual_parked(self.ledger)
+        with mock.patch.object(config, "TREASURY_CLASS_CODE", "TQBR"):
+            self.broker(FundBroker(cash=2_000_000, price=TMON_NOW))
+            rc = s2.phase_park(now=self.at(10, 5))
+        self.assertEqual(rc, 0)
+        self.assertEqual(self.meta("PARK")["verdict"], s2.PASS_WARN)
+        self.assertNotEqual(s2.load_state().get("status"), "halted")
+
+    def test_rejected_is_partial_not_fail(self):
+        virtual_parked(self.ledger)
+        self.broker(FundBroker(cash=2_000_000, price=TMON_NOW, reject=True))
+        rc = s2.phase_park(now=self.at(10, 5))
+        self.assertEqual(rc, 0)
+        self.assertEqual(self.meta("PARK")["verdict"], s2.PARTIAL)
+        self.assertEqual(self.ledger.position(ACC, "TMON")[0], VLOTS)
+
+    def test_dry_run_sends_nothing(self):
+        b = self.broker(FundBroker(cash=2_000_000, price=TMON_NOW))
+        s2.phase_park(now=self.at(10, 5), dry_run=True)
+        self.assertEqual((b.limits, b.orders), ([], []))
+
+    def test_cli_knows_park(self):
+        with mock.patch.object(s2, "phase_park", return_value=0) as ph:
+            self.assertEqual(s2.main(["park", "--dry-run"]), 0)
+        ph.assert_called_once_with(prod=False, dry_run=True)
+
+
 class TestPhaseCleanup(PhaseBase):
 
     def setUp(self):
@@ -485,6 +669,15 @@ class TestPhaseCleanup(PhaseBase):
         s2.phase_cleanup(now=self.at(18, 20))
         m = self.meta("CLEANUP")
         self.assertTrue(any("изменились за день" in w for w in m["warnings"]), m["warnings"])
+
+    def test_park_is_the_reference_after_conversion(self):
+        """После PARK число паёв меняется (виртуальные → реальные) — это не сдвиг за день."""
+        self.fake_run("CLOSE", "091000", treasury={"tmon_lots": VLOTS})
+        self.fake_run("PARK", "100500", treasury={"tmon_lots": 12160})
+        self.broker(FundBroker(cash=5000, lots=12160))
+        s2.phase_cleanup(now=self.at(18, 20))
+        m = self.meta("CLEANUP")
+        self.assertFalse(any("изменились за день" in w for w in m["warnings"]), m["warnings"])
 
     def test_margin_debt_left_is_critical(self):
         """Паёв нет, рубли в минусе — долг остаётся, это FAIL."""
