@@ -250,10 +250,10 @@ def summarize(h: dict, df: pd.DataFrame, days: list[dt.date], n_trials: int, gat
     return out
 
 
-def register(stage: str, n: int, revision: str, path: str = es.TRIALS_PATH) -> int:
+def register(stage: str, n: int, revision: str, path: str = es.TRIALS_PATH, sprint: int = 2) -> int:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "a", encoding="utf-8") as f:
-        f.write(json.dumps({"ts": dt.datetime.now().isoformat(timespec="seconds"), "sprint": 2,
+        f.write(json.dumps({"ts": dt.datetime.now().isoformat(timespec="seconds"), "sprint": sprint,
                             "stage": stage, "trials": n, "revision": revision}, ensure_ascii=False) + "\n")
     with open(path, encoding="utf-8") as f:
         return sum(int(json.loads(line).get("trials", 0)) for line in f)
