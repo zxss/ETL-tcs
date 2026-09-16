@@ -139,7 +139,7 @@ class TestCanonicalValues(unittest.TestCase):
         c = _cfg()
         self.assertEqual(c.FIXED_POSITION_OVERFLOW_MODE, "skip")
         self.assertEqual(c.BEST_TRADES_TOP_N, 5)
-        self.assertAlmostEqual(c.BEST_TRADES_POSITION_RUB, 10_000.0)
+        self.assertAlmostEqual(c.BEST_TRADES_POSITION_RUB, 100_000.0)   # r4: депозит 5 млн ₽
 
     def test_non_shortable_blacklist(self):
         self.assertTrue({"AKRN", "CBOM", "MVID"} <= non_shortable_tickers())

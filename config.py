@@ -333,8 +333,10 @@ SAVE_FORECASTS: bool = get_bool_env("SAVE_FORECASTS", 1)
 BEST_TRADES_TOP_N: int = int(os.getenv("BEST_TRADES_TOP_N", "5"))
 
 # BEST_TRADES_POSITION_RUB — целевой размер позиции на одну бумагу (₽)
-# для расчёта объёма лотов в торговых инструкциях.
-BEST_TRADES_POSITION_RUB: float = float(os.getenv("BEST_TRADES_POSITION_RUB", "10000"))
+# для расчёта объёма лотов в торговых инструкциях. С прогона r4 (депозит 5 млн ₽,
+# решение пользователя 15.09.2026) — 100 000 ₽: 5 позиций × 100 000 = 10 % депозита
+# в активном риске. До r4 было 10 000 ₽ при депозите 2 млн.
+BEST_TRADES_POSITION_RUB: float = float(os.getenv("BEST_TRADES_POSITION_RUB", "100000"))
 
 # LIMIT_ENTRY_FRACTION — насколько лимитка прижата к экстремуму прогнозного
 # коридора (доля 0..1): 0 = спот, 1 = ровно на F.High/F.Low.
@@ -763,9 +765,10 @@ TREASURY_TICKER = os.getenv("TREASURY_TICKER", "TMON")
 # же строке отдаёт сам комментарий как значение (14.09 листинг так и не нашёлся).
 TREASURY_CLASS_CODE = os.getenv("TREASURY_CLASS_CODE", "").split("#", 1)[0].strip()
 # Неснижаемый остаток свободного кэша на комиссии, округление лотов и вариационку
-TREASURY_CASH_BUFFER_RUB = float(os.getenv("TREASURY_CASH_BUFFER_RUB", "1000.0"))
-# Минимальная сумма для покупки TMON (не гонять ордера ради 100 рублей)
-TREASURY_MIN_SWEEP_RUB = float(os.getenv("TREASURY_MIN_SWEEP_RUB", "2000.0"))
+# (с r4 — 5 000 ₽: комиссии растут вместе с объёмом сделок при депозите 5 млн)
+TREASURY_CASH_BUFFER_RUB = float(os.getenv("TREASURY_CASH_BUFFER_RUB", "5000.0"))
+# Минимальная сумма для покупки TMON (не гонять ордера ради 100 рублей; с r4 — 10 000 ₽)
+TREASURY_MIN_SWEEP_RUB = float(os.getenv("TREASURY_MIN_SWEEP_RUB", "10000.0"))
 # Фаза PARK покупает паи только лимитной заявкой: не дороже последней сделки +
 # этот процент (округление вниз к шагу цены). Рыночная заявка на открытии СПБ
 # собрала бы выбросы первой минуты.
