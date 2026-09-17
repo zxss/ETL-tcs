@@ -8,18 +8,26 @@
 2. Где состав между соседними снимками изменился — двоичный поиск по дням до первой
    даты нового состава (дата вступления в силу, T_eff).
 3. Включения и исключения — разность множеств тикеров.
-4. Дата анонса T_ann — последняя новость ISS sitenews с заголовком о базах расчёта
-   индексов или о включении/исключении из Индекса МосБиржи не позднее чем за день
-   до T_eff и не раньше чем за 45 дней; ссылка https://www.moex.com/n{id}.
-   Не нашлась — T_ann пустой (событие в тест не идёт, помечено).
+4. Дата анонса T_ann — САМАЯ РАННЯЯ новость ISS sitenews о пересмотре базы индексов
+   акций (is_imoex_review: квартальный релиз «Новые базы расчета индексов Московской
+   Биржи», «Об изменении / О внеочередном пересмотре баз расчета индексов акций»,
+   точечные «… в Индекс МосБиржи») в окне [T_eff − 45 дн; T_eff − 1 дн];
+   ссылка https://www.moex.com/n{id}. Не нашлась — T_ann пустой (в тест не идёт).
+   Облигации, ESG, РСПП, IPO, недвижимость, «создания стоимости», голубые фишки,
+   фьючерсы — не анонсы IMOEX (первая версия ловила их широким фильтром — исправлено
+   до прогона модулей).
+5. Смена тикера в одном событии (RENAMES: TCSG→T и т. п.) — не включение: пара
+   убирается из включений и исключений, пишется в колонку renames.
 
-Выход: research/structural/data/imoex_changes.csv и imoex_snapshots.json.
-Запуск (на сервере, российский IP): python -m research.structural.fetch_imoex_reviews
+Выход: research/structural/data/imoex_changes.csv, imoex_snapshots.json, imoex_index_news.json.
+Запуск (на сервере, российский IP): python -m research.structural.fetch_imoex_reviews [--from-cache]
 """
 from __future__ import annotations
 
+import argparse
 import csv
 import datetime as dt
+import html
 import json
 import logging
 import os
@@ -39,6 +47,30 @@ FROM, TO = dt.date(2022, 6, 1), dt.date(2026, 9, 11)
 PAUSE = 0.25
 TITLE_RE = re.compile(r"(баз\w*\s+расч[её]та\s+индекс|Индекс\w*\s+МосБиржи|Индекс\w*\s+ММВБ)", re.I)
 ANN_WINDOW_DAYS = 45
+REVIEW_RE = [
+    re.compile(r"^Новые базы расч[её]та индексов Московской [Бб]иржи$"),
+    re.compile(r"^Об изменении баз расч[её]та индексов акций$"),
+    re.compile(r"^О внеочередном пересмотре баз расч[её]та индексов акций$"),
+    re.compile(r"(войдут|включит|включила|исключит|исключила|покинут).* в Индекс МосБиржи$"),
+]
+# Смена кода бумаги (редомициляция, переименование): старый → новый.
+RENAMES = {"TCSG": "T", "YNDX": "YDEX", "FIVE": "X5", "FIXP": "FIXR", "AGRO": "RAGR"}
+
+
+def is_imoex_review(title: str) -> bool:
+    t = html.unescape(title or "").strip()
+    return any(r.search(t) for r in REVIEW_RE)
+
+
+def split_renames(additions: list[str], deletions: list[str]) -> tuple[list[str], list[str], list[str]]:
+    """Пары «старый код исключён, новый включён» в одном событии — не включение."""
+    adds, dels, ren = list(additions), list(deletions), []
+    for old, new in RENAMES.items():
+        if old in dels and new in adds:
+            dels.remove(old)
+            adds.remove(new)
+            ren.append(f"{old}->{new}")
+    return adds, dels, ren
 
 
 def _get(url: str) -> dict:
@@ -142,32 +174,49 @@ def index_news() -> list[dict]:
 
 
 def attach_announcements(events: list[dict], news: list[dict]) -> list[dict]:
+    relevant = [x for x in news if is_imoex_review(x["title"])]
     for e in events:
         eff = dt.date.fromisoformat(e["eff_date"])
-        cands = [x for x in news
+        cands = [x for x in relevant
                  if 1 <= (eff - dt.date.fromisoformat(x["published"][:10])).days <= ANN_WINDOW_DAYS]
-        best = max(cands, key=lambda x: x["published"]) if cands else None
+        best = min(cands, key=lambda x: x["published"]) if cands else None
         e.update(ann_date=best["published"][:10] if best else "", ann_id=best["id"] if best else "",
-                 ann_title=best["title"] if best else "",
+                 ann_title=html.unescape(best["title"]) if best else "",
                  ann_url=f"https://www.moex.com/n{best['id']}" if best else "")
     return events
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description="Пересмотры базы IMOEX из ISS")
+    ap.add_argument("--from-cache", action="store_true",
+                    help="снимки и новости из сохранённых JSON (без прокрутки ленты)")
+    a = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     os.makedirs(DATA_DIR, exist_ok=True)
+    snap_path = os.path.join(DATA_DIR, "imoex_snapshots.json")
+    news_path = os.path.join(DATA_DIR, "imoex_index_news.json")
     cache: dict = {}
+    if a.from_cache:
+        with open(snap_path, encoding="utf-8") as f:
+            cache = json.load(f)
     events = change_points(cache)
-    news = index_news()
-    log.info("новостей о базах индексов: %d", len(news))
+    if a.from_cache:
+        with open(news_path, encoding="utf-8") as f:
+            news = json.load(f)
+    else:
+        news = index_news()
+    log.info("новостей по широкому фильтру: %d, из них анонсов пересмотра IMOEX: %d",
+             len(news), sum(is_imoex_review(x["title"]) for x in news))
+    for e in events:
+        e["additions"], e["deletions"], e["renames"] = split_renames(e["additions"], e["deletions"])
     events = attach_announcements(events, news)
-    with open(os.path.join(DATA_DIR, "imoex_snapshots.json"), "w", encoding="utf-8") as f:
-        json.dump({k: v for k, v in sorted(cache.items()) if v}, f, ensure_ascii=False, indent=0)
-    with open(os.path.join(DATA_DIR, "imoex_index_news.json"), "w", encoding="utf-8") as f:
+    with open(snap_path, "w", encoding="utf-8") as f:
+        json.dump(dict(sorted(cache.items())), f, ensure_ascii=False, indent=0)
+    with open(news_path, "w", encoding="utf-8") as f:
         json.dump(news, f, ensure_ascii=False, indent=1)
     with open(os.path.join(DATA_DIR, "imoex_changes.csv"), "w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, fieldnames=["eff_date", "before_date", "ann_date", "ann_url", "ann_title",
-                                          "additions", "deletions"])
+                                          "additions", "deletions", "renames"])
         w.writeheader()
         for e in events:
             w.writerow({k: (" ".join(v) if isinstance(v, list) else v) for k, v in e.items() if k != "ann_id"})

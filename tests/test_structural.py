@@ -75,6 +75,33 @@ class TestDividendGap(unittest.TestCase):
         self.assertEqual((r["reason"], r["exit_day"]), ("тайм-стоп", d[16]))
 
 
+class TestImoexReviews(unittest.TestCase):
+
+    def test_title_filter(self):
+        from research.structural import fetch_imoex_reviews as fr
+        yes = ["Новые базы расчета индексов Московской Биржи", "Новые базы расчета индексов Московской биржи",
+               "Об изменении баз расчета индексов акций", "О внеочередном пересмотре баз расчета индексов акций",
+               "Московская биржа включит акции Ленты в Индекс МосБиржи",
+               "Акции ДОМ.РФ, Озон и ЦИАН войдут в Индекс МосБиржи"]
+        no = ["О базе расчета Индекса МосБиржи IPO", "Новые базы расчета Индексов МосБиржи – РСПП",
+              "Новые параметры базы расчета Индекса московской недвижимости ДомКлик",
+              "Московская биржа включила акции ДОМ.РФ в Индекс МосБиржи создания стоимости",
+              "О внеочередном пересмотре баз расчета индексов облигаций",
+              "Новые параметры базы расчета Индекса МосБиржи голубых фишек"]
+        self.assertTrue(all(fr.is_imoex_review(t) for t in yes))
+        self.assertFalse(any(fr.is_imoex_review(t) for t in no))
+
+    def test_renames_and_earliest_announcement(self):
+        from research.structural import fetch_imoex_reviews as fr
+        self.assertEqual(fr.split_renames(["T", "HEAD"], ["TCSG"]), (["HEAD"], [], ["TCSG->T"]))
+        ev = [{"eff_date": "2025-12-19"}]
+        news = [{"id": 1, "title": "О базе расчета Индекса МосБиржи IPO", "published": "2025-12-16 10:00:00"},
+                {"id": 2, "title": "Новые базы расчета индексов Московской Биржи", "published": "2025-12-05 19:00:00"},
+                {"id": 3, "title": "Акции ДОМ.РФ, Озон и ЦИАН войдут в Индекс МосБиржи", "published": "2025-12-06 09:00:00"}]
+        e = fr.attach_announcements(ev, news)[0]
+        self.assertEqual((e["ann_date"], e["ann_url"]), ("2025-12-05", "https://www.moex.com/n2"))
+
+
 class TestIndexAndSummary(unittest.TestCase):
 
     def test_event_days(self):
