@@ -33,6 +33,14 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(c["SiH2"]["years"], [2022])                  # 2021 — вне периода
         self.assertEqual(c["BRX6"]["years"], [2025, 2026])            # экспирация после конца периода — год экспирации в периоде
 
+    def test_stock_futures_roots(self):
+        fut = FUT + [{"ticker": "SRZ4", "classCode": "SPBFUT", "uid": "u7", "expirationDate": "2024-12-20T00:00:00Z"},
+                     {"ticker": "GZH5", "classCode": "SPBFUT", "uid": "u8", "expirationDate": "2025-03-21T00:00:00Z"}]
+        got = {c["ticker"] for c in fl.select_contracts(fut, dt.date(2022, 1, 1), dt.date(2026, 9, 11), fl.STOCK_ROOTS)}
+        self.assertEqual(got, {"SRZ4", "GZH5"})                     # сырьё и валюта не попадают
+        self.assertEqual({c["ticker"] for c in fl.select_contracts(fut, dt.date(2022, 1, 1), dt.date(2026, 9, 11))},
+                         {"BRG3", "SiH2", "BRX6"})                   # по умолчанию — прежние корни
+
     def test_futures_table_whitelisted(self):
         self.assertEqual(bf._table("research_fut_5m"), "research_fut_5m")
         self.assertIn("CREATE TABLE IF NOT EXISTS research_fut_5m",

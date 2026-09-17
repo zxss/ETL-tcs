@@ -36,16 +36,20 @@ TABLE = "research_fut_5m"
 ROOTS = {"BR": "Brent", "GD": "золото $", "GL": "золото ₽", "NG": "газ (США)",
          "Si": "USD/RUB", "CR": "CNY/RUB", "MX": "индекс MOEX"}
 SPOT = {"CNYRUB_TOM": "CETS"}
+# Фьючерсы на отдельные акции — для базисного арбитража (research/structural).
+STOCK_ROOTS = {"SR": "SBER", "LK": "LKOH", "GZ": "GAZP", "VB": "VTBR", "GK": "GMKN"}
+ALL_ROOTS = {**ROOTS, **STOCK_ROOTS}
 CONTRACTS_PATH = os.path.join(ROOT, "audit", "r4_research", "sprint2", "contracts.csv")
 
 
-def select_contracts(futures: list[dict], d_from: dt.date, d_to: dt.date) -> list[dict]:
+def select_contracts(futures: list[dict], d_from: dt.date, d_to: dt.date,
+                     roots: dict = ROOTS) -> list[dict]:
     """Контракты нужных корней, живые в периоде; годы архивов на каждый."""
     out = []
     for f in futures:
         tk = str(f.get("ticker", ""))
         root = tk[:2]
-        if root not in ROOTS or f.get("classCode") != "SPBFUT" or len(tk) != 4:
+        if root not in roots or f.get("classCode") != "SPBFUT" or len(tk) != 4:
             continue
         raw = (f.get("expirationDate") or "")[:10]
         if not raw:
@@ -69,7 +73,8 @@ def write_contracts(contracts: list[dict], path: str = CONTRACTS_PATH) -> None:
             w.writerow([c["ticker"], c["root"], c["uid"], c["expiration"], c["basic_asset"]])
 
 
-async def load(conn, d_from: dt.date, d_to: dt.date) -> list[dict]:
+async def load(conn, d_from: dt.date, d_to: dt.date, roots: dict = ROOTS, spot: dict = SPOT,
+               contracts_path: str = CONTRACTS_PATH) -> list[dict]:
     from loaders import moex_loader
     bf.ensure_table(conn, TABLE)
     st_path = bf.state_path_for(TABLE)
@@ -78,15 +83,15 @@ async def load(conn, d_from: dt.date, d_to: dt.date) -> list[dict]:
     async with bf._session() as s:
         data = await moex_loader._api_post(s, "InstrumentsService/Futures",
                                            {"instrumentStatus": "INSTRUMENT_STATUS_ALL"})
-        contracts = select_contracts(data.get("instruments", []), d_from, d_to)
-        for tk, cls in SPOT.items():
+        contracts = select_contracts(data.get("instruments", []), d_from, d_to, roots)
+        for tk, cls in spot.items():
             found = await moex_loader._api_post(s, "InstrumentsService/FindInstrument", {"query": tk})
             for i in found.get("instruments", []):
                 if i.get("ticker") == tk and i.get("classCode") == cls:
                     contracts.append({"ticker": tk, "root": tk, "uid": i["uid"], "expiration": "",
                                       "years": list(range(d_from.year, d_to.year + 1)),
                                       "basic_asset": "CNY/RUB спот"})
-        write_contracts(contracts)
+        write_contracts(contracts, contracts_path)
         log.info("контрактов %d (архивов %d)", len(contracts), sum(len(c["years"]) for c in contracts))
         for c in contracts:
             for year in c["years"]:
@@ -112,12 +117,19 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="История фьючерсов на сырьё и валюту (Спринт 2)")
     ap.add_argument("--from", dest="date_from", default="2022-01-01")
     ap.add_argument("--to", dest="date_to", default="2026-09-11")
+    ap.add_argument("--roots", default=",".join(ROOTS),
+                    help="корни через запятую, например SR,LK,GZ,VB,GK (фьючерсы на акции)")
+    ap.add_argument("--no-spot", action="store_true", help="не грузить спот CNYRUB_TOM")
+    ap.add_argument("--contracts-out", default=CONTRACTS_PATH,
+                    help="куда записать справочник контрактов (не затирать список Спринта 2)")
     a = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    roots = {r: ALL_ROOTS[r] for r in a.roots.split(",") if r}
     import database
     conn = database.get_connection()
     try:
-        stats = asyncio.run(load(conn, dt.date.fromisoformat(a.date_from), dt.date.fromisoformat(a.date_to)))
+        stats = asyncio.run(load(conn, dt.date.fromisoformat(a.date_from), dt.date.fromisoformat(a.date_to),
+                                 roots, {} if a.no_spot else SPOT, a.contracts_out))
     finally:
         conn.close()
     log.info("готово: архивов %d, новых баров %d", len(stats), sum(s["inserted"] for s in stats))
