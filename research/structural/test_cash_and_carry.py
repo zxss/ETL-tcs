@@ -69,11 +69,15 @@ def run(conn, rules: dict, stage: str, ctx: cmn.Context) -> tuple[pd.DataFrame, 
             if ds:
                 last_day[c["ticker"]] = ds[-1]
     days_all = [d for d in ctx.tdays if d_from <= d <= d_to + dt.timedelta(days=hi_dte + 5)]
-    rows, signal_days, open_pos = [], set(), {}
+    rows, signal_days = [], {"C&C": set(), "C&C-2": set()}
+    open_all = {"C&C": {}, "C&C-2": {}}
     fut_cost = rules["costs"]["futures_rt_pct"]
     for d in days_all:
         rate = ctx.fund_rate_annual(d)
         for root, stock in pairs.items():
+          for variant in ("C&C", "C&C-2"):
+            open_pos = open_all[variant]
+            no_div = variant == "C&C-2"                 # чистый carry: дивиденды не используются
             sb = stocks.get(stock)
             s = ll.close_on_day(sb, d, T18) if sb is not None else None
             pos = open_pos.get(stock)
@@ -87,7 +91,8 @@ def run(conn, rules: dict, stage: str, ctx: cmn.Context) -> tuple[pd.DataFrame, 
                 dte = (c["expiration"] - d).days
                 mtm = pos["shares"] * (s - pos["s0"]) - pos["n"] * (fp - pos["f0"])
                 pos["min_mtm"] = min(pos["min_mtm"], mtm)
-                implied = implied_rate_pct(fp / size, s, ctx.dividends(stock, d, c["expiration"]), max(dte, 1))
+                divs_ahead = 0.0 if no_div else ctx.dividends(stock, d, c["expiration"])
+                implied = implied_rate_pct(fp / size, s, divs_ahead, max(dte, 1))
                 if d >= last_day.get(c["ticker"], c["expiration"]) or implied <= rate:
                     div = ctx.dividends(stock, pos["d0"], d)
                     gross_rub = pos["shares"] * (s - pos["s0"] + div) - pos["n"] * (fp - pos["f0"])
@@ -95,7 +100,7 @@ def run(conn, rules: dict, stage: str, ctx: cmn.Context) -> tuple[pd.DataFrame, 
                     fut_notional = pos["n"] * pos["f0"]
                     cost_pct = ctx.cost_rt(stock) + fut_cost * fut_notional / stock_notional
                     reason = "экспирация" if d >= last_day.get(c["ticker"], c["expiration"]) else "базис схлопнулся"
-                    r = cmn.trade(MODULE, "C&C", stock, pos["d0"], d, stock_notional,
+                    r = cmn.trade(MODULE, variant, stock, pos["d0"], d, stock_notional,
                                   gross_rub / stock_notional * 100.0, cost_pct, ctx.fund_pct(pos["d0"], d),
                                   f"{c['ticker']}; {reason}; вход {pos['implied0']:.2f}% при фонде {pos['rate0']:.2f}%; "
                                   f"мин. переоценка {pos['min_mtm']:.0f} ₽")
@@ -118,10 +123,13 @@ def run(conn, rules: dict, stage: str, ctx: cmn.Context) -> tuple[pd.DataFrame, 
             if not (0.8 <= f_share / s <= 1.25):
                 continue
             dte = (c["expiration"] - d).days
-            implied = implied_rate_pct(f_share, s, ctx.dividends(stock, d, c["expiration"]), dte)
+            divs_ahead = ctx.dividends(stock, d, c["expiration"])
+            if no_div and divs_ahead > 0:
+                continue                                 # отсечка в окне — контракт не берём
+            implied = implied_rate_pct(f_share, s, 0.0 if no_div else divs_ahead, dte)
             if implied < rate + m["entry_premium_pct"]:
                 continue
-            signal_days.add(d)
+            signal_days[variant].add(d)
             n = math.floor(m["position_rub"] / (s * size))
             if n <= 0:
                 continue
@@ -129,8 +137,10 @@ def run(conn, rules: dict, stage: str, ctx: cmn.Context) -> tuple[pd.DataFrame, 
                                "d0": d, "implied0": implied, "rate0": rate, "min_mtm": 0.0}
     tr = pd.DataFrame(rows)
     years = ((d_to - d_from).days + 1) / 365.25
-    extra = {"signal_days": len(signal_days), "signal_days_per_year": len(signal_days) / years,
+    extra = {"signal_days": {v: len(s) for v, s in signal_days.items()},
+             "signal_days_per_year": {v: len(s) / years for v, s in signal_days.items()},
              "contracts_used": len(contracts), "sizes_found": sum(1 for c in contracts if sizes.get(c["ticker"])),
-             "max_drawdown_rub": float(tr["min_mtm_rub"].min()) if len(tr) else None,
-             "open_at_end": len(open_pos)}
+             "max_drawdown_rub": {v: float(tr[tr["variant"] == v]["min_mtm_rub"].min()) if len(tr) else None
+                                  for v in ("C&C", "C&C-2")},
+             "open_at_end": {v: len(p) for v, p in open_all.items()}}
     return (tr[cmn.TRADE_FIELDS] if len(tr) else pd.DataFrame(columns=cmn.TRADE_FIELDS)), extra
