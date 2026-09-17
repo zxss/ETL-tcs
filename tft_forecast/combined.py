@@ -1397,10 +1397,24 @@ def build_orders(top: list[dict], position_rub: float,
                 # дороже лимита позиции: это тихая эскалация риска —
                 # незапланированная маржиналка (или отказ INSUFFICIENT_FUNDS)
                 # и перекос диверсификации на дорогих лотах.
-                lots = int(position_rub / (entry * lot))
+                #
+                # Предохранитель ликвидности (аудит r4, 17.09): целевая сумма —
+                # min(лимит позиции, MaxPos). MaxPos = min(λ/ILLIQ Амихуда, 1 % ADV)
+                # раньше ограничивал только риск-паритет, и в AKRN (MaxPos
+                # 60 тыс. ₽) ушла бы заявка на 100 тыс. ₽. MaxPos неизвестен
+                # (мало истории, нет лота) — действует лимит позиции.
+                target = position_rub
+                mp = g.get("max_pos")
+                if mp and mp > 0 and mp < target:
+                    log.info("[LIQ] %s: позиция урезана до MaxPos %.0f ₽ (лимит %.0f ₽)",
+                             g["tk"], mp, position_rub)
+                    target = mp
+                lots = int(target / (entry * lot))
                 if lots <= 0:
-                    log.warning("[SKIP] %s: 1 лот (%.2f ₽) превышает лимит "
-                                "позиции (%.2f ₽)", g["tk"], entry * lot, position_rub)
+                    log.warning("[SKIP] %s: 1 лот (%.2f ₽) превышает допустимую "
+                                "позицию (%.2f ₽: лимит %.2f, MaxPos %s)", g["tk"],
+                                entry * lot, target, position_rub,
+                                f"{mp:.2f}" if mp else "—")
                     lots = total = None
                 else:
                     total = lots * lot * entry

@@ -29,6 +29,7 @@ class TinkoffSandboxClient(TinkoffRestBase):
     """BrokerClient против sandbox-эндпоинта T-Invest API."""
 
     DEFAULT_BASE = config.SANDBOX_API_BASE_URL
+    OPERATIONS_METHOD = "SandboxService/GetSandboxOperations"
 
     # ── Счёт ─────────────────────────────────────────────────────────────────
 

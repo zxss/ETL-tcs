@@ -750,6 +750,12 @@ STAGE2_START_DATE: str = os.getenv("STAGE2_START_DATE", "")
 BROKER_ORDER_MIN_INTERVAL_SEC: float = float(os.getenv("BROKER_ORDER_MIN_INTERVAL_SEC", "0.25"))
 BROKER_429_RETRIES: int = int(os.getenv("BROKER_429_RETRIES", "3"))
 
+# Аудит r4 (17.09). CLEANUP ждёт, пока позиция у брокера обнулится после
+# рыночного закрытия; реестр стопов блокируется на время фазы (flock), protect
+# при занятом реестре пропускает прогон, фаза ждёт до REGISTRY_LOCK_TIMEOUT_SEC.
+SQUARE_OFF_FILL_TIMEOUT_SEC: float = float(os.getenv("SQUARE_OFF_FILL_TIMEOUT_SEC", "30"))
+REGISTRY_LOCK_TIMEOUT_SEC: float = float(os.getenv("REGISTRY_LOCK_TIMEOUT_SEC", "600"))
+
 
 # =====================================================================
 # КАЗНАЧЕЙСТВО И ДЕНЕЖНЫЙ РЫНОК (TMON) — services/treasury.py

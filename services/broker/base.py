@@ -139,6 +139,31 @@ class StopOrderInfo:
 
 
 @dataclass(frozen=True)
+class StopOrderRecord:
+    """Условная заявка из истории GetStopOrders (любой статус).
+
+    Нужна для OCO: активный список не отличает «нога исполнилась» от «нога
+    снята», а от этого зависит, закрыта ли позиция. status — без префикса
+    STOP_ORDER_STATUS_ (ACTIVE / EXECUTED / CANCELED / EXPIRED).
+    """
+    stop_order_id:  str
+    instrument_uid: str
+    kind:           str            # "STOP_LOSS" | "TAKE_PROFIT"
+    status:         str
+    activated_at:   str | None = None   # ISO-время срабатывания (UTC)
+
+
+@dataclass(frozen=True)
+class Trade:
+    """Сделка по счёту из операций брокера (покупка или продажа)."""
+    instrument_uid: str
+    side:           str            # "BUY" | "SELL"
+    price:          float          # за штуку
+    quantity:       float          # штук
+    at:             str            # ISO-время (UTC)
+
+
+@dataclass(frozen=True)
 class ActiveOrder:
     """Активная (неисполненная) лимитная заявка из GetOrders.
     Нужна для синхронизации портфеля: снять заявку по тикеру, сигнал которого
@@ -267,6 +292,15 @@ class BrokerClient(ABC):
     def get_active_stop_orders(self, account_id: str) -> list[StopOrderInfo]:
         """Активные условные заявки (стоп-лосс и тейк-профит) с типом и id.
         Может бросить NotSupportedError, если контур не отдаёт список стопов."""
+
+    def get_stop_order_history(self, account_id: str, since: str) -> list[StopOrderRecord]:
+        """Условные заявки с любым статусом, созданные после since (ISO, UTC)."""
+        raise NotSupportedError("get_stop_order_history не реализован для этого контура")
+
+    def get_trades(self, account_id: str, since: str,
+                   instrument_uid: str | None = None) -> tuple[list[Trade], float]:
+        """Исполненные сделки после since и сумма удержанных комиссий, ₽ (> 0)."""
+        raise NotSupportedError("get_trades не реализован для этого контура")
 
     def get_active_stop_instrument_uids(self, account_id: str) -> set[str]:
         """instrument_uid инструментов с любым активным стопом/тейком

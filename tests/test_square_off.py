@@ -45,21 +45,39 @@ class FakeStop:
         self.stop_order_id = sid
 
 
+class FakeOrder:
+    def __init__(self, uid, oid):
+        self.instrument_uid = uid
+        self.order_id = oid
+
+
 class FakeBroker:
-    def __init__(self, positions, stops=()):
+    def __init__(self, positions, stops=(), orders=()):
         self._positions = positions
         self._stops = list(stops)
+        self._orders = list(orders)
         self.cancelled: list[str] = []
+        self.cancelled_orders: list[str] = []
+        self.events: list[tuple] = []
         self.market_orders: list[tuple] = []
 
     def get_positions(self, account_id):
+        self.events.append(("positions",))
         return self._positions
 
     def get_active_stop_orders(self, account_id):
         return list(self._stops)
 
+    def get_active_orders(self, account_id):
+        return list(self._orders)
+
     def cancel_stop_order(self, *, account_id, stop_order_id):
         self.cancelled.append(stop_order_id)
+        self.events.append(("cancel_stop", stop_order_id))
+
+    def cancel_order(self, *, account_id, order_id):
+        self.cancelled_orders.append(order_id)
+        self.events.append(("cancel_order", order_id))
 
     def find_instrument_by_uid(self, uid):
         from tests.conftest import make_instrument
@@ -82,26 +100,32 @@ class SquareOffBase(unittest.TestCase):
     ACCOUNT = "ACC1"
 
     def run_square_off(self, records, positions, stops=(), *, now=LATE,
-                       enabled=True, force=False, dry_run=False):
-        broker = FakeBroker(positions, stops)
+                       enabled=True, force=False, dry_run=False, orders=(),
+                       close_unregistered=False, exclude_uids=(), not_flat=(),
+                       report=None):
+        broker = FakeBroker(positions, stops, orders)
         saved = {}
         closed_calls = []
 
         def fake_market_close(b, acc, pos, ticker, writer, env):
             closed_calls.append(ticker)
+            b.events.append(("market", ticker))
             return True
 
         with mock.patch.object(po, "_load_pending",
                                return_value={self.ACCOUNT: records}), \
              mock.patch.object(po, "_save_pending", side_effect=saved.update), \
              mock.patch.object(po, "_market_close", side_effect=fake_market_close), \
+             mock.patch.object(po, "_await_flat", return_value=set(not_flat)), \
              mock.patch.object(po.config, "INTRADAY_SQUARE_OFF_ENABLED", enabled), \
              mock.patch.object(po.config, "INTRADAY_SQUARE_OFF_TIME", "18:35"):
             buf = io.StringIO()
             with contextlib.redirect_stdout(buf):
                 n = po.square_off_intraday(
                     broker, self.ACCOUNT, dry_run=dry_run, no_confirm=True,
-                    writer=mock.MagicMock(), env="SANDBOX", force=force, now=now)
+                    writer=mock.MagicMock(), env="SANDBOX", force=force, now=now,
+                    close_unregistered=close_unregistered, exclude_uids=exclude_uids,
+                    report=report)
         return n, closed_calls, broker, buf.getvalue()
 
 
@@ -182,6 +206,59 @@ class TestStopCancellation(SquareOffBase):
         n, _, broker, _ = self.run_square_off(recs, pos, stops)
         self.assertEqual(n, 0)
         self.assertEqual(broker.cancelled, [])
+
+
+class TestCleanupOrder(SquareOffBase):
+    """Строгий порядок CLEANUP (аудит r4, 17.09)."""
+
+    def test_entry_orders_and_stops_cancelled_before_positions_and_close(self):
+        recs = [_rec("AAA", "u1", "intraday_short")]
+        pos = [FakePosition("u1", -10)]
+        stops = [FakeStop("u1", "STOP_LOSS", "sl1")]
+        _, closed, broker, _ = self.run_square_off(
+            recs, pos, stops, orders=[FakeOrder("u1", "entry-1")])
+        kinds = [e[0] for e in broker.events]
+        self.assertLess(kinds.index("cancel_order"), kinds.index("positions"))
+        self.assertLess(kinds.index("cancel_stop"), kinds.index("positions"))
+        self.assertLess(kinds.index("positions"), kinds.index("market"))
+        self.assertEqual(closed, ["AAA"])
+
+    def test_unfilled_limit_of_unfilled_record_cancelled_and_record_closed(self):
+        recs = [_rec("AAA", "u1", "intraday_short")]
+        recs[0]["stop_placed"] = recs[0]["tp_placed"] = False
+        n, closed, broker, _ = self.run_square_off(
+            recs, [], orders=[FakeOrder("u1", "entry-1")])
+        self.assertEqual(broker.cancelled_orders, ["entry-1"])
+        self.assertTrue(recs[0]["closed"])
+        self.assertEqual(recs[0]["closed_reason"], "intraday_not_filled")
+
+    def test_position_not_flat_is_reported_and_record_stays_open(self):
+        recs = [_rec("AAA", "u1", "intraday_long")]
+        rep = {}
+        n, closed, _, _ = self.run_square_off(recs, [FakePosition("u1", 10)],
+                                              not_flat={"u1"}, report=rep)
+        self.assertEqual(n, 0)
+        self.assertEqual(rep["not_flat"], ["AAA"])
+        self.assertFalse(recs[0]["closed"])
+
+    def test_cleanup_closes_unregistered_but_not_treasury_or_overnight(self):
+        recs = [_rec("NIGHT", "u_night", "long_overnight")]
+        pos = [FakePosition("u_orphan", 5), FakePosition("u_fund", 30000),
+               FakePosition("u_night", 10)]
+        rep = {}
+        n, closed, _, _ = self.run_square_off(recs, pos, close_unregistered=True,
+                                              exclude_uids={"u_fund"}, report=rep)
+        self.assertEqual(n, 1)
+        self.assertEqual(closed, ["u_orphan"[:8]])
+        self.assertEqual(rep["orphans"], ["u_orphan"[:8]])
+
+    def test_cancelled_stop_is_unmarked_for_protect(self):
+        """Стоп снят, а закрыть не вышло — protect должен поставить его заново."""
+        recs = [_rec("AAA", "u1", "intraday_long")]
+        self.run_square_off(recs, [FakePosition("u1", 10)],
+                            [FakeStop("u1", "STOP_LOSS", "sl-AAA")], not_flat={"u1"})
+        self.assertFalse(recs[0]["stop_placed"])
+        self.assertIsNone(recs[0]["stop_order_id"])
 
 
 class TestGates(SquareOffBase):

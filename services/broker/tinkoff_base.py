@@ -30,6 +30,8 @@ from services.broker.base import (
     OrderState,
     Quotation,
     StopOrderInfo,
+    StopOrderRecord,
+    Trade,
 )
 
 log = logging.getLogger("broker.tinkoff")
@@ -109,6 +111,8 @@ class TinkoffRestBase(BrokerClient):
 
     SVC = "tinkoff.public.invest.api.contract.v1"
     DEFAULT_BASE = config.API_BASE_URL  # переопределяется подклассом
+    # Операции по счёту: у песочницы свой метод, у боевого — OperationsService.
+    OPERATIONS_METHOD = "OperationsService/GetOperations"
 
     def __init__(self, *,
                  token: str | None = None,
@@ -268,6 +272,54 @@ class TinkoffRestBase(BrokerClient):
         """StopOrdersService.CancelStopOrder — снять стоп/тейк по id."""
         self._post("StopOrdersService/CancelStopOrder",
                    {"accountId": account_id, "stopOrderId": stop_order_id})
+
+    def get_stop_order_history(self, account_id: str, since: str) -> list[StopOrderRecord]:
+        """StopOrdersService.GetStopOrders со статусом ALL: исполненные, снятые и
+        активные условные заявки с since. Проверено на песочнице 17.09: стоп SNGS
+        отдаётся как EXECUTED с activationDateTime, снятый тейк — как CANCELED."""
+        now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() + 3600))
+        data = self._post("StopOrdersService/GetStopOrders", {
+            "accountId": account_id, "status": "STOP_ORDER_STATUS_ALL",
+            "from": since, "to": now})
+        out: list[StopOrderRecord] = []
+        for o in (data.get("stopOrders") or []):
+            sid = o.get("stopOrderId") or ""
+            if not sid:
+                continue
+            out.append(StopOrderRecord(
+                stop_order_id=sid,
+                instrument_uid=o.get("instrumentUid") or "",
+                kind=(o.get("orderType") or o.get("stopOrderType") or "")
+                .replace("STOP_ORDER_TYPE_", ""),
+                status=(o.get("status") or "").replace("STOP_ORDER_STATUS_", ""),
+                activated_at=o.get("activationDateTime")))
+        return out
+
+    def get_trades(self, account_id: str, since: str,
+                   instrument_uid: str | None = None) -> tuple[list[Trade], float]:
+        """Сделки и комиссии из операций по счёту (исполненные, с since)."""
+        now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() + 3600))
+        data = self._post(self.OPERATIONS_METHOD, {
+            "accountId": account_id, "from": since, "to": now,
+            "state": "OPERATION_STATE_EXECUTED"})
+        trades: list[Trade] = []
+        fees = 0.0
+        for op in (data.get("operations") or []):
+            if instrument_uid and op.get("instrumentUid") != instrument_uid:
+                continue
+            kind = op.get("operationType") or ""
+            if kind == "OPERATION_TYPE_BROKER_FEE":
+                fees += abs(Quotation.from_payload(op.get("payment")).as_float())
+                continue
+            side = {"OPERATION_TYPE_BUY": "BUY", "OPERATION_TYPE_SELL": "SELL"}.get(kind)
+            if not side:
+                continue
+            trades.append(Trade(instrument_uid=op.get("instrumentUid") or "", side=side,
+                                price=Quotation.from_payload(op.get("price")).as_float(),
+                                quantity=float(op.get("quantity") or 0),
+                                at=op.get("date") or ""))
+        trades.sort(key=lambda t: t.at)
+        return trades, fees
 
     def get_active_stop_orders(self, account_id: str) -> list[StopOrderInfo]:
         """StopOrdersService.GetStopOrders — активные стопы и тейки с типом/id."""

@@ -19,6 +19,8 @@ from services.broker.base import (
     Position,
     Quotation,
     StopOrderInfo,
+    StopOrderRecord,
+    Trade,
     BrokerError,
     NotSupportedError,
 )
@@ -28,6 +30,6 @@ from services.broker.tinkoff_prod import TinkoffProdClient
 
 __all__ = [
     "ActiveOrder", "BrokerClient", "Instrument", "OrderState", "Position",
-    "Quotation", "StopOrderInfo", "BrokerError", "NotSupportedError",
+    "Quotation", "StopOrderInfo", "StopOrderRecord", "Trade", "BrokerError", "NotSupportedError",
     "TinkoffSandboxClient", "TinkoffProdClient", "new_order_id",
 ]

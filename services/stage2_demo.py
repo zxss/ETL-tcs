@@ -271,6 +271,23 @@ def _run_dirs_for_day(day: dt.date) -> dict[str, str]:
     return out
 
 
+def _superseded_run_dirs(day: dt.date, latest: dict[str, str]) -> list[tuple[str, str]]:
+    """Прогоны фаз этого дня, после которых фаза запускалась ещё раз."""
+    runs = _p("runs")
+    if not os.path.isdir(runs):
+        return []
+    prefix = day.strftime("%Y%m%d")
+    out = []
+    for name in sorted(os.listdir(runs)):
+        if not name.startswith(prefix) or "-" not in name:
+            continue
+        phase = name.rsplit("-", 1)[-1]
+        path = os.path.join(runs, name)
+        if phase in latest and latest[phase] != path:
+            out.append((phase, path))
+    return out
+
+
 # ── Уведомления в Telegram (§ отчётность) ────────────────────────────────────
 
 _VERDICT_ICON = {PASS: "✅", PASS_WARN: "⚠️", PARTIAL: "\U0001f7e1", FAIL: "⛔"}
@@ -281,7 +298,7 @@ _PHASE_FIELDS = {
     "ORDER": (("orders_count", "принято"), ("placed_count", "выставлено"),
               ("rejected_count", "отклонено"), ("fills_count", "заливок")),
     "CLEANUP": (("intraday_before", "было интрадея"), ("positions_closed", "закрыто"),
-                ("orders_cancelled", "снято лимиток")),
+                ("orders_cancelled", "снято лимиток"), ("stops_cancelled", "снято стопов")),
     "OVERNIGHT": (("overnight_orders", "ночных принято"), ("placed_count", "выставлено"),
                   ("treasury_released_lots", "продано паёв фонда")),
     "CLOSE": (("overnight_before", "ночных позиций"), ("positions_closed", "закрыто"),
@@ -753,7 +770,8 @@ def phase_order(*, now: dt.datetime | None = None, prod: bool = False,
             log.info("[ORDER] жду заливки %.0f с, затем привязываю SL/TP", wait_s)
             import time
             time.sleep(wait_s)
-            attach_stops(broker, account_id, dry_run=False, writer=writer, env=env)
+            attach_stops(broker, account_id, dry_run=False, writer=writer, env=env,
+                         conn=conn)
 
         fills = _collect_fills(broker, account_id, placed)
         _write_json(os.path.join(run_dir, "fills.json"), fills)
@@ -955,28 +973,38 @@ def phase_cleanup(*, now: dt.datetime | None = None, prod: bool = False,
     try:
         broker, account_id, env = _make_broker_and_account(prod)
         preflight(res, env=env, prod_flag=prod)
+        if res.errors:
+            return _finish(res, state)           # вне SANDBOX заявок не шлём
         _snapshot_account(broker, account_id, run_dir, run_id, "CLEANUP", "before")
+        try:
+            conn = database.get_connection()
+        except Exception as e:                   # noqa: BLE001
+            log.warning("[CLEANUP] БД недоступна — журнал исполнения и виртуальный "
+                        "реестр не учтены: %s", e)
 
-        before = _open_intraday(broker, account_id)
+        # Строгий порядок (аудит r4): снять лимитки и стопы → фактические позиции
+        # брокера → рыночное закрытие → дождаться нуля у брокера. Закрывается всё,
+        # кроме паёв казначейства и открытых ночных записей: на 18:20 законных
+        # позиций, кроме интрадея, у контура нет.
+        rep: dict = {}
+        exclude = _treasury_uids(broker) if _treasury_enabled() else set()
         closed = square_off_intraday(broker, account_id, dry_run=dry_run,
                                      no_confirm=True, writer=writer, env=env,
-                                     force=True, now=now)
-        # 3. подтверждение: повторный GetPositions обязан вернуть ноль интрадея
-        after = [] if dry_run else _open_intraday(broker, account_id)
-        res.check(not after,
-                  f"после cleanup остались внутридневные позиции: {', '.join(after)}")
+                                     force=True, now=now, close_unregistered=True,
+                                     exclude_uids=exclude, conn=conn, report=rep)
+        if not dry_run:
+            not_flat = rep.get("not_flat") or []
+            leftover = _open_non_treasury(broker, account_id, exclude)
+            res.check(not not_flat and not leftover,
+                      "после cleanup остались позиции: "
+                      + ", ".join(sorted(set(not_flat) | set(leftover))))
+            if rep.get("orphans"):
+                res.partial_fail("закрыты позиции вне реестра стратегий: "
+                                 + ", ".join(rep["orphans"]))
 
-        # 4. снять дневные лимитки, не залившиеся за день
-        cancelled = _cancel_stale_intraday_orders(broker, account_id, dry_run=dry_run)
-
-        # Казначейство (ТЗ Treasury, §5 п.1–2): интрадей паи фонда не трогает,
-        # а после закрытия интрадея маржинального долга нет. Рубли ушли в минус
-        # (убыток интрадея сверх буфера, комиссии) — паи продаются до буфера.
+        # Казначейство (ТЗ Treasury, §5 п.1–2): после закрытия интрадея
+        # маржинального долга нет. Рубли ушли в минус — паи продаются до буфера.
         if _treasury_enabled() and not dry_run:
-            try:
-                conn = database.get_connection()
-            except Exception as e:               # noqa: BLE001
-                log.warning("[CLEANUP] БД недоступна, виртуальный реестр не учтён: %s", e)
             try:
                 tr = _treasury(broker, account_id, env, conn, writer, run_id)
                 st = tr.get_treasury_state()
@@ -1000,9 +1028,13 @@ def phase_cleanup(*, now: dt.datetime | None = None, prod: bool = False,
                 res.check(cash >= 0, f"маржинальный долг после CLEANUP: {cash:.2f} ₽")
 
         _snapshot_account(broker, account_id, run_dir, run_id, "CLEANUP", "after")
-        res.data.update(intraday_before=len(before), positions_closed=closed,
-                        orders_cancelled=cancelled)
-        log.info("[CLEANUP] закрыто позиций %d, снято лимиток %d", closed, cancelled)
+        _write_json(os.path.join(run_dir, "square_off.json"), rep)
+        res.data.update(intraday_before=len(rep.get("closed", [])) + len(rep.get("not_flat", [])),
+                        positions_closed=closed,
+                        orders_cancelled=rep.get("cancelled_orders", 0),
+                        stops_cancelled=rep.get("cancelled_stops", 0))
+        log.info("[CLEANUP] закрыто позиций %d, снято лимиток %d, стопов %d", closed,
+                 rep.get("cancelled_orders", 0), rep.get("cancelled_stops", 0))
     except Exception as e:                       # noqa: BLE001
         log.exception("[CLEANUP] сбой: %s", e)
         res.check(False, f"{type(e).__name__}: {e}")
@@ -1013,27 +1045,18 @@ def phase_cleanup(*, now: dt.datetime | None = None, prod: bool = False,
     return _finish(res, state)
 
 
-def _cancel_stale_intraday_orders(broker, account_id: str, *, dry_run: bool) -> int:
-    """Снимает активные лимитки по внутридневным стратегиям."""
+def _open_non_treasury(broker, account_id: str, exclude: set[str]) -> list[str]:
+    """Открытые позиции, кроме паёв казначейства и открытых ночных записей реестра."""
     reg = _strategy_by_uid(account_id)
-    n = 0
-    try:
-        active = broker.get_active_orders(account_id)
-    except Exception:                            # noqa: BLE001
-        return 0
-    for o in active:
-        uid = getattr(o, "instrument_uid", None)
-        if reg.get(uid, {}).get("strategy") not in _INTRADAY:
+    out = []
+    for p in broker.get_positions(account_id):
+        if not p.is_open or p.instrument_uid in exclude:
             continue
-        if dry_run:
-            n += 1
+        rec = reg.get(p.instrument_uid) or {}
+        if rec.get("strategy") in _OVERNIGHT and not rec.get("closed"):
             continue
-        try:
-            broker.cancel_order(account_id=account_id, order_id=o.order_id)
-            n += 1
-        except Exception as e:                   # noqa: BLE001
-            log.warning("[CLEANUP] не удалось снять заявку %s: %s", o.order_id, e)
-    return n
+        out.append(rec.get("ticker") or p.instrument_uid[:8])
+    return out
 
 
 # ── Фаза CLOSE: утреннее закрытие овернайта (хотфикс 11.09) ─────────────────
@@ -1095,56 +1118,16 @@ def _parse_api_ts(raw) -> dt.datetime | None:
 
 def _journal_overnight_exit(broker, account_id: str, conn, rec: dict, exit_state,
                             shares: float) -> None:
-    """Замыкает строку execution_audit: ночная заливка (если не записана) и выход.
-
-    Вечерняя фаза заливку не видит — она случается позже (ENPG 10.09 — в
-    21:48), поэтому вход дописывается здесь, по состоянию входной заявки.
-    Цена заявки для проскальзывания берётся из самой строки журнала, а не из
-    ответа брокера: initialSecurityPrice у лимитки — не цена лимита.
-    """
-    from audit import execution_audit as ea
-    oid = rec.get("order_id")
-    if not oid or conn is None:
+    """Замыкает строку execution_audit при утреннем закрытии: заливка входа (если
+    не записана — время по операциям брокера) и выход по рыночной заявке CLOSE."""
+    from services import exec_journal
+    if not exit_state.executed_price:
+        log.warning("[CLOSE] %s: нет цены выхода — журнал не замкнут", rec.get("ticker"))
         return
-    try:
-        entry = broker.get_order_state(account_id=account_id, order_id=oid)
-    except Exception as e:                       # noqa: BLE001
-        log.warning("[CLOSE] %s: состояние входной заявки недоступно: %s", rec.get("ticker"), e)
-        return
-    entry_px, exit_px = entry.executed_price, exit_state.executed_price
-    if not entry_px or not exit_px:
-        log.warning("[CLOSE] %s: нет цены входа или выхода — журнал не замкнут",
-                    rec.get("ticker"))
-        return
-    long_ = rec.get("exit_direction", "SELL") == "SELL"
-    entry_fee = entry.executed_commission or 0.0
-    exit_fee = exit_state.executed_commission or 0.0
-    gross = (exit_px - entry_px) * shares * (1.0 if long_ else -1.0)
-    net = gross - entry_fee - exit_fee
-    try:
-        ensure_execution_audit(conn)
-        with conn.cursor() as cur:
-            cur.execute("SELECT requested_price, filled FROM execution_audit "
-                        "WHERE order_id = %s;", (oid,))
-            row = cur.fetchone()
-        if row and not row[1] and row[0]:
-            ea.record_fill(conn, order_id=oid, filled_price=entry_px,
-                           filled_at=(_parse_api_ts(entry.raw.get("orderDate"))
-                                      or dt.datetime.now(dt.timezone.utc)),
-                           requested_price=float(row[0]),
-                           side="BUY" if long_ else "SELL",
-                           fee_rub=entry_fee, qty_shares=shares)
-        ea.record_exit(conn, order_id=oid, exit_price=exit_px,
-                       exit_at=(_parse_api_ts(exit_state.raw.get("orderDate"))
-                                or dt.datetime.now(dt.timezone.utc)),
-                       exit_reason="overnight_close",
-                       pnl_gross_rub=round(gross, 4), pnl_net_rub=round(net, 4))
-    except Exception as e:                       # noqa: BLE001 — журнал не роняет выход
-        try:
-            conn.rollback()
-        except Exception:                        # noqa: BLE001
-            pass
-        log.warning("[CLOSE] %s: журнал исполнения не замкнут: %s", rec.get("ticker"), e)
+    exec_journal.journal_exit(
+        broker, account_id, conn, rec, "overnight_close",
+        exit_price=exit_state.executed_price, exit_fee=exit_state.executed_commission,
+        exit_at=exec_journal.parse_ts(exit_state.raw.get("orderDate")))
 
 
 def close_overnight_positions(broker, account_id: str, conn, *, dry_run: bool,
@@ -1165,9 +1148,11 @@ def close_overnight_positions(broker, account_id: str, conn, *, dry_run: bool,
     днём и дала позицию без выхода), оставшиеся SL/TP снимаются (тейк продажи
     на пустой позиции при открытии открыл бы шорт), запись закрывается.
     """
+    from services import exec_journal
     from services.broker.base import NotSupportedError
     from services.broker.tinkoff_base import new_order_id
-    from services.place_orders import _load_pending, _save_pending, _logrow
+    from services.place_orders import (_fired_leg, _load_pending, _logrow, _save_pending,
+                                       _stop_history)
 
     out = {"overnight_before": 0, "closed": [], "failed": [],
            "orders_cancelled": 0, "registry_reconciled": 0}
@@ -1186,6 +1171,7 @@ def close_overnight_positions(broker, account_id: str, conn, *, dry_run: bool,
         active = {o.order_id for o in broker.get_active_orders(account_id)}
     except Exception:                            # noqa: BLE001
         active = set()
+    history = {} if dry_run else _stop_history(broker, account_id, recs)
 
     def _cancel_stops(tk: str, uid: str) -> bool:
         ok = True
@@ -1219,7 +1205,19 @@ def close_overnight_positions(broker, account_id: str, conn, *, dry_run: bool,
                 except Exception as e:           # noqa: BLE001
                     out["failed"].append(f"{tk}: не снята ночная лимитка ({e})")
                     continue
-            r["closed"], r["closed_reason"] = True, "overnight_no_position"
+            # Позиции нет: лимитка не залилась или позицию ночью закрыл стоп/тейк
+            # (17.09 SNGS: стоп в 07:06). Во втором случае вход и выход — факт,
+            # и он обязан попасть в журнал исполнения.
+            fired = _fired_leg(r, history)
+            reason = ("stop" if fired[0] == "STOP_LOSS" else "target") if fired \
+                else "closed_externally"
+            if exec_journal.journal_fill(broker, account_id, conn, r):
+                exec_journal.journal_exit(
+                    broker, account_id, conn, r, reason,
+                    exit_at=exec_journal.parse_ts(fired[1].activated_at) if fired else None)
+                out.setdefault("journaled_exits", []).append(f"{tk}:{reason}")
+            r["closed"] = True
+            r["closed_reason"] = reason if fired else "overnight_no_position"
             out["registry_reconciled"] += 1
             continue
 
@@ -1420,18 +1418,23 @@ def phase_park(*, now: dt.datetime | None = None, prod: bool = False,
 
 
 def cmd_protect(*, prod: bool = False) -> int:
-    """Вечерний монитор: SL/TP на залившиеся заявки (хотфикс 11.09).
+    """Монитор защиты позиций: SL/TP по факту заливки, OCO, аварийный выход.
 
     Ночная лимитка выставляется в 18:35, а заливается когда угодно до конца
     вечерней сессии (ENPG 10.09 — в 21:48). Ставить стоп вместе с заявкой
     нельзя: условная SELL без позиции при срабатывании открыла бы шорт. Поэтому
-    стоп ставится ПО ФАКТУ заливки: крон запускает монитор каждые 10 минут в
-    вечернюю сессию, а attach_stops уже умеет «позиция появилась → SL/TP» и
-    «позиция закрылась → снять оставшийся стоп».
+    стоп ставится ПО ФАКТУ заливки.
+
+    С аудита r4 (17.09) монитор работает всё торговое время, а не только
+    вечером: утром до CLOSE срабатывают ночные стопы, и парную ногу надо снять
+    сразу (SNGS: тейк висел 07:06–09:10); днём заливаются внутридневные
+    лимитки, которым нужен стоп до 18:20. Каждый прогон: OCO по истории
+    условных заявок, заливки в журнал исполнения, стоп либо аварийный выход по
+    рынку, если цена уже за стопом.
 
     Работает и на остановленном тесте: остановка запрещает новые сделки, а не
     защиту уже открытых. Каталога запуска нет, сообщение в Telegram — только
-    если стоп поставлен или позиция осталась без защиты.
+    если что-то сделано или позиция осталась без защиты.
     """
     if not getattr(config, "STAGE2_ENABLED", True):
         return 0
@@ -1443,31 +1446,52 @@ def cmd_protect(*, prod: bool = False) -> int:
         return 1
     before = {r.get("order_id"): bool(r.get("stop_placed"))
               for r in _load_pending().get(account_id, []) if not r.get("closed")}
+    conn = None
+    try:
+        conn = database.get_connection()
+    except Exception as e:                       # noqa: BLE001
+        log.warning("[PROTECT] БД недоступна — заливки в журнал не пишутся: %s", e)
+    rep: dict = {}
     writer, fp = _open_log()
     try:
-        attach_stops(broker, account_id, dry_run=False, writer=writer, env=env)
+        attach_stops(broker, account_id, dry_run=False, writer=writer, env=env,
+                     conn=conn, report=rep)
     finally:
         fp.close()
+        if conn is not None:
+            conn.close()
     open_uids = {p.instrument_uid for p in broker.get_positions(account_id) if p.is_open}
     recs = [r for r in _load_pending().get(account_id, []) if not r.get("closed")]
     newly = [r.get("ticker") for r in recs
              if r.get("stop_placed") and not before.get(r.get("order_id"), False)]
     naked = [r.get("ticker") for r in recs
              if r.get("instrument_uid") in open_uids and not r.get("stop_placed")]
-    log.info("[PROTECT] поставлено стопов %d, позиций без стопа %d", len(newly), len(naked))
-    if newly or naked:
+    log.info("[PROTECT] стопов поставлено %d, без стопа %d, OCO закрыто %d, "
+             "аварийных выходов %d (сбоев %d), заливок в журнал %d",
+             len(newly), len(naked), len(rep["oco_closed"]), len(rep["breach_exits"]),
+             len(rep["breach_failed"]), rep["fills_journaled"])
+    if newly or naked or rep["oco_closed"] or rep["breach_exits"] or rep["breach_failed"] \
+            or rep["closed_externally"]:
         try:
             from services import notify
             if notify.enabled():
                 lines = ["\U0001f6e1 <b>PROTECT</b>"]
-                if newly:
-                    lines.append("стоп поставлен: " + notify.esc(", ".join(newly)))
+                for cap, items in (("стоп поставлен", newly),
+                                   ("OCO: сработала нога, парная снята", rep["oco_closed"]),
+                                   ("закрыто без известной ноги", rep["closed_externally"]),
+                                   ("цена за стопом — закрыто по рынку", rep["breach_exits"])):
+                    if items:
+                        lines.append(f"{cap}: " + notify.esc(", ".join(items)))
+                if rep["breach_failed"]:
+                    lines.append("⛔ аварийный выход НЕ выполнен: "
+                                 + notify.esc(", ".join(rep["breach_failed"])))
                 if naked:
                     lines.append("⛔ без стопа: " + notify.esc(", ".join(naked)))
-                notify.send("\n".join(lines), silent=not naked)
+                notify.send("\n".join(lines),
+                            silent=not (naked or rep["breach_failed"] or rep["breach_exits"]))
         except Exception as e:                   # noqa: BLE001
             log.warning("уведомление не отправлено: %s", e)
-    return 1 if naked else 0
+    return 1 if (naked or rep["breach_failed"]) else 0
 
 
 # ── Фаза OVERNIGHT (§7) ──────────────────────────────────────────────────────
@@ -1671,6 +1695,14 @@ def build_daily_audit(day: dt.date, res: PhaseResult) -> dict:
     errors = [e for m in meta.values() for e in (m.get("errors") or [])]
     warnings = [w for m in meta.values() for w in (m.get("warnings") or [])]
     partial = [x for m in meta.values() for x in (m.get("partial") or [])]
+    # Фаза, перезапущенная в тот же день, в сводку попадает последним прогоном;
+    # сбой первого прогона раньше пропадал бесследно (16.09: PARK 10:05
+    # PARTIAL_FAILURE, повтор 10:16 PASS → в аудите partial: []).
+    for ph, d in _superseded_run_dirs(day, dirs):
+        m = _read_json(os.path.join(d, "run_meta.json"), {})
+        for x in (m.get("errors") or []) + (m.get("partial") or []):
+            warnings.append(f"{ph} {os.path.basename(d)} ({m.get('verdict')}), "
+                            f"перезапущена: {x}")
     missing = [p for p in PHASES if p not in dirs]
     if missing:
         warnings.append(f"фазы не отработали: {', '.join(missing)}")
@@ -1815,8 +1847,20 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_status()
     if args.phase == "resume":
         return cmd_resume()
+    from services.place_orders import RegistryBusy, RegistryError, registry_lock
+
     if args.phase == "protect":
-        return cmd_protect(prod=args.prod)
+        # Занят реестр — идёт фаза; следующий прогон монитора через 5 минут.
+        try:
+            with registry_lock(wait=False):
+                return cmd_protect(prod=args.prod)
+        except RegistryBusy:
+            log.info("[PROTECT] реестр занят фазой — прогон пропущен")
+            return 0
+        except RegistryError as e:
+            log.error("[PROTECT] %s", e)
+            _alert(f"⛔ <b>PROTECT</b>: {e}")
+            return 1
 
     fn = {"prep": phase_prep, "close": phase_close, "order": phase_order,
           "park": phase_park, "cleanup": phase_cleanup,
@@ -1824,7 +1868,26 @@ def main(argv: list[str] | None = None) -> int:
     kw = {"prod": args.prod}
     if args.phase != "prep":
         kw["dry_run"] = args.dry_run
-    return fn(**kw)
+    if args.phase == "prep":
+        return fn(**kw)                          # PREP не трогает ни реестр, ни заявки
+    # Фазы, которые меняют заявки и реестр, не пересекаются между собой и с protect.
+    try:
+        with registry_lock():
+            return fn(**kw)
+    except RegistryBusy as e:
+        log.error("[%s] %s — фаза не выполнена", args.phase.upper(), e)
+        _alert(f"⛔ <b>{args.phase.upper()}</b> не выполнена: {e}")
+        return 1
+
+
+def _alert(text: str) -> None:
+    """Сообщение в Telegram вне карточки фазы (сбой до её начала)."""
+    try:
+        from services import notify
+        if notify.enabled():
+            notify.send(text, silent=False)
+    except Exception as e:                       # noqa: BLE001
+        log.warning("уведомление не отправлено: %s", e)
 
 
 if __name__ == "__main__":

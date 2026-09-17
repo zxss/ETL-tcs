@@ -1,4 +1,4 @@
-# stage2-demo-15d — функциональный тест на демо-счёте (STAGE2-DEMO-TZ.md §14)
+# stage2-demo — функциональный тест на демо-счёте (STAGE2-DEMO-TZ.md §14)
 #
 # Установка:   crontab -u etl scripts/stage2_crontab
 # Проверка:    crontab -u etl -l
@@ -49,8 +49,15 @@ PY=/opt/etl-tcs/.venv/bin/python
 # OVERNIGHT 18:35 — ночные заявки, дневной аудит, счётчик
 35 18 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo overnight >> audit/stage2-demo/cron.log 2>&1
 
-# PROTECT 18:50 и каждые 10 минут до конца вечерней сессии — SL/TP по факту
-# заливки ночных заявок (ставить стоп до заливки нельзя: SELL без позиции
-# при срабатывании открыл бы шорт)
-50 18 * * 1-5      cd $PROJECT && $PY -m services.stage2_demo protect >> audit/stage2-demo/cron.log 2>&1
-*/10 19-23 * * 1-5 cd $PROJECT && $PY -m services.stage2_demo protect >> audit/stage2-demo/cron.log 2>&1
+# PROTECT — монитор защиты позиций каждые 5 минут всё торговое время (06:50–23:55):
+#   * OCO: сработал SL или TP → парная нога снимается сразу. Утром ночные стопы
+#     срабатывают до CLOSE (17.09 SNGS: стоп 07:06, тейк на пустой позиции висел
+#     до 09:10 — касание открыло бы шорт);
+#   * SL/TP на внутридневные заливки после ORDER (раньше до 18:20 без стопа);
+#   * SL/TP на ночные заливки вечером (ставить стоп до заливки нельзя: SELL без
+#     позиции при срабатывании открыл бы шорт);
+#   * цена уже за стопом → аварийный выход по рынку;
+#   * заливки и выходы — в журнал исполнения.
+# Пока идёт фаза, реестр заблокирован (flock) и монитор пропускает прогон.
+50,55 6 * * 1-5    cd $PROJECT && $PY -m services.stage2_demo protect >> audit/stage2-demo/cron.log 2>&1
+*/5 7-23 * * 1-5   cd $PROJECT && $PY -m services.stage2_demo protect >> audit/stage2-demo/cron.log 2>&1

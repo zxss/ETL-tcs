@@ -63,11 +63,13 @@ CLI:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import csv
 import datetime as dt
 import json
 import logging
 import os
+import shutil
 import sys
 import time
 from pathlib import Path
@@ -225,6 +227,48 @@ def _logrow(writer: csv.DictWriter, **kw) -> None:
 # ── Реестр ожидающих стопов (между фазами) ───────────────────────────────────
 
 _PENDING_PATH = _LOG_DIR / "pending_stops.json"
+_LOCK_PATH = _LOG_DIR / "pending_stops.lock"
+
+
+class RegistryError(RuntimeError):
+    """Реестр стопов нечитаем. Фаза обязана упасть, а не работать с пустым:
+    пустой реестр значит «стопов не ставить, интрадей не закрывать»."""
+
+
+class RegistryBusy(RuntimeError):
+    """Реестр занят другим процессом дольше таймаута."""
+
+
+@contextlib.contextmanager
+def registry_lock(*, timeout_s: float | None = None, wait: bool = True):
+    """Эксклюзивная блокировка реестра на всё время фазы (fcntl.flock).
+
+    Фазы, монитор protect и ручной CLI читают реестр, ходят к брокеру и пишут
+    реестр обратно. Без блокировки параллельный protect мог бы, например,
+    заново поставить стоп на позицию, которую CLEANUP в этот момент закрывает.
+    wait=False — не ждать (protect просто пропускает прогон).
+
+    Внутри процесса брать один раз: flock на новом дескрипторе того же файла
+    блокирует и собственный процесс.
+    """
+    import fcntl
+    _LOG_DIR.mkdir(parents=True, exist_ok=True)
+    if timeout_s is None:
+        timeout_s = float(getattr(config, "REGISTRY_LOCK_TIMEOUT_SEC", 600))
+    fp = open(_LOCK_PATH, "a+", encoding="utf-8")
+    try:
+        deadline = time.monotonic() + (timeout_s if wait else 0.0)
+        while True:
+            try:
+                fcntl.flock(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                if time.monotonic() >= deadline:
+                    raise RegistryBusy(f"реестр {_PENDING_PATH.name} занят другим процессом")
+                time.sleep(0.5)
+        yield
+    finally:
+        fp.close()                               # закрытие дескриптора снимает flock
 
 
 def _load_pending() -> dict:
@@ -233,15 +277,32 @@ def _load_pending() -> dict:
     try:
         return json.loads(_PENDING_PATH.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError) as e:
-        log.warning("Не прочитать %s (%s) — начинаю с пустого реестра.",
-                    _PENDING_PATH, e)
-        return {}
+        raise RegistryError(f"реестр {_PENDING_PATH} нечитаем ({e}) — фаза остановлена; "
+                            f"восстановить из резервной копии {_PENDING_PATH.name}.bak") from e
 
 
 def _save_pending(data: dict) -> None:
+    """Атомарная запись: временный файл в том же каталоге → fsync → os.replace.
+    Обрыв процесса посреди записи оставляет прежний реестр целым. Прежняя
+    версия сохраняется рядом как .bak."""
     _LOG_DIR.mkdir(parents=True, exist_ok=True)
-    _PENDING_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2),
-                             encoding="utf-8")
+    tmp = _PENDING_PATH.with_name(f".{_PENDING_PATH.name}.{os.getpid()}.tmp")
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            f.write(json.dumps(data, ensure_ascii=False, indent=2))
+            f.flush()
+            os.fsync(f.fileno())
+        if _PENDING_PATH.exists():
+            # копия, а не перенос: между двумя переносами реестра не было бы
+            # вовсе, и обрыв в этот момент выглядел бы как пустой реестр
+            try:
+                shutil.copyfile(_PENDING_PATH, _PENDING_PATH.with_name(_PENDING_PATH.name + ".bak"))
+            except OSError:
+                pass
+        os.replace(tmp, _PENDING_PATH)
+    finally:
+        if tmp.exists():
+            tmp.unlink()
 
 
 # ── Гард маржинального шорта ─────────────────────────────────────────────────
@@ -524,14 +585,32 @@ def _exit_dir(r: dict) -> str:
 
 
 def attach_stops(broker: BrokerClient, account_id: str, *,
-                 dry_run: bool, writer: csv.DictWriter, env: str) -> None:
+                 dry_run: bool, writer: csv.DictWriter, env: str,
+                 conn=None, report: dict | None = None) -> None:
     """ФАЗА 2: для залившихся позиций ставит STOP_LOSS и TAKE_PROFIT.
 
     ВНИМАНИЕ: это НЕ нативный OCO. SL и TP — две независимые условные заявки.
-    Когда одна срабатывает и закрывает позицию, вторая остаётся «висеть» и при
-    касании своей цены откроет ОБРАТНУЮ позицию. Поэтому здесь же выполняется
-    reconcile: если позиция, на которую были выставлены SL/TP, теперь закрыта —
-    оставшийся sibling-стоп снимается."""
+    Когда одна срабатывает, вторая остаётся и при касании своей цены откроет
+    ОБРАТНУЮ позицию (17.09: стоп SNGS сработал в 07:06, тейк висел до 09:10).
+    Поэтому каждый прогон, в порядке:
+
+      1. OCO по истории условных заявок: нога EXECUTED → вторая снимается,
+         запись закрывается с причиной stop/target. Не ждём, пока брокер покажет
+         нулевую позицию: по факту исполнения ноги позиция уже закрыта.
+      2. Позиция закрыта без известной ноги → снять остатки (closed_externally).
+      3. Позиция есть → записать заливку в execution_audit (conn).
+      4. Цена уже за стопом → стоп не ставить (брокер отклонит, 15.09 SMLT:
+         30099), а сразу закрыть позицию по рынку (stop_breach).
+      5. Иначе поставить недостающие SL и TP.
+
+    report (необязательный dict) получает списки oco_closed, breach_exits,
+    fills_journaled, closed_externally — для уведомлений и вердикта."""
+    from services import exec_journal
+    rep = report if report is not None else {}
+    for k in ("oco_closed", "breach_exits", "closed_externally", "breach_failed"):
+        rep.setdefault(k, [])
+    rep.setdefault("fills_journaled", 0)
+
     pending = _load_pending()
     acc_list = pending.get(account_id, [])
     active = [r for r in acc_list if not r.get("closed")]
@@ -546,6 +625,7 @@ def attach_stops(broker: BrokerClient, account_id: str, *,
     except NotSupportedError:
         stop_orders = []
         print("[WARN]  GetStopOrders не поддержан — дедуп стопов по реестру.")
+    history = _stop_history(broker, account_id, active)
     existing_sl = {s.instrument_uid for s in stop_orders if s.kind == "STOP_LOSS"}
     existing_tp = {s.instrument_uid for s in stop_orders if s.kind == "TAKE_PROFIT"}
 
@@ -553,18 +633,52 @@ def attach_stops(broker: BrokerClient, account_id: str, *,
     for r in active:
         tk, uid = r["ticker"], r["instrument_uid"]
         bal = positions.get(uid, 0.0)
+
+        # ── 1. OCO: одна нога исполнилась → снять вторую
+        fired = _fired_leg(r, history)
+        if fired:
+            kind, rec_ = fired
+            if abs(bal) > 1e-9:
+                print(f"[WARN]  {tk}: {kind} исполнен, а брокер ещё показывает "
+                      f"позицию {bal:.0f} шт — снимаю парную ногу всё равно.")
+            if dry_run:
+                print(f"[DRY]   {tk}: {kind} исполнен — снять парную ногу.")
+                continue
+            if _cancel_uid_stops(broker, account_id, r, stop_orders, writer, env, "oco_cancel"):
+                r["closed"] = True
+                r["closed_reason"] = "stop" if kind == "STOP_LOSS" else "target"
+                exec_journal.journal_exit(broker, account_id, conn, r, r["closed_reason"],
+                                          exit_at=exec_journal.parse_ts(rec_.activated_at))
+                rep["oco_closed"].append(tk)
+                print(f"[OCO]   {tk}: {kind} исполнен, парная нога снята, запись закрыта.")
+            continue
+
         bracketed = r.get("stop_placed") or r.get("tp_placed")
 
-        # ── reconcile: позиция закрыта, но брекет был выставлен → снять остаток
+        # ── 2. позиция закрыта без известной ноги
         if abs(bal) < 1e-9:
             if bracketed:
                 _reconcile_closed(broker, account_id, r, stop_orders, dry_run, writer, env)
+                if r.get("closed") and not dry_run:
+                    r["closed_reason"] = r.get("closed_reason") or "closed_externally"
+                    exec_journal.journal_exit(broker, account_id, conn, r, "closed_externally")
+                    rep["closed_externally"].append(tk)
             else:
                 print(f"[WAIT]  {tk}: лимитка {r['order_id']} ещё не залилась — в очереди.")
             continue
 
+        # ── 3. заливка в журнал исполнения
+        if conn is not None and not dry_run and not r.get("fill_journaled"):
+            if exec_journal.journal_fill(broker, account_id, conn, r):
+                r["fill_journaled"] = True
+                rep["fills_journaled"] += 1
+
         lot = int(r.get("lot", 1)) or 1
-        qty = max(1, int(abs(bal) // lot))
+        qty = int(abs(bal) // lot)
+        if qty <= 0:
+            print(f"[ERROR] {tk}: позиция {abs(bal):.0f} шт меньше лота {lot} — "
+                  f"защиту поставить нельзя.")
+            continue
         if qty != r.get("api_qty"):
             print(f"[INFO]  {tk}: позиция {abs(bal):.0f} шт → {qty} лот "
                   f"(заявлено {r.get('api_qty')}).")
@@ -578,7 +692,7 @@ def attach_stops(broker: BrokerClient, account_id: str, *,
                 print(f"[ERROR] {tk}: инструмент недоступен: {e}")
                 continue
 
-        # ── STOP_LOSS
+        # ── 4–5. STOP_LOSS (или аварийный выход, если цена уже за стопом)
         if not r.get("stop_placed"):
             stop_q = Quotation(units=int(r["stop_units"]), nano=int(r["stop_nano"]))
             if uid in existing_sl:
@@ -587,10 +701,19 @@ def attach_stops(broker: BrokerClient, account_id: str, *,
             elif dry_run:
                 print(f"[DRY]   {tk}: STOP_LOSS {edir} qty={qty} @ {stop_q.as_float()}")
             else:
+                if _stop_breached(broker, uid, edir, stop_q.as_float()):
+                    _breach_exit(broker, account_id, r, inst, bal, stop_orders,
+                                 writer, env, conn, rep)
+                    continue
                 sid = _place_conditional(broker, account_id, tk, inst, edir,
                                          qty, stop_q, "STOP_LOSS", writer, env)
                 if sid:
                     r["stop_placed"], r["stop_order_id"] = True, sid
+                elif _stop_breached(broker, uid, edir, stop_q.as_float()):
+                    # отказ брокера пришёл, потому что цена успела пройти стоп
+                    _breach_exit(broker, account_id, r, inst, bal, stop_orders,
+                                 writer, env, conn, rep)
+                    continue
 
         # ── TAKE_PROFIT
         if not r.get("tp_placed") and r.get("tp_units") is not None:
@@ -610,26 +733,126 @@ def attach_stops(broker: BrokerClient, account_id: str, *,
         _save_pending(pending)
 
 
+def _stop_history(broker: BrokerClient, account_id: str, active: list[dict]) -> dict:
+    """{stop_order_id: StopOrderRecord} по записям с выставленными ногами.
+    Контур без истории → пустой словарь: OCO сработает по нулевой позиции."""
+    from services import exec_journal
+    with_legs = [r for r in active if r.get("stop_order_id") or r.get("tp_order_id")]
+    if not with_legs:
+        return {}
+    since = min(exec_journal.utc_iso(r.get("created")) for r in with_legs)
+    try:
+        return {h.stop_order_id: h for h in broker.get_stop_order_history(account_id, since)}
+    except (NotSupportedError, BrokerError) as e:
+        print(f"[WARN]  история условных заявок недоступна ({e}) — OCO по позиции.")
+        return {}
+
+
+def _fired_leg(r: dict, history: dict):
+    """(вид, запись истории) исполнившейся ноги или None."""
+    for kind, key in (("STOP_LOSS", "stop_order_id"), ("TAKE_PROFIT", "tp_order_id")):
+        h = history.get(r.get(key) or "")
+        if h is not None and h.status == "EXECUTED":
+            return kind, h
+    return None
+
+
+def _cancel_uid_stops(broker: BrokerClient, account_id: str, r: dict, stop_orders: list,
+                      writer: csv.DictWriter, env: str, action: str) -> bool:
+    """Снять все активные условные заявки по инструменту записи. True — сняты все."""
+    ok = True
+    for s in [s for s in stop_orders if s.instrument_uid == r["instrument_uid"]]:
+        try:
+            broker.cancel_stop_order(account_id=account_id, stop_order_id=s.stop_order_id)
+            print(f"[CANCEL] {r['ticker']}: снят {s.kind} {s.stop_order_id[:8]}…")
+            _logrow(writer, env=env, account_id=account_id, ticker=r["ticker"],
+                    action=action, order_id=s.stop_order_id, status="cancelled", info=s.kind)
+        except BrokerError as e:
+            ok = False
+            print(f"[ERROR] {r['ticker']}: не снять {s.kind} {s.stop_order_id[:8]}…: {e}")
+            _logrow(writer, env=env, account_id=account_id, ticker=r["ticker"],
+                    action=action, order_id=s.stop_order_id, status="error", info=str(e))
+    return ok
+
+
+def _stop_breached(broker: BrokerClient, uid: str, exit_direction: str, stop: float) -> bool:
+    """Цена уже за стопом: для лонга (выход SELL) последняя ≤ стопа, для шорта ≥.
+    Нет цены → False: без цены аварийно закрывать нельзя, ставим стоп как обычно."""
+    try:
+        last = broker.get_last_price(uid)
+    except (NotSupportedError, BrokerError):
+        return False
+    if not last or not stop:
+        return False
+    return last <= stop if exit_direction == "SELL" else last >= stop
+
+
+def _breach_exit(broker: BrokerClient, account_id: str, r: dict, inst: Instrument,
+                 balance: float, stop_orders: list, writer: csv.DictWriter, env: str,
+                 conn, rep: dict) -> bool:
+    """Аварийный выход по рынку: цена прошла стоп раньше, чем он был поставлен.
+
+    Сначала снимаются условные заявки по бумаге (тейк на пустой позиции открыл
+    бы обратную), без этого рыночная заявка не отправляется. Исполнение
+    дожидается по GetOrderState."""
+    from services import exec_journal
+    tk = r["ticker"]
+    print(f"[BREACH] {tk}: цена уже за стопом — закрываю позицию по рынку.")
+    if not _cancel_uid_stops(broker, account_id, r, stop_orders, writer, env, "breach_cancel_stop"):
+        rep["breach_failed"].append(tk)
+        return False
+    lot = int(r.get("lot") or 1) or 1
+    lots = int(abs(balance) // lot)
+    edir = _close_direction(balance)
+    try:
+        posted = broker.post_market_order(account_id=account_id, instrument=inst,
+                                          direction=edir, quantity_lots=lots,
+                                          order_id=new_order_id())
+        st = _await_order(broker, account_id, posted.order_id)
+    except BrokerError as e:
+        print(f"[ERROR] {tk}: аварийный выход не прошёл: {e}")
+        _logrow(writer, env=env, account_id=account_id, ticker=tk, direction=edir,
+                action="stop_breach_exit", qty_lots_api=lots, status="error", info=str(e))
+        rep["breach_failed"].append(tk)
+        return False
+    _logrow(writer, env=env, account_id=account_id, ticker=tk, direction=edir,
+            action="stop_breach_exit", order_id=st.order_id, qty_lots_api=lots,
+            price=st.executed_price, status=st.execution_report_status)
+    if not st.is_filled:
+        rep["breach_failed"].append(tk)
+        return False
+    r["closed"], r["closed_reason"] = True, "stop_breach"
+    exec_journal.journal_exit(broker, account_id, conn, r, "stop_breach",
+                              exit_price=st.executed_price,
+                              exit_fee=st.executed_commission)
+    rep["breach_exits"].append(tk)
+    return True
+
+
+def _await_order(broker: BrokerClient, account_id: str, order_id: str, *,
+                 timeout_s: float = 20.0):
+    """GetOrderState до конечного статуса или таймаута."""
+    deadline = time.monotonic() + timeout_s
+    st = broker.get_order_state(account_id=account_id, order_id=order_id)
+    while not st.is_terminal and time.monotonic() < deadline:
+        time.sleep(1.0)
+        st = broker.get_order_state(account_id=account_id, order_id=order_id)
+    return st
+
+
 def _reconcile_closed(broker: BrokerClient, account_id: str, r: dict,
                       stop_orders: list, dry_run: bool,
                       writer: csv.DictWriter, env: str) -> None:
-    """Позиция закрыта (сработал SL или TP). Снимаем оставшийся sibling-стоп,
-    чтобы он не открыл обратную позицию, и помечаем запись закрытой."""
-    tk, uid = r["ticker"], r["instrument_uid"]
-    leftovers = [s for s in stop_orders if s.instrument_uid == uid]
+    """Позиция закрыта, а какая нога сработала — неизвестно. Снимаем оставшиеся
+    условные заявки и закрываем запись, только если сняты все."""
+    tk = r["ticker"]
+    leftovers = [s for s in stop_orders if s.instrument_uid == r["instrument_uid"]]
     if dry_run:
         print(f"[DRY]   {tk}: позиция закрыта — снять {len(leftovers)} оставшихся стоп(ов).")
         return
-    for s in leftovers:
-        try:
-            broker.cancel_stop_order(account_id=account_id, stop_order_id=s.stop_order_id)
-            print(f"[OCO]   {tk}: снят оставшийся {s.kind} {s.stop_order_id[:8]}… "
-                  f"(позиция уже закрыта).")
-            _logrow(writer, env=env, account_id=account_id, ticker=tk,
-                    action="oco_cancel", order_id=s.stop_order_id,
-                    status="cancelled", info=s.kind)
-        except BrokerError as e:
-            print(f"[WARN]  {tk}: не снять {s.kind} {s.stop_order_id[:8]}…: {e}")
+    if not _cancel_uid_stops(broker, account_id, r, stop_orders, writer, env, "oco_cancel"):
+        print(f"[WARN]  {tk}: не все стопы сняты — запись остаётся открытой.")
+        return
     r["closed"] = True
     print(f"[DONE]  {tk}: сделка закрыта, запись архивирована.")
 
@@ -667,25 +890,40 @@ def _is_intraday(rec: dict) -> bool | None:
 def square_off_intraday(broker: BrokerClient, account_id: str, *,
                         dry_run: bool = False, no_confirm: bool = False,
                         writer: csv.DictWriter, env: str,
-                        force: bool = False, now: dt.datetime | None = None) -> int:
+                        force: bool = False, now: dt.datetime | None = None,
+                        close_unregistered: bool = False, exclude_uids=(),
+                        conn=None, report: dict | None = None) -> int:
     """Закрывает по рынку внутридневные позиции перед закрытием основной сессии.
 
     Зачем: в двухфазной модели позиция выходит ТОЛЬКО по STOP_LOSS или
     TAKE_PROFIT. На симуляции 5-минутного пути цены 79,1% внутридневных заливок
-    не достигают ни того, ни другого и переносятся через ночь. Это ломает две
-    вещи сразу: торгуется не та стратегия, которую валидировали (intraday_long
-    определена как close/open-1, а с переносом реализуется close_{t+1}/open_t-1),
-    и добавляется незаложенная стоимость переноса шорта 0,0575% за ночь.
+    не достигают ни того, ни другого и переносятся через ночь.
 
-    Позиции long_overnight НЕ ТРОГАЮТСЯ — они держатся через ночь по замыслу.
-    Записи без поля strategy (созданные до этой версии) тоже не трогаются:
-    закрыть по ошибке ночную позицию хуже, чем не закрыть дневную.
+    Строгий порядок (аудит r4, 17.09):
+      1. снять активные лимитки на вход и условные заявки по закрываемым бумагам —
+         иначе лимитка зальётся уже после закрытия и уйдёт в ночь, а оставшийся
+         стоп откроет обратную позицию;
+      2. взять ФАКТИЧЕСКИЕ позиции у брокера;
+      3. закрыть по рынку;
+      4. дождаться, пока позиция у брокера станет нулевой (опрос до
+         SQUARE_OFF_FILL_TIMEOUT_SEC).
 
-    Перед закрытием снимаются связанные SL и TP — иначе останется висящая
-    условная заявка, которая при касании своей цены откроет ОБРАТНУЮ позицию.
+    Позиции long_overnight НЕ ТРОГАЮТСЯ. close_unregistered=True (фаза CLEANUP
+    Этапа 2) — закрываются и позиции без записи в реестре или без стратегии:
+    на 18:20 у контура не бывает законных позиций, кроме интрадея. В ручном CLI
+    (по умолчанию False) такие позиции не трогаются: они могут быть ручными.
+    exclude_uids — инструменты, которые не закрываются никогда (паи казначейства).
 
-    Возвращает число закрытых позиций.
+    report получает cancelled_orders, cancelled_stops, closed, orphans,
+    not_flat, kept_overnight. Возвращает число закрытых позиций.
     """
+    from services import exec_journal
+    rep = report if report is not None else {}
+    for k in ("closed", "orphans", "not_flat", "kept_overnight"):
+        rep.setdefault(k, [])
+    rep.setdefault("cancelled_orders", 0)
+    rep.setdefault("cancelled_stops", 0)
+
     if not getattr(config, "INTRADAY_SQUARE_OFF_ENABLED", True) and not force:
         print("INTRADAY_SQUARE_OFF_ENABLED=0 — закрытие по концу сессии отключено.")
         return 0
@@ -700,91 +938,159 @@ def square_off_intraday(broker: BrokerClient, account_id: str, *,
     pending = _load_pending()
     acc_list = pending.get(account_id, [])
     active = [r for r in acc_list if not r.get("closed")]
+    reg = {r.get("instrument_uid"): r for r in active if r.get("instrument_uid")}
+    exclude = set(exclude_uids or ())
+    night = {u for u, r in reg.items() if r.get("strategy") == "long_overnight"}
 
-    positions = {p.instrument_uid: p for p in broker.get_positions(account_id) if p.is_open}
-    if not positions:
-        print("Открытых позиций нет — закрывать нечего.")
-        return 0
+    def _wanted(uid: str) -> bool:
+        """Бумага подлежит закрытию: интрадей по реестру или (в CLEANUP) чужая."""
+        if uid in exclude or uid in night:
+            return False
+        flag = _is_intraday(reg.get(uid) or {})
+        return flag is True or (close_unregistered and flag is None)
+
+    # ── 1. лимитки на вход и условные заявки
+    try:
+        active_orders = broker.get_active_orders(account_id)
+    except (NotSupportedError, BrokerError) as e:
+        active_orders = []
+        print(f"[WARN]  активные заявки не получены: {e}")
     try:
         stop_orders = broker.get_active_stop_orders(account_id)
     except NotSupportedError:
         stop_orders = []
         print("[WARN]  GetStopOrders не поддержан — стопы снять не смогу.")
-
-    targets, skipped_overnight, unknown = [], [], []
-    seen_uids = set()
-    for r in active:
-        uid = r.get("instrument_uid")
-        pos = positions.get(uid)
-        if pos is None:
-            continue
-        seen_uids.add(uid)
-        flag = _is_intraday(r)
-        if flag is True:
-            targets.append((r, pos))
-        elif flag is False:
-            skipped_overnight.append(r)
-        else:
-            unknown.append(r)
-
-    orphan = [uid for uid in positions if uid not in seen_uids]
-
-    if skipped_overnight:
-        print(f"[KEEP]  {len(skipped_overnight)} ночных позиций остаются открытыми: "
-              + ", ".join(r["ticker"] for r in skipped_overnight))
-    if unknown:
-        print(f"[SKIP]  {len(unknown)} записей без стратегии (созданы до этой версии) — "
-              f"не трогаю: " + ", ".join(r["ticker"] for r in unknown))
-    if orphan:
-        print(f"[SKIP]  {len(orphan)} открытых позиций нет в реестре — не трогаю.")
-    if not targets:
-        print("Внутридневных позиций к закрытию нет.")
-        return 0
-
-    print(f"\nЗАКРЫТИЕ ВНУТРИДНЕВНЫХ ПОЗИЦИЙ ({now:%H:%M} МСК, контур {env})")
-    print("-" * 78)
-    for r, pos in targets:
-        stops = [s for s in stop_orders if s.instrument_uid == r["instrument_uid"]]
-        kinds = "+".join(sorted({s.kind for s in stops})) or "нет"
-        print(f"  {r['ticker']:<7} {r.get('strategy',''):<16} "
-              f"{abs(pos.balance_shares):>10.0f} шт  снять стопы: {kinds}")
-    print("-" * 78)
+    orders_to_cancel = [o for o in active_orders if _wanted(o.instrument_uid)]
+    stops_to_cancel = [s for s in stop_orders if _wanted(s.instrument_uid)]
 
     if dry_run:
-        print("[DRY-RUN] реальные заявки не отправляются.")
+        positions = [p for p in broker.get_positions(account_id)
+                     if p.is_open and _wanted(p.instrument_uid)]
+        print(f"[DRY-RUN] снять лимиток {len(orders_to_cancel)}, стопов "
+              f"{len(stops_to_cancel)}, закрыть позиций {len(positions)}; "
+              f"реальные заявки не отправляются.")
         return 0
     if not no_confirm:
-        prompt = ("ЗАКРЫТЬ по рынку на БОЕВОМ счёте? (y/n): " if env == "PROD"
-                  else "Закрыть по рынку? (y/n): ")
+        prompt = ("ЗАКРЫТЬ интрадей по рынку на БОЕВОМ счёте? (y/n): " if env == "PROD"
+                  else "Закрыть интрадей по рынку? (y/n): ")
         if not confirm(prompt):
             print("[INFO] Закрытие отменено пользователем.")
             return 0
 
-    closed = 0
-    for r, pos in targets:
-        tk = r["ticker"]
-        # 1) сначала снимаем условные заявки — иначе после закрытия позиции
-        #    оставшийся стоп при касании откроет обратную.
-        for s in [s for s in stop_orders if s.instrument_uid == r["instrument_uid"]]:
-            try:
-                broker.cancel_stop_order(account_id=account_id,
-                                         stop_order_id=s.stop_order_id)
-                print(f"[CANCEL] {tk}: снят {s.kind} {s.stop_order_id[:8]}…")
-                _logrow(writer, env=env, account_id=account_id, ticker=tk,
-                        action="squareoff_cancel_stop", order_id=s.stop_order_id,
-                        status="cancelled", info=s.kind)
-            except BrokerError as e:
-                print(f"[WARN]  {tk}: не снять {s.kind}: {e}")
+    failed_stop_uids: set[str] = set()
+    for o in orders_to_cancel:
+        try:
+            broker.cancel_order(account_id=account_id, order_id=o.order_id)
+            rep["cancelled_orders"] += 1
+            _logrow(writer, env=env, account_id=account_id,
+                    ticker=(reg.get(o.instrument_uid) or {}).get("ticker", o.instrument_uid[:8]),
+                    action="squareoff_cancel_order", order_id=o.order_id, status="cancelled")
+        except BrokerError as e:
+            print(f"[WARN]  не снята лимитка {o.order_id[:8]}…: {e}")
+    for s in stops_to_cancel:
+        tk = (reg.get(s.instrument_uid) or {}).get("ticker", s.instrument_uid[:8])
+        try:
+            broker.cancel_stop_order(account_id=account_id, stop_order_id=s.stop_order_id)
+            rep["cancelled_stops"] += 1
+            print(f"[CANCEL] {tk}: снят {s.kind} {s.stop_order_id[:8]}…")
+            _logrow(writer, env=env, account_id=account_id, ticker=tk,
+                    action="squareoff_cancel_stop", order_id=s.stop_order_id,
+                    status="cancelled", info=s.kind)
+            rec = reg.get(s.instrument_uid)
+            if rec is not None:
+                # стоп снят: если позицию закрыть не выйдет, protect поставит заново
+                key = "stop" if s.kind == "STOP_LOSS" else "tp"
+                rec[f"{key}_placed"], rec[f"{key}_order_id"] = False, None
+        except BrokerError as e:
+            failed_stop_uids.add(s.instrument_uid)
+            print(f"[ERROR] {tk}: не снять {s.kind}: {e}")
 
-        # 2) затем закрываем позицию по рынку
+    # ── 2. фактические позиции у брокера
+    positions = {p.instrument_uid: p for p in broker.get_positions(account_id) if p.is_open}
+    # Внутридневная запись без позиции: лимитка не залилась и снята выше. Запись
+    # закрывается, иначе монитор ждал бы её заливки вечно.
+    for uid, rec in reg.items():
+        if uid not in positions and _is_intraday(rec) is True:
+            reason = "intraday_not_filled"
+            if exec_journal.journal_fill(broker, account_id, conn, rec):
+                # залилась и уже закрыта, а монитор не успел это записать
+                exec_journal.journal_exit(broker, account_id, conn, rec, "closed_externally")
+                reason = "closed_externally"
+            rec["closed"], rec["closed_reason"] = True, reason
+    if not positions:
+        print("Открытых позиций нет — закрывать нечего.")
+        _save_pending(pending)
+        return 0
+
+    targets = []
+    for uid, pos in positions.items():
+        rec = reg.get(uid)
+        if uid in exclude:
+            continue
+        if uid in night:
+            rep["kept_overnight"].append(rec.get("ticker"))
+            continue
+        flag = _is_intraday(rec or {})
+        if flag is True or (close_unregistered and flag is None):
+            if flag is None:
+                rep["orphans"].append((rec or {}).get("ticker") or uid[:8])
+            targets.append((uid, pos, rec))
+        elif flag is None:
+            print(f"[SKIP]  позиция {uid[:8]}… не принадлежит системе (нет в реестре "
+                  f"или без стратегии) — не трогаю.")
+    if rep["kept_overnight"]:
+        print(f"[KEEP]  ночные позиции остаются открытыми: {', '.join(rep['kept_overnight'])}")
+    if not targets:
+        print("Внутридневных позиций к закрытию нет.")
+        _save_pending(pending)
+        return 0
+
+    # ── 3. закрытие по рынку (без снятых стопов не закрываем: обратная позиция хуже)
+    print(f"\nЗАКРЫТИЕ ВНУТРИДНЕВНЫХ ПОЗИЦИЙ ({now:%H:%M} МСК, контур {env})")
+    sent = []
+    for uid, pos, rec in targets:
+        tk = (rec or {}).get("ticker") or uid[:8]
+        if uid in failed_stop_uids:
+            print(f"[ERROR] {tk}: стопы не сняты — позиция не закрывается.")
+            rep["not_flat"].append(tk)
+            continue
         if _market_close(broker, account_id, pos, tk, writer, env):
-            r["closed"] = True
-            r["closed_reason"] = "square_off"
-            closed += 1
+            sent.append((uid, tk, rec))
+        else:
+            rep["not_flat"].append(tk)
+
+    # ── 4. ждать нулевой позиции у брокера
+    timeout = float(getattr(config, "SQUARE_OFF_FILL_TIMEOUT_SEC", 30))
+    remaining = _await_flat(broker, account_id, {u for u, _, _ in sent}, timeout_s=timeout)
+    closed = 0
+    for uid, tk, rec in sent:
+        if uid in remaining:
+            print(f"[ERROR] {tk}: за {timeout:.0f} с позиция у брокера не обнулилась.")
+            rep["not_flat"].append(tk)
+            continue
+        closed += 1
+        rep["closed"].append(tk)
+        if rec is not None:
+            rec["closed"], rec["closed_reason"] = True, "square_off"
+            exec_journal.journal_exit(broker, account_id, conn, rec, "square_off")
 
     _save_pending(pending)
     print(f"\nЗакрыто внутридневных позиций: {closed} из {len(targets)}.")
     return closed
+
+
+def _await_flat(broker: BrokerClient, account_id: str, uids: set[str], *,
+                timeout_s: float, poll_s: float = 1.0) -> set[str]:
+    """Опрашивает позиции, пока все uids не обнулятся. Возвращает необнулённые."""
+    remaining = set(uids)
+    deadline = time.monotonic() + timeout_s
+    while remaining:
+        open_uids = {p.instrument_uid for p in broker.get_positions(account_id) if p.is_open}
+        remaining &= open_uids
+        if not remaining or time.monotonic() >= deadline:
+            break
+        time.sleep(poll_s)
+    return remaining
 
 
 # ── СИНХРОНИЗАЦИЯ ПОРТФЕЛЯ К СИГНАЛАМ (ТЗ) ────────────────────────────────────
@@ -864,13 +1170,22 @@ def _verify_protection(broker: BrokerClient, account_id: str, ticker_of) -> None
 
 def _market_close(broker: BrokerClient, account_id: str, pos, ticker: str,
                   writer: csv.DictWriter, env: str) -> bool:
-    """Закрыть позицию по рынку. Возвращает True при успехе."""
+    """Отправить рыночную заявку на закрытие позиции. True — заявка принята
+    (исполнение проверяет вызывающий по позициям брокера)."""
     try:
         inst = broker.find_instrument_by_uid(pos.instrument_uid)
     except BrokerError as e:
         print(f"[ERROR] {ticker}: не закрыть — инструмент по uid не найден: {e}")
         return False
-    qty = max(1, int(abs(pos.balance_shares) // (inst.lot or 1)))
+    lot = int(inst.lot or 1) or 1
+    qty = int(abs(pos.balance_shares) // lot)
+    if qty <= 0:
+        # Прежний max(1, …) продал бы целый лот при остатке меньше лота — то есть
+        # открыл бы обратную позицию на разницу.
+        print(f"[ERROR] {ticker}: остаток {abs(pos.balance_shares):.0f} шт меньше лота {lot}.")
+        return False
+    if abs(pos.balance_shares) % lot:
+        print(f"[WARN]  {ticker}: остаток не кратен лоту {lot} — закрываю {qty} лот.")
     edir = _close_direction(pos.balance_shares)
     try:
         st = broker.post_market_order(account_id=account_id, instrument=inst,
@@ -1197,16 +1512,18 @@ def main(argv: Optional[list[str]] = None) -> int:
         # ── ФАЗА 3: закрытие внутридневных позиций ──
         if args.square_off:
             print(f"Контур: {env} | Счёт №{account_id} | ФАЗА 3: закрытие внутридневных")
-            square_off_intraday(broker, account_id, dry_run=args.dry_run,
-                                no_confirm=args.no_confirm, writer=writer, env=env,
-                                force=args.force)
+            with registry_lock():
+                square_off_intraday(broker, account_id, dry_run=args.dry_run,
+                                    no_confirm=args.no_confirm, writer=writer, env=env,
+                                    force=args.force)
             return 0
 
         # ── ФАЗА 2 ──
         if args.attach_stops:
             print(f"Контур: {env} | Счёт №{account_id} | ФАЗА 2: привязка стопов")
-            attach_stops(broker, account_id, dry_run=args.dry_run,
-                         writer=writer, env=env)
+            with registry_lock():
+                attach_stops(broker, account_id, dry_run=args.dry_run,
+                             writer=writer, env=env)
             return 0
 
         # ── ФАЗА 1 ──
@@ -1245,11 +1562,12 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         # ── СИНХРОНИЗАЦИЯ (по умолчанию): закрыть выпавшие сигналы + выставить новые
         if not args.place_only:
-            sync_portfolio(broker, account_id, orders,
-                           dry_run=args.dry_run, no_confirm=args.no_confirm,
-                           immediate_stop=args.immediate_stop, writer=writer, env=env,
-                           wait_s=args.wait_fill,
-                           poll_s=float(getattr(config, "ORDER_FILL_POLL_SEC", 5.0)))
+            with registry_lock():
+                sync_portfolio(broker, account_id, orders,
+                               dry_run=args.dry_run, no_confirm=args.no_confirm,
+                               immediate_stop=args.immediate_stop, writer=writer, env=env,
+                               wait_s=args.wait_fill,
+                               poll_s=float(getattr(config, "ORDER_FILL_POLL_SEC", 5.0)))
             return 0
 
         # ── --place-only: старое поведение (только заявки, без закрытий)
@@ -1261,9 +1579,10 @@ def main(argv: Optional[list[str]] = None) -> int:
             print("[INFO] Выставление заявок отменено пользователем.")
             return 0
 
-        place_limits(broker, account_id, orders,
-                     dry_run=args.dry_run, immediate_stop=args.immediate_stop,
-                     force=args.force, writer=writer, env=env)
+        with registry_lock():
+            place_limits(broker, account_id, orders,
+                         dry_run=args.dry_run, immediate_stop=args.immediate_stop,
+                         force=args.force, writer=writer, env=env)
     finally:
         fp.close()
     print("\nГотово. Журнал: data/order_log/<дата>.csv")
