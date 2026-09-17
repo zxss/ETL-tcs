@@ -1,0 +1,296 @@
+{
+ "meta": {
+  "created": "17.09.2026 19:55",
+  "revision": "745a567",
+  "trials_total": 106
+ },
+ "results": {
+  "dev": {
+   "T0": {
+    "trades": 481,
+    "active_days": 111,
+    "net_pct_trade": 0.04683494503642457,
+    "win_rate": 0.34303534303534305,
+    "payoff": 2.0432093667271958,
+    "pnl_rub": 22618.304748725546,
+    "pnl_rub_year": 9781.612835645527,
+    "trade_pct_year": 0.19563225671291054,
+    "fund_pct_year": 19.073503692352443,
+    "account_pct_year": 19.269135949065355,
+    "max_dd_rub": -36415.12193292695,
+    "max_dd_pct": -0.728302438658539,
+    "t_active_days": 0.35398722730538873,
+    "dsr": 0.012062959026601427,
+    "load_avg_rub": 431272.19900900905,
+    "load_max_rub": 499648.06,
+    "buying_power_breach_days": 0,
+    "financing_pct_trade": null,
+    "exits": {
+     "stop": 290,
+     "time": 191
+    }
+   },
+   "T1": {
+    "trades": 481,
+    "active_days": 111,
+    "net_pct_trade": 0.11492250173497191,
+    "win_rate": 0.5114345114345115,
+    "payoff": 1.0773369783145619,
+    "pnl_rub": 208440.6390277372,
+    "pnl_rub_year": 90143.16735204274,
+    "trade_pct_year": 1.802863347040855,
+    "fund_pct_year": 19.073503692352443,
+    "account_pct_year": 20.876367039393298,
+    "max_dd_rub": -156389.85647741565,
+    "max_dd_pct": -3.127797129548313,
+    "t_active_days": 0.7453419314103986,
+    "dsr": 0.03522088366127812,
+    "load_avg_rub": 1407188.7212162162,
+    "load_max_rub": 2499659.9,
+    "buying_power_breach_days": 0,
+    "financing_pct_trade": null,
+    "exits": {
+     "time": 476,
+     "stop": 5
+    }
+   },
+   "T2": {
+    "trades": 481,
+    "active_days": 111,
+    "net_pct_trade": 0.11492250173497191,
+    "win_rate": 0.5114345114345115,
+    "payoff": 1.0773369783145619,
+    "pnl_rub": 54965.06067050984,
+    "pnl_rub_year": 23770.435005611485,
+    "trade_pct_year": 0.47540870011222963,
+    "fund_pct_year": 19.073503692352443,
+    "account_pct_year": 19.548912392464672,
+    "max_dd_rub": -77195.23230590195,
+    "max_dd_pct": -1.543904646118039,
+    "t_active_days": 0.5325013568357736,
+    "dsr": 0.023367945333887145,
+    "load_avg_rub": 431272.19900900905,
+    "load_max_rub": 499648.06,
+    "buying_power_breach_days": 0,
+    "financing_pct_trade": null,
+    "exits": {
+     "time": 476,
+     "stop": 5
+    }
+   },
+   "T3": {
+    "trades": 111,
+    "active_days": 111,
+    "net_pct_trade": 0.03704052007124873,
+    "win_rate": 0.5045045045045045,
+    "payoff": 1.0444136852364425,
+    "pnl_rub": 20604.68314183948,
+    "pnl_rub_year": 8910.793064895035,
+    "trade_pct_year": 0.1782158612979007,
+    "fund_pct_year": 19.073503692352443,
+    "account_pct_year": 19.251719553650343,
+    "max_dd_rub": -73469.40407634924,
+    "max_dd_pct": -1.4693880815269849,
+    "t_active_days": 0.27140794322760564,
+    "dsr": 0.011448721572657078,
+    "load_avg_rub": 431272.19900900905,
+    "load_max_rub": 499648.06,
+    "buying_power_breach_days": 0,
+    "financing_pct_trade": null,
+    "exits": {
+     "time": 111
+    }
+   },
+   "T4": {
+    "trades": 103,
+    "active_days": 60,
+    "net_pct_trade": -2.610306090822183,
+    "win_rate": 0.21359223300970873,
+    "payoff": 0.4679840130839439,
+    "pnl_rub": -267590.3901051667,
+    "pnl_rub_year": -115723.3322137273,
+    "trade_pct_year": -2.314466644274546,
+    "fund_pct_year": 19.073503692352443,
+    "account_pct_year": 16.759037048077897,
+    "max_dd_rub": -267590.39010516676,
+    "max_dd_pct": -5.351807802103335,
+    "t_active_days": -6.2792543881072564,
+    "dsr": 3.4823313702446913e-40,
+    "load_avg_rub": 341445.92166666663,
+    "load_max_rub": 898001.7000000001,
+    "buying_power_breach_days": 0,
+    "financing_pct_trade": 0.11219710009836345,
+    "exits": {
+     "time": 103
+    }
+   },
+   "T4M": {
+    "trades": 103,
+    "active_days": 60,
+    "net_pct_trade": -2.717508732631809,
+    "win_rate": 0.20388349514563106,
+    "payoff": 0.462290965675636,
+    "pnl_rub": -278582.5183917153,
+    "pnl_rub_year": -120477.03698219915,
+    "trade_pct_year": -2.409540739643983,
+    "fund_pct_year": 19.073503692352443,
+    "account_pct_year": 16.66396295270846,
+    "max_dd_rub": -278582.51839171536,
+    "max_dd_pct": -5.571650367834307,
+    "t_active_days": -6.4797959265304925,
+    "dsr": 2.0433359655366445e-42,
+    "load_avg_rub": 341445.92166666663,
+    "load_max_rub": 898001.7000000001,
+    "buying_power_breach_days": 0,
+    "financing_pct_trade": 0.21939974190798897,
+    "exits": {
+     "time": 103
+    }
+   }
+  },
+  "holdout": {
+   "T0": {
+    "trades": 207,
+    "active_days": 49,
+    "net_pct_trade": 0.11266088039660296,
+    "win_rate": 0.4057971014492754,
+    "payoff": 1.7347878063735973,
+    "pnl_rub": 23013.574889091065,
+    "pnl_rub_year": 13614.189359024698,
+    "trade_pct_year": 0.272283787180494,
+    "fund_pct_year": 11.06815594990584,
+    "account_pct_year": 11.340439737086335,
+    "max_dd_rub": -27386.574276398693,
+    "max_dd_pct": -0.5477314855279738,
+    "t_active_days": 0.5451296498169036,
+    "dsr": 0.012277887737802973,
+    "load_avg_rub": 419585.28507102036,
+    "load_max_rub": 499387.5,
+    "buying_power_breach_days": 0,
+    "financing_pct_trade": null,
+    "exits": {
+     "stop": 107,
+     "time": 100
+    }
+   },
+   "T1": {
+    "trades": 215,
+    "active_days": 49,
+    "net_pct_trade": 0.15632040126034474,
+    "win_rate": 0.5674418604651162,
+    "payoff": 0.900480661651526,
+    "pnl_rub": 84072.90957524402,
+    "pnl_rub_year": 49735.18961906656,
+    "trade_pct_year": 0.9947037923813312,
+    "fund_pct_year": 11.06815594990584,
+    "account_pct_year": 12.062859742287172,
+    "max_dd_rub": -124491.88088934278,
+    "max_dd_pct": -2.4898376177868555,
+    "t_active_days": 0.4328258607976102,
+    "dsr": 0.016010695213482216,
+    "load_avg_rub": 1618434.017446327,
+    "load_max_rub": 2499841.8000000003,
+    "buying_power_breach_days": 0,
+    "financing_pct_trade": null,
+    "exits": {
+     "time": 212,
+     "stop": 3
+    }
+   },
+   "T2": {
+    "trades": 207,
+    "active_days": 49,
+    "net_pct_trade": 0.1490747151930281,
+    "win_rate": 0.5603864734299517,
+    "payoff": 0.9171109832082882,
+    "pnl_rub": 30542.674016069454,
+    "pnl_rub_year": 18068.19451517885,
+    "trade_pct_year": 0.361363890303577,
+    "fund_pct_year": 11.06815594990584,
+    "account_pct_year": 11.429519840209418,
+    "max_dd_rub": -57114.80932629989,
+    "max_dd_pct": -1.1422961865259977,
+    "t_active_days": 0.4486215863780729,
+    "dsr": 0.017730895737784847,
+    "load_avg_rub": 419585.28507102036,
+    "load_max_rub": 499387.5,
+    "buying_power_breach_days": 0,
+    "financing_pct_trade": null,
+    "exits": {
+     "time": 203,
+     "stop": 3,
+     "tp": 1
+    }
+   },
+   "T3": {
+    "trades": 48,
+    "active_days": 48,
+    "net_pct_trade": -0.010810359744953368,
+    "win_rate": 0.4375,
+    "payoff": 1.2598283668314803,
+    "pnl_rub": 8277.1790090758,
+    "pnl_rub_year": 4896.548360312265,
+    "trade_pct_year": 0.0979309672062453,
+    "fund_pct_year": 11.06815594990584,
+    "account_pct_year": 11.166086917112086,
+    "max_dd_rub": -53767.19695343754,
+    "max_dd_pct": -1.075343939068751,
+    "t_active_days": 0.16448338167799434,
+    "dsr": 0.009221463116910461,
+    "load_avg_rub": 422098.3743433333,
+    "load_max_rub": 499387.5,
+    "buying_power_breach_days": 0,
+    "financing_pct_trade": null,
+    "exits": {
+     "time": 48
+    }
+   },
+   "T4": {
+    "trades": 168,
+    "active_days": 102,
+    "net_pct_trade": -0.01559522902241317,
+    "win_rate": 0.4583333333333333,
+    "payoff": 1.1625867280989817,
+    "pnl_rub": 12.973011074437636,
+    "pnl_rub_year": 7.674471705299412,
+    "trade_pct_year": 0.00015348943410598825,
+    "fund_pct_year": 11.06815594990584,
+    "account_pct_year": 11.068309439339947,
+    "max_dd_rub": -64347.99282662733,
+    "max_dd_pct": -1.2869598565325464,
+    "t_active_days": 0.00030557524987450476,
+    "dsr": 0.00541949159893103,
+    "load_avg_rub": 355555.2820445869,
+    "load_max_rub": 898207.2999999999,
+    "buying_power_breach_days": 0,
+    "financing_pct_trade": 0.1008098093201484,
+    "exits": {
+     "time": 168
+    }
+   },
+   "T4M": {
+    "trades": 168,
+    "active_days": 102,
+    "net_pct_trade": -0.14511081345683727,
+    "win_rate": 0.4226190476190476,
+    "payoff": 1.172896922148042,
+    "pnl_rub": -21151.576591308374,
+    "pnl_rub_year": -12512.683072654063,
+    "trade_pct_year": -0.25025366145308126,
+    "fund_pct_year": 11.06815594990584,
+    "account_pct_year": 10.817902288452759,
+    "max_dd_rub": -68982.6156073668,
+    "max_dd_pct": -1.3796523121473359,
+    "t_active_days": -0.49927084357616625,
+    "dsr": 0.0013534253855673481,
+    "load_avg_rub": 355555.2820445869,
+    "load_max_rub": 898207.2999999999,
+    "buying_power_breach_days": 0,
+    "financing_pct_trade": 0.23032539375457245,
+    "exits": {
+     "time": 168
+    }
+   }
+  }
+ }
+}
