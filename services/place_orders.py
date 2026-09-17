@@ -255,7 +255,10 @@ def registry_lock(*, timeout_s: float | None = None, wait: bool = True):
     _LOG_DIR.mkdir(parents=True, exist_ok=True)
     if timeout_s is None:
         timeout_s = float(getattr(config, "REGISTRY_LOCK_TIMEOUT_SEC", 600))
-    fp = open(_LOCK_PATH, "a+", encoding="utf-8")
+    # Только чтение: flock записи не требует, а lock-файл, созданный другим
+    # пользователем (например, тестами хука выкладки), не должен ронять фазу.
+    fd = os.open(_LOCK_PATH, os.O_RDONLY | os.O_CREAT, 0o666)
+    fp = os.fdopen(fd, "r")
     try:
         deadline = time.monotonic() + (timeout_s if wait else 0.0)
         while True:
