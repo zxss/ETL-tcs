@@ -1,0 +1,303 @@
+{
+ "h1": {
+  "module": "h1_factor_breadth",
+  "stage": "dev",
+  "variant": "ridge10-n5",
+  "summary": {
+   "trades": 545,
+   "trades_per_year": 235.85456161137438,
+   "dates": 109,
+   "avg_hold_days": 7.0256880733944955,
+   "net_excess_pct_trade": -1.5049935352792663,
+   "win_rate": 0.3192660550458716,
+   "t": -4.810980374512469,
+   "excess_annual_pct": -78.18773544148029,
+   "contribution_pct_capital_year": -7.099191809824874,
+   "pnl_excess_rub": -820221.4767271999,
+   "ir": -2.875589628118154,
+   "mdd_rub": -820221.4767271999,
+   "dsr": 1.896126971021561e-21,
+   "trials": 113
+  },
+  "pbo": {
+   "pbo": 0.7285714285714285,
+   "median_logit": -0.587786664902119,
+   "configs": 6,
+   "combinations": 70
+  },
+  "capacity_rub": 0.0,
+  "passed": false,
+  "failed": [
+   "сверх фонда -78.19 % год < 2.0",
+   "t -4.81 < 3.01 (Harvey–Liu–Zhu)",
+   "PBO 73% ≥ 40%",
+   "ёмкость 0 ₽ < 5 000 000 ₽"
+  ],
+  "grid": {
+   "ridge1-n3": {
+    "trades": 333,
+    "net_excess_pct_trade": -1.5382615611459551,
+    "t": -4.453183623945665
+   },
+   "ridge1-n5": {
+    "trades": 545,
+    "net_excess_pct_trade": -1.5134008850881449,
+    "t": -4.838854261223003
+   },
+   "ridge10-n3": {
+    "trades": 333,
+    "net_excess_pct_trade": -1.5382615611459551,
+    "t": -4.453183623945665
+   },
+   "ridge10-n5": {
+    "trades": 545,
+    "net_excess_pct_trade": -1.5049935352792663,
+    "t": -4.810980374512469
+   },
+   "ridge100-n3": {
+    "trades": 333,
+    "net_excess_pct_trade": -1.561354830094052,
+    "t": -4.576426431788847
+   },
+   "ridge100-n5": {
+    "trades": 545,
+    "net_excess_pct_trade": -1.5716601751774848,
+    "t": -5.037984756407747
+   }
+  },
+  "short_leg_reference": {
+   "trades": 545,
+   "net_excess_pct_trade": -0.24839303221588516,
+   "t": -0.5339714629924716
+  },
+  "long_short_diagnostic": {
+   "dates": 109,
+   "spread_mean_pct": 0.39944535113738416,
+   "t": 1.2502680264283912,
+   "top_mean_pct": -0.4108372200132978,
+   "bottom_mean_pct": -0.8102825711506819,
+   "hit_rate": 0.5963302752293578
+  },
+  "universe_mean_fwd_pct": -0.4432979654269508
+ },
+ "h2": {
+  "module": "h2_aggregated_ofi",
+  "stage": "dev",
+  "variant": "z2.0-h1",
+  "summary": {
+   "trades": 521,
+   "trades_per_year": 225.46830568720378,
+   "dates": 239,
+   "avg_hold_days": 1.6314779270633397,
+   "net_excess_pct_trade": -0.635245529494327,
+   "win_rate": 0.32245681381957775,
+   "t": -5.738379217376887,
+   "excess_annual_pct": -142.11937190151608,
+   "contribution_pct_capital_year": -2.8645546646091304,
+   "pnl_excess_rub": -330962.92086654436,
+   "ir": -2.7685514837324883,
+   "mdd_rub": -336423.46714086924,
+   "dsr": 5.184582685161225e-10,
+   "trials": 113
+  },
+  "pbo": {
+   "pbo": 0.12857142857142856,
+   "median_logit": 1.3862943611198908,
+   "configs": 4,
+   "combinations": 70
+  },
+  "capacity_rub": 6915609.366290752,
+  "passed": false,
+  "failed": [
+   "сверх фонда -142.12 % год < 2.0",
+   "t -5.74 < 3.01 (Harvey–Liu–Zhu)"
+  ],
+  "grid": {
+   "z2.0-h1": {
+    "trades": 521,
+    "net_excess_pct_trade": -0.635245529494327,
+    "t": -5.738379217376887
+   },
+   "z2.0-h2": {
+    "trades": 520,
+    "net_excess_pct_trade": -0.8242236310506892,
+    "t": -4.318159251868406
+   },
+   "z2.5-h1": {
+    "trades": 143,
+    "net_excess_pct_trade": -0.25570079226392256,
+    "t": -2.139630962966186
+   },
+   "z1.5-h1": {
+    "trades": 1546,
+    "net_excess_pct_trade": -0.6732721772251778,
+    "t": -9.126478291133878
+   }
+  },
+  "data_limitation": "Стакана в БД нет и исторический стакан T-Invest API не отдаёт. Настоящий OFI (Cont, Kukanov, Stoikov 2014) по имеющимся данным неизмерим."
+ },
+ "h3": {
+  "module": "h3_meta_labeling",
+  "stage": "dev",
+  "variant": "p0.60",
+  "summary": {
+   "trades": 0
+  },
+  "pbo": {
+   "pbo": 0.9428571428571428,
+   "median_logit": -0.6931471805599454,
+   "configs": 2,
+   "combinations": 70
+  },
+  "capacity_rub": null,
+  "passed": false,
+  "failed": [
+   "сверх фонда — % год < 2.0",
+   "t — < 3.01 (Harvey–Liu–Zhu)",
+   "PBO 94% ≥ 40%",
+   "ёмкость — ₽ < 5 000 000 ₽"
+  ],
+  "events": 965,
+  "take_rate": 0.261139896373057,
+  "p_meta_median": 0.255128410730701,
+  "grid": {
+   "raw": {
+    "trades": 965,
+    "net_excess_pct_trade": -1.046965204130007,
+    "t": -7.85703862277747
+   },
+   "p0.50": {
+    "trades": 0,
+    "net_excess_pct_trade": null,
+    "t": null
+   },
+   "p0.55": {
+    "trades": 0,
+    "net_excess_pct_trade": null,
+    "t": null
+   },
+   "p0.60": {
+    "trades": 0,
+    "net_excess_pct_trade": null,
+    "t": null
+   },
+   "p0.65": {
+    "trades": 0,
+    "net_excess_pct_trade": null,
+    "t": null
+   },
+   "q80": {
+    "trades": 193,
+    "net_excess_pct_trade": -0.922540494656796,
+    "t": -3.917909753622482
+   },
+   "q90": {
+    "trades": 97,
+    "net_excess_pct_trade": -1.2720119353151482,
+    "t": -2.8598145009182763
+   }
+  }
+ },
+ "h4": {
+  "module": "h4_totm_inelastic",
+  "stage": "dev",
+  "variant": "n5-T+3",
+  "summary": {
+   "trades": 137,
+   "trades_per_year": 59.28821090047393,
+   "dates": 28,
+   "avg_hold_days": 4.927007299270073,
+   "net_excess_pct_trade": -1.5234141348061332,
+   "win_rate": 0.2846715328467153,
+   "t": -2.9415286170103667,
+   "excess_annual_pct": -112.85677601626769,
+   "contribution_pct_capital_year": -1.8064099702629812,
+   "pnl_excess_rub": -208707.73646844027,
+   "ir": -1.7800167967400577,
+   "mdd_rub": -239277.25327547776,
+   "dsr": 7.112663484973023e-15,
+   "trials": 113
+  },
+  "pbo": {
+   "pbo": 0.3,
+   "median_logit": 0.9162907318741551,
+   "configs": 6,
+   "combinations": 20
+  },
+  "capacity_rub": 0.0,
+  "passed": false,
+  "failed": [
+   "сверх фонда -112.86 % год < 2.0",
+   "t -2.94 < 3.01 (Harvey–Liu–Zhu)",
+   "ёмкость 0 ₽ < 5 000 000 ₽"
+  ],
+  "windows": 28,
+  "skipped": {
+   "нет цены на баре": 16
+  },
+  "grid": {
+   "n3-T+1": {
+    "trades": 83,
+    "net_excess_pct_trade": -1.1136825418162457,
+    "t": -4.710922363200641
+   },
+   "n3-T+3": {
+    "trades": 83,
+    "net_excess_pct_trade": -1.5866202214479592,
+    "t": -2.9136635945681904
+   },
+   "n5-T+1": {
+    "trades": 137,
+    "net_excess_pct_trade": -1.0576786396577256,
+    "t": -4.29540736600178
+   },
+   "n5-T+3": {
+    "trades": 137,
+    "net_excess_pct_trade": -1.5234141348061332,
+    "t": -2.9415286170103667
+   },
+   "n10-T+1": {
+    "trades": 276,
+    "net_excess_pct_trade": -1.1467630290688156,
+    "t": -3.984364572751017
+   },
+   "n10-T+3": {
+    "trades": 276,
+    "net_excess_pct_trade": -1.4775001634681402,
+    "t": -2.962244350986089
+   }
+  }
+ },
+ "h5": {
+  "module": "h5_cash_and_carry",
+  "stage": "dev",
+  "variant": "C&C-2",
+  "summary": {
+   "trades": 73,
+   "t": 2.5,
+   "excess_annual_pct": 1.07,
+   "ir": 1.5,
+   "net_excess_pct_trade": 0.056
+  },
+  "pbo": {
+   "pbo": null
+  },
+  "capacity_rub": null,
+  "passed": false,
+  "failed": [
+   "сверх фонда +1.07 % год < 2.0",
+   "t +2.50 < 3.01 (Harvey–Liu–Zhu)",
+   "PBO и ёмкость не считались: прогон не повторялся, отложенная выборка израсходована"
+  ],
+  "reused": true,
+  "prior": {
+   "source": "audit/r4_research/structural/dev_cc2",
+   "trades": 73,
+   "t": 2.5,
+   "excess_annual_pct": 1.07,
+   "ir": 1.5,
+   "net_excess_pct_trade": 0.056,
+   "results_json": "/opt/etl-r4/audit/r4_research/structural/dev_cc2/results.json"
+  }
+ }
+}
