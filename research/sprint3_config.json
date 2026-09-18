@@ -1,0 +1,54 @@
+{
+  "version": "sprint3-v1-2026-09-15",
+  "tag": "v1",
+  "history": "v0 (коммит e3cfdf8): цель с абсолютным барьером TMON + издержки + 0,10 п.п. — ворота не прошёл ни один кластер (AUC 0,52)",
+  "approved": "пользователь, 15.09.2026: v1 — цель относительно IMOEX (направление А), справочно издержки только комиссией (Б); связка лонг бумаги + шорт фьючерса MX; горизонт 2 дня; sklearn HistGradientBoosting; отложенная — walk-forward внутри окна, один раз и только после ворот на разработке",
+  "samples": {
+    "dev": {"from": "2024-05-21", "to": "2026-09-11", "stock_table": "market_data_5m"},
+    "holdout": {"from": "2022-09-12", "to": "2024-05-20", "stock_table": "research_bars_5m", "runs": 1,
+                "approved": true,
+                "protocol": "замороженный конвейер (признаки, гиперпараметры, цель, порог) — тот же walk-forward внутри окна: 12 месяцев прошлого → 1 месяц вперёд; только кластеры, прошедшие ворота на разработке этой же версии конфигурации; один прогон"}
+  },
+  "clusters": {
+    "EXPORTERS": ["LKOH", "ROSN", "TATN", "NVTK", "GAZP", "SNGS", "SNGSP", "GMKN", "CHMF", "MAGN",
+                  "PLZL", "SELG", "ALRS", "RUAL", "PHOR", "AKRN", "ENPG", "FLOT"],
+    "FINANCIALS": ["SBER", "VTBR", "BSPB", "MOEX", "T", "CBOM"],
+    "DOMESTIC_CONSUMER": ["MGNT", "X5", "LENT", "FIXR", "MVID", "SMLT", "PIKK", "ETLN", "MTSS", "RTKM",
+                          "AFLT", "NMTP", "IRAO", "FEES", "HYDR", "UPRO", "MSNG", "TGKA", "OGKB"],
+    "TECH_GROWTH": ["YDEX", "POSI", "ASTR", "VKCO"]
+  },
+  "clusters_note": "энергетика (IRAO, FEES, HYDR, UPRO, MSNG, TGKA, OGKB), транспорт (AFLT, NMTP) — во внутреннем спросе; FLOT (танкеры) — в экспортёрах; NLMK вне вселенной проекта (нет дивидендов в dividends.csv)",
+  "timing": {
+    "decision": "18:30 дня t — данные по бар 18:25 включительно",
+    "entry": "close бара 18:30 дня t (цена фазы OVERNIGHT r3, 18:35)",
+    "exit": "close бара 18:30 через horizon торговых дней",
+    "main_session": "10:00–18:25 (все даты выборок до 14.09.2026)"
+  },
+  "target": {"type": "relative_imoex", "column": "y_rel", "horizon_days": 2, "margin_pct": 0.10, "cost_scenario": "base",
+             "y": "1, если (доходность бумаги с дивидендами − доходность IMOEX) за удержание > издержки круга бумаги + margin; IMOEX — close бара 18:30, как у бумаги"},
+  "hedge": {"root": "MX", "cost_rt_pct": 0.07,
+            "note": "шорт ближнего фьючерса на индекс Мосбиржи на сумму лонга, тот же контракт на вход и выход (выбытие за 2 торговых дня до экспирации); комиссия «Премиум» 0,025 % × 2 + спред ≈ 0,02 %; ГО под залог паёв TMON — плата за перенос 0"},
+  "evaluation": {"net": "net_mn",
+                 "net_note": "связка против «всё в TMON»: доходность бумаги − доходность фьючерса MX − рост пая фонда на сумму лонга − издержки бумаги − издержки фьючерса",
+                 "informational": {"net_alpha": "альфа к IMOEX за вычетом издержек бумаги (метрика пользователя)",
+                                   "net_mn_fee": "Б: связка, издержки бумаги — только комиссия 0,08 % (нижняя граница, лимитные заявки)"}},
+  "features": {
+    "stock": ["rs_3", "rs_10", "rs_30", "ret_1", "z_ema20", "z_ema50", "vol_ratio", "pk_over_cc",
+              "cs_spread", "cs_rel", "amihud_rel", "adv_rel", "vol_z", "evening_share", "overnight_gap",
+              "intraday_ret"],
+    "market": ["imoex_ret_1", "imoex_ret_5", "imoex_vol_20"],
+    "commodity": ["brent_ret_1", "brent_ret_5", "brent_day", "gold_ret_1", "gold_ret_5", "gold_day",
+                  "cny_ret_1", "cny_ret_5", "cny_day"],
+    "news": ["news_fin_48h", "news_div_48h", "news_other_48h", "news_sent_48h"],
+    "note": "ликвидность — только относительно своей истории (60 дней): лоты и сплиты не сравнимы между бумагами; утренняя сессия не используется (в 2022–2024 её не было); сырьё — ближний контракт с выбытием за 2 дня до экспирации, доходность внутри одного контракта"
+  },
+  "model": {"library": "sklearn HistGradientBoostingClassifier", "max_iter": 300, "learning_rate": 0.03,
+            "max_leaf_nodes": 15, "min_samples_leaf": 40, "l2_regularization": 1.0, "random_state": 42,
+            "note": "LightGBM/CatBoost на сервере нет, окружение общее с r3 — ставить пакеты туда не будем; HistGradientBoosting — тот же гистограммный бустинг"},
+  "walk_forward": {"refit": "ежемесячно, первый торговый день месяца", "train_months": 12,
+                   "min_train_months": 6, "min_train_rows": 500,
+                   "purge": "в обучение только строки, чей выход (t + horizon) раньше начала тестового месяца"},
+  "decision": {"threshold": 0.5, "note": "сделка, если вероятность превышения барьера ≥ 0,5"},
+  "gate": {"t_min": 2.0, "net_min": 0.0, "dates_min": 30,
+           "note": "по net_mn (связка); t — Ньюи–Уэст (лаг 1) по датам входа: удержания 2 дня перекрываются"}
+}
