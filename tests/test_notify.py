@@ -157,6 +157,27 @@ class TestMessageContent(NotifyBase):
         self.assertIn("сигналов", text)
         self.assertIn("заявок в плане", text)
 
+    def test_notify_label_shown_for_shared_channel(self):
+        """23.09.2026: один и тот же бот/чат на песочницу и турнир — метка в
+        шапке отличает карточки, отдельный канал заводить не нужно."""
+        res = s2.PhaseResult("OVERNIGHT", "r", "/tmp")
+        with mock.patch.object(config, "STAGE2_NOTIFY_LABEL", "ТУРНИР"):
+            text = self._capture(res, {})[0][0]
+        self.assertIn("ТУРНИР", text)
+
+    def test_notify_label_absent_by_default(self):
+        """r4 не задаёт STAGE2_NOTIFY_LABEL — карточка песочницы не меняется."""
+        res = s2.PhaseResult("OVERNIGHT", "r", "/tmp")
+        with mock.patch.object(config, "STAGE2_NOTIFY_LABEL", ""):
+            text = self._capture(res, {})[0][0]
+        self.assertNotIn("\U0001f3c6", text)
+
+    def test_notify_label_is_escaped(self):
+        res = s2.PhaseResult("OVERNIGHT", "r", "/tmp")
+        with mock.patch.object(config, "STAGE2_NOTIFY_LABEL", "<ТУРНИР>"):
+            text = self._capture(res, {})[0][0]
+        self.assertIn("&lt;ТУРНИР&gt;", text)
+
     def test_routine_pass_is_silent_but_failure_is_not(self):
         """Рутинный успех не должен будить ночью; провал — должен."""
         ok = s2.PhaseResult("PREP", "r", "/tmp")

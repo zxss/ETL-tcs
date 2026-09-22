@@ -332,7 +332,9 @@ def _notify_phase(res: "PhaseResult", state: dict) -> None:
             return
 
         icon = _VERDICT_ICON.get(res.verdict, "")
-        lines = [f"{icon} <b>{notify.esc(res.phase)}</b> \u2014 {notify.esc(res.verdict)}",
+        label = str(getattr(config, "STAGE2_NOTIFY_LABEL", "") or "").strip()
+        tag = f"\U0001f3c6 <b>{notify.esc(label)}</b>\n" if label else ""
+        lines = [f"{tag}{icon} <b>{notify.esc(res.phase)}</b> \u2014 {notify.esc(res.verdict)}",
                  f"<code>{notify.esc(res.run_id)}</code>"]
 
         facts = [f"{cap}: <b>{notify.esc(res.data[key])}</b>"
