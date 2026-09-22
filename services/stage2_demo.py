@@ -360,6 +360,13 @@ def _notify_phase(res: "PhaseResult", state: dict) -> None:
                 lines.append(f"нарастающим: <b>{notify.esc(_pct(day['cum_pct']))}</b>")
             if day.get("positions") is not None:
                 lines.append(f"позиций в ночь: {notify.esc(day['positions'])}")
+            if day.get("trades_target"):
+                pace = day.get("trades_total") or 0
+                left_days = max(0, int(day.get("target") or 0) - int(day.get("completed") or 0))
+                need = day["trades_target"] - pace
+                behind = " ⚠️ отстаём" if left_days and need > left_days else ""
+                lines.append(f"сделок в зачёте: <b>{notify.esc(pace)} / {notify.esc(day['trades_target'])}</b>"
+                             + notify.esc(behind))
 
         for e in res.errors[:5]:
             lines.append(f"\u26d4 {notify.esc(e)}")
@@ -1688,7 +1695,7 @@ def phase_overnight(*, now: dt.datetime | None = None, prod: bool = False,
                  len(accepted), len(placed))
 
         # 8. дневной аудит, баланс, счётчик
-        state = _close_trading_day(day, state, res)
+        state = _close_trading_day(day, state, res, env)
     except Exception as e:                       # noqa: BLE001
         log.exception("[OVERNIGHT] сбой: %s", e)
         res.check(False, f"{type(e).__name__}: {e}")
@@ -1700,8 +1707,14 @@ def phase_overnight(*, now: dt.datetime | None = None, prod: bool = False,
 
 # ── Дневной аудит и счётчик (§11, §12) ───────────────────────────────────────
 
-def _execution_stats(day: dt.date) -> dict:
-    """Статистика исполнения за день из execution_audit."""
+def _execution_stats(day: dt.date, env: str = "SANDBOX") -> dict:
+    """Статистика исполнения за день из execution_audit.
+
+    Фильтр по account_env — execution_audit общая таблица для всех контуров;
+    без него дневная сводка песочницы и боевого профиля, запущенных
+    параллельно в один день, смешались бы в одну цифру (решение пользователя
+    23.09.2026 о параллельном турнирном контуре).
+    """
     sql = """
         SELECT COUNT(*),
                COUNT(*) FILTER (WHERE filled),
@@ -1709,12 +1722,12 @@ def _execution_stats(day: dt.date) -> dict:
                -- Тот же FILTER, что и у факта: сравнивать половины критерия
                -- по разным множествам строк — значит сравнивать разное.
                AVG(expected_slippage_pct) FILTER (WHERE filled)
-        FROM execution_audit WHERE asof_date = %s;
+        FROM execution_audit WHERE asof_date = %s AND account_env = %s;
     """
     try:
         with database.get_db_connection() as c:
             with c.cursor() as cur:
-                cur.execute(sql, (day,))
+                cur.execute(sql, (day, env))
                 n, filled, fact, exp = cur.fetchone()
         return {"available": True,
                 "orders": int(n or 0), "filled": int(filled or 0),
@@ -1728,7 +1741,27 @@ def _execution_stats(day: dt.date) -> dict:
         return {"available": False, "orders": 0, "filled": 0}
 
 
-def build_daily_audit(day: dt.date, res: PhaseResult) -> dict:
+def _trades_since(start_day: dt.date, env: str = "SANDBOX") -> int:
+    """Накопительный счётчик залитых сделок для STAGE2_TRADE_TARGET (§12а).
+
+    Считает СТРОКИ execution_audit, а не позиции: вход и выход ночного лонга —
+    две строки, два fill. Если турнир считает круглый оборот за одну сделку,
+    это число нужно делить на два — решение о трактовке за организаторами
+    турнира, здесь просто честный счётчик filled-заявок.
+    """
+    sql = "SELECT COUNT(*) FROM execution_audit WHERE filled AND asof_date >= %s AND account_env = %s;"
+    try:
+        with database.get_db_connection() as c:
+            with c.cursor() as cur:
+                cur.execute(sql, (start_day, env))
+                (n,) = cur.fetchone()
+        return int(n or 0)
+    except Exception as e:                       # noqa: BLE001
+        log.warning("счётчик сделок недоступен: %s", e)
+        return 0
+
+
+def build_daily_audit(day: dt.date, res: PhaseResult, env: str = "SANDBOX") -> dict:
     """Сводит день по каталогам всех фаз."""
     dirs = _run_dirs_for_day(day)
     meta = {ph: _read_json(os.path.join(d, "run_meta.json"), {}) for ph, d in dirs.items()}
@@ -1766,7 +1799,7 @@ def build_daily_audit(day: dt.date, res: PhaseResult) -> dict:
         warnings.append(f"фазы не отработали: {', '.join(missing)}")
 
     prep = meta.get("PREP", {})
-    stats = _execution_stats(day)
+    stats = _execution_stats(day, env)
 
     placed_today = len(orders.get("accepted") or []) + len(night.get("accepted") or [])
     if not stats.get("available"):
@@ -1807,10 +1840,10 @@ def build_daily_audit(day: dt.date, res: PhaseResult) -> dict:
     return audit
 
 
-def _close_trading_day(day: dt.date, state: dict, res: PhaseResult) -> dict:
+def _close_trading_day(day: dt.date, state: dict, res: PhaseResult, env: str = "SANDBOX") -> dict:
     """Дневной аудит, сводка баланса, отчёт и счётчик торговых дней."""
     dirs = _run_dirs_for_day(day)
-    audit = build_daily_audit(day, res)
+    audit = build_daily_audit(day, res, env)
 
     prev = None
     if state.get("days"):
@@ -1818,7 +1851,7 @@ def _close_trading_day(day: dt.date, state: dict, res: PhaseResult) -> dict:
         prev = prev_sum.get("closing_balance_rub")
     summary = stage2_balance.collect_day(day, dirs, prev_closing=prev)
     stage2_balance.save_day(summary)
-    stage2_balance.save_report(execution=_execution_stats(day))
+    stage2_balance.save_report(execution=_execution_stats(day, env))
 
     # день засчитывается только при завершившейся фазе OVERNIGHT без FAIL
     if audit["verdict"] != FAIL and day.isoformat() not in state.get("days", []):
@@ -1851,6 +1884,11 @@ def _close_trading_day(day: dt.date, state: dict, res: PhaseResult) -> dict:
                     if (closing is not None and base) else None),
         "positions": summary.get("positions_overnight"),
     }
+    trade_target = int(getattr(config, "STAGE2_TRADE_TARGET", 0) or 0)
+    if trade_target:
+        start_day = dt.date.fromisoformat(state["days"][0]) if state.get("days") else day
+        res.data["day_summary"]["trades_total"] = _trades_since(start_day, env)
+        res.data["day_summary"]["trades_target"] = trade_target
     return state
 
 

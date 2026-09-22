@@ -671,6 +671,14 @@ STAGE2_ENABLED: bool = get_bool_env("STAGE2_ENABLED", 1)
 STAGE2_TEST_ID: str = os.getenv("STAGE2_TEST_ID", "stage2-demo-15d")
 STAGE2_TARGET_DAYS: int = int(os.getenv("STAGE2_TARGET_DAYS", "15"))
 
+# STAGE2_TRADE_TARGET — счётчик сделок для зачётных условий (турнир и т.п.).
+# 0 (по умолчанию) — счётчик выключен, в карточке Telegram не показывается.
+# Считаются ЗАЛИТЫЕ (filled) строки execution_audit с asof_date >= дня старта
+# теста, отдельно по каждому контуру (SANDBOX/PROD — колонка account_env),
+# чтобы параллельные прогоны (например, песочница r4 и боевой турнирный
+# профиль) не путали друг другу счётчик. Решение пользователя 23.09.2026.
+STAGE2_TRADE_TARGET: int = int(os.getenv("STAGE2_TRADE_TARGET", "0"))
+
 # С 14.09.2026 Мосбиржа открывается аукционом в 09:00, непрерывные торги с 09:10
 # (T-Invest TradingSchedules). Утро сдвинуто вслед за открытием с тем же шагом,
 # что при открытии в 10:00: PREP — до аукциона (план от вчерашнего закрытия, как

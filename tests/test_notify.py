@@ -189,6 +189,36 @@ class TestMessageContent(NotifyBase):
         self.assertIn("1", text)
         self.assertIn("15", text)
 
+    def test_trade_counter_shown_when_target_set(self):
+        """Турнирный счётчик (23.09.2026): виден только когда STAGE2_TRADE_TARGET
+        задан, чтобы не менять карточку у текущего теста stage2-demo-30d-r4."""
+        res = s2.PhaseResult("OVERNIGHT", "r", "/tmp")
+        res.data["day_summary"] = {"completed": 3, "target": 24, "closing": 1041000.0,
+                                   "change": 1000.0, "change_pct": 0.1, "cum_pct": 0.1,
+                                   "positions": 5, "trades_total": 14, "trades_target": 100}
+        text = self._capture(res, {})[0][0]
+        self.assertIn("сделок в зачёте", text)
+        self.assertIn("14", text)
+        self.assertIn("100", text)
+
+    def test_trade_counter_hidden_without_target(self):
+        res = s2.PhaseResult("OVERNIGHT", "r", "/tmp")
+        res.data["day_summary"] = {"completed": 1, "target": 15, "closing": 100500.0,
+                                   "change": 500.0, "change_pct": 0.5, "cum_pct": 0.5,
+                                   "positions": 2}
+        text = self._capture(res, {})[0][0]
+        self.assertNotIn("сделок в зачёте", text)
+
+    def test_trade_counter_warns_when_pace_cannot_reach_target(self):
+        """3 дня из 24 позади, зачтено 2 сделки из 100 — за оставшиеся 21 день
+        нужно > 1 сделки/день в среднем, предупреждение должно появиться."""
+        res = s2.PhaseResult("OVERNIGHT", "r", "/tmp")
+        res.data["day_summary"] = {"completed": 3, "target": 24, "closing": 1000000.0,
+                                   "change": 0.0, "change_pct": 0.0, "cum_pct": 0.0,
+                                   "positions": 1, "trades_total": 2, "trades_target": 100}
+        text = self._capture(res, {})[0][0]
+        self.assertIn("отстаём", text)
+
     def test_error_text_is_escaped(self):
         """Ошибка с '<' не должна ломать разметку сообщения."""
         res = s2.PhaseResult("ORDER", "r", "/tmp")

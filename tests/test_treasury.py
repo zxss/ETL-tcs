@@ -705,7 +705,7 @@ class TestPhaseOvernight(PhaseBase):
                   mock.patch.object(po, "place_limits", side_effect=_place),
                   mock.patch.object(s2, "ensure_execution_audit", return_value=True),
                   mock.patch.object(s2, "_record_intents", return_value=0),
-                  mock.patch.object(s2, "_close_trading_day", side_effect=lambda d, st, r: st),
+                  mock.patch.object(s2, "_close_trading_day", side_effect=lambda d, st, r, env=None: st),
                   # здесь проверяется казначейство, а не режим входа (его — test_overnight_marketable)
                   mock.patch.object(s2.config, "OVERNIGHT_ENTRY_MODE", "forecast")):
             p.start()
@@ -747,6 +747,46 @@ class TestPhaseOvernight(PhaseBase):
             s2.phase_overnight(now=self.at(18, 35))
         self.assertEqual(b.orders, [])
         self.assertEqual(self.meta("OVERNIGHT")["treasury"]["tmon_lots"], 12170)
+
+
+class TestTradeCounter(PhaseBase):
+    """Турнирный счётчик сделок (§12а, решение пользователя 23.09.2026) —
+    _close_trading_day напрямую, без мока компоновки заявок: здесь важна
+    только сводка дня, не постановка."""
+
+    def setUp(self):
+        super().setUp()
+        self.state = {"test_id": "t", "target_trading_days": 24, "days": [],
+                      "completed_trading_days": 0, "status": "running"}
+
+    def _run(self, target, fetchone_side_effect):
+        res = s2.PhaseResult("OVERNIGHT", "r", self.tmp)
+        conn = mock.MagicMock()
+        cur = conn.__enter__.return_value.cursor.return_value.__enter__.return_value
+        cur.fetchone.side_effect = fetchone_side_effect
+        with mock.patch.object(config, "STAGE2_TRADE_TARGET", target), \
+             mock.patch.object(s2.database, "get_db_connection", return_value=conn):
+            s2._close_trading_day(self.DAY, self.state, res, "PROD")
+        return res, cur
+
+    def test_disabled_by_default_leaves_day_summary_untouched(self):
+        res, cur = self._run(0, [(0, 0, None, None), (0, 0, None, None)])
+        self.assertNotIn("trades_total", res.data["day_summary"])
+        self.assertEqual(cur.execute.call_count, 2)          # только _execution_stats × 2
+
+    def test_enabled_reads_cumulative_count_for_own_env(self):
+        res, cur = self._run(100, [(0, 0, None, None), (0, 0, None, None), (23,)])
+        self.assertEqual(res.data["day_summary"]["trades_total"], 23)
+        self.assertEqual(res.data["day_summary"]["trades_target"], 100)
+        # третий вызов — _trades_since, с env этого прогона (PROD) и датой начала теста
+        last = cur.execute.call_args_list[-1][0][1]
+        self.assertEqual(last[1], "PROD")
+
+    def test_start_day_is_first_test_day_not_today(self):
+        self.state["days"] = ["2026-09-01"]
+        res, cur = self._run(100, [(0, 0, None, None), (0, 0, None, None), (5,)])
+        start = cur.execute.call_args_list[-1][0][1][0]
+        self.assertEqual(start, dt.date(2026, 9, 1))
 
 
 if __name__ == "__main__":

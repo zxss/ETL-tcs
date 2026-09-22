@@ -199,5 +199,46 @@ class TestBrokenJournalIsVisible(unittest.TestCase):
         self.assertEqual(stats["orders"], 0)
 
 
+class TestAccountEnvScoping(unittest.TestCase):
+    """Параллельный турнирный контур (23.09.2026): песочница и боевой счёт
+    пишут в общую execution_audit, поэтому дневная сводка и счётчик сделок
+    обязаны фильтроваться по account_env, иначе один запрос на один день
+    молча просуммирует SANDBOX и PROD."""
+
+    def _conn(self, row):
+        conn = mock.MagicMock()
+        cur = conn.__enter__.return_value.cursor.return_value.__enter__.return_value
+        cur.fetchone.return_value = row
+        return conn, cur
+
+    def test_execution_stats_filters_by_env(self):
+        conn, cur = self._conn((3, 2, None, None))
+        with mock.patch.object(s2.database, "get_db_connection", return_value=conn):
+            stats = s2._execution_stats(dt.date.today(), env="PROD")
+        self.assertEqual(stats["orders"], 3)
+        self.assertEqual(cur.execute.call_args[0][1][1], "PROD")
+
+    def test_execution_stats_defaults_to_sandbox(self):
+        conn, cur = self._conn((0, 0, None, None))
+        with mock.patch.object(s2.database, "get_db_connection", return_value=conn):
+            s2._execution_stats(dt.date.today())
+        self.assertEqual(cur.execute.call_args[0][1][1], "SANDBOX")
+
+    def test_trades_since_counts_filled_from_start_day(self):
+        conn, cur = self._conn((14,))
+        with mock.patch.object(s2.database, "get_db_connection", return_value=conn):
+            n = s2._trades_since(dt.date(2026, 9, 18), env="PROD")
+        self.assertEqual(n, 14)
+        args = cur.execute.call_args[0][1]
+        self.assertEqual(args, (dt.date(2026, 9, 18), "PROD"))
+
+    def test_trades_since_is_quiet_on_db_failure(self):
+        """Как и _execution_stats: сбой журнала не должен ронять фазу — счётчик
+        просто возвращает 0, а не бросает наружу."""
+        with mock.patch.object(s2.database, "get_db_connection",
+                               side_effect=RuntimeError("нет таблицы")):
+            self.assertEqual(s2._trades_since(dt.date.today(), env="PROD"), 0)
+
+
 if __name__ == "__main__":
     unittest.main()
