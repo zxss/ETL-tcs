@@ -228,14 +228,66 @@ class PhaseResult:
 
 # ── Предполётные проверки (§8) ───────────────────────────────────────────────
 
-def preflight(res: PhaseResult, *, env: str, prod_flag: bool) -> None:
-    """Критические проверки контура. Провал любой → FAIL, торговля не идёт."""
-    res.check(env == "SANDBOX", f"контур не SANDBOX: {env}")
-    res.check(str(getattr(config, "TRADING_MODE", "")).lower() != "prod",
-              f"TRADING_MODE={getattr(config, 'TRADING_MODE', None)}")
-    res.check(not prod_flag, "передан флаг --prod")
-    res.check(not getattr(config, "PROD_ACCOUNT_ID", ""),
-              "PROD_ACCOUNT_ID заполнен — боевой счёт должен быть закрыт")
+def contour_ok(env: str) -> str | None:
+    """Согласован ли контур целиком. None — торговать можно, иначе причина отказа.
+
+    Полумеры недопустимы: боевой счёт при TRADING_MODE≠prod или песочница при
+    TRADING_MODE=prod — это перепутанный профиль .env, а не конфигурация.
+    """
+    mode = str(getattr(config, "TRADING_MODE", "")).lower()
+    prod_account = str(getattr(config, "PROD_ACCOUNT_ID", "") or "").strip()
+    if env == "SANDBOX":
+        return None if mode != "prod" else "TRADING_MODE=prod в песочнице"
+    if env == "PROD":
+        if mode != "prod":
+            return f"боевой счёт при TRADING_MODE={mode or None}"
+        if not prod_account:
+            return "боевой счёт без PROD_ACCOUNT_ID"
+        if os.getenv("ALLOW_UNATTENDED_PROD", "") != "1":
+            return "боевой счёт без ALLOW_UNATTENDED_PROD=1"
+        return None
+    return f"неизвестный контур {env}"
+
+
+def preflight(res: PhaseResult, *, env: str, prod_flag: bool,
+              account_id: str | None = None) -> None:
+    """Критические проверки контура. Провал любой → FAIL, торговля не идёт.
+
+    Два режима и ничего между ними:
+      * песочница (без --prod) — контур SANDBOX, TRADING_MODE не prod,
+        PROD_ACCOUNT_ID пуст. Изоляция песочницы не ослаблена: профиль с
+        боевыми параметрами без явного --prod по-прежнему проваливает фазу;
+      * боевой (--prod) — совпасть обязаны ВСЕ признаки: контур PROD,
+        TRADING_MODE=prod, PROD_ACCOUNT_ID задан И равен счёту, который реально
+        открыл брокер, ALLOW_UNATTENDED_PROD=1 (осознанный автозапуск),
+        отдельный STAGE2_DIR, позиция не выше PROD_MAX_POSITION_RUB.
+
+    Проверка совпадения счёта — главная: без неё опечатка в PROD_ACCOUNT_ID
+    направила бы заявки на другой реальный счёт пользователя.
+    """
+    mode = str(getattr(config, "TRADING_MODE", "")).lower()
+    prod_account = str(getattr(config, "PROD_ACCOUNT_ID", "") or "").strip()
+    if not prod_flag:
+        res.check(env == "SANDBOX", f"контур не SANDBOX: {env}")
+        res.check(mode != "prod", f"TRADING_MODE={mode or None} без флага --prod")
+        res.check(not prod_flag, "передан флаг --prod")
+        res.check(not prod_account,
+                  "PROD_ACCOUNT_ID заполнен — боевой счёт должен быть закрыт")
+        return
+
+    res.check(env == "PROD", f"--prod передан, но контур {env}")
+    res.check(mode == "prod", f"--prod передан, но TRADING_MODE={mode or None}")
+    res.check(bool(prod_account), "PROD_ACCOUNT_ID не задан")
+    res.check(bool(account_id) and account_id == prod_account,
+              f"счёт брокера {account_id} ≠ PROD_ACCOUNT_ID {prod_account}")
+    res.check(os.getenv("ALLOW_UNATTENDED_PROD", "") == "1",
+              "ALLOW_UNATTENDED_PROD ≠ 1 — автозапуск по крону не разрешён")
+    res.check(os.path.basename(os.path.normpath(base_dir())) != "stage2-demo",
+              "STAGE2_DIR не отделён от песочницы — счётчики смешаются")
+    cap = float(getattr(config, "PROD_MAX_POSITION_RUB", 0) or 0)
+    pos = float(getattr(config, "BEST_TRADES_POSITION_RUB", 0) or 0)
+    res.check(not cap or pos <= cap,
+              f"позиция {pos:.0f} ₽ выше предела PROD_MAX_POSITION_RUB {cap:.0f} ₽")
 
 
 def guard_halted(state: dict) -> str | None:
@@ -554,7 +606,7 @@ def phase_prep(*, now: dt.datetime | None = None, prod: bool = False) -> int:
         _snapshot_account(broker, account_id, run_dir, run_id, "PREP", "after")
 
         # 9. предполётные проверки
-        preflight(res, env=env, prod_flag=prod)
+        preflight(res, env=env, prod_flag=prod, account_id=account_id)
         res.check(bool(plan["orders"]) or True, "план пуст", critical=False)
         _write_json(os.path.join(run_dir, "preflight.json"), {
             "critical_passed": res.critical_passed,
@@ -686,8 +738,9 @@ def check_order_allowed(po: dict, *, env: str, used_ids: set[str]) -> str | None
     """Проверки перед отправкой каждой заявки (§5.3). None — можно ставить."""
     from tft_forecast.combined import non_shortable_tickers, trading_strategies
 
-    if env != "SANDBOX" or str(getattr(config, "TRADING_MODE", "")).lower() == "prod":
-        return "контур не SANDBOX"
+    bad = contour_ok(env)
+    if bad:
+        return bad
     st = po.get("strategy_type")
     if st not in trading_strategies():
         return f"стратегия {st} вне TRADING_STRATEGIES"
@@ -728,7 +781,7 @@ def phase_order(*, now: dt.datetime | None = None, prod: bool = False,
     writer, fp = _open_log()
     try:
         broker, account_id, env = _make_broker_and_account(prod)
-        preflight(res, env=env, prod_flag=prod)
+        preflight(res, env=env, prod_flag=prod, account_id=account_id)
 
         plan, plan_dir = _find_plan(day)
         current_ds = dataset_fingerprint(conn)
@@ -982,7 +1035,7 @@ def phase_cleanup(*, now: dt.datetime | None = None, prod: bool = False,
     conn = None
     try:
         broker, account_id, env = _make_broker_and_account(prod)
-        preflight(res, env=env, prod_flag=prod)
+        preflight(res, env=env, prod_flag=prod, account_id=account_id)
         if res.errors:
             return _finish(res, state)           # вне SANDBOX заявок не шлём
         _snapshot_account(broker, account_id, run_dir, run_id, "CLEANUP", "before")
@@ -1307,7 +1360,7 @@ def phase_close(*, now: dt.datetime | None = None, prod: bool = False,
     writer, fp = _open_log()
     try:
         broker, account_id, env = _make_broker_and_account(prod)
-        preflight(res, env=env, prod_flag=prod)
+        preflight(res, env=env, prod_flag=prod, account_id=account_id)
         if res.errors:
             return _finish(res, state)           # вне SANDBOX заявок не шлём
         _snapshot_account(broker, account_id, run_dir, run_id, "CLOSE", "before")
@@ -1387,7 +1440,7 @@ def phase_park(*, now: dt.datetime | None = None, prod: bool = False,
     writer, fp = _open_log()
     try:
         broker, account_id, env = _make_broker_and_account(prod)
-        preflight(res, env=env, prod_flag=prod)
+        preflight(res, env=env, prod_flag=prod, account_id=account_id)
         if res.errors:
             return _finish(res, state)           # вне SANDBOX заявок не шлём
         _snapshot_account(broker, account_id, run_dir, run_id, "PARK", "before")
@@ -1451,8 +1504,12 @@ def cmd_protect(*, prod: bool = False) -> int:
     from services.place_orders import (_make_broker_and_account, _open_log,
                                        _load_pending, attach_stops)
     broker, account_id, env = _make_broker_and_account(prod)
-    if env != "SANDBOX":
-        log.error("[PROTECT] контур %s — Этап 2 работает только в SANDBOX", env)
+    bad = contour_ok(env)
+    if bad:
+        log.error("[PROTECT] контур не согласован: %s", bad)
+        return 1
+    if env == "PROD" and account_id != str(getattr(config, "PROD_ACCOUNT_ID", "")).strip():
+        log.error("[PROTECT] счёт брокера %s ≠ PROD_ACCOUNT_ID", account_id)
         return 1
     before = {r.get("order_id"): bool(r.get("stop_placed"))
               for r in _load_pending().get(account_id, []) if not r.get("closed")}
@@ -1589,7 +1646,7 @@ def phase_overnight(*, now: dt.datetime | None = None, prod: bool = False,
     writer, fp = _open_log()
     try:
         broker, account_id, env = _make_broker_and_account(prod)
-        preflight(res, env=env, prod_flag=prod)
+        preflight(res, env=env, prod_flag=prod, account_id=account_id)
         _snapshot_account(broker, account_id, run_dir, run_id, "OVERNIGHT", "before")
 
         # 2. пересчёт только ночной стратегии

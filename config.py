@@ -63,6 +63,11 @@ INVEST_CA_BUNDLE: str = os.getenv("INVEST_CA_BUNDLE", "")
 # номера счёта здесь быть не должно.
 PROD_ACCOUNT_ID: str = os.getenv("PROD_ACCOUNT_ID", "")
 
+# Предел позиции на БОЕВОМ контуре — предохранитель от опечатки в
+# BEST_TRADES_POSITION_RUB (лишний ноль превращает 20 000 ₽ в 200 000 ₽).
+# 0 отключает проверку.
+PROD_MAX_POSITION_RUB: float = float(os.getenv("PROD_MAX_POSITION_RUB", "25000"))
+
 
 def require_prod_account_id() -> str:
     """Номер боевого счёта. Вызывается только при реальном обращении к PROD."""
