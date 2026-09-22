@@ -129,6 +129,7 @@ _CONFIG_KEYS = (
     "APPLY_RISK_PENALTIES", "SELLER_MOMENTUM_SHORT_ENABLED", "SHORT_IMOEX_MAX_TREND",
     "OVERNIGHT_MAX_MARKET_ATR_PCTL", "OVERNIGHT_MIN_EDGE_X_COST",
     "LIMIT_ENTRY_FRACTION", "LIMIT_TP_FRACTION", "ORDER_FILL_WAIT_SEC",
+    "OVERNIGHT_ENTRY_MODE", "OVERNIGHT_MARKETABLE_SLIP_PCT",
     "INTRADAY_SQUARE_OFF_ENABLED", "INTRADAY_SQUARE_OFF_TIME",
     "FIXED_POSITION_OVERFLOW_MODE", "BEST_TRADES_TOP_N", "BEST_TRADES_POSITION_RUB",
     "VALIDATION_COST_RT", "TFT_COST_RT", "VALIDATION_FULL_UNIVERSE",
@@ -1496,6 +1497,53 @@ def cmd_protect(*, prod: bool = False) -> int:
 
 # ── Фаза OVERNIGHT (§7) ──────────────────────────────────────────────────────
 
+def reprice_marketable(broker, orders: list, *, slip_pct: float, position_rub: float) -> tuple[list, list[str]]:
+    """Ночные лонги — вход по текущей цене с запасом slip_pct (решение 22.09.2026).
+
+    Прогнозный вход вечерней фазы стоит ниже рынка и опирается на вчерашний бар,
+    поэтому не исполнялся. Здесь цена берётся у брокера в момент постановки:
+      вход  = last · (1 ± slip)   (BUY — выше, SELL — ниже: заявка сразу исполнима);
+      стоп/тейк — те же проценты от НОВОГО входа, что считала модель;
+      лоты  — под ту же сумму позиции: лимит позиции, либо урезанная MaxPos сумма.
+    Нет цены — заявка остаётся как была (прогнозная лимитка), это пишется в лог.
+    """
+    import dataclasses
+    out, notes = [], []
+    for o in orders:
+        try:
+            inst = broker.find_instrument(o.ticker)
+            last = broker.get_last_price(inst.instrument_uid)
+        except Exception as e:                   # noqa: BLE001
+            last = None
+            notes.append(f"{o.ticker}: цена недоступна ({type(e).__name__}) — прогнозная лимитка")
+        if not last or last <= 0 or not o.entry_price or not o.quantity_lots:
+            if last is not None and last <= 0:
+                notes.append(f"{o.ticker}: нулевая цена — прогнозная лимитка")
+            out.append(o)
+            continue
+        sign = 1.0 if o.direction == "LONG" else -1.0
+        entry = last * (1.0 + sign * slip_pct / 100.0)
+        stop = entry * (1.0 - sign * o.stop_pct / 100.0) if o.stop_pct else None
+        tp = entry * (1.0 + sign * o.tp_pct / 100.0) if o.tp_pct else None
+        lot = int(o.lot_size or 1)
+        was = float(o.total_rub or 0.0)
+        # был ли размер урезан MaxPos: тогда держим ту же сумму, иначе — лимит позиции
+        cap = position_rub if was >= position_rub - o.entry_price * lot else was
+        lots = int(cap / (entry * lot)) if entry > 0 else 0
+        if lots <= 0:
+            notes.append(f"{o.ticker}: 1 лот по {entry:.2f} дороже допустимых {cap:.0f} ₽ — пропуск")
+            out.append(dataclasses.replace(o, quantity_lots=None, total_rub=None))
+            continue
+        better = (o.anchor_price - entry) / o.anchor_price * 100.0 * sign if o.anchor_price else None
+        log.info("[OVERNIGHT] %s: вход по рынку %.4f (последняя %.4f %+.2f %%; прогнозная лимитка была %.4f), "
+                 "%d лот(ов) на %.0f ₽", o.ticker, entry, last, sign * slip_pct, o.entry_price,
+                 lots, lots * lot * entry)
+        out.append(dataclasses.replace(o, entry_price=entry, stop_price=stop, tp_price=tp,
+                                       better_pct=better, quantity_lots=lots,
+                                       total_rub=lots * lot * entry))
+    return out, notes
+
+
 def phase_overnight(*, now: dt.datetime | None = None, prod: bool = False,
                     dry_run: bool = False) -> int:
     """Пересчитывает ТОЛЬКО long_overnight и ставит ночные заявки.
@@ -1542,6 +1590,16 @@ def phase_overnight(*, now: dt.datetime | None = None, prod: bool = False,
             float(getattr(config, "LIMIT_ENTRY_FRACTION", 0.2)),
             quiet=True, refresh=False)
         night = [o for o in orders if o.strategy == "long_overnight" and o.is_placeable]
+        mode = str(getattr(config, "OVERNIGHT_ENTRY_MODE", "forecast")).lower()
+        res.data["entry_mode"] = mode
+        if night and mode == "marketable":
+            night, notes = reprice_marketable(
+                broker, night,
+                slip_pct=float(getattr(config, "OVERNIGHT_MARKETABLE_SLIP_PCT", 0.1)),
+                position_rub=float(getattr(config, "BEST_TRADES_POSITION_RUB", 10000)))
+            night = [o for o in night if o.is_placeable]
+            for n in notes:
+                res.check(False, f"вход по рынку: {n}", critical=False)
 
         used: set[str] = set()
         accepted, rejected = [], []

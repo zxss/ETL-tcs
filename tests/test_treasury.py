@@ -705,7 +705,9 @@ class TestPhaseOvernight(PhaseBase):
                   mock.patch.object(po, "place_limits", side_effect=_place),
                   mock.patch.object(s2, "ensure_execution_audit", return_value=True),
                   mock.patch.object(s2, "_record_intents", return_value=0),
-                  mock.patch.object(s2, "_close_trading_day", side_effect=lambda d, st, r: st)):
+                  mock.patch.object(s2, "_close_trading_day", side_effect=lambda d, st, r: st),
+                  # здесь проверяется казначейство, а не режим входа (его — test_overnight_marketable)
+                  mock.patch.object(s2.config, "OVERNIGHT_ENTRY_MODE", "forecast")):
             p.start()
             self.addCleanup(p.stop)
 

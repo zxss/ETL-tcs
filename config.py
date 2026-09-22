@@ -345,6 +345,20 @@ BEST_TRADES_POSITION_RUB: float = float(os.getenv("BEST_TRADES_POSITION_RUB", "1
 # на 2–5% от рынка, и заявки висели днями не исполняясь.
 LIMIT_ENTRY_FRACTION: float = float(os.getenv("LIMIT_ENTRY_FRACTION", "0.2"))
 
+# OVERNIGHT_ENTRY_MODE — как фаза OVERNIGHT 18:35 ставит ночные лонги.
+#   "marketable" — перед постановкой берётся ТЕКУЩАЯ цена у брокера и лимит
+#                  ставится на OVERNIGHT_MARKETABLE_SLIP_PCT выше неё: заявка
+#                  исполняется сразу (аукцион закрытия / вечерняя сессия).
+#                  Стоп и тейк пересчитываются от фактического входа с теми же
+#                  процентами, лоты — под ту же сумму позиции.
+#   "forecast"   — прежний вход внутри прогнозного коридора (LIMIT_ENTRY_FRACTION).
+# Решение пользователя 22.09.2026: в песочнице задача — проверять покупки и
+# продажи каждый день. За 18–21.09 при "forecast" не исполнилась ни одна из 9
+# ночных заявок: лимит стоял на 0,7–1,3 % ниже якоря, а якорь вечерней фазы —
+# вчерашний бар (дефект 4), цена до лимита не доходила.
+OVERNIGHT_ENTRY_MODE: str = os.getenv("OVERNIGHT_ENTRY_MODE", "marketable").strip().lower()
+OVERNIGHT_MARKETABLE_SLIP_PCT: float = float(os.getenv("OVERNIGHT_MARKETABLE_SLIP_PCT", "0.1"))
+
 # LIMIT_TP_FRACTION — цель take-profit как доля пути от ВХОДА к ПРОТИВОПОЛОЖНОЙ
 # границе прогнозного коридора (анализ диапазона):
 #   SHORT → к НИЖНЕЙ границе F.Low (прибыль на возврате вниз);
