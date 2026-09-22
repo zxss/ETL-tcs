@@ -1,0 +1,29 @@
+# tournament-robot — та же оркестровка фаз, что и scripts/stage2_crontab,
+# только с флагом --prod и другим .env (см. config/tournament_live.env.example).
+#
+# НЕ УСТАНОВЛЕН нигде. Установка (только когда все 5 замков из
+# TOURNAMENT-LIVE-PREP.md лично закрыты пользователем):
+#   crontab -u etl scripts/stage2_tournament_crontab
+#
+# Отличия от scripts/stage2_crontab:
+#   1. У каждой фазы добавлен --prod (проверяется вместе с TRADING_MODE=prod,
+#      PROD_ACCOUNT_ID и ALLOW_UNATTENDED_PROD — иначе preflight() уронит
+#      фазу в FAIL, см. services/stage2_demo.py:preflight).
+#   2. Лог и код cd — в отдельный каталог, чтобы не путать с логом песочницы.
+#   3. .env переключается через ENV_FILE — процесс должен грузить его явно
+#      (python-dotenv не подхватывает произвольный путь без override_dotenv).
+
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+PROJECT=/opt/etl-tcs
+PY=/opt/etl-tcs/.venv/bin/python
+LOG=audit/stage2-tournament/cron.log
+
+45  8 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo prep      --prod >> $LOG 2>&1
+10  9 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo close     --prod >> $LOG 2>&1
+15  9 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo order     --prod >> $LOG 2>&1
+5  10 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo park      --prod >> $LOG 2>&1
+20 18 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo cleanup   --prod >> $LOG 2>&1
+35 18 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo overnight --prod >> $LOG 2>&1
+50,55 6 * * 1-5    cd $PROJECT && $PY -m services.stage2_demo protect --prod >> $LOG 2>&1
+*/5 7-23 * * 1-5   cd $PROJECT && $PY -m services.stage2_demo protect --prod >> $LOG 2>&1
