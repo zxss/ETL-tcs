@@ -1,17 +1,24 @@
 # tournament-robot — та же оркестровка фаз, что и scripts/stage2_crontab,
-# только с флагом --prod и другим .env (см. config/tournament_live.env.example).
+# только с флагом --prod и оверлеем переменных турнирного профиля.
 #
 # НЕ УСТАНОВЛЕН нигде. Установка (только когда все 5 замков из
-# TOURNAMENT-LIVE-PREP.md лично закрыты пользователем):
+# TOURNAMENT-LIVE-PREP.md лично закрыты пользователем — см. раздел
+# «Как запустить»):
+#   cp config/tournament_live.env.example /opt/etl-tcs/.env.tournament
+#   chmod 600 /opt/etl-tcs/.env.tournament   # дописать секреты, см. сам файл
 #   crontab -u etl scripts/stage2_tournament_crontab
 #
 # Отличия от scripts/stage2_crontab:
 #   1. У каждой фазы добавлен --prod (проверяется вместе с TRADING_MODE=prod,
 #      PROD_ACCOUNT_ID и ALLOW_UNATTENDED_PROD — иначе preflight() уронит
 #      фазу в FAIL, см. services/stage2_demo.py:preflight).
-#   2. Лог и код cd — в отдельный каталог, чтобы не путать с логом песочницы.
-#   3. .env переключается через ENV_FILE — процесс должен грузить его явно
-#      (python-dotenv не подхватывает произвольный путь без override_dotenv).
+#   2. Лог и STAGE2_DIR — в отдельный каталог, не пересекается с песочницей.
+#   3. `set -a; . .env.tournament; set +a` перед python — экспортирует
+#      переменные турнирного профиля ДО старта процесса; load_dotenv() внутри
+#      config.py их не перезапишет (override=False по умолчанию), а всё
+#      общее (DB_*, обычно и INVEST_TOKEN) по-прежнему возьмётся из общего
+#      .env. python-dotenv сам «.env.tournament» без явного пути не прочтёт —
+#      поэтому файл подгружается через обычный bash source, не через код.
 
 SHELL=/bin/bash
 PATH=/usr/local/bin:/usr/bin:/bin
@@ -19,11 +26,11 @@ PROJECT=/opt/etl-tcs
 PY=/opt/etl-tcs/.venv/bin/python
 LOG=audit/stage2-tournament/cron.log
 
-45  8 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo prep      --prod >> $LOG 2>&1
-10  9 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo close     --prod >> $LOG 2>&1
-15  9 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo order     --prod >> $LOG 2>&1
-5  10 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo park      --prod >> $LOG 2>&1
-20 18 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo cleanup   --prod >> $LOG 2>&1
-35 18 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo overnight --prod >> $LOG 2>&1
-50,55 6 * * 1-5    cd $PROJECT && $PY -m services.stage2_demo protect --prod >> $LOG 2>&1
-*/5 7-23 * * 1-5   cd $PROJECT && $PY -m services.stage2_demo protect --prod >> $LOG 2>&1
+45  8 * * 1-5  cd $PROJECT && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo prep      --prod >> $LOG 2>&1
+10  9 * * 1-5  cd $PROJECT && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo close     --prod >> $LOG 2>&1
+15  9 * * 1-5  cd $PROJECT && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo order     --prod >> $LOG 2>&1
+5  10 * * 1-5  cd $PROJECT && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo park      --prod >> $LOG 2>&1
+20 18 * * 1-5  cd $PROJECT && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo cleanup   --prod >> $LOG 2>&1
+35 18 * * 1-5  cd $PROJECT && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo overnight --prod >> $LOG 2>&1
+50,55 6 * * 1-5    cd $PROJECT && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo protect --prod >> $LOG 2>&1
+*/5 7-23 * * 1-5   cd $PROJECT && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo protect --prod >> $LOG 2>&1
