@@ -8,6 +8,8 @@ data/order_log/pending_stops.json PROTECT такую позицию не вид�
 """
 from __future__ import annotations
 
+import contextlib
+import io
 import shutil
 import tempfile
 import unittest
@@ -171,8 +173,11 @@ class TestCliGuards(unittest.TestCase):
         self.assertEqual(cm.exception.code, 2)
 
     def test_list_does_not_need_ticker(self):
+        # stdout гасим: вывод теста иначе попадает в лог post-receive хука и
+        # маскирует строку OK, по которой видно, здоров ли деплой
         with mock.patch.object(ap, "_broker", return_value=(None, ACC, "PROD")), \
-             mock.patch.object(ap, "active_records", return_value=[]):
+             mock.patch.object(ap, "active_records", return_value=[]), \
+             contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(ap.main(["--prod", "--list"]), 0)
 
 
