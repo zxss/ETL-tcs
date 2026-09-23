@@ -25,12 +25,16 @@ PATH=/usr/local/bin:/usr/bin:/bin
 PROJECT=/opt/etl-tcs
 PY=/opt/etl-tcs/.venv/bin/python
 LOG=audit/stage2-tournament/cron.log
+# ВАЖНО: каталог лога должен существовать ДО запуска — перенаправление
+# `>> $LOG` выполняется раньше python, и на несуществующем каталоге bash
+# роняет всю цепочку молча (23.09.2026: все фазы турнира не выполнялись).
+DIR=audit/stage2-tournament
 
-45  8 * * 1-5  cd $PROJECT && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo prep      --prod >> $LOG 2>&1
-10  9 * * 1-5  cd $PROJECT && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo close     --prod >> $LOG 2>&1
-15  9 * * 1-5  cd $PROJECT && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo order     --prod >> $LOG 2>&1
-5  10 * * 1-5  cd $PROJECT && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo park      --prod >> $LOG 2>&1
-20 18 * * 1-5  cd $PROJECT && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo cleanup   --prod >> $LOG 2>&1
-35 18 * * 1-5  cd $PROJECT && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo overnight --prod >> $LOG 2>&1
-50,55 6 * * 1-5    cd $PROJECT && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo protect --prod >> $LOG 2>&1
-*/5 7-23 * * 1-5   cd $PROJECT && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo protect --prod >> $LOG 2>&1
+45  8 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo prep      --prod >> $LOG 2>&1
+10  9 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo close     --prod >> $LOG 2>&1
+15  9 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo order     --prod >> $LOG 2>&1
+5  10 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo park      --prod >> $LOG 2>&1
+20 18 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo cleanup   --prod >> $LOG 2>&1
+35 18 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo overnight --prod >> $LOG 2>&1
+50,55 6 * * 1-5    cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo protect --prod >> $LOG 2>&1
+*/5 7-23 * * 1-5   cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo protect --prod >> $LOG 2>&1

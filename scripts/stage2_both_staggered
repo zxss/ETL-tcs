@@ -1,0 +1,40 @@
+# Два профиля в одном расписании: песочница r4 и турнир на боевом счёте.
+#
+# Турнирные фазы сдвинуты на +3 минуты. Причина: оба профиля пишут в ОБЩИЙ
+# реестр data/order_log/pending_stops.json (путь захардкожен в place_orders и
+# от STAGE2_DIR не зависит). При одновременном запуске срабатывает блокировка
+# реестра, и проигравший процесс пропускает запуск — для PROTECT это значит,
+# что стоп на живой позиции встанет только со следующей попытки.
+#
+# Установка: crontab -u etl /opt/etl-tcs/scripts/stage2_both_staggered
+# Откат:     crontab -u etl /root/crontab.etl.backup-<метка>
+
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+PROJECT=/opt/etl-tcs
+PY=/opt/etl-tcs/.venv/bin/python
+LOG=audit/stage2-tournament/cron.log
+# ВАЖНО: `mkdir -p $DIR` в каждой турнирной строке. Перенаправление `>> $LOG`
+# bash выполняет ДО запуска python: без каталога цепочка падает молча, лога
+# нет, фаза не выполняется. Так 23.09.2026 весь турнирный контур простоял.
+DIR=audit/stage2-tournament
+
+# ── Песочница r4 (виртуальные деньги, счётчик 30 дней) ──────────────────────
+45  8 * * 1-5  cd $PROJECT && mkdir -p audit/stage2-demo && $PY -m services.stage2_demo prep      >> audit/stage2-demo/cron.log 2>&1
+10  9 * * 1-5  cd $PROJECT && mkdir -p audit/stage2-demo && $PY -m services.stage2_demo close     >> audit/stage2-demo/cron.log 2>&1
+15  9 * * 1-5  cd $PROJECT && mkdir -p audit/stage2-demo && $PY -m services.stage2_demo order     >> audit/stage2-demo/cron.log 2>&1
+5  10 * * 1-5  cd $PROJECT && mkdir -p audit/stage2-demo && $PY -m services.stage2_demo park      >> audit/stage2-demo/cron.log 2>&1
+20 18 * * 1-5  cd $PROJECT && mkdir -p audit/stage2-demo && $PY -m services.stage2_demo cleanup   >> audit/stage2-demo/cron.log 2>&1
+35 18 * * 1-5  cd $PROJECT && mkdir -p audit/stage2-demo && $PY -m services.stage2_demo overnight >> audit/stage2-demo/cron.log 2>&1
+50,55 6 * * 1-5    cd $PROJECT && mkdir -p audit/stage2-demo && $PY -m services.stage2_demo protect >> audit/stage2-demo/cron.log 2>&1
+*/5 7-23 * * 1-5   cd $PROJECT && mkdir -p audit/stage2-demo && $PY -m services.stage2_demo protect >> audit/stage2-demo/cron.log 2>&1
+
+# ── Турнир, боевой счёт «Робот» 2018145468 (+3 минуты к каждой фазе) ────────
+48  8 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo prep      --prod >> $LOG 2>&1
+13  9 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo close     --prod >> $LOG 2>&1
+18  9 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo order     --prod >> $LOG 2>&1
+8  10 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo park      --prod >> $LOG 2>&1
+23 18 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo cleanup   --prod >> $LOG 2>&1
+38 18 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo overnight --prod >> $LOG 2>&1
+53,58 6 * * 1-5    cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo protect --prod >> $LOG 2>&1
+3-58/5 7-23 * * 1-5 cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo protect --prod >> $LOG 2>&1
