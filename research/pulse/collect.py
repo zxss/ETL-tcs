@@ -97,6 +97,7 @@ def main() -> int:
     ap.add_argument("--from", dest="d_from", default="2026-04-01")
     args = ap.parse_args()
     d_from = dt.date.fromisoformat(args.d_from)
+    os.makedirs(os.path.dirname(OUT), exist_ok=True)
     tickers = sorted(set(ns.UNIVERSE))
     rows = []
     for i, tk in enumerate(tickers, 1):
