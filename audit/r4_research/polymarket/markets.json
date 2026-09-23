@@ -23,7 +23,7 @@
   "end": "2025-12-31T12:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 07:18:23+00",
-  "points": 8813
+  "points": 3216
  },
  {
   "event": "russia-x-ukraine-ceasefire-by-june-30-2026",
@@ -49,7 +49,7 @@
   "end": "2026-01-31T00:00:00Z",
   "closed": true,
   "closed_time": "2026-02-01 07:27:48+00",
-  "points": 1589
+  "points": 1558
  },
  {
   "event": "russia-x-ukraine-ceasefire-before-july",
@@ -62,7 +62,7 @@
   "end": "2025-06-30T12:00:00Z",
   "closed": true,
   "closed_time": "2025-07-01 08:18:21+00",
-  "points": 3828
+  "points": 3807
  },
  {
   "event": "russia-x-ukraine-ceasefire-before-2027",
@@ -88,7 +88,7 @@
   "end": "2026-04-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-05-01 06:54:52+00",
-  "points": 1074
+  "points": 1043
  },
  {
   "event": "russia-x-ukraine-ceasefire-before-june",
@@ -101,7 +101,7 @@
   "end": "2025-05-31T12:00:00Z",
   "closed": true,
   "closed_time": "2025-06-01 07:20:27+00",
-  "points": 873
+  "points": 853
  },
  {
   "event": "russia-x-ukraine-ceasefire-by-february-28-2026",
@@ -114,7 +114,7 @@
   "end": "2026-02-28T00:00:00Z",
   "closed": true,
   "closed_time": "2026-03-01 09:25:01+00",
-  "points": 870
+  "points": 840
  },
  {
   "event": "will-putin-meet-with-trump-by-first-100-days",
@@ -127,7 +127,7 @@
   "end": "2025-04-29T12:00:00Z",
   "closed": true,
   "closed_time": "2025-04-30 07:58:21+00",
-  "points": 3130
+  "points": 3110
  },
  {
   "event": "russia-x-ukraine-ceasefire-by-next-friday-mar-21",
@@ -140,7 +140,7 @@
   "end": "2025-03-21T12:00:00Z",
   "closed": true,
   "closed_time": "2025-03-22 06:24:21+00",
-  "points": 201
+  "points": 182
  },
  {
   "event": "russia-x-ukraine-ceasefire-by-november-30-513",
@@ -153,7 +153,7 @@
   "end": "2025-11-30T00:00:00Z",
   "closed": true,
   "closed_time": "2025-12-01 07:19:54+00",
-  "points": 971
+  "points": 939
  },
  {
   "event": "russia-x-ukraine-ceasefire-by-august-31",
@@ -166,7 +166,7 @@
   "end": "2025-08-31T00:00:00Z",
   "closed": true,
   "closed_time": "2025-09-01 06:08:28+00",
-  "points": 608
+  "points": 281
  },
  {
   "event": "will-trump-meet-with-putin-by-august-15",
@@ -179,7 +179,7 @@
   "end": "2025-08-15T00:00:00Z",
   "closed": true,
   "closed_time": "2025-08-15 21:16:22+00",
-  "points": 216
+  "points": 0
  },
  {
   "event": "will-russia-invade-a-nato-country-in-2025",
@@ -192,7 +192,7 @@
   "end": "2025-12-31T12:00:00Z",
   "closed": true,
   "closed_time": "2026-07-01 06:01:56+00",
-  "points": 6303
+  "points": 2361
  },
  {
   "event": "russia-x-ukraine-ceasefire-in-2024",
@@ -205,7 +205,7 @@
   "end": "2024-12-31T12:00:00Z",
   "closed": true,
   "closed_time": "2025-01-01 08:23:08+00",
-  "points": 2560
+  "points": 0
  },
  {
   "event": "will-trump-meet-with-putin-again-by",
@@ -231,7 +231,7 @@
   "end": "2025-12-31T12:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 08:42:47+00",
-  "points": 5411
+  "points": 5390
  },
  {
   "event": "will-putin-meet-with-zelenskyy-by-august-31",
@@ -244,33 +244,33 @@
   "end": "2025-08-31T22:00:00Z",
   "closed": true,
   "closed_time": "2025-09-01 06:07:58+00",
-  "points": 780
+  "points": 771
  },
  {
   "event": "will-ukraine-recapture-crimean-territory-by-june-30-2026",
   "market_id": "2374271",
   "question": "Will Ukraine recapture Crimean territory by December 31, 2026?",
   "cls": "WAR",
-  "volume": 2830633.1679380015,
+  "volume": 2835752.854846001,
   "yes_token": "67011482977279466154940850972585572311207926803952896052113224614375102184687",
   "start": "2026-05-27T22:15:04.059Z",
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 2817
+  "points": 2838
  },
  {
   "event": "ukraine-signs-peace-deal-with-russia-before-2027",
   "market_id": "665224",
   "question": "Ukraine signs peace deal with Russia before 2027?",
   "cls": "PEACE",
-  "volume": 2791306.101376999,
+  "volume": 2795432.5782769998,
   "yes_token": "93579588306754356558129639371052358607099327699211232141859164590129536814208",
   "start": "2025-11-05T17:57:39.192Z",
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 7476
+  "points": 7496
  },
  {
   "event": "where-will-trump-and-putin-meet-next-393",
@@ -283,20 +283,20 @@
   "end": "2025-09-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 08:55:39+00",
-  "points": 3242
+  "points": 1000
  },
  {
   "event": "russia-x-ukraine-ceasefire-agreement-by",
   "market_id": "2243897",
   "question": "Russia x Ukraine ceasefire agreement by December 31, 2026?",
   "cls": "PEACE",
-  "volume": 2652069.2587189986,
+  "volume": 2660447.3258019993,
   "yes_token": "99878393523957043401217108863095556720659532630565063651671026144852955005052",
   "start": "2026-05-13T03:30:47.258382Z",
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 3171
+  "points": 3191
  },
  {
   "event": "ukraine-signs-peace-deal-with-russia-in-2025",
@@ -309,7 +309,7 @@
   "end": "2025-12-31T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 08:02:41+00",
-  "points": 3411
+  "points": 3378
  },
  {
   "event": "where-will-trump-and-putin-meet-next-393",
@@ -322,7 +322,7 @@
   "end": "2025-09-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 08:52:37+00",
-  "points": 3241
+  "points": 1006
  },
  {
   "event": "where-will-trump-and-putin-meet-next-393",
@@ -335,7 +335,7 @@
   "end": "2025-09-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 08:45:49+00",
-  "points": 3241
+  "points": 1006
  },
  {
   "event": "russia-x-ukraine-ceasefire-by-friday",
@@ -348,7 +348,7 @@
   "end": "2025-03-14T12:00:00Z",
   "closed": true,
   "closed_time": "2025-03-15 06:20:28+00",
-  "points": 84
+  "points": 65
  },
  {
   "event": "trump-putin-and-zelensky-meet-together-by-august-31",
@@ -361,7 +361,7 @@
   "end": "2025-08-31T00:00:00Z",
   "closed": true,
   "closed_time": "2025-09-01 06:28:56+00",
-  "points": 590
+  "points": 559
  },
  {
   "event": "ukraine-agrees-not-to-join-nato-by-june-30",
@@ -374,20 +374,20 @@
   "end": "2026-06-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-07-01 06:03:23+00",
-  "points": 4239
+  "points": 4208
  },
  {
   "event": "nato-x-russia-military-clash-in-2025",
   "market_id": "1090496",
   "question": "NATO x Russia military clash by December 31, 2026?",
   "cls": "WAR",
-  "volume": 2149095.3294839994,
+  "volume": 2169899.240753001,
   "yes_token": "105031123790227090351610621121319179238510007553875150023320472711583933704999",
   "start": "2026-01-13T19:24:08.322Z",
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 5818
+  "points": 5839
  },
  {
   "event": "ukraine-recognizes-russian-sovereignty-over-ukrainian-territory-in-2025",
@@ -400,7 +400,7 @@
   "end": "2026-01-01T04:59:00Z",
   "closed": true,
   "closed_time": "2026-01-01 09:46:29+00",
-  "points": 7876
+  "points": 7871
  },
  {
   "event": "nato-x-russia-military-clash-in-2025",
@@ -413,7 +413,7 @@
   "end": "2026-09-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-09-01 09:04:25+00",
-  "points": 873
+  "points": 867
  },
  {
   "event": "where-will-trump-and-putin-meet-next-393",
@@ -426,7 +426,7 @@
   "end": "2025-09-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 09:02:29+00",
-  "points": 3227
+  "points": 991
  },
  {
   "event": "where-will-trump-and-putin-meet-next-584",
@@ -439,7 +439,7 @@
   "end": "2026-06-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-07-01 07:36:02+00",
-  "points": 6135
+  "points": 6103
  },
  {
   "event": "will-trump-meet-with-putin-again-by",
@@ -452,7 +452,7 @@
   "end": "2025-12-31T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 09:46:31+00",
-  "points": 3317
+  "points": 3283
  },
  {
   "event": "russia-x-ukraine-ceasefire-agreement-by",
@@ -465,7 +465,7 @@
   "end": "2026-07-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-07-01 06:09:40+00",
-  "points": 1176
+  "points": 1173
  },
  {
   "event": "who-will-trump-meet-with-in-august",
@@ -485,13 +485,13 @@
   "market_id": "2243896",
   "question": "Russia x Ukraine ceasefire agreement by October 31, 2026?",
   "cls": "PEACE",
-  "volume": 1691463.0731369997,
+  "volume": 1698912.8569389994,
   "yes_token": "10861802947610899379330568332287100318869035186187733531205554992019689450318",
   "start": "2026-05-13T03:30:53.564Z",
   "end": "2026-11-01T03:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 3171
+  "points": 3191
  },
  {
   "event": "what-will-happen-before-gta-vi",
@@ -517,7 +517,7 @@
   "end": "2025-09-30T00:00:00Z",
   "closed": true,
   "closed_time": "2025-10-01 06:28:37+00",
-  "points": 1309
+  "points": 1278
  },
  {
   "event": "ukraine-agrees-not-to-join-nato-before-july",
@@ -530,7 +530,7 @@
   "end": "2025-12-31T12:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 07:45:41+00",
-  "points": 7874
+  "points": 7854
  },
  {
   "event": "russia-x-ukraine-ceasefire-by-august-15",
@@ -543,7 +543,7 @@
   "end": "2025-08-15T00:00:00Z",
   "closed": true,
   "closed_time": "2025-08-16 06:03:54+00",
-  "points": 223
+  "points": 192
  },
  {
   "event": "russian-strike-on-a-nato-member-by-october-31",
@@ -556,7 +556,7 @@
   "end": "2026-03-31T00:00:00Z",
   "closed": true,
   "closed_time": "2026-04-01 07:51:21+00",
-  "points": 2750
+  "points": 2726
  },
  {
   "event": "seaair-ceasefire-in-ukraine-before-may",
@@ -582,7 +582,7 @@
   "end": "2025-03-31T12:00:00Z",
   "closed": true,
   "closed_time": "2025-04-01 07:45:52+00",
-  "points": 442
+  "points": 422
  },
  {
   "event": "will-russia-invade-a-nato-country-in-2025",
@@ -595,7 +595,7 @@
   "end": "2025-12-31T12:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 07:19:27+00",
-  "points": 5212
+  "points": 5192
  },
  {
   "event": "trump-putin-and-zelensky-meet-by-august-23",
@@ -608,7 +608,7 @@
   "end": "2025-08-23T00:00:00Z",
   "closed": true,
   "closed_time": "2025-08-24 06:01:41+00",
-  "points": 172
+  "points": 141
  },
  {
   "event": "russia-x-ukraine-ceasefire-by-february-1",
@@ -621,20 +621,20 @@
   "end": "2025-02-01T12:00:00Z",
   "closed": true,
   "closed_time": "2025-02-05 03:12:13+00",
-  "points": 489
+  "points": 401
  },
  {
   "event": "will-russia-capture-all-of-stepnohirsk-by",
   "market_id": "2125369",
   "question": "Will Russia capture all of Stepnohirsk by September 30, 2026?",
   "cls": "WAR",
-  "volume": 1327636.4937030002,
+  "volume": 1327636.4937030012,
   "yes_token": "8801172977794092146061616813978915827794844185411002079917437218898204513735",
   "start": "2026-04-30T14:11:20.157152Z",
   "end": "2026-10-01T03:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 3471
+  "points": 3492
  },
  {
   "event": "us-recognizes-russian-sovereignty-over-ukraine",
@@ -647,7 +647,7 @@
   "end": "2025-12-31T12:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 08:36:53+00",
-  "points": 7546
+  "points": 7525
  },
  {
   "event": "will-trump-meet-with-putin-in-saudi-arabia-before-june",
@@ -660,7 +660,7 @@
   "end": "2025-05-31T12:00:00Z",
   "closed": true,
   "closed_time": "2025-06-01 07:20:35+00",
-  "points": 2073
+  "points": 2053
  },
  {
   "event": "nato-x-russia-military-clash-in-2025",
@@ -673,7 +673,7 @@
   "end": "2026-07-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-07-01 06:55:20+00",
-  "points": 3696
+  "points": 3693
  },
  {
   "event": "where-will-trump-and-putin-meet-next-393",
@@ -686,7 +686,7 @@
   "end": "2025-09-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 09:02:27+00",
-  "points": 2366
+  "points": 129
  },
  {
   "event": "where-will-trump-and-putin-meet-next-584",
@@ -699,20 +699,20 @@
   "end": "2026-06-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-07-01 07:38:02+00",
-  "points": 6332
+  "points": 6300
  },
  {
   "event": "us-x-russia-military-clash-by",
   "market_id": "1124834",
   "question": "US x Russia military clash by December 31, 2026?",
   "cls": "WAR",
-  "volume": 1082856.6801969996,
+  "volume": 1082945.0465399998,
   "yes_token": "74580890713477889155778397033413604695248820561928419929239929602538131402272",
   "start": "2026-01-07T05:45:57.05Z",
   "end": "2027-05-29T03:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 5769
+  "points": 5790
  },
  {
   "event": "where-will-trump-and-putin-meet-next-584",
@@ -725,7 +725,7 @@
   "end": "2026-06-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-07-01 07:36:04+00",
-  "points": 6226
+  "points": 6194
  },
  {
   "event": "where-will-trump-and-putin-meet-next-393",
@@ -738,7 +738,7 @@
   "end": "2025-09-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 09:02:29+00",
-  "points": 3243
+  "points": 1000
  },
  {
   "event": "where-will-trump-and-putin-meet-next-393",
@@ -751,7 +751,7 @@
   "end": "2025-09-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 09:14:41+00",
-  "points": 3242
+  "points": 1000
  },
  {
   "event": "will-ukraine-recapture-crimean-territory-by-june-30-2026",
@@ -764,7 +764,20 @@
   "end": "2026-07-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-07-01 06:09:38+00",
-  "points": 6362
+  "points": 6359
+ },
+ {
+  "event": "nato-x-russia-military-clash-in-2025",
+  "market_id": "3120760",
+  "question": "NATO x Russia military clash by October 31, 2026?",
+  "cls": "WAR",
+  "volume": 992437.205075,
+  "yes_token": "90103249718343334756773580827701144244122903469501608441410963092372041632343",
+  "start": "2026-07-26T22:31:22.047135Z",
+  "end": "2026-11-01T03:59:00Z",
+  "closed": false,
+  "closed_time": null,
+  "points": 1401
  },
  {
   "event": "where-will-trump-and-putin-meet-next-393",
@@ -777,7 +790,20 @@
   "end": "2025-09-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 08:48:39+00",
-  "points": 3242
+  "points": 1006
+ },
+ {
+  "event": "nobel-peace-prize-winner-2026-139",
+  "market_id": "637013",
+  "question": "Will Vladimir Putin win the Nobel Peace Prize in 2026?",
+  "cls": "PEACE",
+  "volume": 954946.708104,
+  "yes_token": "3072654272549368438022392135276167382428661847959009954134234860002162565563",
+  "start": "2025-10-16T22:30:37.308427Z",
+  "end": "2027-04-01T03:59:00Z",
+  "closed": false,
+  "closed_time": null,
+  "points": 7646
  },
  {
   "event": "will-trump-meet-with-putin-again-by",
@@ -790,40 +816,14 @@
   "end": "2025-11-30T00:00:00Z",
   "closed": true,
   "closed_time": "2025-12-01 07:11:40+00",
-  "points": 1066
- },
- {
-  "event": "nato-x-russia-military-clash-in-2025",
-  "market_id": "3120760",
-  "question": "NATO x Russia military clash by October 31, 2026?",
-  "cls": "WAR",
-  "volume": 930494.5181309998,
-  "yes_token": "90103249718343334756773580827701144244122903469501608441410963092372041632343",
-  "start": "2026-07-26T22:31:22.047135Z",
-  "end": "2026-11-01T03:59:00Z",
-  "closed": false,
-  "closed_time": null,
-  "points": 1380
- },
- {
-  "event": "nobel-peace-prize-winner-2026-139",
-  "market_id": "637013",
-  "question": "Will Vladimir Putin win the Nobel Peace Prize in 2026?",
-  "cls": "PEACE",
-  "volume": 922844.3311039995,
-  "yes_token": "3072654272549368438022392135276167382428661847959009954134234860002162565563",
-  "start": "2025-10-16T22:30:37.308427Z",
-  "end": "2027-04-01T03:59:00Z",
-  "closed": false,
-  "closed_time": null,
-  "points": 7626
+  "points": 1034
  },
  {
   "event": "russia-x-ukraine-ceasefire-by",
   "market_id": "2264328",
   "question": "Russia x Ukraine ceasefire by December 31, 2026?",
   "cls": "PEACE",
-  "volume": 911004.869892,
+  "volume": 912754.0133420002,
   "yes_token": "51308444364217538450493615474295421156909090806486317984535574801660314569304",
   "start": "2026-05-16T01:25:40.912938Z",
   "end": "2024-11-28T04:59:00Z",
@@ -842,7 +842,7 @@
   "end": "2026-06-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-07-01 07:29:07+00",
-  "points": 6103
+  "points": 6071
  },
  {
   "event": "where-will-trump-and-putin-meet-next-393",
@@ -855,7 +855,7 @@
   "end": "2025-09-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 08:55:37+00",
-  "points": 3242
+  "points": 1006
  },
  {
   "event": "where-will-trump-and-putin-meet-next-393",
@@ -868,7 +868,20 @@
   "end": "2025-09-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 09:13:37+00",
-  "points": 3242
+  "points": 1006
+ },
+ {
+  "event": "nobel-peace-prize-winner-2026-139",
+  "market_id": "637011",
+  "question": "Will Volodymyr Zelenskyy win the Nobel Peace Prize in 2026?",
+  "cls": "PEACE",
+  "volume": 834862.136342,
+  "yes_token": "69233785052194635705851216099911823720821171641039286350179421202360326472771",
+  "start": "2025-10-16T22:30:36.80247Z",
+  "end": "2027-04-01T03:59:00Z",
+  "closed": false,
+  "closed_time": null,
+  "points": 7564
  },
  {
   "event": "where-will-trump-and-putin-meet-next-393",
@@ -881,20 +894,7 @@
   "end": "2025-09-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 08:58:37+00",
-  "points": 3242
- },
- {
-  "event": "nobel-peace-prize-winner-2026-139",
-  "market_id": "637011",
-  "question": "Will Volodymyr Zelenskyy win the Nobel Peace Prize in 2026?",
-  "cls": "PEACE",
-  "volume": 828437.8373420001,
-  "yes_token": "69233785052194635705851216099911823720821171641039286350179421202360326472771",
-  "start": "2025-10-16T22:30:36.80247Z",
-  "end": "2027-04-01T03:59:00Z",
-  "closed": false,
-  "closed_time": null,
-  "points": 7544
+  "points": 1006
  },
  {
   "event": "russia-x-ukraine-ceasefire-agreement-by",
@@ -907,7 +907,7 @@
   "end": "2026-06-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-06-01 12:15:34+00",
-  "points": 463
+  "points": 454
  },
  {
   "event": "will-the-us-recognize-russian-sovereignty-over-crimea-in-2025",
@@ -920,7 +920,7 @@
   "end": "2025-12-31T12:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 08:33:51+00",
-  "points": 7587
+  "points": 7566
  },
  {
   "event": "ukraine-signs-peace-deal-with-russia-by-june-30",
@@ -933,7 +933,7 @@
   "end": "2026-06-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-07-01 06:03:23+00",
-  "points": 4264
+  "points": 4233
  },
  {
   "event": "will-russia-capture-all-of-kupiansk-by",
@@ -946,7 +946,7 @@
   "end": "2026-07-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-07-01 06:11:10+00",
-  "points": 2949
+  "points": 2946
  },
  {
   "event": "where-will-trump-and-putin-meet-next-584",
@@ -959,7 +959,7 @@
   "end": "2026-06-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-07-01 07:37:14+00",
-  "points": 6293
+  "points": 6261
  },
  {
   "event": "nato-article-5-before-march",
@@ -972,7 +972,7 @@
   "end": "2025-02-28T12:00:00Z",
   "closed": true,
   "closed_time": "2025-03-01 07:31:40+00",
-  "points": 2072
+  "points": 2052
  },
  {
   "event": "trump-putin-and-zelensky-seen-together-by-august-31",
@@ -985,14 +985,14 @@
   "end": "2025-08-31T00:00:00Z",
   "closed": true,
   "closed_time": "2025-09-01 06:10:36+00",
-  "points": 609
+  "points": 578
  },
  {
   "event": "russia-x-ukraine-ceasefire-by",
   "market_id": "2264327",
   "question": "Russia x Ukraine ceasefire by October 31, 2026?",
   "cls": "PEACE",
-  "volume": 714715.472465,
+  "volume": 716275.7920149999,
   "yes_token": "45485246012125503746429368791635888864303168609293442805366798912544304945187",
   "start": "2026-05-16T01:27:30.987857Z",
   "end": "2024-11-28T04:59:00Z",
@@ -1011,7 +1011,7 @@
   "end": "2025-12-31T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 13:51:41+00",
-  "points": 840
+  "points": 802
  },
  {
   "event": "who-will-trump-meet-with-in-january",
@@ -1050,7 +1050,7 @@
   "end": "2025-09-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 08:56:41+00",
-  "points": 3233
+  "points": 997
  },
  {
   "event": "where-will-trump-and-putin-meet-next-393",
@@ -1063,7 +1063,7 @@
   "end": "2025-09-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 09:13:39+00",
-  "points": 3243
+  "points": 1006
  },
  {
   "event": "where-will-trump-and-putin-meet-next-584",
@@ -1076,7 +1076,7 @@
   "end": "2026-06-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-07-01 07:34:59+00",
-  "points": 6255
+  "points": 6223
  },
  {
   "event": "nato-x-russia-military-clash-in-2025",
@@ -1089,20 +1089,20 @@
   "end": "2026-01-01T04:59:00Z",
   "closed": true,
   "closed_time": "2026-01-01 08:46:51+00",
-  "points": 2383
+  "points": 2379
  },
  {
   "event": "russia-x-ukraine-peace-parlay",
   "market_id": "694027",
   "question": "Russia x Ukraine Peace Combo",
   "cls": "PEACE",
-  "volume": 622538.3875259998,
+  "volume": 628529.5819509998,
   "yes_token": "22812895764648101937611607427223609714680609990042020918357037515389986407242",
   "start": "2025-11-24T17:22:53.172073Z",
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 7047
+  "points": 7068
  },
  {
   "event": "where-will-trump-and-putin-meet-next-584",
@@ -1115,7 +1115,7 @@
   "end": "2026-06-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-07-01 07:29:08+00",
-  "points": 6024
+  "points": 5992
  },
  {
   "event": "russia-x-ukraine-ceasefire-agreement-by",
@@ -1128,7 +1128,7 @@
   "end": "2026-09-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-09-01 06:08:58+00",
-  "points": 1757
+  "points": 1754
  },
  {
   "event": "trumpputin-meeting-in-hungary-by-dec-31",
@@ -1141,7 +1141,7 @@
   "end": "2025-12-31T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 08:47:45+00",
-  "points": 1814
+  "points": 1781
  },
  {
   "event": "where-will-trump-and-putin-meet-next-393",
@@ -1154,7 +1154,7 @@
   "end": "2025-09-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 09:13:37+00",
-  "points": 3243
+  "points": 1000
  },
  {
   "event": "will-russia-capture-all-of-kupiansk-by",
@@ -1167,7 +1167,7 @@
   "end": "2026-01-01T04:59:00Z",
   "closed": true,
   "closed_time": "2026-01-01 09:15:33+00",
-  "points": 1384
+  "points": 1379
  },
  {
   "event": "nato-x-russia-military-clash-in-2025",
@@ -1180,7 +1180,7 @@
   "end": "2026-04-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-04-01 09:50:17+00",
-  "points": 4105
+  "points": 4100
  },
  {
   "event": "putin-and-zelenskyy-shake-hands-by-october-31",
@@ -1193,7 +1193,7 @@
   "end": "2025-12-31T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 07:35:39+00",
-  "points": 3513
+  "points": 3481
  },
  {
   "event": "who-will-trump-meet-with-in-august",
@@ -1213,13 +1213,13 @@
   "market_id": "1194695",
   "question": "Will Russia invade another country in 2026?",
   "cls": "WAR",
-  "volume": 521359.0636549998,
+  "volume": 528019.0375509999,
   "yes_token": "59573580306448637210106211846184223086456880319167309095381061981348540313643",
   "start": "2026-01-19T20:34:30.286687Z",
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 5581
+  "points": 5601
  },
  {
   "event": "trump-putin-and-zelensky-seen-together-before-july",
@@ -1232,7 +1232,7 @@
   "end": "2025-06-30T12:00:00Z",
   "closed": true,
   "closed_time": "2025-07-01 08:28:47+00",
-  "points": 3321
+  "points": 3300
  },
  {
   "event": "will-trump-meet-with-putin-in-alaska-on-august-15",
@@ -1245,7 +1245,7 @@
   "end": "2025-08-15T00:00:00Z",
   "closed": true,
   "closed_time": "2025-08-15 21:14:10+00",
-  "points": 166
+  "points": 144
  },
  {
   "event": "will-putin-meet-with-trump-before-october",
@@ -1271,20 +1271,33 @@
   "end": "2026-01-31T00:00:00Z",
   "closed": true,
   "closed_time": "2026-02-01 07:54:46+00",
-  "points": 1371
+  "points": 1340
  },
  {
   "event": "where-will-zelenskyy-and-putin-meet-next",
   "market_id": "667081",
   "question": "Will Zelenskyy and Putin meet next in Qatar / UAE before 2027?",
   "cls": "PEACE",
-  "volume": 488161.3359330001,
+  "volume": 488745.176333,
   "yes_token": "109978165881504539790995975219191515813497149711080814601448321686789281233788",
   "start": "2025-11-06T15:54:55.540897Z",
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 7168
+  "points": 7187
+ },
+ {
+  "event": "where-will-zelenskyy-and-putin-meet-next",
+  "market_id": "667083",
+  "question": "Will Zelenskyy and Putin meet next in US before 2027?",
+  "cls": "PEACE",
+  "volume": 487734.9660820001,
+  "yes_token": "39581938955138309676871380692496293004215000761155903816599275664457268284697",
+  "start": "2025-11-06T15:54:54.777753Z",
+  "end": "2027-01-01T04:59:00Z",
+  "closed": false,
+  "closed_time": null,
+  "points": 7388
  },
  {
   "event": "nato-downs-another-russian-drone-byptptpt-20260726214930818",
@@ -1300,19 +1313,6 @@
   "points": 638
  },
  {
-  "event": "where-will-zelenskyy-and-putin-meet-next",
-  "market_id": "667083",
-  "question": "Will Zelenskyy and Putin meet next in US before 2027?",
-  "cls": "PEACE",
-  "volume": 484078.57989299996,
-  "yes_token": "39581938955138309676871380692496293004215000761155903816599275664457268284697",
-  "start": "2025-11-06T15:54:54.777753Z",
-  "end": "2027-01-01T04:59:00Z",
-  "closed": false,
-  "closed_time": null,
-  "points": 7368
- },
- {
   "event": "where-will-trump-and-putin-meet-next",
   "market_id": "573659",
   "question": "Will Trump and Putin meet next in Russia?",
@@ -1323,7 +1323,7 @@
   "end": "2025-09-30T00:00:00Z",
   "closed": true,
   "closed_time": "2025-08-15 22:18:44+00",
-  "points": 171
+  "points": 0
  },
  {
   "event": "will-russia-capture-all-of-vovchansk-by",
@@ -1336,7 +1336,7 @@
   "end": "2026-01-01T04:59:00Z",
   "closed": true,
   "closed_time": "2026-01-01 09:14:41+00",
-  "points": 1380
+  "points": 1375
  },
  {
   "event": "who-will-trump-meet-with-in-2025",
@@ -1349,7 +1349,7 @@
   "end": "2025-12-31T12:00:00Z",
   "closed": true,
   "closed_time": "2025-08-15 21:13:14+00",
-  "points": 3027
+  "points": 0
  },
  {
   "event": "where-will-trump-and-putin-meet-next-584",
@@ -1362,7 +1362,7 @@
   "end": "2026-06-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-07-01 07:39:04+00",
-  "points": 6219
+  "points": 6187
  },
  {
   "event": "will-russia-capture-all-of-donetsk-oblast-by",
@@ -1375,7 +1375,7 @@
   "end": "2026-07-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-07-01 06:08:38+00",
-  "points": 3893
+  "points": 3890
  },
  {
   "event": "ukraine-recognizes-russian-sovereignty-over-ukrainian-territory-in-2025",
@@ -1388,7 +1388,7 @@
   "end": "2026-07-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-07-01 06:20:52+00",
-  "points": 6616
+  "points": 6613
  },
  {
   "event": "us-x-russia-military-clash-by",
@@ -1401,20 +1401,20 @@
   "end": "2026-01-01T04:59:00Z",
   "closed": true,
   "closed_time": "2026-01-01 07:33:45+00",
-  "points": 5212
+  "points": 5209
  },
  {
   "event": "where-will-zelenskyy-and-putin-meet-next",
   "market_id": "667086",
   "question": "Will Zelenskyy and Putin not meet before 2027?",
   "cls": "PEACE",
-  "volume": 410648.378977,
+  "volume": 411299.44136500004,
   "yes_token": "79785869153488116125585882351533672227064414203253987761686968264163478391224",
   "start": "2025-11-06T15:54:56.725848Z",
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 7332
+  "points": 7352
  },
  {
   "event": "where-will-trump-and-putin-meet-next-584",
@@ -1427,7 +1427,7 @@
   "end": "2026-06-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-07-01 07:36:01+00",
-  "points": 6092
+  "points": 6060
  },
  {
   "event": "eunato-country-announces-peacekeeping-force-in-ukraine-before-2027",
@@ -1440,7 +1440,7 @@
   "end": "2026-07-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-07-01 06:20:52+00",
-  "points": 4160
+  "points": 4157
  },
  {
   "event": "trump-putin-and-zelensky-seen-together-in-2025",
@@ -1453,7 +1453,20 @@
   "end": "2025-12-31T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 07:45:39+00",
-  "points": 3531
+  "points": 3499
+ },
+ {
+  "event": "where-will-trump-and-putin-meet-next-678",
+  "market_id": "2364961",
+  "question": "Will Trump and Putin not meet?",
+  "cls": "PEACE",
+  "volume": 390957.5072950001,
+  "yes_token": "60721106651047318972353533272976554010468129253652681478570218681774510353152",
+  "start": "2026-05-26T22:51:38.428829Z",
+  "end": "2027-01-01T04:59:00Z",
+  "closed": false,
+  "closed_time": null,
+  "points": 2860
  },
  {
   "event": "ukraine-signs-peace-deal-with-russia-by-march-31",
@@ -1466,7 +1479,20 @@
   "end": "2026-03-31T00:00:00Z",
   "closed": true,
   "closed_time": "2026-04-01 07:49:17+00",
-  "points": 3436
+  "points": 3420
+ },
+ {
+  "event": "will-russia-invade-a-nato-country-in-2025",
+  "market_id": "2749367",
+  "question": "Will Russia invade a NATO country by December 31, 2026?",
+  "cls": "WAR",
+  "volume": 373932.64559499995,
+  "yes_token": "23530003628454702082168799022501270830098851824883932803252713402311376262723",
+  "start": "2026-06-30T23:38:28.288Z",
+  "end": "2025-12-31T12:00:00Z",
+  "closed": false,
+  "closed_time": null,
+  "points": 0
  },
  {
   "event": "will-russia-capture-all-of-stepnohirsk-by",
@@ -1479,7 +1505,7 @@
   "end": "2026-02-01T04:59:00Z",
   "closed": true,
   "closed_time": "2026-02-01 07:57:46+00",
-  "points": 795
+  "points": 792
  },
  {
   "event": "where-will-trump-and-putin-meet-next-584",
@@ -1492,7 +1518,7 @@
   "end": "2026-06-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-07-01 07:37:04+00",
-  "points": 6267
+  "points": 6235
  },
  {
   "event": "will-russia-capture-all-of-prymorske-by",
@@ -1505,7 +1531,7 @@
   "end": "2026-04-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-04-01 06:32:25+00",
-  "points": 1933
+  "points": 1930
  },
  {
   "event": "ceasefire-between-russia-and-ukraine-by-june",
@@ -1518,33 +1544,7 @@
   "end": "2024-06-30T00:00:00Z",
   "closed": true,
   "closed_time": "2024-07-01 06:40:27+00",
-  "points": 4833
- },
- {
-  "event": "will-russia-invade-a-nato-country-in-2025",
-  "market_id": "2749367",
-  "question": "Will Russia invade a NATO country by December 31, 2026?",
-  "cls": "WAR",
-  "volume": 353166.265655,
-  "yes_token": "23530003628454702082168799022501270830098851824883932803252713402311376262723",
-  "start": "2026-06-30T23:38:28.288Z",
-  "end": "2025-12-31T12:00:00Z",
-  "closed": false,
-  "closed_time": null,
-  "points": 0
- },
- {
-  "event": "where-will-trump-and-putin-meet-next-678",
-  "market_id": "2364961",
-  "question": "Will Trump and Putin not meet?",
-  "cls": "PEACE",
-  "volume": 346674.94437000004,
-  "yes_token": "60721106651047318972353533272976554010468129253652681478570218681774510353152",
-  "start": "2026-05-26T22:51:38.428829Z",
-  "end": "2027-01-01T04:59:00Z",
-  "closed": false,
-  "closed_time": null,
-  "points": 2840
+  "points": 4802
  },
  {
   "event": "will-trump-meet-with-putin-again-by",
@@ -1564,13 +1564,13 @@
   "market_id": "667085",
   "question": "Will Zelenskyy  and Putin meet next in Belarus before 2027?",
   "cls": "PEACE",
-  "volume": 328790.154125,
+  "volume": 329099.784125,
   "yes_token": "49294129153368227724589487358129709815623656965346925920887096680145412557878",
   "start": "2025-11-06T15:54:56.980855Z",
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 7202
+  "points": 7223
  },
  {
   "event": "will-trump-meet-with-putin-again-by",
@@ -1596,7 +1596,7 @@
   "end": "2026-06-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-07-01 07:34:08+00",
-  "points": 6404
+  "points": 6372
  },
  {
   "event": "ukraine-signs-peace-deal-with-russia-by-august-31-20260619003108240",
@@ -1609,7 +1609,7 @@
   "end": "2026-09-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-09-01 06:04:49+00",
-  "points": 1778
+  "points": 1775
  },
  {
   "event": "ceasefire-between-russia-and-ukraine-before-october",
@@ -1622,7 +1622,7 @@
   "end": "2024-09-30T12:00:00Z",
   "closed": true,
   "closed_time": "2024-10-01 06:06:28+00",
-  "points": 3106
+  "points": 3087
  },
  {
   "event": "will-russia-capture-all-of-donetsk-oblast-by",
@@ -1635,7 +1635,7 @@
   "end": "2026-04-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-04-01 06:31:25+00",
-  "points": 1966
+  "points": 1963
  },
  {
   "event": "russia-x-ukraine-any-diplomatic-meeting-byptptpt-20260629155934230",
@@ -1661,7 +1661,7 @@
   "end": "2026-07-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-07-01 06:16:52+00",
-  "points": 4336
+  "points": 4333
  },
  {
   "event": "who-will-trump-meet-with-in-november",
@@ -1674,7 +1674,7 @@
   "end": "2025-11-30T00:00:00Z",
   "closed": true,
   "closed_time": "2025-12-01 07:14:40+00",
-  "points": 756
+  "points": 724
  },
  {
   "event": "russia-x-ukraine-ceasefire-by",
@@ -1687,7 +1687,7 @@
   "end": "2026-06-30T21:59:00Z",
   "closed": true,
   "closed_time": "2026-07-01 00:09:34+00",
-  "points": 1101
+  "points": 1098
  },
  {
   "event": "where-will-trump-and-putin-meet-next-584",
@@ -1700,7 +1700,7 @@
   "end": "2026-06-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-07-01 07:27:53+00",
-  "points": 6497
+  "points": 6465
  },
  {
   "event": "will-russia-capture-all-of-kupiansk-by",
@@ -1713,7 +1713,7 @@
   "end": "2025-12-01T04:59:00Z",
   "closed": true,
   "closed_time": "2025-12-01 07:32:40+00",
-  "points": 638
+  "points": 635
  },
  {
   "event": "will-russia-capture-all-of-stepnohirsk-by",
@@ -1726,7 +1726,7 @@
   "end": "2026-03-01T04:59:00Z",
   "closed": true,
   "closed_time": "2026-03-01 07:17:13+00",
-  "points": 1277
+  "points": 1275
  },
  {
   "event": "will-trump-meet-with-putin-again-by",
@@ -1739,7 +1739,7 @@
   "end": "2026-03-31T00:00:00Z",
   "closed": true,
   "closed_time": "2026-04-01 06:15:19+00",
-  "points": 3419
+  "points": 3404
  },
  {
   "event": "will-putin-meet-with-trump-before-july",
@@ -1752,7 +1752,7 @@
   "end": "2025-06-30T12:00:00Z",
   "closed": true,
   "closed_time": "2025-07-01 07:38:59+00",
-  "points": 1784
+  "points": 1764
  },
  {
   "event": "will-russia-capture-all-of-stepnohirsk-by",
@@ -1765,7 +1765,7 @@
   "end": "2026-04-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-04-01 06:25:19+00",
-  "points": 2203
+  "points": 2200
  },
  {
   "event": "will-russia-capture-all-of-kupiansk-by",
@@ -1778,7 +1778,7 @@
   "end": "2026-04-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-04-01 06:31:31+00",
-  "points": 2589
+  "points": 2586
  },
  {
   "event": "ukraine-signs-peace-deal-with-russia-by-january-31",
@@ -1791,20 +1791,20 @@
   "end": "2026-01-31T00:00:00Z",
   "closed": true,
   "closed_time": "2026-02-01 07:37:46+00",
-  "points": 1083
+  "points": 1052
  },
  {
   "event": "where-will-zelenskyy-and-putin-meet-next",
   "market_id": "667089",
   "question": "Will Zelenskyy and Putin meet next in India before 2027?",
   "cls": "PEACE",
-  "volume": 243768.13604099996,
+  "volume": 244415.69104099993,
   "yes_token": "70655523015278409559354665275052252005700696038068181663770777643620619790723",
   "start": "2025-11-06T15:54:58.653Z",
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 7493
+  "points": 7514
  },
  {
   "event": "russia-x-ukraine-any-diplomatic-meeting-byptptpt-20260629155934230",
@@ -1817,20 +1817,20 @@
   "end": "2026-07-31T23:59:00Z",
   "closed": true,
   "closed_time": "2026-08-01 08:30:20+00",
-  "points": 780
+  "points": 771
  },
  {
   "event": "where-will-zelenskyy-and-putin-meet-next",
   "market_id": "667088",
   "question": "Will Zelenskyy and Putin meet next in Switzerland before 2027?",
   "cls": "PEACE",
-  "volume": 239110.395239,
+  "volume": 239642.065239,
   "yes_token": "97896651713834698705942666525038524840160368359889800727554470817302423856103",
   "start": "2025-11-06T15:54:57.489Z",
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 7263
+  "points": 7283
  },
  {
   "event": "russia-x-ukraine-diplomatic-meeting-by",
@@ -1856,20 +1856,20 @@
   "end": "2026-06-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-07-01 07:29:05+00",
-  "points": 6224
+  "points": 6192
  },
  {
   "event": "where-will-zelenskyy-and-putin-meet-next",
   "market_id": "667079",
   "question": "Will Zelenskyy and Putin meet next in Ukraine before 2027?",
   "cls": "PEACE",
-  "volume": 236463.62239500004,
+  "volume": 237058.36572800006,
   "yes_token": "73239672811767063016910396680870532467341723524995779471503316104927396057871",
   "start": "2025-11-06T15:54:55.2866Z",
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 7539
+  "points": 7560
  },
  {
   "event": "ukraine-officially-agrees-to-a-us-backed-ceasefire-framework-in-2025",
@@ -1882,7 +1882,7 @@
   "end": "2026-03-31T00:00:00Z",
   "closed": true,
   "closed_time": "2026-04-01 06:14:11+00",
-  "points": 2676
+  "points": 2669
  },
  {
   "event": "natoeu-troops-fighting-in-ukraine-before-july",
@@ -1895,33 +1895,33 @@
   "end": "2024-06-30T00:00:00Z",
   "closed": true,
   "closed_time": "2024-07-01 06:45:33+00",
-  "points": 2986
+  "points": 2955
  },
  {
   "event": "where-will-zelenskyy-and-putin-meet-next",
   "market_id": "667076",
   "question": "Will Zelenskyy and Putin meet next in Turkey before 2027?",
   "cls": "PEACE",
-  "volume": 226295.84847700002,
+  "volume": 227033.89647699997,
   "yes_token": "26880262286353559461109525615512763357587866035194597494489295218957286731245",
   "start": "2025-11-06T15:54:52.539904Z",
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 7168
+  "points": 7187
  },
  {
   "event": "will-russia-capture-all-of-donetsk-oblast-by",
   "market_id": "2246417",
   "question": "Will Russia capture all of Donetsk Oblast by December 31, 2026?",
   "cls": "WAR",
-  "volume": 223046.55137,
+  "volume": 223046.55136999997,
   "yes_token": "10286739223877237963651252562288085155553554709402511784236867878518615784105",
   "start": "2026-05-13T01:11:58.890603Z",
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 3133
+  "points": 3153
  },
  {
   "event": "will-russia-capture-all-of-vovchansk-by",
@@ -1934,20 +1934,20 @@
   "end": "2026-04-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-04-01 06:26:21+00",
-  "points": 2328
+  "points": 2326
  },
  {
   "event": "where-will-zelenskyy-and-putin-meet-next",
   "market_id": "667077",
   "question": "Will Zelenskyy and Putin meet next in Russia before 2027?",
   "cls": "PEACE",
-  "volume": 212952.44950199994,
+  "volume": 213421.847685,
   "yes_token": "85717751679598035967545890807383026012313403982356691287276105909111743342417",
   "start": "2025-11-06T15:54:52.795924Z",
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 7373
+  "points": 7394
  },
  {
   "event": "where-will-trump-and-putin-meet-next",
@@ -1973,7 +1973,7 @@
   "end": "2025-02-28T12:00:00Z",
   "closed": true,
   "closed_time": "2025-03-01 07:41:51+00",
-  "points": 228
+  "points": 208
  },
  {
   "event": "successful-ukraine-counter-attack-in-donbass",
@@ -1986,7 +1986,7 @@
   "end": "2025-08-22T00:00:00Z",
   "closed": true,
   "closed_time": "2025-08-23 07:07:41+00",
-  "points": 250
+  "points": 218
  },
  {
   "event": "us-x-russia-military-clash-by",
@@ -1999,7 +1999,7 @@
   "end": "2026-07-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-07-01 06:54:19+00",
-  "points": 5393
+  "points": 5390
  },
  {
   "event": "will-russia-invade-finland-in-2025",
@@ -2012,7 +2012,7 @@
   "end": "2025-12-31T12:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 08:40:55+00",
-  "points": 5213
+  "points": 5192
  },
  {
   "event": "trump-putin-and-zelensky-meet-together-by-december-31",
@@ -2025,7 +2025,7 @@
   "end": "2025-12-31T00:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 08:03:41+00",
-  "points": 2903
+  "points": 2870
  },
  {
   "event": "russia-x-ukraine-ceasefire-by-end-of-2027",
@@ -2041,6 +2041,19 @@
   "points": 529
  },
  {
+  "event": "where-will-trump-and-putin-meet-next-678",
+  "market_id": "2364962",
+  "question": "Will Trump and Putin meet next in China?",
+  "cls": "PEACE",
+  "volume": 176111.80589399996,
+  "yes_token": "19389166301388823009353528659838082515289587284309335761993116571669132485120",
+  "start": "2026-05-26T22:51:42.455164Z",
+  "end": "2027-01-01T04:59:00Z",
+  "closed": false,
+  "closed_time": null,
+  "points": 2836
+ },
+ {
   "event": "where-will-trump-and-putin-meet-next-584",
   "market_id": "618504",
   "question": "Will Trump and Putin meet next in Japan?",
@@ -2051,7 +2064,7 @@
   "end": "2026-06-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-07-01 07:35:59+00",
-  "points": 6154
+  "points": 6122
  },
  {
   "event": "nato-downs-another-russian-drone-by-september-30",
@@ -2064,7 +2077,7 @@
   "end": "2025-09-30T00:00:00Z",
   "closed": true,
   "closed_time": "2025-10-01 07:27:49+00",
-  "points": 464
+  "points": 432
  },
  {
   "event": "will-russia-capture-all-of-prymorske-by",
@@ -2077,7 +2090,7 @@
   "end": "2026-03-01T04:59:00Z",
   "closed": true,
   "closed_time": "2026-03-01 07:22:17+00",
-  "points": 1302
+  "points": 1299
  },
  {
   "event": "natoeu-troops-fighting-in-ukraine-in-2025",
@@ -2090,7 +2103,7 @@
   "end": "2026-01-01T04:59:00Z",
   "closed": true,
   "closed_time": "2026-01-01 09:34:35+00",
-  "points": 8022
+  "points": 8017
  },
  {
   "event": "will-russia-capture-all-of-prymorske-by",
@@ -2103,7 +2116,7 @@
   "end": "2026-05-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-05-01 07:41:04+00",
-  "points": 1295
+  "points": 1291
  },
  {
   "event": "where-will-trump-and-putin-meet-next",
@@ -2117,19 +2130,6 @@
   "closed": true,
   "closed_time": "2025-08-15 22:17:46+00",
   "points": 171
- },
- {
-  "event": "where-will-trump-and-putin-meet-next-678",
-  "market_id": "2364962",
-  "question": "Will Trump and Putin meet next in China?",
-  "cls": "PEACE",
-  "volume": 166418.53519199998,
-  "yes_token": "19389166301388823009353528659838082515289587284309335761993116571669132485120",
-  "start": "2026-05-26T22:51:42.455164Z",
-  "end": "2027-01-01T04:59:00Z",
-  "closed": false,
-  "closed_time": null,
-  "points": 2816
  },
  {
   "event": "where-will-trump-and-putin-meet-next",
@@ -2155,20 +2155,20 @@
   "end": "2026-06-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-07-01 07:26:58+00",
-  "points": 6355
+  "points": 6323
  },
  {
   "event": "russia-x-ukraine-ceasefire-agreement-by",
   "market_id": "3701687",
   "question": "Russia x Ukraine ceasefire agreement by March 31, 2027?",
   "cls": "PEACE",
-  "volume": 160735.387354,
+  "volume": 161512.177548,
   "yes_token": "32668038714838009503048724507695709034548046391432510979670931857193321545220",
   "start": "2026-08-18T16:24:29.196255Z",
   "end": "2027-04-01T03:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 836
+  "points": 856
  },
  {
   "event": "russian-strike-on-a-nato-member-by-october-31",
@@ -2181,7 +2181,7 @@
   "end": "2025-10-31T00:00:00Z",
   "closed": true,
   "closed_time": "2025-11-01 06:12:08+00",
-  "points": 892
+  "points": 861
  },
  {
   "event": "ukraine-officially-agrees-to-a-us-backed-ceasefire-framework-in-2025",
@@ -2194,7 +2194,7 @@
   "end": "2026-06-30T00:00:00Z",
   "closed": true,
   "closed_time": "2026-07-02 01:05:34+00",
-  "points": 3259
+  "points": 3209
  },
  {
   "event": "natoeu-troops-fighting-in-ukraine-in-2025",
@@ -2207,59 +2207,72 @@
   "end": "2026-07-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-07-01 06:02:13+00",
-  "points": 6553
- },
- {
-  "event": "ukraine-agrees-not-to-join-nato-before-2027",
-  "market_id": "665353",
-  "question": "Ukraine agrees not to join NATO before 2027? ",
-  "cls": "PEACE",
-  "volume": 155560.885928,
-  "yes_token": "67434096485422898960094679900824428370678719833905981124759661668295489882630",
-  "start": "2025-11-05T16:57:38.053Z",
-  "end": "2027-01-01T04:59:00Z",
-  "closed": false,
-  "closed_time": null,
-  "points": 7239
- },
- {
-  "event": "natoeu-troops-fighting-in-ukraine-in-2025",
-  "market_id": "2749382",
-  "question": "NATO/EU troops fighting in Ukraine by December 31, 2026?",
-  "cls": "WAR",
-  "volume": 153863.376068,
-  "yes_token": "83822435716035660497147241422577858668594129234727507087266598622219382324322",
-  "start": "2026-06-30T23:41:36.279645Z",
-  "end": "2027-01-01T04:59:00Z",
-  "closed": false,
-  "closed_time": null,
-  "points": 1953
+  "points": 6550
  },
  {
   "event": "russia-x-ukraine-ceasefire-agreement-by",
   "market_id": "3701688",
   "question": "Russia x Ukraine ceasefire agreement by June 30, 2027?",
   "cls": "PEACE",
-  "volume": 153339.05771399997,
+  "volume": 156973.486514,
   "yes_token": "12371044810334815945437204785566448598704969234268355196784616531601747425896",
   "start": "2026-08-18T16:24:26.339542Z",
   "end": "2027-07-01T03:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 833
+  "points": 853
+ },
+ {
+  "event": "ukraine-agrees-not-to-join-nato-before-2027",
+  "market_id": "665353",
+  "question": "Ukraine agrees not to join NATO before 2027? ",
+  "cls": "PEACE",
+  "volume": 155702.35592800003,
+  "yes_token": "67434096485422898960094679900824428370678719833905981124759661668295489882630",
+  "start": "2025-11-05T16:57:38.053Z",
+  "end": "2027-01-01T04:59:00Z",
+  "closed": false,
+  "closed_time": null,
+  "points": 7259
+ },
+ {
+  "event": "trump-meets-with-putin-by",
+  "market_id": "2365031",
+  "question": "Trump meets with Putin by December 31?",
+  "cls": "PEACE",
+  "volume": 155167.51139300002,
+  "yes_token": "55438884553479289150292990840792024710917825886712830718218802108974282474850",
+  "start": "2026-05-26T22:47:14.48033Z",
+  "end": "2027-01-01T04:59:00Z",
+  "closed": false,
+  "closed_time": null,
+  "points": 2861
+ },
+ {
+  "event": "natoeu-troops-fighting-in-ukraine-in-2025",
+  "market_id": "2749382",
+  "question": "NATO/EU troops fighting in Ukraine by December 31, 2026?",
+  "cls": "WAR",
+  "volume": 153863.37606799998,
+  "yes_token": "83822435716035660497147241422577858668594129234727507087266598622219382324322",
+  "start": "2026-06-30T23:41:36.279645Z",
+  "end": "2027-01-01T04:59:00Z",
+  "closed": false,
+  "closed_time": null,
+  "points": 1973
  },
  {
   "event": "where-will-zelenskyy-and-putin-meet-next",
   "market_id": "667082",
   "question": "Will Zelenskyy and Putin meet next in Saudi Arabia before 2027?",
   "cls": "PEACE",
-  "volume": 151818.911317,
+  "volume": 152402.75331700005,
   "yes_token": "44554681108074793313893626424278471150091658237406724818592366780413111952248",
   "start": "2025-11-06T15:54:55.032039Z",
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 7415
+  "points": 7435
  },
  {
   "event": "trump-putin-xi-meeting-before-july",
@@ -2272,20 +2285,20 @@
   "end": "2025-06-30T12:00:00Z",
   "closed": true,
   "closed_time": "2025-07-01 06:18:31+00",
-  "points": 2649
+  "points": 2630
  },
  {
-  "event": "trump-meets-with-putin-by",
-  "market_id": "2365031",
-  "question": "Trump meets with Putin by December 31?",
+  "event": "where-will-zelenskyy-and-putin-meet-next",
+  "market_id": "667091",
+  "question": "Will Zelenskyy and Putin meet next in Kazakhstan before 2027?",
   "cls": "PEACE",
-  "volume": 147243.12514700004,
-  "yes_token": "55438884553479289150292990840792024710917825886712830718218802108974282474850",
-  "start": "2026-05-26T22:47:14.48033Z",
+  "volume": 145578.620913,
+  "yes_token": "54237553451748254358716138432515796896116382531843965080824241132102523930557",
+  "start": "2025-11-06T15:54:59.416Z",
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 2840
+  "points": 7400
  },
  {
   "event": "ukraine-calls-a-referendum-on-peace-deal-with-russia-by-january-31",
@@ -2298,20 +2311,7 @@
   "end": "2026-02-01T04:59:00Z",
   "closed": true,
   "closed_time": "2026-02-01 07:55:46+00",
-  "points": 855
- },
- {
-  "event": "where-will-zelenskyy-and-putin-meet-next",
-  "market_id": "667091",
-  "question": "Will Zelenskyy and Putin meet next in Kazakhstan before 2027?",
-  "cls": "PEACE",
-  "volume": 144459.891913,
-  "yes_token": "54237553451748254358716138432515796896116382531843965080824241132102523930557",
-  "start": "2025-11-06T15:54:59.416Z",
-  "end": "2027-01-01T04:59:00Z",
-  "closed": false,
-  "closed_time": null,
-  "points": 7380
+  "points": 852
  },
  {
   "event": "where-will-trump-and-putin-meet-next",
@@ -2337,7 +2337,20 @@
   "end": "2026-02-01T04:59:00Z",
   "closed": true,
   "closed_time": "2026-02-01 08:00:48+00",
-  "points": 1182
+  "points": 1178
+ },
+ {
+  "event": "where-will-zelenskyy-and-putin-meet-next",
+  "market_id": "667084",
+  "question": "Will Zelenskyy and Putin meet next in Hungary before 2027?",
+  "cls": "PEACE",
+  "volume": 138469.39637700006,
+  "yes_token": "48029706520476920867563191720905390205436907688048088297110780903632004868682",
+  "start": "2025-11-06T15:54:57.235237Z",
+  "end": "2027-01-01T04:59:00Z",
+  "closed": false,
+  "closed_time": null,
+  "points": 7282
  },
  {
   "event": "will-russia-capture-all-of-vovchansk-by",
@@ -2350,20 +2363,20 @@
   "end": "2025-12-01T04:59:00Z",
   "closed": true,
   "closed_time": "2025-12-01 07:32:40+00",
-  "points": 635
+  "points": 632
  },
  {
   "event": "will-russia-capture-all-of-kupiansk-by",
   "market_id": "2373817",
   "question": "Will Russia capture all of Kupiansk by December 31?",
   "cls": "WAR",
-  "volume": 135439.792067,
+  "volume": 135443.122067,
   "yes_token": "16620263983815473572619609020950896548271326777722860283515181418520860963393",
   "start": "2026-05-27T21:16:08.531365Z",
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 2794
+  "points": 2815
  },
  {
   "event": "where-will-trump-and-putin-meet-next",
@@ -2389,7 +2402,7 @@
   "end": "2025-12-31T12:00:00Z",
   "closed": true,
   "closed_time": "2026-01-01 08:40:53+00",
-  "points": 7111
+  "points": 7090
  },
  {
   "event": "who-will-trump-meet-with-in-2025",
@@ -2405,30 +2418,43 @@
   "points": 215
  },
  {
-  "event": "where-will-zelenskyy-and-putin-meet-next",
-  "market_id": "667084",
-  "question": "Will Zelenskyy and Putin meet next in Hungary before 2027?",
+  "event": "who-will-trump-meet-with-in-2026",
+  "market_id": "666608",
+  "question": "Will Trump meet with Vladimir Putin in 2026?",
   "cls": "PEACE",
-  "volume": 125088.641377,
-  "yes_token": "48029706520476920867563191720905390205436907688048088297110780903632004868682",
-  "start": "2025-11-06T15:54:57.235237Z",
-  "end": "2027-01-01T04:59:00Z",
+  "volume": 126547.00960599992,
+  "yes_token": "18834416841134066071294984543664581503830451370489897043834745342244995614332",
+  "start": "2025-11-05T21:54:07.441563Z",
+  "end": "2027-01-02T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 7261
+  "points": 7096
  },
  {
   "event": "where-will-zelenskyy-and-putin-meet-next",
   "market_id": "667078",
   "question": "Will Zelenskyy and Putin meet next in Italy / Vatican before 2027?",
   "cls": "PEACE",
-  "volume": 124865.10033400002,
+  "volume": 125448.94833400002,
   "yes_token": "79870642522472738294477480164450071777573982117460225753874363249153327726105",
   "start": "2025-11-06T15:54:53.051022Z",
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 7171
+  "points": 7192
+ },
+ {
+  "event": "trump-meets-with-putin-by",
+  "market_id": "2365030",
+  "question": "Trump meets with Putin by September 30?",
+  "cls": "PEACE",
+  "volume": 125031.117901,
+  "yes_token": "5171771136175462749917211979004914310492684153094569326873470540382155462221",
+  "start": "2026-05-26T22:47:20.615898Z",
+  "end": "2026-10-01T03:59:00Z",
+  "closed": false,
+  "closed_time": null,
+  "points": 2861
  },
  {
   "event": "russia-x-ukraine-diplomatic-meeting-by",
@@ -2444,19 +2470,6 @@
   "points": 798
  },
  {
-  "event": "who-will-trump-meet-with-in-2026",
-  "market_id": "666608",
-  "question": "Will Trump meet with Vladimir Putin in 2026?",
-  "cls": "PEACE",
-  "volume": 124424.53744299998,
-  "yes_token": "18834416841134066071294984543664581503830451370489897043834745342244995614332",
-  "start": "2025-11-05T21:54:07.441563Z",
-  "end": "2027-01-02T04:59:00Z",
-  "closed": false,
-  "closed_time": null,
-  "points": 7076
- },
- {
   "event": "will-russia-capture-all-of-prymorske-by",
   "market_id": "1060098",
   "question": "Will Russia capture all of Prymorske by January 31, 2026?",
@@ -2467,7 +2480,7 @@
   "end": "2026-02-01T04:59:00Z",
   "closed": true,
   "closed_time": "2026-02-01 07:57:44+00",
-  "points": 797
+  "points": 794
  },
  {
   "event": "who-will-trump-meet-with-in-august-20260731154151454",
@@ -2480,7 +2493,7 @@
   "end": "2026-09-01T03:59:00Z",
   "closed": true,
   "closed_time": "2026-09-01 06:54:33+00",
-  "points": 754
+  "points": 751
  },
  {
   "event": "will-russia-capture-all-of-prymorske-by",
@@ -2493,20 +2506,7 @@
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 3448
- },
- {
-  "event": "trump-meets-with-putin-by",
-  "market_id": "2365030",
-  "question": "Trump meets with Putin by September 30?",
-  "cls": "PEACE",
-  "volume": 119550.847901,
-  "yes_token": "5171771136175462749917211979004914310492684153094569326873470540382155462221",
-  "start": "2026-05-26T22:47:20.615898Z",
-  "end": "2026-10-01T03:59:00Z",
-  "closed": false,
-  "closed_time": null,
-  "points": 2841
+  "points": 3468
  },
  {
   "event": "who-will-trump-meet-with-in-january",
@@ -2519,7 +2519,7 @@
   "end": "2026-01-31T00:00:00Z",
   "closed": true,
   "closed_time": "2026-02-01 07:28:46+00",
-  "points": 1202
+  "points": 1171
  },
  {
   "event": "successful-ukrainian-counterattack-in-donbass-by-september-15",
@@ -2532,7 +2532,20 @@
   "end": "2025-09-15T00:00:00Z",
   "closed": true,
   "closed_time": "2025-09-16 06:22:20+00",
-  "points": 465
+  "points": 434
+ },
+ {
+  "event": "where-will-zelenskyy-and-putin-meet-next",
+  "market_id": "667080",
+  "question": "Will Zelenskyy and Putin meet next in China before 2027?",
+  "cls": "PEACE",
+  "volume": 117509.42670999997,
+  "yes_token": "61321874302294143810411104328163398094317999645113570399923526983989301536597",
+  "start": "2025-11-06T15:54:54.522686Z",
+  "end": "2027-01-01T04:59:00Z",
+  "closed": false,
+  "closed_time": null,
+  "points": 7175
  },
  {
   "event": "russia-x-ukraine-diplomatic-meeting-by",
@@ -2548,19 +2561,6 @@
   "points": 663
  },
  {
-  "event": "where-will-zelenskyy-and-putin-meet-next",
-  "market_id": "667080",
-  "question": "Will Zelenskyy and Putin meet next in China before 2027?",
-  "cls": "PEACE",
-  "volume": 116834.65670999998,
-  "yes_token": "61321874302294143810411104328163398094317999645113570399923526983989301536597",
-  "start": "2025-11-06T15:54:54.522686Z",
-  "end": "2027-01-01T04:59:00Z",
-  "closed": false,
-  "closed_time": null,
-  "points": 7155
- },
- {
   "event": "will-russia-capture-all-of-prymorske-by",
   "market_id": "2125379",
   "question": "Will Russia capture all of Prymorske by September 30, 2026?",
@@ -2571,20 +2571,20 @@
   "end": "2026-10-01T03:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 3424
+  "points": 3445
  },
  {
   "event": "where-will-trump-and-putin-meet-next-678",
   "market_id": "2364953",
   "question": "Will Trump and Putin meet next in Russia?",
   "cls": "PEACE",
-  "volume": 107469.55916599999,
+  "volume": 112352.47894799997,
   "yes_token": "65355803544986772306259703642888907873620479260866954644363685018735834578056",
   "start": "2026-05-26T22:50:58.621325Z",
   "end": "2027-01-01T04:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 2822
+  "points": 2842
  },
  {
   "event": "where-will-trump-and-putin-meet-next",
@@ -2610,7 +2610,7 @@
   "end": "2026-02-01T04:59:00Z",
   "closed": true,
   "closed_time": "2026-02-01 07:52:50+00",
-  "points": 584
+  "points": 581
  },
  {
   "event": "ukraine-agrees-not-to-join-nato-by-march-31",
@@ -2623,20 +2623,20 @@
   "end": "2026-03-31T00:00:00Z",
   "closed": true,
   "closed_time": "2026-04-01 08:14:17+00",
-  "points": 2404
+  "points": 2396
  },
  {
   "event": "russia-x-ukraine-any-diplomatic-meeting-byptptpt-20260819",
   "market_id": "3733198",
   "question": "Will Russia and Ukraine hold any diplomatic meeting by September 30, 2026?",
   "cls": "PEACE",
-  "volume": 101891.442543,
+  "volume": 103384.40024599996,
   "yes_token": "39533708712975066141334165695816179555435797877119921291082873082950975279957",
   "start": "2026-08-20T00:39:17Z",
   "end": "2026-10-01T03:59:00Z",
   "closed": false,
   "closed_time": null,
-  "points": 803
+  "points": 823
  },
  {
   "event": "where-will-trump-and-putin-meet-next",

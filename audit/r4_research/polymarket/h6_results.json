@@ -1,0 +1,97 @@
+{
+ "module": "h6_polymarket_signal",
+ "dev_sample": {
+  "from": "2024-05-21",
+  "to": "2026-09-11"
+ },
+ "days": 578,
+ "baseline": {
+  "trades": 578,
+  "trades_per_year": 250.13566350710897,
+  "dates": 578,
+  "avg_hold_days": 1.4411764705882353,
+  "net_excess_pct_trade": -0.16358814534988533,
+  "win_rate": 0.38235294117647056,
+  "t": -4.4601868088737096,
+  "excess_annual_pct": -41.43120171004239,
+  "contribution_pct_capital_year": -0.818384585579819,
+  "pnl_excess_rub": -94553.94801223371,
+  "ir": -2.8789161597379374,
+  "mdd_rub": -94849.97154212117
+ },
+ "classes": {
+  "PEACE": {
+   "correlation": {
+    "n": 491,
+    "r": 0.026285092977102492,
+    "t": 0.5814522124105601,
+    "p": 0.5612036372045857,
+    "p_holm": 0.954385446539983
+   },
+   "oos_summary": {
+    "trades": 350,
+    "trades_per_year": 151.46623222748815,
+    "dates": 104,
+    "avg_hold_days": 1.52,
+    "net_excess_pct_trade": -0.05923631254767146,
+    "win_rate": 0.44857142857142857,
+    "t": -0.805783374254123,
+    "excess_annual_pct": -14.224509263092164,
+    "contribution_pct_capital_year": -0.17944602145291355,
+    "pnl_excess_rub": -20732.709391685014,
+    "ir": -0.34059003238474816,
+    "mdd_rub": -50936.944792975024
+   },
+   "pbo": {
+    "pbo": 0.4857142857142857,
+    "median_logit": 1.0986122886681098,
+    "configs": 3,
+    "combinations": 70
+   },
+   "passed": false,
+   "failed": [
+    "сверх фонда -14.22 % год < 2.0",
+    "t -0.81 < 3.01 (Harvey–Liu–Zhu)",
+    "PBO 49% ≥ 40%"
+   ],
+   "coverage_pct": 60.553633217993074
+  },
+  "WAR": {
+   "correlation": {
+    "n": 415,
+    "r": 0.03498787097819669,
+    "t": 0.7114731679911727,
+    "p": 0.4771927232699915,
+    "p_holm": 0.954385446539983
+   },
+   "oos_summary": {
+    "trades": 444,
+    "trades_per_year": 192.14573459715638,
+    "dates": 160,
+    "avg_hold_days": 1.4189189189189189,
+    "net_excess_pct_trade": -0.11500998790522558,
+    "win_rate": 0.4391891891891892,
+    "t": -2.1677620715149426,
+    "excess_annual_pct": -29.5849502220966,
+    "contribution_pct_capital_year": -0.4419735722411929,
+    "pnl_excess_rub": -51064.434629920164,
+    "ir": -1.2264586210161552,
+    "mdd_rub": -89434.69390526312
+   },
+   "pbo": {
+    "pbo": 0.11428571428571428,
+    "median_logit": 1.0986122886681098,
+    "configs": 3,
+    "combinations": 70
+   },
+   "passed": false,
+   "failed": [
+    "сверх фонда -29.58 % год < 2.0",
+    "t -2.17 < 3.01 (Harvey–Liu–Zhu)"
+   ],
+   "coverage_pct": 76.8166089965398
+  }
+ },
+ "fund_approx_annual_pct": 18.0,
+ "fund_approx_note": "приближение — локальной истории TMON@/LQDT в этой БД нет"
+}
