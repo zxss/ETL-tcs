@@ -38,9 +38,9 @@ API = "https://www.tbank.ru/api/invest-gw/social/v1/post/instrument/{tk}"
 _CTX = ssl.create_default_context()
 _CTX.check_hostname = False
 _CTX.verify_mode = ssl.CERT_NONE
-DELAY = 0.25
+DELAY = 0.2
 PAGE = 50
-MAX_PAGES = 400
+MAX_PAGES = 1000                      # на быстрой сети VDS тяжёлые тикеры достаются глубже
 
 
 def _get(tk: str, cursor: int | None):

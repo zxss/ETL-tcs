@@ -53,11 +53,11 @@ POSITION_RUB = 10_000.0
 # Данные Пульса собраны с 2026-06-15 (глубже тяжёлые тикеры через этот API
 # тянуть непрактично, см. отчёт). Окна короткие — это ПЕРВЫЙ СРЕЗ, не полный
 # holdout-протокол; z-окно короткое, чтобы осталось дней на разбиение.
-DEV_FROM, DEV_TO = dt.date(2026, 6, 25), dt.date(2026, 8, 5)
-HO_FROM, HO_TO = dt.date(2026, 8, 6), dt.date(2026, 9, 8)
-HEADLINE = {"measure": "posts", "window": 10, "n_names": 5}
+DEV_FROM, DEV_TO = dt.date(2026, 4, 15), dt.date(2026, 7, 15)      # сбор рекомендуется --from 2026-03-01 (запас на разогрев z)
+HO_FROM, HO_TO = dt.date(2026, 7, 16), dt.date(2026, 9, 19)
+HEADLINE = {"measure": "posts", "window": 20, "n_names": 5}
 GRID = [{"measure": m, "window": w, "n_names": 5}
-        for m in ("posts", "authors") for w in (5, 10, 20)]
+        for m in ("posts", "authors") for w in (10, 20, 40)]
 
 
 def load_prices(conn) -> pd.DataFrame:
