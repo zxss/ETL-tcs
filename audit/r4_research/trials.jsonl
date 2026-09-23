@@ -17,3 +17,4 @@
 {"ts": "2026-09-22T14:46:38", "sprint": 9, "stage": "polymarket", "trials": 8, "revision": "d81bb92"}
 {"ts": "2026-09-22T14:47:29", "sprint": 9, "stage": "polymarket-leadlag", "trials": 1, "revision": "b84ccb8"}
 {"ts": "2026-09-23T10:45:55", "sprint": 10, "stage": "h6_polymarket_signal", "trials": 6, "revision": "?"}
+{"ts": "2026-09-23T13:38:10", "sprint": 11, "stage": "intraday_regime_scan", "trials": 8, "revision": "?"}
