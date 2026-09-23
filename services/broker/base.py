@@ -106,6 +106,13 @@ class Instrument:
     currency:             str   # "rub", "usd"...
     trading_status:       str   # "SECURITY_TRADING_STATUS_NORMAL_TRADING" — норма
     api_trade_available:  bool  # True → можно торговать через API
+    # shortEnabledFlag из ShareBy: False → маржинальный шорт по бумаге запрещён
+    # брокером, заявка SELL без позиции будет отклонена. Default True, чтобы не
+    # ломать конструирование Instrument там, где флаг не важен.
+    short_enabled:        bool = True
+    # Класс листинга (TQBR, SPBRU…). Один фонд торгуется на разных биржах, и
+    # доступ через API у листингов разный — казначейству важно, какой выбран.
+    class_code:           str = ""
 
 
 # ── Состояние заявки ─────────────────────────────────────────────────────────
@@ -132,6 +139,31 @@ class StopOrderInfo:
 
 
 @dataclass(frozen=True)
+class StopOrderRecord:
+    """Условная заявка из истории GetStopOrders (любой статус).
+
+    Нужна для OCO: активный список не отличает «нога исполнилась» от «нога
+    снята», а от этого зависит, закрыта ли позиция. status — без префикса
+    STOP_ORDER_STATUS_ (ACTIVE / EXECUTED / CANCELED / EXPIRED).
+    """
+    stop_order_id:  str
+    instrument_uid: str
+    kind:           str            # "STOP_LOSS" | "TAKE_PROFIT"
+    status:         str
+    activated_at:   str | None = None   # ISO-время срабатывания (UTC)
+
+
+@dataclass(frozen=True)
+class Trade:
+    """Сделка по счёту из операций брокера (покупка или продажа)."""
+    instrument_uid: str
+    side:           str            # "BUY" | "SELL"
+    price:          float          # за штуку
+    quantity:       float          # штук
+    at:             str            # ISO-время (UTC)
+
+
+@dataclass(frozen=True)
 class ActiveOrder:
     """Активная (неисполненная) лимитная заявка из GetOrders.
     Нужна для синхронизации портфеля: снять заявку по тикеру, сигнал которого
@@ -150,6 +182,11 @@ class OrderState:
     lots_requested:         int
     lots_executed:          int
     raw:                    dict  # полный ответ для логов
+    # Факт исполнения. Без этих полей проскальзывание (цена заявки против цены
+    # заливки) посчитать нечем: API их отдаёт, а раньше парсер выбрасывал.
+    executed_price:      float | None = None   # средняя цена исполнения за штуку
+    executed_amount:     float | None = None   # исполненная сумма заявки
+    executed_commission: float | None = None   # удержанная комиссия
 
     @property
     def is_filled(self) -> bool:
@@ -256,6 +293,15 @@ class BrokerClient(ABC):
         """Активные условные заявки (стоп-лосс и тейк-профит) с типом и id.
         Может бросить NotSupportedError, если контур не отдаёт список стопов."""
 
+    def get_stop_order_history(self, account_id: str, since: str) -> list[StopOrderRecord]:
+        """Условные заявки с любым статусом, созданные после since (ISO, UTC)."""
+        raise NotSupportedError("get_stop_order_history не реализован для этого контура")
+
+    def get_trades(self, account_id: str, since: str,
+                   instrument_uid: str | None = None) -> tuple[list[Trade], float]:
+        """Исполненные сделки после since и сумма удержанных комиссий, ₽ (> 0)."""
+        raise NotSupportedError("get_trades не реализован для этого контура")
+
     def get_active_stop_instrument_uids(self, account_id: str) -> set[str]:
         """instrument_uid инструментов с любым активным стопом/тейком
         (для защиты от задвоения в фазе 1). Производное от get_active_stop_orders."""
@@ -270,3 +316,17 @@ class BrokerClient(ABC):
         """instrument_uid инструментов с активной (неисполненной) заявкой —
         для защиты от задвоения лимиток. Производное от get_active_orders."""
         return {o.instrument_uid for o in self.get_active_orders(account_id)}
+
+    # ----- Казначейство (services/treasury.py) -----
+
+    def get_money_rub(self, account_id: str) -> float:
+        """Свободные рубли на счёте (без заблокированных под заявки)."""
+        raise NotSupportedError("get_money_rub не реализован для этого контура")
+
+    def get_last_price(self, instrument_uid: str) -> float | None:
+        """Цена последней сделки по инструменту, за штуку."""
+        raise NotSupportedError("get_last_price не реализован для этого контура")
+
+    def find_instrument_listings(self, query: str) -> list[dict]:
+        """Все листинги по запросу (тикер, класс, uid, доступ через API)."""
+        raise NotSupportedError("find_instrument_listings не реализован для этого контура")

@@ -119,6 +119,12 @@ class TinkoffProdClient(TinkoffRestBase):
                                     blocked_shares=float(s.get("blocked", 0) or 0)))
         return out
 
+    def get_money_rub(self, account_id: str) -> float:
+        """Свободные рубли (поле money — без заблокированных под заявки)."""
+        data = self._post("OperationsService/GetPositions", {"accountId": account_id})
+        return sum(Quotation.from_payload(m).as_float()
+                   for m in (data.get("money") or []) if m.get("currency") == "rub")
+
     def get_active_orders(self, account_id: str) -> list[ActiveOrder]:
         data = self._post("OrdersService/GetOrders", {"accountId": account_id})
         out: list[ActiveOrder] = []

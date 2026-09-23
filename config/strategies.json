@@ -1,0 +1,79 @@
+{
+  "version": "strategies-2026-09-17",
+  "note": "Реестр стратегий движка (services/strategies). Статус CERTIFIED выставляет только research/certifier.py по критериям ТЗ 2.1; вручную статусы не поднимаем. В боевой пул идут записи ACTIVE_MIX + is_active=true.",
+  "limits": {
+    "capital_rub": 5000000,
+    "core_min_pct": 85.0,
+    "satellite_cap_rub": 750000,
+    "per_strategy_rub": 300000,
+    "per_ticker_rub": 150000
+  },
+  "certification": {"t_min": 2.0, "excess_annual_min_pct": 2.0, "ir_min": 0.8, "dsr_min": 0.95,
+                    "holdout": "2022-09-12…2024-05-20", "square_off_violations_max": 0},
+  "strategies": [
+    {
+      "strategy_id": "intraday_short",
+      "module": "services.strategies.plugins.intraday_short",
+      "class": "IntradayShortStrategy",
+      "version": "r4.1",
+      "status": "ACTIVE_MIX",
+      "is_active": true,
+      "funding": "margin_free",
+      "horizon": "intraday",
+      "note": "боевая стратегия прогона r4; в движок перенесена обёрткой без изменения расчёта"
+    },
+    {
+      "strategy_id": "long_overnight",
+      "module": "services.strategies.plugins.long_overnight",
+      "class": "LongOvernightStrategy",
+      "version": "r4.1",
+      "status": "ACTIVE_MIX",
+      "is_active": true,
+      "funding": "cash_unpark_tmon",
+      "horizon": "overnight",
+      "note": "боевая стратегия прогона r4; перенесена обёрткой без изменения расчёта"
+    },
+    {
+      "strategy_id": "totm_calendar",
+      "module": "research.structural.test_totm",
+      "class": "",
+      "version": "research",
+      "status": "RESEARCH",
+      "is_active": false,
+      "metrics": {"holdout_excess_annual_pct": 46.54, "dev_excess_annual_pct": -50.04,
+                  "holdout_t": 1.7, "dev_t": -1.5},
+      "note": "ретро-тест 17.09: знак меняется между периодами (разработка −10,4 % капитала, отложенная +8,9 %) — в сертификацию не идёт"
+    },
+    {
+      "strategy_id": "cash_and_carry",
+      "module": "research.structural.test_cash_and_carry",
+      "class": "",
+      "version": "C&C-2",
+      "status": "RESEARCH",
+      "is_active": false,
+      "metrics": {"holdout_excess_annual_pct": 1.44, "holdout_t": 1.9, "holdout_ir": 1.36,
+                  "dev_excess_annual_pct": 1.07, "dev_t": 2.5},
+      "note": "чистый базис без заглядывания вперёд: устойчив, но ниже порога +2 % и t < 2"
+    },
+    {
+      "strategy_id": "dividend_gap",
+      "module": "research.structural.test_dividend_gap",
+      "class": "",
+      "version": "research",
+      "status": "RESEARCH",
+      "is_active": false,
+      "metrics": {"holdout_excess_annual_pct": -23.38, "dev_excess_annual_pct": -11.68},
+      "note": "убыточна в обоих периодах, фильтр качества не помогает"
+    },
+    {
+      "strategy_id": "index_rebalance",
+      "module": "research.structural.test_index_rebalance",
+      "class": "",
+      "version": "research",
+      "status": "RESEARCH",
+      "is_active": false,
+      "metrics": {"dev_excess_annual_pct": 22.04, "holdout_excess_annual_pct": -2.03, "holdout_t": 0.2},
+      "note": "на разработке сильна, на отложенной знак обратный; 13–14 сделок"
+    }
+  ]
+}

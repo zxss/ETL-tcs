@@ -28,13 +28,14 @@ import numpy as np
 import pandas as pd
 
 import config
+import trading_calendar
 
 log = logging.getLogger("tft.market")
 
-_SQL = """
+_SQL_TMPL = """
     SELECT date, open, high, low, close, volume
     FROM market_data
-    WHERE ticker = %(tk)s
+    WHERE ticker = %(tk)s{session_filter}
     ORDER BY date DESC
     LIMIT %(n)s;
 """
@@ -50,8 +51,10 @@ _GAP_THRESH = -0.005     # -0.5%
 class TickerMarket:
     rs: float | None = None            # относительная сила, %
     vol_spike: float | None = None     # кратность к SMA20
-    atr_pctl: float | None = None      # 0..100
+    atr_pctl: float | None = None      # 0..100 — ПЕРЦЕНТИЛЬ, не величина
+    atr_pct: float | None = None       # ATR(14) / close * 100 — величина, %
     gap_down_prob: float | None = None # 0..1
+    ret1: float | None = None          # доходность последнего закрытого дня, %
 
 
 @dataclass
@@ -59,6 +62,7 @@ class MarketContext2:
     regime: str = "NEUTRAL"            # BULL / BEAR / NEUTRAL
     imoex_ret10: float | None = None   # доходность индекса за 10 дней, %
     breadth: float | None = None       # доля бумаг выше EMA50 (0..1)
+    index_above_ema50: bool | None = None  # индекс выше своей EMA50 (риск шорт-сквиза)
     atr_pctl_market: float | None = None  # медиана ATR_Pctl по рынку
     risk_level: str = "NORMAL"         # NORMAL / ELEVATED / HIGH
     source: str = "proxy"              # "IMOEX" | "proxy"
@@ -69,8 +73,10 @@ class MarketContext2:
 
 def _load(conn, ticker: str) -> pd.DataFrame | None:
     try:
+        sql = _SQL_TMPL.format(
+            session_filter=trading_calendar.sql_session_filter("date"))
         with conn.cursor() as cur:
-            cur.execute(_SQL, {"tk": ticker, "n": _LOOKBACK})
+            cur.execute(sql, {"tk": ticker, "n": _LOOKBACK})
             rows = cur.fetchall()
     except Exception:  # noqa: BLE001
         return None
@@ -88,19 +94,41 @@ def _load(conn, ticker: str) -> pd.DataFrame | None:
 
 # ── Метрики на тикер ───────────────────────────────────────────────────────────
 
-def _atr_pctl(df: pd.DataFrame) -> float | None:
+def _atr_series(df: pd.DataFrame) -> pd.Series | None:
     if len(df) < _ATR_WIN + 5:
         return None
     h, l, c = df["high"], df["low"], df["close"]
     prev_c = c.shift(1)
     tr = pd.concat([(h - l), (h - prev_c).abs(), (l - prev_c).abs()], axis=1).max(axis=1)
     atr = tr.rolling(_ATR_WIN).mean().dropna()
-    if atr.empty:
+    return None if atr.empty else atr
+
+
+def _atr_pctl(df: pd.DataFrame) -> float | None:
+    """Перцентиль текущего ATR за 252 дня (0..100) — насколько бумага
+    волатильна ОТНОСИТЕЛЬНО СВОЕЙ истории."""
+    atr = _atr_series(df)
+    if atr is None:
         return None
     hist = atr.tail(_ATR_HIST)
     cur = float(atr.iloc[-1])
-    pctl = float((hist <= cur).mean() * 100.0)
-    return pctl
+    return float((hist <= cur).mean() * 100.0)
+
+
+def _atr_pct(df: pd.DataFrame) -> float | None:
+    """ATR(14) в процентах от цены — АБСОЛЮТНАЯ величина волатильности.
+
+    Отличается от _atr_pctl принципиально: перцентиль сравнивает бумагу с ней
+    самой (SBER на 30-м перцентиле своей истории), а atr_pct сравним МЕЖДУ
+    бумагами и годится как знаменатель для нормировки прогноза на риск.
+    """
+    atr = _atr_series(df)
+    if atr is None:
+        return None
+    close = float(df["close"].iloc[-1])
+    if close <= 0:
+        return None
+    return float(atr.iloc[-1]) / close * 100.0
 
 
 def _vol_spike(df: pd.DataFrame) -> float | None:
@@ -121,6 +149,17 @@ def _gap_down_prob(df: pd.DataFrame) -> float | None:
     if gaps.empty:
         return None
     return float((gaps < _GAP_THRESH).mean())
+
+
+def _ret1(close: pd.Series) -> float | None:
+    """Доходность последнего ЗАКРЫТОГО дня, %. Признак импульса продавцов:
+    отрицательное значение = вчера бумага падала."""
+    if len(close) < 2:
+        return None
+    prev = float(close.iloc[-2])
+    if prev <= 0:
+        return None
+    return float(close.iloc[-1] / prev - 1.0) * 100.0
 
 
 def _ret10(close: pd.Series) -> float | None:
@@ -148,6 +187,19 @@ def _build_index(frames: dict[str, pd.DataFrame]) -> pd.Series | None:
     daily = mat.mean(axis=1, skipna=True).fillna(0.0)
     level = (1.0 + daily).cumprod()
     return level if len(level) >= 11 else None
+
+
+def _above_ema(level: pd.Series, span: int = 50) -> bool | None:
+    """Индекс выше своей EMA — предохранитель от шорт-сквиза.
+
+    Отличается от режима BULL/BEAR: тот требует ещё и EMA50 > EMA200, то есть
+    подтверждённого тренда. Здесь нужен более чувствительный признак — рынок
+    уже развернулся вверх относительно среднесрочной средней, и шортить в такой
+    день опаснее, даже если формально режим ещё не BULL.
+    """
+    if level is None or len(level) < 50:
+        return None
+    return bool(level.iloc[-1] > _ema(level, span).iloc[-1])
 
 
 def _regime(level: pd.Series) -> str:
@@ -186,6 +238,7 @@ def compute(conn, tickers: list[str]) -> MarketContext2:
             ctx.source = "proxy"
 
         ctx.regime = _regime(level)
+        ctx.index_above_ema50 = _above_ema(level, 50)
         r10 = _ret10(level) if level is not None else None
         ctx.imoex_ret10 = r10 * 100.0 if r10 is not None else None
 
@@ -203,7 +256,9 @@ def compute(conn, tickers: list[str]) -> MarketContext2:
                 rs=rs,
                 vol_spike=_vol_spike(df),
                 atr_pctl=_atr_pctl(df),
+                atr_pct=_atr_pct(df),
                 gap_down_prob=_gap_down_prob(df),
+                ret1=_ret1(close),
             )
             ctx.per[tk] = tm
             if tm.atr_pctl is not None:

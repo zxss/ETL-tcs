@@ -1,0 +1,63 @@
+# stage2-demo — функциональный тест на демо-счёте (STAGE2-DEMO-TZ.md §14)
+#
+# Установка:   crontab -u etl scripts/stage2_crontab
+# Проверка:    crontab -u etl -l
+# Снять:       crontab -u etl -r
+#
+# Пять ОТДЕЛЬНЫХ фаз и монитор, а не один общий запуск: если одна фаза упала,
+# остальные должны отработать самостоятельно и попасть в дневной аудит.
+#
+# Cron не знает о биржевых праздниках и о дате старта теста — это проверяет сам
+# оркестратор (services/calendar, STAGE2_START_DATE). В праздник фаза выходит с
+# кодом 0 и отметкой skipped; до даты старта — выходит молча, без каталога.
+#
+# Времена ДУБЛИРУЮТ config.STAGE2_*_TIME. При изменении конфигурации этот файл
+# нужно перевыпустить: cron не читает .env.
+#
+# ВАЖНО: 1-5 — это Пн-Пт. Биржа торгует и по выходным, но модель при
+# INCLUDE_WEEKEND_TRADING=0 работает по календарю Пн-Пт, и тест следует ему же.
+#
+# Хотфикс 11.09: добавлены CLOSE (выход из long_overnight утром) и PROTECT
+# (стопы на ночные заливки вечером). Старый таймер etl-square-off снят —
+# закрытие интрадея делает только CLEANUP.
+
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+PROJECT=/opt/etl-tcs
+PY=/opt/etl-tcs/.venv/bin/python
+
+# Утро привязано к открытию Мосбиржи: с 14.09.2026 аукцион 09:00, торги с 09:10
+# (T-Invest TradingSchedules). До этого: PREP 09:45, CLOSE 10:00, ORDER 10:05.
+
+# PREP 08:45 — считает сигналы и замораживает план, заявок не ставит (до аукциона)
+45  8 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo prep      >> audit/stage2-demo/cron.log 2>&1
+
+# CLOSE 09:10 — продаёт по рынку ночные позиции long_overnight (выход стратегии)
+10  9 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo close     >> audit/stage2-demo/cron.log 2>&1
+
+# ORDER 09:15 — исполняет замороженный план (только intraday_*)
+15  9 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo order     >> audit/stage2-demo/cron.log 2>&1
+
+# PARK 10:05 — казначейство: TMON@ торгуется через API только на СПБ, с 10:00.
+# Лимитная покупка паёв (не дороже последней сделки + 0,05 %), виртуальные паи
+# из CLOSE переводятся в реальные. Первая минута пропускается: выбросы цены.
+5  10 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo park      >> audit/stage2-demo/cron.log 2>&1
+
+# CLEANUP 18:20 — закрывает интрадей до аукциона 18:40-18:50
+20 18 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo cleanup   >> audit/stage2-demo/cron.log 2>&1
+
+# OVERNIGHT 18:35 — ночные заявки, дневной аудит, счётчик
+35 18 * * 1-5  cd $PROJECT && $PY -m services.stage2_demo overnight >> audit/stage2-demo/cron.log 2>&1
+
+# PROTECT — монитор защиты позиций каждые 5 минут всё торговое время (06:50–23:55):
+#   * OCO: сработал SL или TP → парная нога снимается сразу. Утром ночные стопы
+#     срабатывают до CLOSE (17.09 SNGS: стоп 07:06, тейк на пустой позиции висел
+#     до 09:10 — касание открыло бы шорт);
+#   * SL/TP на внутридневные заливки после ORDER (раньше до 18:20 без стопа);
+#   * SL/TP на ночные заливки вечером (ставить стоп до заливки нельзя: SELL без
+#     позиции при срабатывании открыл бы шорт);
+#   * цена уже за стопом → аварийный выход по рынку;
+#   * заливки и выходы — в журнал исполнения.
+# Пока идёт фаза, реестр заблокирован (flock) и монитор пропускает прогон.
+50,55 6 * * 1-5    cd $PROJECT && $PY -m services.stage2_demo protect >> audit/stage2-demo/cron.log 2>&1
+*/5 7-23 * * 1-5   cd $PROJECT && $PY -m services.stage2_demo protect >> audit/stage2-demo/cron.log 2>&1

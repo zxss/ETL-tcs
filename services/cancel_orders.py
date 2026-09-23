@@ -10,7 +10,8 @@ services/cancel_orders.py — снятие активных заявок и ст
 Сначала ВСЕГДА печатает превью того, что будет снято, и спрашивает y/n
 (на боевом счёте — с баннером). --dry-run только показывает, ничего не трогает.
 
-КОНТУР ПО УМОЛЧАНИЮ — PROD (боевой счёт). --sandbox для теста.
+КОНТУР ПО УМОЛЧАНИЮ — SANDBOX (виртуальные деньги). Боевой счёт — только
+с явным --prod; связка --prod --no-confirm требует ALLOW_UNATTENDED_PROD=1.
 
 Запуск:
     python3 -m services.cancel_orders --dry-run          # показать, что снялось бы
@@ -18,7 +19,7 @@ services/cancel_orders.py — снятие активных заявок и ст
     python3 -m services.cancel_orders --orders-only      # только лимитные заявки
     python3 -m services.cancel_orders --stops-only       # только стоп-заявки
     python3 -m services.cancel_orders --ticker ROSN      # только по одному тикеру
-    python3 -m services.cancel_orders --sandbox          # песочница
+    python3 -m services.cancel_orders --prod             # БОЕВОЙ счёт
 """
 from __future__ import annotations
 
@@ -26,6 +27,7 @@ import argparse
 import csv
 import datetime as dt
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -184,8 +186,13 @@ def cancel(broker, account_id: str, orders: list[dict], stops: list[dict], *,
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(
         description="Снятие активных заявок/стопов T-Invest. По умолчанию — "
-                    "боевой счёт, снимаются И заявки, И стопы.")
-    p.add_argument("--sandbox", action="store_true", help="тестовый контур")
+                    "песочница; снимаются И заявки, И стопы.")
+    g_env = p.add_mutually_exclusive_group()
+    g_env.add_argument("--sandbox", action="store_true",
+                       help="тестовый контур — режим по умолчанию")
+    g_env.add_argument("--prod", action="store_true",
+                       help="БОЕВОЙ счёт (реальные заявки). В связке с --no-confirm "
+                            "требует ALLOW_UNATTENDED_PROD=1.")
     p.add_argument("--account", default="", help="ID счёта (по умолч. из config).")
     p.add_argument("--ticker", default="", help="снять только по этому тикеру.")
     g = p.add_mutually_exclusive_group()
@@ -196,10 +203,15 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--no-confirm", action="store_true", help="не спрашивать y/n (для cron)")
     args = p.parse_args(argv)
 
+    if args.prod and args.no_confirm and os.getenv("ALLOW_UNATTENDED_PROD", "") != "1":
+        raise RuntimeError(
+            "Выполнение на PROD без подтверждения запрещено без флага "
+            "ALLOW_UNATTENDED_PROD=1")
+
     want_orders = not args.stops_only
     want_stops = not args.orders_only
 
-    if args.sandbox:
+    if not args.prod:
         c = TinkoffSandboxClient()
         acc = args.account or config.SANDBOX_ACCOUNT_ID
         env = "SANDBOX"
@@ -219,7 +231,7 @@ def main(argv: list[str] | None = None) -> int:
             return 1
 
     try:
-        snap = snapshot(c, acc, sandbox=args.sandbox)
+        snap = snapshot(c, acc, sandbox=not args.prod)
     except BrokerError as e:
         print(f"[ERROR] Снимок счёта: {e}", file=sys.stderr)
         return 1

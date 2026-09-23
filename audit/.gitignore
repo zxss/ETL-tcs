@@ -1,0 +1,6 @@
+# Крупные артефакты расчёта: воспроизводятся скриптами audit/run_*.py
+out/walkforward.csv
+out/ranker_panel.csv
+out/components.csv
+out/candles/
+out/*.log

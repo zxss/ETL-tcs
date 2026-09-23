@@ -1,0 +1,16 @@
+# Тяжёлые ML-зависимости. Ставятся ПОВЕРХ базовых и полностью опциональны —
+# без них конвейер работает на встроенных запасных вариантах:
+#
+#   torch      нет → tft_forecast использует калиброванный статистический
+#                    baseline (EWMA-волатильность + эмпирическое покрытие);
+#   hmmlearn   нет → режимы рынка считаются квантильным fallback'ом.
+#
+#   pip install -r requirements.txt -r requirements-ml.txt
+
+torch~=2.8              # Temporal Fusion Transformer (tft_forecast/model.py)
+hmmlearn~=0.3           # HMM-режимы рынка (strategy_validation/)
+
+# pytorch-forecasting нужен ТОЛЬКО для tft_forecast/feature_engineering.py
+# (make_timeseries_dataset) — этот модуль в конвейер не подключён, импорт
+# ленивый. Раскомментируйте, если собираете датасет через pytorch-forecasting.
+# pytorch-forecasting~=1.0

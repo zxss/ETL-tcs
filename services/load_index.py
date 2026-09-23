@@ -24,7 +24,7 @@ import aiohttp
 import config
 import database
 from loaders.moex_loader import (
-    make_headers, fetch_daily_candles, _api_post,
+    make_headers, make_connector, fetch_daily_candles, _api_post,
 )
 from services.load_history import _daily_from_dt
 
@@ -58,7 +58,7 @@ async def _load_one(session, conn, ticker: str, to_dt: datetime) -> int:
     uid = instr.get("uid") or instr.get("figi")
     log.info("  %s | %s | UID=%s", ticker, instr.get("name", ticker), uid)
 
-    from_daily = await asyncio.to_thread(_daily_from_dt, conn, ticker, to_dt)
+    from_daily = await asyncio.to_thread(_daily_from_dt, ticker, to_dt)
     if from_daily is None:
         log.info("  [1D] %s — актуально, пропускаем", ticker)
         return 0
@@ -74,14 +74,16 @@ async def _load_one(session, conn, ticker: str, to_dt: datetime) -> int:
         return 0
 
     db_rows = [(ticker, *r) for r in rows]
-    saved = await asyncio.to_thread(database.upsert_candles, conn, db_rows)
+    # Своя транзакция из пула: индексы грузятся тем же путём, что и бумаги.
+    saved = await asyncio.to_thread(database.upsert_candles, db_rows)
     log.info("  [1D] %s: +%d строк", ticker, saved)
     return saved
 
 
 async def _run_async(conn, tickers: list[str]) -> int:
+    """conn не используется для записи — коннекты берутся из пула."""
     to_dt = datetime.now(timezone.utc)
-    connector = aiohttp.TCPConnector(ssl=False)
+    connector = make_connector()
     async with aiohttp.ClientSession(
         headers=make_headers(),
         connector=connector,

@@ -14,10 +14,13 @@ LB / Verdict) и из TFT-прогноза (направленный PnL кор�
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
 from dataclasses import dataclass, asdict
 from typing import Optional
+
+log = logging.getLogger("tft.combined")
 
 # ── Цвет (ANSI) ────────────────────────────────────────────────────────────────
 _GREEN = "\033[32m"
@@ -130,6 +133,13 @@ def _build_rows(val_rows, forecasts, tickers, strats):
                 "rs": cor.get("RS") if isinstance(cor, dict) else None,
                 "vol_spike": cor.get("VolSpike") if isinstance(cor, dict) else None,
                 "atr_pctl": cor.get("ATRpctl") if isinstance(cor, dict) else None,
+                "atr_pct": cor.get("ATRpct") if isinstance(cor, dict) else None,
+                "ret1": cor.get("Ret1") if isinstance(cor, dict) else None,
+                "market_atr_pctl": (cor.get("MarketATRpctl")
+                                    if isinstance(cor, dict) else None),
+                "index_above_ema50": (cor.get("IndexAboveEMA50")
+                                      if isinstance(cor, dict) else None),
+                "cost_rt": cor.get("CostRT") if isinstance(cor, dict) else None,
                 "gap_down_prob": cor.get("GapDownProb") if isinstance(cor, dict) else None,
             })
     return rows
@@ -206,85 +216,184 @@ def _clamp01(x: float) -> float:
     return 0.0 if x < 0 else (1.0 if x > 1 else x)
 
 
-def _score_row(r, strict: bool):
+def _apply_penalty(score: float, factor: float) -> float:
+    """Знак-безопасное применение риск-штрафа.
+
+    Штраф обязан УХУДШАТЬ рейтинг независимо от знака. Простое умножение это
+    свойство ломает на отрицательных значениях: −0.5 × 0.70 = −0.35, то есть
+    штраф ПОДНИМАЕТ плохой сигнал вверх по рейтингу. В режиме эвристики
+    (score ∈ [0,1]) проблемы нет, но в режиме сырой альфы score — это ExpPnL,
+    который регулярно отрицателен, поэтому штраф на отрицательной стороне
+    применяется делением.
     """
-    Считает FinalScore (0..1) с учётом рыночного контекста и риск-фильтров,
-    проставляет флаги предупреждений и допустимость сделки (strict-фильтр).
-    Возвращает (final_score, allowed, flags).
+    if factor <= 0:
+        return score
+    return score * factor if score >= 0 else score / factor
+
+
+def _risk_penalties(r, long: bool) -> tuple[float, list[str], bool]:
+    """Мультипликативные риск-штрафы и флаги — общие для обоих режимов.
+
+    Возвращает (множитель, флаги, severe): severe=True означает, что сработало
+    условие, по которому бумагу можно не просто штрафовать, а отсекать
+    (климакс объёма или высокий риск гэпа вниз).
+
+    Штраф за режим рынка сюда НЕ входит: см. _score_row.
     """
-    long = r["direction"] == "LONG"
-    regime = r["regime"]
     rs = r["rs"]
     vs = r["vol_spike"]
-    atr = r["atr_pctl"]
     gdp = r["gap_down_prob"]
-    flags = []
+    factor = 1.0
+    flags: list[str] = []
+    severe = False
 
-    # — суб-скоры (0..1) —
-    exp = r["exp_pnl"]
-    exp_score = _clamp01(0.5 + (exp or 0.0) / 2.0)          # ±1% → 0..1
-    prob_score = r["prob_profit"] if r["prob_profit"] is not None else 0.5
-
-    vmeta = _verdict_meta(r["verdict"])[1]
-    verdict_score = {0: 1.0, 1: 0.5, 2: 0.0}.get(vmeta, 0.4)
-    fdr_score = 1.0 if r["fdr"] else (0.0 if r["fdr"] is not None else 0.5)
-    pbo_score = _clamp01(1.0 - r["pbo"]) if r["pbo"] is not None else 0.5
-    validation_score = (verdict_score + fdr_score + pbo_score) / 3.0
-
-    liq_score = (r["liq_score"] or 50) / 100.0
-
-    rs_eff = (rs if long else -rs) if rs is not None else 0.0
-    rs_score = _clamp01(0.5 + rs_eff / 10.0)                # ±5% → 0..1
-
-    if regime is None:
-        regime_score = 0.5
-    elif long:
-        regime_score = {"BULL": 1.0, "NEUTRAL": 0.5, "BEAR": 0.2}.get(regime, 0.5)
-    else:
-        regime_score = {"BEAR": 1.0, "NEUTRAL": 0.5, "BULL": 0.2}.get(regime, 0.5)
-
-    if vs is None:
-        vol_score = 0.5
-    elif vs > 4.0:
-        vol_score = 0.2
-    elif vs > 2.5:
-        vol_score = 0.4
-    elif vs < 0.8:
-        vol_score = 0.4
-    else:
-        vol_score = 0.7
-
-    final = (0.30 * exp_score + 0.15 * prob_score + 0.15 * validation_score +
-             0.15 * liq_score + 0.10 * rs_score + 0.10 * regime_score +
-             0.05 * vol_score)
-
-    # — множительные риск-штрафы и флаги —
-    # Market Regime penalty (−30%)
-    if long and regime == "BEAR":
-        final *= 0.70
-    if (not long) and regime == "BULL":
-        final *= 0.70
-    # High Risk Short: SHORT при сильной бумаге (RS > +5%) → −25%
+    # High Risk Short: SHORT при сильной бумаге (RS > +5%) → −25%.
+    # Здесь rs используется как РИСК-ФИЛЬТР одного края, а не как компонент
+    # рейтинга: как компонент он шум (IC −0.002), а на long_overnight вреден.
     if (not long) and rs is not None and rs > 5.0:
-        final *= 0.75
+        factor *= 0.75
         flags.append("High Risk Short")
-    # Volume climax / аномальный объём
+
+    # Климакс объёма.
     if vs is not None and vs > 2.5:
         flags.append("⚠ Volume Climax")
     if vs is not None and vs > 4.0:
-        final *= 0.70   # ExpPnL Confidence × 0.7
-    # Overnight gap risk — только long_overnight
+        factor *= 0.70
+        severe = True
+
+    # Риск гэпа вниз — только для ночной стратегии.
     if r["strategy"] == "long_overnight" and gdp is not None:
         if gdp > 0.40:
             flags.append("⚠ High Overnight Risk")
         if gdp > 0.50:
-            final *= 0.70   # OvernightScore × 0.7
+            factor *= 0.70
+            severe = True
 
-    # — жёсткий рыночный фильтр —
+    return factor, flags, severe
+
+
+SCORE_MODES = ("heuristic", "raw_alpha", "trade_score")
+
+# Пол для знаменателя нормировки на волатильность: ниже 0.2% ATR не бывает у
+# ликвидных бумаг, а деление на околонулевую величину даёт выбросы в рейтинге.
+_MIN_ATR_PCT = 0.2
+
+
+def _trade_score(r) -> float | None:
+    """Прогноз, нормированный на волатильность: ExpPnL / ATR%.
+
+    Смысл: бумага с ожиданием +0,8% при ATR 1% должна стоять выше бумаги с
+    ожиданием +1,2% при ATR 3% — вторая просто шумнее, а не лучше.
+
+    ВАЖНО: издержки здесь ВТОРОЙ РАЗ НЕ ВЫЧИТАЮТСЯ. ExpPnL уже приходит нетто
+    round-trip (см. directional.strategy_pnl: exp_net = med - cost_rt), поэтому
+    формула вида (exp_pnl - CostRT) / ATR% вычла бы издержки дважды.
+
+    Знаменатель — ATR(14)/close*100 (market._atr_pct), а НЕ ATRpctl: перцентиль
+    сравнивает бумагу с её собственной историей и между бумагами несопоставим.
+    При отсутствии ATR% откатываемся на ширину прогнозного коридора RangePct —
+    это тоже волатильность в процентах, только оценённая моделью.
+    """
+    exp = r.get("exp_pnl")
+    if exp is None:
+        return None
+    vol = r.get("atr_pct")
+    if vol is None or not vol or vol != vol:
+        rng = r.get("range_pct")
+        # Коридор q0.1..q0.9 примерно вчетверо шире дневного ATR — приводим
+        # к сопоставимому масштабу, чтобы режим не менял смысл при откате.
+        vol = (rng / 4.0) if rng else None
+    if vol is None or vol != vol:
+        return None
+    return exp / max(float(vol), _MIN_ATR_PCT)
+
+
+def _resolve_mode(raw_alpha, mode):
+    """Обратная совместимость: булев raw_alpha старше строкового mode."""
+    if raw_alpha is True:
+        return "raw_alpha"
+    if raw_alpha is False and mode is None:
+        return "heuristic"
+    if mode:
+        m = str(mode).strip().lower()
+        return m if m in SCORE_MODES else "heuristic"
+    import config as _cfg
+    m = str(getattr(_cfg, "SCORE_MODE", "heuristic")).strip().lower()
+    return m if m in SCORE_MODES else "heuristic"
+
+
+def _score_row(r, strict: bool, raw_alpha: bool | None = None,
+               hard_exclude: bool | None = None,
+               mode: str | None = None,
+               apply_penalties: bool | None = None):
+    """
+    Считает итоговый рейтинг строки, флаги риска и допустимость сделки.
+    Возвращает (final_score, allowed, flags).
+
+    ТРИ РЕЖИМА (config.SCORE_MODE):
+
+      heuristic (ДЕФОЛТ) — exp 0.70 / prob 0.20 / liq 0.10, результат в [0,1].
+        Веса пересчитаны после аудита: из формулы убраны rs, regime и vol,
+        чей измеренный вклад неотличим от нуля, и validation_score (вердикт
+        теперь работает отдельным гейтом, а не слагаемым весом 0.05).
+
+      raw_alpha — Score = ExpPnL. Даёт максимальный Rank IC (+0.054 против
+        +0.051 у эвристики), но ХУДШИЙ портфель: модуль ExpPnL связан с
+        волатильностью (корреляция с шириной коридора +0.285), поэтому топ-10
+        набирается из бумаг с широким размахом.
+
+      trade_score — Score = ExpPnL / ATR%. Нормировка прогноза на риск.
+        Измеренный результат: волатильность топ-10 действительно снижается,
+        но доходность падает (альфа -5.2% против +2.1% у эвристики), и режим
+        неустойчив при расколе выборки. Оставлен как доступный режим, но не
+        рекомендован — см. таблицу в config.py.
+
+    Общее для всех режимов: риск-штрафы (_risk_penalties), штраф за контртренд
+    и жёсткий рыночный фильтр strict. Штрафы отключаются
+    config.APPLY_RISK_PENALTIES=0 (на реплее они ухудшают результат).
+    """
+    import config as _cfg
+    mode = _resolve_mode(raw_alpha, mode)
+    if hard_exclude is None:
+        hard_exclude = bool(getattr(_cfg, "RAW_ALPHA_HARD_EXCLUDE", True))
+    if apply_penalties is None:
+        apply_penalties = bool(getattr(_cfg, "APPLY_RISK_PENALTIES", True))
+
+    long = r["direction"] == "LONG"
+    regime = r["regime"]
+    exp = r["exp_pnl"]
+
+    penalty, flags, severe = _risk_penalties(r, long)
+    if not apply_penalties:
+        penalty = 1.0
+
+    if mode == "raw_alpha":
+        final = exp if exp is not None else 0.0
+    elif mode == "trade_score":
+        ts = _trade_score(r)
+        final = ts if ts is not None else 0.0
+    else:
+        exp_score = _clamp01(0.5 + (exp or 0.0) / 2.0)      # ±1% → 0..1
+        prob_score = r["prob_profit"] if r["prob_profit"] is not None else 0.5
+        liq_score = (r["liq_score"] or 50) / 100.0
+        final = 0.70 * exp_score + 0.20 * prob_score + 0.10 * liq_score
+
+    final = _apply_penalty(final, penalty)
+
+    # Штраф за контртренд остаётся: в отличие от regime_score, он не ранжирует
+    # бумаги между собой, а наклоняет весь блок LONG против блока SHORT.
+    counter_trend = (long and regime == "BEAR") or ((not long) and regime == "BULL")
+    if apply_penalties and counter_trend:
+        final = _apply_penalty(final, 0.70)
+
+    # — допустимость сделки —
     allowed = True
-    if strict:
-        if (long and regime == "BEAR") or ((not long) and regime == "BULL"):
-            allowed = False
+    if strict and counter_trend:
+        allowed = False
+    # В режимах, где рейтинг может быть отрицательным, множительный штраф слабо
+    # меняет порядок — тяжёлые риск-условия отсекают бумагу целиком.
+    if mode in ("raw_alpha", "trade_score") and hard_exclude and severe:
+        allowed = False
 
     return final, allowed, flags
 
@@ -393,24 +502,220 @@ def _price_time_txt(r):
     return "—"
 
 
+# ── Путь А: специализация по стратегиям ───────────────────────────────────────
+
+def trading_strategies() -> set[str]:
+    """Что разрешено торговать (config.TRADING_STRATEGIES).
+
+    Отдельно от VALIDATION_STRATS: контур валидации продолжает считать все
+    стратегии, иначе мы перестанем видеть, что происходит с исключённой.
+    """
+    import config as _cfg
+    return set(getattr(_cfg, "TRADING_STRATEGIES", None)
+               or ["long_overnight", "intraday_short"])
+
+
+def _seller_momentum(r: dict) -> bool | None:
+    """Подтверждён ли импульс продавцов: вчера падение И волатильность рынка
+    выше медианы.
+
+    None — данных не хватает (нет ret1 или оценки волатильности рынка). Вызывающий
+    решает сам; здесь мы НЕ выдаём False, чтобы не спутать «нет импульса» с
+    «не знаем».
+    """
+    ret1 = r.get("ret1")
+    mkt = r.get("market_atr_pctl")
+    if ret1 is None or mkt is None:
+        return None
+    return bool(ret1 < 0 and mkt > 50.0)
+
+
+def _overnight_edge_ok(r: dict, k: float) -> bool | None:
+    """ExpPnL превышает издержки round-trip в k раз.
+
+    ExpPnL приходит УЖЕ нетто издержек (directional.strategy_pnl), поэтому это
+    порог сверх безубыточности, а не «покрывает ли сделка комиссию».
+    """
+    exp = r.get("exp_pnl")
+    if exp is None:
+        return None
+    cost = r.get("cost_rt")
+    if cost is None:
+        import config as _cfg
+        cost = float(getattr(_cfg, "TFT_COST_RT", 0.08))
+    return bool(exp > k * float(cost))
+
+
+def _short_squeeze_risk(r: dict) -> bool | None:
+    """Индекс выше своей EMA50 — шортить опасно (риск шорт-сквиза).
+
+    None — признак недоступен.
+    """
+    v = r.get("index_above_ema50")
+    return None if v is None else bool(v)
+
+
+def _overnight_market_too_hot(r: dict, cap: float) -> bool | None:
+    """Волатильность рынка выше потолка — овернайт-лонги запрещены.
+
+    Покупка через ночь на панической волатильности — это ставка на гэп вверх
+    в момент, когда распределение гэпов шире всего.
+    """
+    v = r.get("market_atr_pctl")
+    return None if v is None else bool(float(v) > cap)
+
+
+def apply_strategy_specialisation(rows: list[dict], *,
+                                  allowed: set[str] | None = None,
+                                  require_momentum: bool | None = None,
+                                  overnight_k: float | None = None,
+                                  block_short_uptrend: bool | None = None,
+                                  overnight_max_market_atr: float | None = None,
+                                  verbose: bool = True) -> list[dict]:
+    """Фильтр Пути А: оставить только те сигналы, где есть преимущество.
+
+      1. Торгуются только стратегии из TRADING_STRATEGIES (intraday_long убрана:
+         её средняя доходность -0.2393% при t -17.26).
+      2. intraday_short — только при подтверждённом импульсе продавцов.
+      3. intraday_short запрещён, когда индекс выше своей EMA50 (шорт-сквиз).
+      4. long_overnight — только когда ExpPnL превышает издержки в k раз.
+      5. long_overnight запрещён при рыночной волатильности выше потолка.
+
+    Пункты 3 и 5 — ПРЕДОХРАНИТЕЛИ, а не источники доходности. На выборке из
+    одного медвежьего рынка запрет шорта при растущем индексе стоит около
+    3 п.п. CAGR (12.4% -> 9.3%), потому что убирает только прибыльные шорт-дни;
+    его смысл — защита в режиме, которого в выборке нет. Потолок волатильности
+    для овернайта почти ни на что не влияет (12.363% -> 12.347%).
+
+    Строки, по которым не хватает данных для решения, ПРОПУСКАЮТСЯ (остаются),
+    а не отбрасываются: отсутствие признака не есть отрицательный сигнал.
+    """
+    import config as _cfg
+    allowed = allowed if allowed is not None else trading_strategies()
+    if require_momentum is None:
+        require_momentum = bool(getattr(_cfg, "SELLER_MOMENTUM_SHORT_ENABLED", True))
+    if overnight_k is None:
+        overnight_k = float(getattr(_cfg, "OVERNIGHT_MIN_EDGE_X_COST", 0.5))
+    if block_short_uptrend is None:
+        block_short_uptrend = bool(getattr(_cfg, "SHORT_IMOEX_MAX_TREND", "EMA50"))
+    if overnight_max_market_atr is None:
+        overnight_max_market_atr = float(
+            getattr(_cfg, "OVERNIGHT_MAX_MARKET_ATR_PCTL", 70.0))
+
+    out = []
+    dropped = {"strategy": 0, "momentum": 0, "squeeze": 0, "edge": 0, "hot": 0}
+    for r in rows:
+        st = r.get("strategy")
+        if st not in allowed:
+            dropped["strategy"] += 1
+            continue
+        if st == "intraday_short":
+            if require_momentum and _seller_momentum(r) is False:
+                dropped["momentum"] += 1
+                continue
+            if block_short_uptrend and _short_squeeze_risk(r) is True:
+                dropped["squeeze"] += 1
+                continue
+        if st == "long_overnight":
+            if overnight_k > 0 and _overnight_edge_ok(r, overnight_k) is False:
+                dropped["edge"] += 1
+                continue
+            if (overnight_max_market_atr
+                    and _overnight_market_too_hot(r, overnight_max_market_atr) is True):
+                dropped["hot"] += 1
+                continue
+        out.append(r)
+
+    if verbose and any(dropped.values()):
+        log.info("Специализация: отсеяно по стратегии %d, без импульса %d, "
+                 "риск шорт-сквиза %d, ниже порога %d, рынок перегрет %d; "
+                 "осталось %d.",
+                 dropped["strategy"], dropped["momentum"], dropped["squeeze"],
+                 dropped["edge"], dropped["hot"], len(out))
+    return out
+
+
+REJECTED_VERDICT = "REJECTED"
+
+
+def is_rejected(row: dict) -> bool:
+    """Вердикт контура валидации — REJECTED («отличие от случайности не доказано»)."""
+    return row.get("verdict") == REJECTED_VERDICT
+
+
+def warn_unvalidated(rows: list[dict], *, env: str = "", force: bool = False) -> int:
+    """Печатает предупреждение, если среди кандидатов есть REJECTED-стратегии.
+
+    Возвращает число таких кандидатов. Ничего не блокирует — блокировка живёт
+    в select_top_rows под STRICT_VALIDATION_GATE. Смысл предупреждения: до
+    аудита система молча отправляла в стакан заявки по стратегиям, которые её
+    собственный контур валидации отверг, и об этом нигде не говорилось.
+    """
+    bad = [r for r in rows if is_rejected(r)]
+    if not bad:
+        return 0
+    head = f"{_BOLD}{_RED}" if _color_enabled() else ""
+    tail = _RESET if _color_enabled() else ""
+    print(f"\n{head}{'!' * 88}{tail}")
+    print(f"{head}!!  ВНИМАНИЕ: {len(bad)} из {len(rows)} сигналов имеют вердикт "
+          f"REJECTED{tail}")
+    print(f"{head}!!  Контур валидации не смог отличить эти стратегии от "
+          f"случайности.{tail}")
+    if env == "PROD":
+        print(f"{head}!!  КОНТУР БОЕВОЙ — это реальные деньги на непроверенном "
+              f"сигнале.{tail}")
+    if force:
+        print(f"{head}!!  Передан --force-trade-unvalidated — торговля продолжится.{tail}")
+    else:
+        print(f"{head}!!  STRICT_VALIDATION_GATE=1 остановит торговлю такими "
+              f"сигналами.{tail}")
+    for r in bad[:10]:
+        print(f"{head}!!    {r['ticker']:<6} {r['strategy']:<16} "
+              f"ExpPnL={_f(r.get('exp_pnl'), '+.3f')}%{tail}")
+    if len(bad) > 10:
+        print(f"{head}!!    … ещё {len(bad) - 10}{tail}")
+    print(f"{head}{'!' * 88}{tail}\n")
+    return len(bad)
+
+
 def select_top_rows(val_rows, forecasts, tickers, strats, *,
                     show_all: bool = False, top_n: int = 10,
-                    strict: bool | None = None) -> list[dict]:
+                    strict: bool | None = None,
+                    validation_gate: bool | None = None,
+                    specialise: bool = True) -> list[dict]:
     """Та же пайплайн-логика, что в print_combined → _print_best_trades,
-    но без печати. Возвращает топ-N строк-кандидатов (сортированы по FinalScore).
+    но без печати. Возвращает топ-N строк-кандидатов (сортированы по рейтингу).
 
     Используется services/place_orders.py: для выставления заявок нужна
     ТА ЖЕ выборка, что показана пользователю в блоке «ЛУЧШИЕ СДЕЛКИ».
+
+    ГЕЙТ ВАЛИДАЦИИ (config.STRICT_VALIDATION_GATE, по умолчанию выключен).
+    При включении из кандидатов исключаются стратегии с вердиктом REJECTED.
+    До аудита вердикт вообще не участвовал в отборе: он влиял только на
+    слагаемое validation_score весом 0.15 (то есть менял рейтинг на ~0.05) и
+    не мог помешать сделке. На момент аудита REJECTED имели 138 комбинаций из
+    138, поэтому включение гейта останавливает торговлю полностью — это
+    ожидаемое поведение, а не сбой: см. AUDIT-PROFITABILITY-REPORT.md, §4.1.
+    Пока гейт выключен, вызывающий обязан показать warn_unvalidated().
     """
+    import config as _cfg
     if strict is None:
-        import config as _cfg
         strict = bool(getattr(_cfg, "STRICT_MARKET_FILTER", False))
+    if validation_gate is None:
+        validation_gate = bool(getattr(_cfg, "STRICT_VALIDATION_GATE", False))
+
     fc = dict(forecasts or {})
     fc.pop("__meta__", None)
     rows = _build_rows(val_rows, fc, tickers, strats)
+    rows = _drop_blocked_shorts(rows)
     if not rows:
         return []
     rows = _apply_selection(rows, show_all)
+    # Путь А: специализация — торгуем только там, где измерено преимущество.
+    if specialise:
+        rows = apply_strategy_specialisation(rows)
+        if not rows:
+            return []
     scored = []
     for r in rows:
         score, allowed, flags = _score_row(r, strict)
@@ -423,6 +728,17 @@ def select_top_rows(val_rows, forecasts, tickers, strats, *,
     scored.sort(key=lambda x: x["final_score"], reverse=True)
     cand = [r for r in scored
             if r["exp_pnl"] is not None and r["selected"] is not False]
+
+    if validation_gate:
+        before = len(cand)
+        cand = [r for r in cand if not is_rejected(r)]
+        if before and not cand:
+            log.warning("STRICT_VALIDATION_GATE=1: все %d кандидатов отвергнуты "
+                        "контуром валидации (REJECTED) — сделок нет.", before)
+        elif before != len(cand):
+            log.info("STRICT_VALIDATION_GATE=1: отсеяно %d кандидатов с вердиктом "
+                     "REJECTED, осталось %d.", before - len(cand), len(cand))
+
     if top_n and top_n > 0:
         cand = cand[:top_n]
     return cand
@@ -437,6 +753,9 @@ def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False,
     meta = forecasts.pop("__meta__", None)
 
     rows = _build_rows(val_rows, forecasts, tickers, strats)
+    # Тот же фильтр, что и в select_top_rows: блок «ЛУЧШИЕ СДЕЛКИ» и реальные
+    # заявки строятся из одной выборки — расхождений быть не должно.
+    rows = _drop_blocked_shorts(rows)
     if not rows:
         return
     rows = _apply_selection(rows, show_all)
@@ -457,6 +776,11 @@ def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False,
         _print_market_summary(meta)
         return
     rows.sort(key=lambda x: x["final_score"], reverse=True)
+
+    # Сохранение в БД (forecasts) — ДО отсечения по top_n, чтобы в базе была
+    # вся посчитанная выборка, а не только видимый топ.
+    from . import persist
+    persist.save_daily(rows, meta, forecasts)
 
     # Топ-N бумаг по итоговому рейтингу (FinalScore). По умолчанию 50.
     total_rows = len(rows)
@@ -510,7 +834,22 @@ def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False,
 
     _print_legend()
     _print_flags(rows)
-    _print_best_trades(rows, top_n=best_top_n, position_rub=best_position,
+
+    # Блок «ЛУЧШИЕ СДЕЛКИ» и инструкции для автозаявок ДЕЙСТВЕННЫЕ: из них
+    # напрямую строятся заявки. Поэтому здесь применяется та же специализация
+    # Пути А, что и в select_top_rows, — иначе дашборд предлагал бы сигналы по
+    # стратегиям, которые торговать запрещено (intraday_long), и «что показано»
+    # расходилось бы с «что отправлено».
+    # Таблица ВЫШЕ намеренно остаётся полной: контур валидации продолжает
+    # считать все стратегии из VALIDATION_STRATS, иначе мы перестанем видеть,
+    # что происходит с исключённой.
+    tradable = apply_strategy_specialisation(rows, verbose=False)
+    if len(tradable) != len(rows):
+        allowed = ", ".join(sorted(trading_strategies()))
+        print(f"\n  К торговле допущено {len(tradable)} из {len(rows)} сигналов "
+              f"(TRADING_STRATEGIES: {allowed} + предохранители Пути А).")
+        print("  Строки выше — полный мониторинг, включая нетоварные стратегии.")
+    _print_best_trades(tradable, top_n=best_top_n, position_rub=best_position,
                        entry_frac=entry_frac)
     _print_market_summary(meta)
 
@@ -521,11 +860,14 @@ _DOW_RU = ("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
 
 
 def _next_trading_day(d):
-    import datetime as dt
-    d = d + dt.timedelta(days=1)
-    while d.weekday() >= 5:          # сб/вс → следующий будний
-        d += dt.timedelta(days=1)
-    return d
+    """Следующий торговый день по календарю биржи (services/calendar.py).
+
+    Раньше здесь было `while d.weekday() >= 5` — жёсткий Пн–Пт: окно в шапке
+    расходилось с шагом модели при торговле по выходным и не знало о
+    праздниках и переносах."""
+    from services.calendar import get_calendar
+    days = get_calendar().get_next_trading_days(d, 1)
+    return days[0] if days else d
 
 
 def print_weekly_dashboard(forecasts, top_n: int = 50) -> None:
@@ -578,18 +920,27 @@ def print_weekly_dashboard(forecasts, top_n: int = 50) -> None:
     if not rows:
         return
     rows.sort(key=lambda x: x["exp"], reverse=True)
+
+    # Сохранение в БД (forecasts, strategy='weekly') — тоже до отсечения top_n.
+    from . import persist
+    _h = int(fc[rows[0]["ticker"]].get("WeekHorizon", 5))
+    persist.save_weekly(rows, meta, _h)
+
     total = len(rows)
     if top_n and top_n > 0:
         rows = rows[:top_n]
 
-    # Окно прогноза от ТЕКУЩЕГО дня недели (следующие H торговых дней).
+    # Окно прогноза = ровно те H торговых дней, которые покрывает горизонт
+    # модели. Календарь один: TradingCalendar знает праздники, переносы и
+    # расписание биржи из API, а маску дней недели берёт из режима проекта.
+    from services.calendar import get_calendar
     h = int(fc[rows[0]["ticker"]].get("WeekHorizon", 5))
     as_of = meta.get("as_of") or dt.datetime.now(dt.timezone(dt.timedelta(hours=3)))
     today = as_of.date() if hasattr(as_of, "date") else as_of
-    start = _next_trading_day(today)
-    end = start
-    for _ in range(h - 1):
-        end = _next_trading_day(end)
+    _cal = get_calendar()
+    horizon_days = _cal.get_next_trading_days(today, h)
+    start = horizon_days[0] if horizon_days else today
+    end = _cal.get_target_horizon_date(today, h) or start
 
     W = 146
     print("\n" + "=" * W)
@@ -760,6 +1111,41 @@ def _unavailable_tickers() -> set[str]:
     return _DEFAULT_UNAVAILABLE | set(extra)
 
 
+# Бумаги, по которым брокер не даёт маржинальный шорт (shortEnabledFlag=false в
+# InstrumentsService/ShareBy). Заявка SELL без позиции по ним отклоняется, а
+# сигнал intraday_short по ним заведомо неисполним.
+# Базовый список сверен с API по всем 46 тикерам config.TICKERS: ровно эти три.
+# Расширяется из окружения: NON_SHORTABLE_TICKERS="AKRN CBOM MVID XXXX".
+# Источник истины при выставлении — живой флаг Instrument.short_enabled
+# (см. services/place_orders.py); этот список нужен, чтобы отсечь сигнал раньше,
+# ещё до похода в API.
+_DEFAULT_NON_SHORTABLE: set[str] = {"AKRN", "CBOM", "MVID"}
+
+
+def non_shortable_tickers() -> set[str]:
+    """Тикеры, по которым шорт запрещён: базовый список + NON_SHORTABLE_TICKERS."""
+    extra = os.getenv("NON_SHORTABLE_TICKERS", "").upper().split()
+    return _DEFAULT_NON_SHORTABLE | set(extra)
+
+
+def _drop_blocked_shorts(rows: list[dict]) -> list[dict]:
+    """Убирает SHORT-сигналы по нешортабельным бумагам.
+
+    Вызывается ДО отбора лучшей дневной стратегии, поэтому бумага не выпадает
+    из дашборда целиком — по ней остаётся LONG-кандидат, если он есть.
+    """
+    blocked = non_shortable_tickers()
+    if not blocked:
+        return rows
+    kept = []
+    for r in rows:
+        if r.get("direction") == "SHORT" and r["ticker"].upper() in blocked:
+            log.info("[SKIP SHORT] %s: шорт недоступен у брокера", r["ticker"])
+            continue
+        kept.append(r)
+    return kept
+
+
 def _lot_size(ticker: str) -> tuple[int, bool]:
     """Возвращает (размер_лота, точно_известен). False → дефолт 1, надо проверить."""
     tk = ticker.upper()
@@ -847,7 +1233,7 @@ class Order:
     entry_price:     Optional[float]  # лимитная цена входа
     better_pct:      Optional[float]  # насколько entry выгоднее спота
     stop_price:      Optional[float]
-    stop_pct:        Optional[float]  # |down_pct|
+    stop_pct:        Optional[float]  # расстояние стопа, % (>= MIN_STOP_PCT)
     tp_price:        Optional[float]  # take-profit (цель по диапазону)
     tp_pct:          Optional[float]  # |прибыль%| от входа до tp_price
     lot_size:        int
@@ -899,8 +1285,26 @@ def _risk_parity_alloc(geoms: list[dict], budget_rub: float) -> list[float]:
     return alloc
 
 
+def stop_distance_pct(down: float) -> float:
+    """Расстояние стопа от входа, %: всегда положительное и не меньше MIN_STOP_PCT.
+
+    down — Downside стратегии: q0.10 знаковой доходности минус издержки. Для
+    уверенного прогноза q0.10 бывает выше издержек, и тогда down > 0. Прежняя
+    формула entry·(1 + down/100) давала лонгу стоп ВЫШЕ входа (ENPG 10.09:
+    вход 310,81, стоп 312,47) — при постановке он сработал бы сразу.
+
+    Убыточный хвост (down < 0) задаёт расстояние, оптимистичный (down ≥ 0) —
+    нет, и тогда действует пол. Именно max(−down, 0), а не |down|: при
+    down = +3% модуль дал бы стоп в 3%, то есть расстояние, растущее вместе с
+    оптимизмом модели, — ровно то, от чего пол должен защищать.
+    """
+    import config as _cfg
+    floor = float(getattr(_cfg, "MIN_STOP_PCT", 1.0))
+    return max(max(-float(down), 0.0), floor)
+
+
 def build_orders(top: list[dict], position_rub: float,
-                 entry_frac: float, tp_frac: float = 1.0,
+                 entry_frac: float, tp_frac: float | None = None,
                  budget_rub: float | None = None) -> list[Order]:
     """Чистая функция: top-N рейтинга → список структурированных Order.
 
@@ -908,20 +1312,38 @@ def build_orders(top: list[dict], position_rub: float,
     и services/place_orders.py (для отправки в T-Invest). Логика расчёта ТА ЖЕ
     (никаких расхождений между «что показано» и «что отправлено»).
 
-    Размер позиции:
+    Размер позиции (контракт ОДИНАКОВ в обоих режимах — не хватает на лот,
+    бумага пропускается, а не «доливается» до целого лота):
       • budget_rub задан → РИСК-ПАРИТЕТ: бюджет делится по бумагам так, чтобы
-        рублёвый риск (объём × стоп%) был одинаков; вес ∝ 1/стоп%. Если на
-        бумагу не хватает даже 1 лота — она пропускается (0 лотов).
-      • иначе → фикс position_rub на бумагу, минимум 1 лот (прежнее поведение).
+        рублёвый риск (объём × стоп%) был одинаков; вес ∝ 1/стоп%.
+      • иначе → фикс position_rub на бумагу.
+    В обоих случаях число лотов округляется ВНИЗ, и при 0 лотов заявка
+    помечается неисполнимой (quantity_lots=None → is_placeable False).
 
     Прочее (цена входа в коридоре, стоп от входа, take-profit по диапазону) —
     без изменений.
+
+    tp_frac=None → config.LIMIT_TP_FRACTION. Значение по умолчанию не
+    дублируется в сигнатурах: раньше здесь и в compute_orders стояла
+    захардкоженная 1.0, и она молча побеждала конфигурацию при вызове без
+    явного аргумента.
     """
+    if tp_frac is None:
+        import config as _cfg
+        tp_frac = float(getattr(_cfg, "LIMIT_TP_FRACTION", 0.5))
     unavail = _unavailable_tickers()
+    blocked_short = non_shortable_tickers()
 
     # ── проход 1: геометрия входа/стопа/тейка на каждую бумагу
     geoms: list[dict] = []
     for r in top:
+        # Вторая линия защиты: сюда строка могла прийти в обход дашборда
+        # (например из сохранённого топа) — шорт по нешортабельной бумаге
+        # помечаем неторгуемым, чтобы заявка не ушла брокеру.
+        if r["direction"] == "SHORT" and r["ticker"].upper() in blocked_short:
+            log.info("[SKIP SHORT] %s: шорт недоступен у брокера", r["ticker"])
+            r = dict(r)
+            r["_short_blocked"] = True
         anchor = r.get("anchor_price")
         down   = r.get("down")
         f_low  = r.get("f_low")
@@ -929,7 +1351,7 @@ def build_orders(top: list[dict], position_rub: float,
         tk     = r["ticker"]
         lng    = (r["direction"] == "LONG")
         lot, lot_known = _lot_size(tk)
-        na = tk in unavail
+        na = tk in unavail or bool(r.get("_short_blocked"))
 
         entry, _src = _limit_entry_price(r["direction"], anchor, f_low, f_high, entry_frac)
         better = None
@@ -939,8 +1361,8 @@ def build_orders(top: list[dict], position_rub: float,
                 better = -better
 
         if entry and entry > 0 and down is not None:
-            stop_p   = entry * (1.0 + down / 100.0) if lng else entry * (1.0 - down / 100.0)
-            stop_pct = abs(down)
+            stop_pct = stop_distance_pct(down)
+            stop_p   = entry * (1.0 - stop_pct / 100.0) if lng else entry * (1.0 + stop_pct / 100.0)
         else:
             stop_p = stop_pct = None
 
@@ -970,8 +1392,32 @@ def build_orders(top: list[dict], position_rub: float,
                 total = (lots * lot * entry) if lots > 0 else None
                 lots = lots if lots > 0 else None
             else:
-                lots = max(1, int(position_rub / (entry * lot)))
-                total = lots * lot * entry
+                # Честное квантование вниз, как и в риск-паритете. Прежний
+                # max(1, ...) насильно ставил минимум один лот, даже когда он
+                # дороже лимита позиции: это тихая эскалация риска —
+                # незапланированная маржиналка (или отказ INSUFFICIENT_FUNDS)
+                # и перекос диверсификации на дорогих лотах.
+                #
+                # Предохранитель ликвидности (аудит r4, 17.09): целевая сумма —
+                # min(лимит позиции, MaxPos). MaxPos = min(λ/ILLIQ Амихуда, 1 % ADV)
+                # раньше ограничивал только риск-паритет, и в AKRN (MaxPos
+                # 60 тыс. ₽) ушла бы заявка на 100 тыс. ₽. MaxPos неизвестен
+                # (мало истории, нет лота) — действует лимит позиции.
+                target = position_rub
+                mp = g.get("max_pos")
+                if mp and mp > 0 and mp < target:
+                    log.info("[LIQ] %s: позиция урезана до MaxPos %.0f ₽ (лимит %.0f ₽)",
+                             g["tk"], mp, position_rub)
+                    target = mp
+                lots = int(target / (entry * lot))
+                if lots <= 0:
+                    log.warning("[SKIP] %s: 1 лот (%.2f ₽) превышает допустимую "
+                                "позицию (%.2f ₽: лимит %.2f, MaxPos %s)", g["tk"],
+                                entry * lot, target, position_rub,
+                                f"{mp:.2f}" if mp else "—")
+                    lots = total = None
+                else:
+                    total = lots * lot * entry
         else:
             lots = total = None
 
@@ -992,7 +1438,7 @@ def _print_order_instructions(top: list[dict], position_rub: float,
                               entry_frac: float) -> None:
     """Печатает блок «ИНСТРУКЦИИ ДЛЯ АВТОЗАЯВОК» из подготовленных Order."""
     import config as _cfg
-    tp_frac = float(getattr(_cfg, "LIMIT_TP_FRACTION", 1.0))
+    tp_frac = float(getattr(_cfg, "LIMIT_TP_FRACTION", 0.5))
     W = 176
     pos_k = position_rub / 1000.0
     orders = build_orders(top, position_rub, entry_frac, tp_frac=tp_frac)

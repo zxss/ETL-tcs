@@ -13,6 +13,7 @@ from datetime import datetime, timezone, timedelta
 import aiohttp
 
 import config
+import tls
 
 log = logging.getLogger("moex_loader")
 
@@ -33,13 +34,80 @@ def iso_utc(dt: datetime) -> str:
     return dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def bar_date_msk(iso_ts: str) -> str:
+    """ISO-метка начала бара (UTC) → торговая дата 'YYYY-MM-DD' по Москве.
+
+    Раньше дата бралась срезом строки iso_ts[:10], то есть по КАЛЕНДАРЮ UTC.
+    Сейчас T-Invest отдаёт дневные бары как '2026-09-05T00:00:00Z', и срез
+    совпадает с московской датой — но это совпадение, а не гарантия: как только
+    брокер вернёт начало бара в 21:00Z (= 00:00 MSK следующего дня), срез
+    сдвинет всю историю на день назад. Торговый день MOEX — московский
+    календарный день, поэтому переводим явно."""
+    ts = iso_ts.replace("Z", "+00:00")
+    try:
+        dt = datetime.fromisoformat(ts)
+    except ValueError:
+        # запасной путь: дробные секунды переменной длины
+        head, _, rest = ts.partition(".")
+        tz = rest[-6:] if len(rest) >= 6 else "+00:00"
+        dt = datetime.fromisoformat(head + tz)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(MSK).date().isoformat()
+
+
 def make_headers() -> dict:
-    import urllib3
-    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    """Заголовки запроса к API брокера. Здесь же — валидация наличия токена:
+    config импортируется без него, а сетевой клиент без токена работать не может."""
     return {
-        "Authorization": f"Bearer {config.INVEST_TOKEN}",
+        "Authorization": f"Bearer {config.require_invest_token()}",
         "Content-Type": "application/json",
     }
+
+
+def make_connector() -> aiohttp.TCPConnector:
+    """TCPConnector с проверкой TLS по config.INVEST_TLS_VERIFY (по умолч. вкл)."""
+    return aiohttp.TCPConnector(ssl=tls.aiohttp_ssl())
+
+
+# --- Расписание торгов (синхронный запрос) ----------------------------------
+
+def fetch_trading_schedules_sync(exchange: str, from_date, to_date, timeout: float = 20.0) -> dict:
+    """InstrumentsService/TradingSchedules по бирже — синхронно, на stdlib.
+
+    Синхронный, потому что вызывается из services/calendar.sync_schedule() вне
+    asyncio-контура (шаг ETL в main.py). Ограничения API: `from` не может быть
+    в прошлом, `to` — не дальше 14 дней от текущей даты.
+    """
+    import json
+    import urllib.error
+    import urllib.request
+
+    import tls
+
+    def _iso(d):
+        if isinstance(d, datetime):
+            return d.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+        return datetime(d.year, d.month, d.day, tzinfo=timezone.utc)\
+            .isoformat().replace("+00:00", "Z")
+
+    url = f"{config.API_BASE_URL}/{config.API_SERVICE}.InstrumentsService/TradingSchedules"
+    body = json.dumps({"exchange": exchange,
+                       "from": _iso(from_date),
+                       "to": _iso(to_date)}).encode("utf-8")
+    req = urllib.request.Request(
+        url, data=body, method="POST",
+        headers={"Authorization": f"Bearer {config.require_invest_token()}",
+                 "Content-Type": "application/json",
+                 "Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout, context=tls.ssl_context()) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", errors="replace")[:200]
+        raise RuntimeError(f"TradingSchedules: HTTP {e.code} {detail}") from e
+    except urllib.error.URLError as e:
+        raise RuntimeError(f"TradingSchedules: сетевая ошибка: {e}") from e
 
 
 # --- Async HTTP с ретраями --------------------------------------------------
@@ -157,7 +225,7 @@ async def fetch_daily_candles(
         if o == 0:
             continue
         rows.append((
-            key[:10],                                    # date
+            bar_date_msk(key),                           # торговая дата (MSK)
             round(o, 4),
             round(quotation_to_float(c["high"]), 4),
             round(quotation_to_float(c["low"]), 4),

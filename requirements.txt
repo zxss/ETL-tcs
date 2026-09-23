@@ -1,16 +1,23 @@
-aiohttp>=3.9.0
-anthropic>=0.40.0
-psycopg2-binary>=2.9.9
-python-dotenv>=1.0.0
-requests>=2.31.0
-telethon>=1.36.0
+# Базовый стек: всё, что нужно штатному конвейеру (ETL → валидация → прогноз).
+# Устанавливается всегда.
+#
+#   pip install -r requirements.txt
+#
+# Тяжёлые ML-библиотеки вынесены отдельно и опциональны:
+#   pip install -r requirements-ml.txt              # torch, hmmlearn
+# Отключённый контур новостей:
+#   pip install -r contrib/experimental_news/requirements.txt
 
-# Strategy Edge Validator (strategy_validation/)
-numpy>=1.26.0
-pandas>=2.0.0
-scipy>=1.11.0
-hmmlearn>=0.3.0  # опционально: HMM-режимы (есть квантильный fallback)
+# --- Загрузка данных ---------------------------------------------------------
+aiohttp~=3.13           # асинхронные запросы к T-Invest API
+psycopg2-binary~=2.9    # PostgreSQL
+python-dotenv~=1.2      # чтение .env в config.py
 
-# Multi-Asset TFT Next-Day Range Forecast (tft_forecast/)
-# torch опционален: без него используется калиброванный baseline.
-torch>=2.2.0  # опционально: полноценный Temporal Fusion Transformer
+# --- Расчёты (валидация стратегий, признаки, прогноз) ------------------------
+numpy~=2.0
+pandas~=2.3
+scipy~=1.13             # статистики контура валидации
+
+# Тесты идут на stdlib unittest — отдельной зависимости не требуют:
+#   python3 -m unittest discover -s tests -t .
+# pytest опционален (tests/conftest.py работает с обоими раннерами).

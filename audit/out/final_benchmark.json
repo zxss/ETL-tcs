@@ -1,0 +1,293 @@
+{
+ "дашборд FinalScore top10": {
+  "perf": {
+   "n": 455,
+   "total_return_pct": -17.83469389578485,
+   "cagr_pct": -10.308654025725817,
+   "mean_daily_pct": -0.033219685142307595,
+   "vol_annual_pct": 22.40238137844141,
+   "sharpe": -0.3736817311715604,
+   "profit_factor": 0.9322775572863703,
+   "max_drawdown_pct": -29.473817112792354,
+   "win_rate": 0.432967032967033,
+   "best_day_pct": 6.889619130817617,
+   "worst_day_pct": -7.103902223034596
+  },
+  "alpha": {
+   "beta": -0.6161109004475569,
+   "alpha_daily_pct": -0.03762619246227445,
+   "alpha_annual_pct": -9.481800500493161,
+   "strategy_annual_pct": -0.7811328005300948,
+   "bench_annual_pct": -14.121918137859117,
+   "excess_annual_pct": 13.34078533732902,
+   "corr": -0.6175778708431459,
+   "n_days": 343
+  }
+ },
+ "дашборд top5": {
+  "perf": {
+   "n": 455,
+   "total_return_pct": -13.954036826290139,
+   "cagr_pct": -7.986672043271792,
+   "mean_daily_pct": -0.021939756220804418,
+   "vol_annual_pct": 23.686019700930743,
+   "sharpe": -0.2334211757590263,
+   "profit_factor": 0.9578240831285634,
+   "max_drawdown_pct": -36.41186535522982,
+   "win_rate": 0.43736263736263736,
+   "best_day_pct": 7.926952509797781,
+   "worst_day_pct": -7.293700799027635
+  },
+  "alpha": {
+   "beta": -0.606897576328302,
+   "alpha_daily_pct": -0.027799216544769308,
+   "alpha_annual_pct": -7.005402569281865,
+   "strategy_annual_pct": 1.56515532169152,
+   "bench_annual_pct": -14.121918137859117,
+   "excess_annual_pct": 15.687073459550637,
+   "corr": -0.5769439687567955,
+   "n_days": 343
+  }
+ },
+ "дашборд risk-parity": {
+  "perf": {
+   "n": 455,
+   "total_return_pct": -19.014375014522255,
+   "cagr_pct": -11.024161634206209,
+   "mean_daily_pct": -0.036761839704607474,
+   "vol_annual_pct": 21.99002224448759,
+   "sharpe": -0.42128122939408846,
+   "profit_factor": 0.9237992391002787,
+   "max_drawdown_pct": -30.043855337070045,
+   "win_rate": 0.43956043956043955,
+   "best_day_pct": 6.821183506862676,
+   "worst_day_pct": -6.940148364626722
+  },
+  "alpha": {
+   "beta": -0.608219726405586,
+   "alpha_daily_pct": -0.044742431557848426,
+   "alpha_annual_pct": -11.275092752577804,
+   "strategy_annual_pct": -2.6858635664470496,
+   "bench_annual_pct": -14.121918137859117,
+   "excess_annual_pct": 11.436054571412066,
+   "corr": -0.62162663021615,
+   "n_days": 343
+  }
+ },
+ "только long": {
+  "perf": {
+   "n": 455,
+   "total_return_pct": -50.78945203029742,
+   "cagr_pct": -32.4776390748798,
+   "mean_daily_pct": -0.15284305838606385,
+   "vol_annual_pct": 12.046291388764535,
+   "sharpe": -3.1973700012945088,
+   "profit_factor": 0.5301190169544001,
+   "max_drawdown_pct": -51.68904048725279,
+   "win_rate": 0.34285714285714286,
+   "best_day_pct": 3.9305687187131824,
+   "worst_day_pct": -2.825030764790922
+  },
+  "alpha": {
+   "beta": 0.31124658555483453,
+   "alpha_daily_pct": -0.14897995106125778,
+   "alpha_annual_pct": -37.54294766743696,
+   "strategy_annual_pct": -41.9383464693305,
+   "bench_annual_pct": -14.121918137859117,
+   "excess_annual_pct": -27.81642833147138,
+   "corr": 0.513874658071281,
+   "n_days": 343
+  }
+ },
+ "только exp_score (без обёртки)": {
+  "perf": {
+   "n": 455,
+   "total_return_pct": -9.473357107039536,
+   "cagr_pct": -5.363039411430293,
+   "mean_daily_pct": -0.013288742608558824,
+   "vol_annual_pct": 20.81302808353489,
+   "sharpe": -0.1608974496126308,
+   "profit_factor": 0.9698014741499882,
+   "max_drawdown_pct": -27.23986981869665,
+   "win_rate": 0.44835164835164837,
+   "best_day_pct": 6.164609465032442,
+   "worst_day_pct": -6.305001003012453
+  },
+  "alpha": {
+   "beta": -0.4790787355490575,
+   "alpha_daily_pct": -0.0016006252932580442,
+   "alpha_annual_pct": -0.4033575739010271,
+   "strategy_annual_pct": 6.3621531111118195,
+   "bench_annual_pct": -14.121918137859117,
+   "excess_annual_pct": 20.48407124897094,
+   "corr": -0.5314318931044952,
+   "n_days": 343
+  }
+ },
+ "случайный отбор (контроль)": {
+  "perf": {
+   "n": 455,
+   "total_return_pct": -46.32008965034111,
+   "cagr_pct": -29.147154816781818,
+   "mean_daily_pct": -0.13481650383822144,
+   "vol_annual_pct": 9.608091475742407,
+   "sharpe": -3.535952905215933,
+   "profit_factor": 0.49293280696744957,
+   "max_drawdown_pct": -45.87154257234726,
+   "win_rate": 0.33186813186813185,
+   "best_day_pct": 5.399883165618284,
+   "worst_day_pct": -3.9489418898355773
+  },
+  "alpha": {
+   "beta": 0.03321390338404163,
+   "alpha_daily_pct": -0.13521297208374175,
+   "alpha_annual_pct": -34.07366896510292,
+   "strategy_annual_pct": -34.54271298973112,
+   "bench_annual_pct": -14.121918137859117,
+   "excess_annual_pct": -20.420794851872003,
+   "corr": 0.07872742800126536,
+   "n_days": 343
+  }
+ },
+ "дашборд + HMM-фильтр": {
+  "perf": {
+   "n": 455,
+   "total_return_pct": -19.248670217852194,
+   "cagr_pct": -11.166820009855282,
+   "mean_daily_pct": -0.03692446795625001,
+   "vol_annual_pct": 22.52584185123091,
+   "sharpe": -0.4130796081419945,
+   "profit_factor": 0.9258173882663923,
+   "max_drawdown_pct": -31.267350699461225,
+   "win_rate": 0.4307692307692308,
+   "best_day_pct": 6.889619130817617,
+   "worst_day_pct": -7.103902223034596
+  },
+  "alpha": {
+   "beta": -0.6481075630562567,
+   "alpha_daily_pct": -0.044333772697500384,
+   "alpha_annual_pct": -11.172110719770096,
+   "strategy_annual_pct": -2.0195887697622754,
+   "bench_annual_pct": -14.121918137859117,
+   "excess_annual_pct": 12.102329368096841,
+   "corr": -0.6446245371324705,
+   "n_days": 343
+  }
+ },
+ "GBDT long top10 (нетто)": {
+  "perf": {
+   "n": 323,
+   "total_return_pct": -47.14117244762734,
+   "cagr_pct": -39.189267194652466,
+   "mean_daily_pct": -0.1889004935435488,
+   "vol_annual_pct": 20.438447587107703,
+   "sharpe": -2.3290870879548398,
+   "profit_factor": 0.6542518526380016,
+   "max_drawdown_pct": -50.23936790923691,
+   "win_rate": 0.4458204334365325,
+   "best_day_pct": 6.312070985836541,
+   "worst_day_pct": -6.012370476192327
+  },
+  "alpha": {
+   "beta": 0.6542237573861426,
+   "alpha_daily_pct": -0.1498822472799714,
+   "alpha_annual_pct": -37.7703263145528,
+   "strategy_annual_pct": -47.60292437297429,
+   "bench_annual_pct": -15.02941149325766,
+   "excess_annual_pct": -32.57351287971663,
+   "corr": 0.6877169345245744,
+   "n_days": 323
+  }
+ },
+ "GBDT long top10 (валовой)": {
+  "perf": {
+   "n": 323,
+   "total_return_pct": -19.908073753464052,
+   "cagr_pct": -15.902844394914206,
+   "mean_daily_pct": -0.06043083171490981,
+   "vol_annual_pct": 20.436014193381997,
+   "sharpe": -0.745182962198612,
+   "profit_factor": 0.8738561650325922,
+   "max_drawdown_pct": -28.317222088455594,
+   "win_rate": 0.5077399380804953,
+   "best_day_pct": 6.432774440664597,
+   "worst_day_pct": -5.8900802091266025
+  },
+  "alpha": {
+   "beta": 0.6540725922446663,
+   "alpha_daily_pct": -0.02142160101924783,
+   "alpha_annual_pct": -5.398243456850453,
+   "strategy_annual_pct": -15.228569592157273,
+   "bench_annual_pct": -15.02941149325766,
+   "excess_annual_pct": -0.19915809889961167,
+   "corr": 0.6876399005820006,
+   "n_days": 323
+  }
+ },
+ "GBDT market-neutral (нетто)": {
+  "perf": {
+   "n": 323,
+   "total_return_pct": -21.35386194179032,
+   "cagr_pct": -17.089603087988113,
+   "mean_daily_pct": -0.07349056630625089,
+   "vol_annual_pct": 6.557623922488035,
+   "sharpe": -2.824136139565118,
+   "profit_factor": 0.6253739010629303,
+   "max_drawdown_pct": -21.44435608975477,
+   "win_rate": 0.42724458204334365,
+   "best_day_pct": 1.2626626357673703,
+   "worst_day_pct": -1.299656785015493
+  },
+  "alpha": {
+   "beta": -0.05398376540928934,
+   "alpha_daily_pct": -0.07671018624391636,
+   "alpha_annual_pct": -19.33096693346692,
+   "strategy_annual_pct": -18.519622709175223,
+   "bench_annual_pct": -15.02941149325766,
+   "excess_annual_pct": -3.4902112159175647,
+   "corr": -0.17686747695328897,
+   "n_days": 323
+  }
+ },
+ "GBDT market-neutral (валовой)": {
+  "perf": {
+   "n": 323,
+   "total_return_pct": 19.858458531922587,
+   "cagr_pct": 15.179765516776843,
+   "mean_daily_pct": 0.056946381484907674,
+   "vol_annual_pct": 6.55808851120628,
+   "sharpe": 2.18821202392664,
+   "profit_factor": 1.4395116222801911,
+   "max_drawdown_pct": -4.253237503597729,
+   "win_rate": 0.5603715170278638,
+   "best_day_pct": 1.3921295375963396,
+   "worst_day_pct": -1.1723862720321387
+  },
+  "alpha": {
+   "beta": -0.054065051402246114,
+   "alpha_daily_pct": 0.05372191360820734,
+   "alpha_annual_pct": 13.53792222926825,
+   "strategy_annual_pct": 14.350488134196734,
+   "bench_annual_pct": -15.02941149325766,
+   "excess_annual_pct": 29.379899627454392,
+   "corr": -0.17712124642537805,
+   "n_days": 323
+  }
+ },
+ "IMOEX buy&hold": {
+  "perf": {
+   "n": 581,
+   "total_return_pct": -31.404428216330437,
+   "cagr_pct": -15.08275605519196,
+   "mean_daily_pct": -0.05370781258759515,
+   "vol_annual_pct": 23.760254006269058,
+   "sharpe": -0.5696222257768365,
+   "profit_factor": 0.908023985165761,
+   "max_drawdown_pct": -41.120037039932114,
+   "win_rate": 0.4819277108433735,
+   "best_day_pct": 9.185789070744278,
+   "worst_day_pct": -4.291397492988791
+  },
+  "alpha": {}
+ }
+}

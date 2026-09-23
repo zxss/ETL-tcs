@@ -1,0 +1,4 @@
+# Зависимости отключённого контура новостей (contrib/experimental_news/).
+# В основной requirements.txt не входят: штатный конвейер их не использует.
+telethon~=1.43        # чтение Telegram-канала @markettwits
+anthropic~=0.105      # LLM-разметка сентимента (есть regex-fallback)

@@ -1,0 +1,15 @@
+# Ротация лога сбора новостей: 144 запуска в сутки пишут в один файл, и без
+# ротации он растёт неограниченно.
+#
+# Установка (от root):
+#   install -o root -g root -m 644 scripts/logrotate-etl-news /etc/logrotate.d/etl-news
+/opt/etl-tcs/logs/news_tg.log {
+    weekly
+    rotate 4
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+    su etl etl
+}

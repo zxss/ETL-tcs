@@ -1,0 +1,150 @@
+{
+  "version": "strategic-2026-09-18",
+  "source": "ТЗ пользователя 18.09.2026 — стратегическое исследование, гипотезы H1–H5",
+  "note": "Правила заморожены ДО прогонов. Любая правка — новая версия и новая запись в audit/r4_research/trials.jsonl.",
+  "samples": {
+    "dev": {
+      "from": "2024-05-21",
+      "to": "2026-09-11",
+      "tables": {
+        "bars": "market_data_5m",
+        "daily": "market_data"
+      }
+    },
+    "holdout": {
+      "from": "2022-01-03",
+      "to": "2024-05-20",
+      "tables": {
+        "bars": "research_bars_5m",
+        "daily": "research_bars_5m"
+      }
+    }
+  },
+  "universe": {
+    "index": "IMOEX",
+    "note": "46 акций, по которым есть 5-минутки в обеих выборках; отбор пересечением, чтобы состав не менялся между dev и holdout",
+    "min_adv_rub": 20000000.0
+  },
+  "costs": {
+    "fee_broker_side_pct": 0.04,
+    "fee_exchange_side_pct": 0.03,
+    "spread_source": "corwin_schultz",
+    "spread_floor_source": "audit/out/cost_matrix.csv",
+    "impact_law": "sqrt",
+    "impact_Y": 1.0,
+    "capacity_formula": "Q_opt/V = 4/9 * (alpha/(Y*sigma))^2",
+    "carry": "research/cost_model.carry_pct — непокрытые позиции на ночь"
+  },
+  "gates": {
+    "dev": {
+      "excess_annual_min_pct": 2.0,
+      "t_min": 3.01,
+      "pbo_max": 0.4,
+      "capacity_min_rub": 5000000.0
+    },
+    "holdout": {
+      "t_min": 2.5,
+      "net_excess_min_pct": 0.0,
+      "dsr_min": 0.95
+    },
+    "t_min_source": "Harvey, Liu, Zhu (2016) — порог t > 3,0 с поправкой на множественное тестирование"
+  },
+  "cpcv": {
+    "blocks": 5,
+    "k_test": 2,
+    "embargo_days": 5
+  },
+  "hypotheses": {
+    "h1_factor_breadth": {
+      "title": "Кросс-секционный факторный охват (Gu, Kelly, Xiu 2020)",
+      "factors": [
+        "residual_momentum_30",
+        "residual_momentum_90",
+        "garman_klass_vol",
+        "amihud_illiq",
+        "dist_ema50",
+        "dist_ema200"
+      ],
+      "model": "ridge",
+      "alphas": [
+        1.0,
+        10.0,
+        100.0
+      ],
+      "rebalance_days": 5,
+      "portfolio": "long_top_decile_vs_fund",
+      "diagnostic_portfolio": "long_short_deciles",
+      "min_names": 3,
+      "note": "шорт-нога считается только справочно: в контуре нет ночного непокрытого плеча",
+      "headline_config": {
+        "alpha": 10.0,
+        "n_names": 5
+      },
+      "grid_for_pbo": "alpha ∈ {1, 10, 100} × размер корзины ∈ {3, 5}"
+    },
+    "h2_aggregated_ofi": {
+      "title": "Агрегированный дисбаланс потока заявок — ПРОКСИ по барам",
+      "data_limitation": "Стакана в БД нет и исторический стакан T-Invest API не отдаёт. Настоящий OFI (Cont, Kukanov, Stoikov 2014) по имеющимся данным неизмерим.",
+      "proxy": "знаковый объём по правилу тика на 5-минутках (Lee-Ready без котировок) + подтверждение ценой выше VWAP",
+      "session": [
+        "10:00",
+        "16:30"
+      ],
+      "z_window_days": 60,
+      "z_threshold": 2.0,
+      "hold_days": [
+        1,
+        2
+      ],
+      "sides": [
+        "long"
+      ],
+      "headline_config": "z ≥ 2,0, удержание 1 день",
+      "grid_for_pbo": "z ∈ {1,5; 2,0; 2,5} × удержание ∈ {1, 2}"
+    },
+    "h3_meta_labeling": {
+      "title": "Двухэтапная фильтрация сделок (López de Prado)",
+      "primary": "пробой дневного диапазона вверх (close > max(high) за 20 дней)",
+      "barriers": {
+        "tp_atr": 1.5,
+        "sl_atr": 1.0,
+        "max_days": 5,
+        "atr_window": 14
+      },
+      "meta_model": "random_forest",
+      "meta_params": {
+        "max_depth": 3,
+        "n_estimators": 200,
+        "min_samples_leaf": 20
+      },
+      "meta_features": [
+        "atr_pct",
+        "dist_ema50",
+        "garman_klass_vol",
+        "amihud_illiq",
+        "residual_momentum_30",
+        "rel_volume",
+        "imoex_ret_5"
+      ],
+      "p_threshold": 0.6,
+      "headline_config": "P > 0,60 (порог ТЗ)",
+      "quantile_variants": "q80/q90 — верхние 20 %/10 % по P; объявлены до прогона, потому что при несимметричных барьерах базовая доля тейков ниже 0,5 и абсолютный порог может не достигаться",
+      "grid_for_pbo": "пороги 0,50/0,55/0,60/0,65 и квантили q80/q90"
+    },
+    "h4_totm_inelastic": {
+      "title": "Календарный макро-приток (McConnell & Xu 2008)",
+      "entry": "18:35 последнего торгового дня месяца (T-1)",
+      "exit": "18:20 третьего торгового дня нового месяца (T+3)",
+      "basket": "топ-5 по среднему обороту за 60 дней",
+      "already_tested": "структурный модуль 1Б (удержание 4 сессии): dev −50,04 % год, t −1,5 — гейт разработки не пройден",
+      "headline_config": "топ-5, выход T+3",
+      "grid_for_pbo": "корзина ∈ {3, 5, 10} × выход ∈ {T+1, T+3}"
+    },
+    "h5_cash_and_carry": {
+      "title": "Структурный дельта-нейтральный Cash-and-Carry",
+      "rule": "implied_repo >= fund_rate + 1.5 п.п.",
+      "already_tested": "структурный модуль 2′ (C&C-2, без заглядывания вперёд): dev +1,07 % год, t +2,5; отложенная выборка ИЗРАСХОДОВАНА 17.09.2026 (+1,44 % год, t 1,9)",
+      "holdout_spent": true
+    }
+  }
+}
