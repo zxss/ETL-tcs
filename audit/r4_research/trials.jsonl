@@ -21,3 +21,4 @@
 {"ts": "2026-09-23T14:22:01", "sprint": 12, "stage": "h3_metals_pairs_standalone", "trials": 12, "revision": "?"}
 {"ts": "2026-09-23T22:52:49", "sprint": 14, "stage": "news_brent", "trials": 8, "revision": "?"}
 {"ts": "2026-09-23T23:00:22", "sprint": 15, "stage": "futures_intraday_reversion", "trials": 10, "revision": "?"}
+{"ts": "2026-09-23T23:06:34", "sprint": 16, "stage": "futures_cross_leadlag", "trials": 6, "revision": "?"}
