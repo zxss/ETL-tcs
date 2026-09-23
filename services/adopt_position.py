@@ -218,6 +218,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--yes", action="store_true", help="не спрашивать подтверждения")
     a = p.parse_args(argv)
 
+    # Аргументы проверяем ДО обращения к брокеру: незачем ходить в сеть и
+    # трогать боевой контур, чтобы сообщить о забытом --stop.
+    if not (a.list or a.forget) and (not a.ticker or a.stop is None):
+        p.error("нужны --ticker и --stop (либо --list / --forget)")
+
     broker, account_id, env = _broker(a.prod)
     print(f"Контур {env}, счёт {account_id}\n")
 
@@ -239,9 +244,6 @@ def main(argv: list[str] | None = None) -> int:
                   "сами, иначе оставшаяся нога при касании цены откроет "
                   "обратную позицию.")
         return 0
-
-    if not a.ticker or a.stop is None:
-        p.error("нужны --ticker и --stop (либо --list / --forget)")
 
     try:
         inst = broker.find_instrument(a.ticker)

@@ -153,5 +153,28 @@ class TestDescribe(unittest.TestCase):
         self.assertIn("риск до стопа", out)
 
 
+class TestCliGuards(unittest.TestCase):
+    """Неполные аргументы не должны стоить похода в боевой контур."""
+
+    def test_missing_stop_fails_before_broker(self):
+        with mock.patch.object(ap, "_broker",
+                               side_effect=AssertionError("брокер не должен вызываться")):
+            with self.assertRaises(SystemExit) as cm:
+                ap.main(["--prod", "-t", "VTBR"])
+        self.assertEqual(cm.exception.code, 2)
+
+    def test_missing_ticker_fails_before_broker(self):
+        with mock.patch.object(ap, "_broker",
+                               side_effect=AssertionError("брокер не должен вызываться")):
+            with self.assertRaises(SystemExit) as cm:
+                ap.main(["--prod", "--stop", "52.5"])
+        self.assertEqual(cm.exception.code, 2)
+
+    def test_list_does_not_need_ticker(self):
+        with mock.patch.object(ap, "_broker", return_value=(None, ACC, "PROD")), \
+             mock.patch.object(ap, "active_records", return_value=[]):
+            self.assertEqual(ap.main(["--prod", "--list"]), 0)
+
+
 if __name__ == "__main__":
     unittest.main()
