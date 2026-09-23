@@ -16,11 +16,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 
 import config
 from services.broker import TinkoffProdClient, TinkoffSandboxClient
 from services.broker.base import Quotation
+
+log = logging.getLogger(__name__)
 
 
 def _money(m: dict | None) -> float:
@@ -40,11 +43,23 @@ def _resolve_tickers(c, uids: list[str]) -> dict[str, str]:
     return out
 
 
-def snapshot(c, account_id: str, *, sandbox: bool) -> dict:
+def snapshot(c, account_id: str, *, sandbox: bool | None = None) -> dict:
     """Сырой снимок счёта. Отличается только метод списка заявок:
     sandbox → SandboxService/GetSandboxOrders, prod → OrdersService/GetOrders.
-    Портфель/позиции/стопы — общие сервисы (OperationsService/StopOrdersService)."""
-    orders_method = "SandboxService/GetSandboxOrders" if sandbox else "OrdersService/GetOrders"
+    Портфель/позиции/стопы — общие сервисы (OperationsService/StopOrdersService).
+
+    Контур берётся У САМОГО КЛИЕНТА (атрибут ORDERS_METHOD), а не из аргумента:
+    песочный метод на боевом счёте отвечает HTTP 404 «Account not found», и
+    вызывающий код про это знать не обязан. Аргумент sandbox оставлен для
+    совместимости, влияет только на подпись снимка; расхождение с клиентом —
+    ошибка вызывающего, она пишется в лог и игнорируется в пользу клиента.
+    """
+    orders_method = getattr(c, "ORDERS_METHOD", "OrdersService/GetOrders")
+    client_sandbox = orders_method.startswith("SandboxService/")
+    if sandbox is not None and sandbox != client_sandbox:
+        log.warning("snapshot: запрошен контур sandbox=%s, а клиент %s — "
+                    "используется контур клиента", sandbox, type(c).__name__)
+    sandbox = client_sandbox
     return {
         "account_id": account_id,
         "sandbox":    sandbox,

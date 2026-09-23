@@ -35,7 +35,7 @@ def _money(m: dict | None) -> float:
 
 
 def capture(broker, account_id: str, *, run_id: str, phase: str,
-            sandbox: bool = True, exclude_uids=()) -> dict:
+            sandbox: bool | None = None, exclude_uids=()) -> dict:
     """Снимок баланса на текущей фазе → структура для balance.json.
 
     Источник — OperationsService/GetPortfolio через account_status.snapshot().

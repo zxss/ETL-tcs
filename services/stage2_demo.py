@@ -645,7 +645,7 @@ def _snapshot_account(broker, account_id: str, run_dir: str, run_id: str,
                       phase: str, when: str) -> dict:
     """positions_<when>.json + balance.json на текущий момент."""
     from services import account_status
-    snap = account_status.snapshot(broker, account_id, sandbox=True)
+    snap = account_status.snapshot(broker, account_id)   # контур — у клиента
     _write_json(os.path.join(run_dir, f"positions_{when}.json"), snap)
     bal = stage2_balance.capture(broker, account_id, run_id=run_id, phase=phase,
                                  exclude_uids=_treasury_uids(broker))

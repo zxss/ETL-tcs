@@ -113,6 +113,10 @@ class TinkoffRestBase(BrokerClient):
     DEFAULT_BASE = config.API_BASE_URL  # переопределяется подклассом
     # Операции по счёту: у песочницы свой метод, у боевого — OperationsService.
     OPERATIONS_METHOD = "OperationsService/GetOperations"
+    # Список активных заявок — тоже контурный метод. Песочный метод на боевом
+    # счёте отвечает HTTP 404 «Account not found» (23.09.2026: так падали все
+    # фазы турнира). Спрашивать контур у клиента, а не передавать флагом.
+    ORDERS_METHOD = "OrdersService/GetOrders"
 
     def __init__(self, *,
                  token: str | None = None,

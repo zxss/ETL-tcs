@@ -30,6 +30,7 @@ class TinkoffSandboxClient(TinkoffRestBase):
 
     DEFAULT_BASE = config.SANDBOX_API_BASE_URL
     OPERATIONS_METHOD = "SandboxService/GetSandboxOperations"
+    ORDERS_METHOD = "SandboxService/GetSandboxOrders"
 
     # ── Счёт ─────────────────────────────────────────────────────────────────
 
