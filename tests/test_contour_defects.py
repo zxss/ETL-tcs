@@ -137,3 +137,33 @@ class TestOvernightVarLimit(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestContourFallbackForOldSummaries(unittest.TestCase):
+    """Сводки до 24.09.2026 признака контура не несут — метка по номеру счёта."""
+
+    def _report(self, account: str) -> str:
+        import json
+        import os
+        import tempfile
+        from unittest import mock
+        from services import stage2_balance
+        day = {"trading_day": "2026-09-23", "account_id": account,
+               "opening_balance_rub": 1e6, "closing_balance_rub": 1_001_000.0,
+               "day_change_rub": 1000.0, "by_phase": {}, "intraday_pnl_rub": 100.0,
+               "overnight_carry_rub": 50.0, "unrealised_pnl_rub": 0.0,
+               "positions_overnight": 0, "incomplete_phases": []}
+        with tempfile.TemporaryDirectory() as tmp:
+            os.makedirs(os.path.join(tmp, "balance"))
+            with open(os.path.join(tmp, "balance", "2026-09-23.json"), "w",
+                      encoding="utf-8") as f:
+                json.dump(day, f)
+            with mock.patch.object(stage2_balance, "_stage2_dir", lambda: tmp):
+                return stage2_balance.build_report(start_balance=1e6, target_days=24)
+
+    def test_numeric_account_is_prod(self):
+        self.assertIn("PROD (РЕАЛЬНЫЕ ДЕНЬГИ)", self._report("2018145468"))
+
+    def test_uuid_account_is_sandbox(self):
+        self.assertIn("Счёт: SANDBOX",
+                      self._report("1639899c-2aca-49fe-b5d8-d68e8b84f225"))

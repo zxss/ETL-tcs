@@ -180,6 +180,13 @@ def build_report(*, start_balance: float | None = None,
         else int(getattr(config, "STAGE2_TARGET_DAYS", 15))
     account = next((s.get("account_id") for s in summaries if s.get("account_id")), "—")
     sandbox = next((s.get("sandbox") for s in summaries if s.get("sandbox") is not None), None)
+    if sandbox is None:
+        # Сводки, записанные до 24.09.2026, признака контура не несут. Запасное
+        # определение по номеру счёта: у боевого он числовой (2018145468), у
+        # песочницы — UUID. Совпадение с PROD_ACCOUNT_ID решает однозначно.
+        prod_acc = str(getattr(config, "PROD_ACCOUNT_ID", "") or "")
+        sandbox = False if (prod_acc and account == prod_acc) else \
+            (not str(account).replace(" ", "").isdigit() if account != "—" else None)
     env = "SANDBOX" if sandbox else ("PROD (РЕАЛЬНЫЕ ДЕНЬГИ)" if sandbox is False else "СЧЁТ")
 
     L = []
