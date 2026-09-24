@@ -180,6 +180,26 @@ def near_index_future(broker: TinkoffSandboxClient) -> Instrument:
 
 # ── Ребаланс ─────────────────────────────────────────────────────────────────
 
+def positions(broker, account_id: str) -> dict[str, float]:
+    """instrument_uid → баланс в ШТУКАХ, включая ФЬЮЧЕРСЫ.
+
+    Клиент песочницы читает из GetSandboxPositions только раздел securities,
+    поэтому шорт фьючерса в get_positions() не виден (проверено 24.09.2026:
+    после продажи 5 MXZ6 позиция в выдаче отсутствовала). Без этого следующий
+    ребаланс счёл бы хедж отсутствующим и открыл бы его второй раз. Разбираем
+    ответ здесь, чтобы не менять общий клиент торгового контура.
+    """
+    data = broker._post("SandboxService/GetSandboxPositions", {"accountId": account_id})
+    out: dict[str, float] = {}
+    for section in ("securities", "futures", "options"):
+        for it in (data.get(section) or []):
+            uid = it.get("instrumentUid") or ""
+            bal = float(it.get("balance", 0) or 0)
+            if uid and abs(bal) > 1e-9:
+                out[uid] = out.get(uid, 0.0) + bal
+    return out
+
+
 def _px(broker, uid: str) -> float | None:
     try:
         return broker.get_last_price(uid)
@@ -203,8 +223,7 @@ def plan_rebalance(broker, account_id: str, tgt: dict) -> dict:
     want[fut.instrument_uid] = {"ticker": fut.ticker, "ins": fut, "lots": -fut_lots,
                                 "price": fut_px}
 
-    have = {p.instrument_uid: p.balance_shares for p in broker.get_positions(account_id)
-            if p.is_open}
+    have = dict(positions(broker, account_id))
     trades = []
     for uid, w in want.items():
         cur_lots = int(round(have.pop(uid, 0.0) / w["ins"].lot))
@@ -249,18 +268,39 @@ def equity(broker, account_id: str) -> dict:
     """Оценка капитала рукава: деньги + рыночная стоимость позиций."""
     money = broker.get_money_rub(account_id)
     total, rows = money, []
-    for p in broker.get_positions(account_id):
-        if not p.is_open:
-            continue
-        px = _px(broker, p.instrument_uid) or 0.0
-        val = p.balance_shares * px
+    for uid, bal in positions(broker, account_id).items():
+        px = _px(broker, uid) or 0.0
+        try:
+            tk = broker.find_instrument_by_uid(uid).ticker
+        except BrokerError:
+            tk = uid[:8]
+        # Фьючерс — не актив на балансе: деньги по нему идут вариационной маржой,
+        # поэтому в капитал он входит нулём, а не нотионалом.
+        val = 0.0 if tk.upper().startswith(("MX", "MI")) else bal * px
         total += val
-        rows.append({"uid": p.instrument_uid, "shares": p.balance_shares,
-                     "price": px, "value_rub": round(val, 2)})
+        rows.append({"uid": uid, "ticker": tk, "shares": bal, "price": px,
+                     "value_rub": round(val, 2)})
     return {"money_rub": round(money, 2), "positions": rows, "equity_rub": round(total, 2)}
 
 
-def run_rebalance(dry_run: bool) -> int:
+def already_this_month(now: dt.datetime) -> bool:
+    """Ребаланс за текущий календарный месяц уже сделан (журнал — источник правды)."""
+    if not os.path.exists(LEDGER):
+        return False
+    for line in open(LEDGER, encoding="utf-8"):
+        if not line.strip():
+            continue
+        ts = json.loads(line).get("ts", "")[:7]
+        if ts == now.strftime("%Y-%m"):
+            return True
+    return False
+
+
+def run_rebalance(dry_run: bool, if_due: bool = False) -> int:
+    now = dt.datetime.now(MSK)
+    if if_due and already_this_month(now):
+        log.info("[MOMENTUM] ребаланс за %s уже сделан — пропуск", now.strftime("%Y-%m"))
+        return 0
     broker = TinkoffSandboxClient()
     account_id = open_account(broker)
     conn = database.get_connection()
@@ -369,10 +409,12 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Моментум-рукав r4 (только песочница)")
     ap.add_argument("command", choices=["rebalance", "status"])
     ap.add_argument("--dry-run", action="store_true", help="посчитать и показать сделки, не отправляя")
+    ap.add_argument("--if-due", action="store_true",
+                    help="для cron: пропустить, если ребаланс за этот месяц уже был")
     a = ap.parse_args()
     if str(getattr(config, "TRADING_MODE", "sandbox")).strip().lower() == "prod":
         log.warning("TRADING_MODE=prod — рукав всё равно идёт в песочницу (боевого пути нет)")
-    return run_rebalance(a.dry_run) if a.command == "rebalance" else run_status()
+    return run_rebalance(a.dry_run, a.if_due) if a.command == "rebalance" else run_status()
 
 
 if __name__ == "__main__":

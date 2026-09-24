@@ -1,0 +1,18 @@
+# Моментум-рукав: форвард-проверка на ОТДЕЛЬНОМ счёте песочницы (решение
+# пользователя 24.09.2026). Запускается из исследовательской копии /opt/etl-r4,
+# боевая выкладка /opt/etl-tcs не затрагивается.
+#
+# Установка (от root):
+#   install -o root -g root -m 644 scripts/r4_momentum_crontab /etc/cron.d/etl-r4-momentum
+# Снять:  rm /etc/cron.d/etl-r4-momentum
+#
+# Ребаланс раз в месяц: cron будит по будням первой недели, а --if-due выходит
+# молча, если ребаланс за текущий месяц уже записан в журнал. 12:32 — середина
+# сессии, минута не пересекается ни с фазами r4/турнира, ни с монитором protect.
+# Счёт рукава: audit/momentum/account.txt (отдельный от r4; .env не трогается).
+
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+MAILTO=""
+
+32 12 1-7 * 1-5  etl  cd /opt/etl-r4 && flock -n /tmp/etl-r4-momentum.lock /opt/etl-tcs/.venv/bin/python -W ignore -m services.momentum_sleeve rebalance --if-due >> /opt/etl-r4/audit/momentum/cron.log 2>&1
