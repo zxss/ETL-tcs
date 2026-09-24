@@ -1,5 +1,10 @@
 # Два профиля в одном расписании: песочница r4 и турнир на боевом счёте.
 #
+# PREP турнира вынесен на 08:33, ORDER на 09:28 (решение пользователя 24.09).
+# Причина: 24.09 оба PREP впервые считали TFT одновременно на двух ядрах и
+# выросли с 7 до 24-25 минут; турнирный PREP закончился в 09:12 при CLOSE в
+# 09:13. Теперь турнирный PREP успевает до старта песочного в 08:45.
+#
 # Турнирные фазы сдвинуты на +3 минуты. Причина: оба профиля пишут в ОБЩИЙ
 # реестр data/order_log/pending_stops.json (путь захардкожен в place_orders и
 # от STAGE2_DIR не зависит). При одновременном запуске срабатывает блокировка
@@ -30,9 +35,9 @@ DIR=audit/stage2-tournament
 */5 7-23 * * 1-5   cd $PROJECT && mkdir -p audit/stage2-demo && $PY -m services.stage2_demo protect >> audit/stage2-demo/cron.log 2>&1
 
 # ── Турнир, боевой счёт «Робот» 2018145468 (+3 минуты к каждой фазе) ────────
-48  8 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo prep      --prod >> $LOG 2>&1
+33  8 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo prep      --prod >> $LOG 2>&1
 13  9 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo close     --prod >> $LOG 2>&1
-18  9 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo order     --prod >> $LOG 2>&1
+28  9 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo order     --prod >> $LOG 2>&1
 8  10 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo park      --prod >> $LOG 2>&1
 23 18 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo cleanup   --prod >> $LOG 2>&1
 38 18 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo overnight --prod >> $LOG 2>&1

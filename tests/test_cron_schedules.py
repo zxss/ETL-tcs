@@ -101,5 +101,66 @@ def _expand(field: str, lo: int, hi: int) -> list[int]:
     return out
 
 
+class TestPhaseOrdering(unittest.TestCase):
+    """Порядок фаз и развод тяжёлых прогонов.
+
+    24.09.2026 оба профиля впервые считали TFT одновременно на двух ядрах:
+    PREP вырос с 7 до 24-25 минут, турнирный закончился в 09:12 при CLOSE в
+    09:13. Гонку лечит разнос стартов, а не запас в одну минуту.
+    """
+
+    ORDER = ("prep", "close", "order", "park", "cleanup", "overnight")
+
+    def _phases(self, prod: bool) -> dict:
+        text = (SCRIPTS / "stage2_both_staggered").read_text(encoding="utf-8")
+        out = {}
+        for raw in text.splitlines():
+            line = raw.strip()
+            if not line or line.startswith("#") or "=" in line.split()[0]:
+                continue
+            if not _CRON_LINE.match(line) or ("--prod" in line) != prod:
+                continue
+            m = re.search(r"stage2_demo (\w+)", line)
+            if not m or m.group(1) == "protect":
+                continue
+            f = line.split()
+            if "," in f[0] or "/" in f[0] or "-" in f[0]:
+                continue
+            out[m.group(1)] = int(f[1]) * 60 + int(f[0])
+        return out
+
+    def test_phase_order_within_profile(self):
+        for prod in (False, True):
+            ph = self._phases(prod)
+            got = [p for p in self.ORDER if p in ph]
+            times = [ph[p] for p in got]
+            self.assertEqual(times, sorted(times),
+                             f"{'турнир' if prod else 'песочница'}: порядок фаз нарушен {ph}")
+
+    def test_heavy_phases_do_not_start_together(self):
+        """PREP и OVERNIGHT считают прогноз — им нужны разные окна."""
+        sbx, prod = self._phases(False), self._phases(True)
+        for phase, need in (("prep", 10), ("overnight", 3)):
+            gap = abs(sbx[phase] - prod[phase])
+            self.assertGreaterEqual(
+                gap, need,
+                f"{phase}: между профилями {gap} мин, нужно ≥ {need} — "
+                f"одновременный расчёт растягивает обе фазы")
+
+    def test_prod_prep_finishes_before_sandbox_prep(self):
+        """Турнирный PREP должен успеть до старта песочного."""
+        sbx, prod = self._phases(False), self._phases(True)
+        self.assertLess(prod["prep"], sbx["prep"],
+                        "турнирный PREP обязан стартовать раньше песочного")
+
+    def test_gap_between_close_and_order(self):
+        """CLOSE должен успеть закрыться до ORDER даже при медленном брокере."""
+        for prod in (False, True):
+            ph = self._phases(prod)
+            self.assertGreaterEqual(ph["order"] - ph["close"], 5,
+                                    f"{'турнир' if prod else 'песочница'}: "
+                                    f"между CLOSE и ORDER меньше 5 минут")
+
+
 if __name__ == "__main__":
     unittest.main()
