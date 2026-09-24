@@ -44,19 +44,44 @@ PER_YEAR = 252.0
 MAX_LEV, MIN_LEV = 2.0, 0.25
 
 
+def har_only(g: pd.DataFrame) -> pd.DataFrame:
+    """Только HAR-прогноз (без GARCH/ATR) — тот же walk-forward, но быстро."""
+    g = g.dropna(subset=["rv_d", "rv_w", "rv_m", "y1"]).reset_index(drop=True)
+    n = len(g)
+    if n < H.TRAIN_MIN + H.EMBARGO + H.REFIT:
+        return pd.DataFrame()
+    y = g["y1"].to_numpy(float)
+    rv_all = g["rv"].to_numpy(float)
+    pred = np.full(n, np.nan)
+    start = H.TRAIN_MIN
+    while start + H.EMBARGO < n:
+        tr = np.arange(0, start - 1)
+        te = np.arange(start + H.EMBARGO, min(start + H.EMBARGO + H.REFIT, n))
+        if len(tr) < H.TRAIN_MIN // 2 or len(te) == 0:
+            break
+        flo = max(1e-6, 0.05 * float(np.nanmedian(rv_all[tr])))
+        X = H._design(g, "HAR")
+        ok = np.isfinite(X[tr]).all(axis=1) & np.isfinite(y[tr])
+        if ok.sum() >= 60:
+            beta = H._ols(X[tr][ok], y[tr][ok])
+            p = X[te] @ beta
+            pred[te] = np.where(np.isfinite(p), np.maximum(p, flo), np.nan)
+        start += H.REFIT
+    return pd.DataFrame({"ticker": g["ticker"], "d": g["d"], "rv_hat": pred})
+
+
 def har_sigma(conn, table: str, d0: dt.date, d1: dt.date) -> pd.DataFrame:
     """Прогноз HAR на 1 день вперёд по каждой бумаге и дате (walk-forward)."""
     raw = H.load_sample(conn, table, d0, d1)
     feats = raw.groupby("ticker", group_keys=False).apply(H.features)
     parts = []
     for tk, g in feats.groupby("ticker"):
-        f = H.forecasts_for_ticker(g, 1)
+        f = har_only(g)
         if len(f):
-            parts.append(f[["ticker", "d", "HAR"]])
+            parts.append(f)
     if not parts:
         return pd.DataFrame()
-    out = pd.concat(parts, ignore_index=True)
-    out = out.rename(columns={"HAR": "rv_hat"})
+    out = pd.concat(parts, ignore_index=True).dropna(subset=["rv_hat"])
     out["sigma"] = np.sqrt(out["rv_hat"].clip(lower=1e-6))
     return out
 
