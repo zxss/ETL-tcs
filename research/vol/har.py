@@ -146,6 +146,14 @@ def _design(g: pd.DataFrame, spec: str) -> np.ndarray:
     return np.column_stack([np.ones(len(X)), X])
 
 
+def _sigmoid(x: float) -> float:
+    """Устойчивая логистическая функция: оптимизатор уходит в ±700 и ломает exp."""
+    if x >= 0.0:
+        return 1.0 / (1.0 + math.exp(-min(x, 700.0)))
+    e = math.exp(max(x, -700.0))
+    return e / (1.0 + e)
+
+
 def garch11_fit(r: np.ndarray) -> tuple[float, float, float]:
     """MLE GARCH(1,1) на дневных доходностях (%). Возвращает (ω, α, β)."""
     from scipy.optimize import minimize
@@ -156,7 +164,7 @@ def garch11_fit(r: np.ndarray) -> tuple[float, float, float]:
     var0 = float(np.var(r))
 
     def nll(p):
-        w, a, b = np.exp(p[0]), 1.0 / (1.0 + np.exp(-p[1])), 1.0 / (1.0 + np.exp(-p[2]))
+        w, a, b = math.exp(min(p[0], 50.0)), _sigmoid(p[1]), _sigmoid(p[2])
         if a + b >= 0.999:
             b = 0.999 - a
         s = var0
@@ -181,9 +189,9 @@ def garch11_fit(r: np.ndarray) -> tuple[float, float, float]:
             continue
     if bp is None:
         return (var0, 0.0, 0.0)
-    w = math.exp(bp[0])
-    a = 1.0 / (1.0 + math.exp(-bp[1]))
-    b = 1.0 / (1.0 + math.exp(-bp[2]))
+    w = math.exp(min(float(bp[0]), 50.0))
+    a = _sigmoid(float(bp[1]))
+    b = _sigmoid(float(bp[2]))
     if a + b >= 0.999:
         b = 0.999 - a
     return (w, a, b)
