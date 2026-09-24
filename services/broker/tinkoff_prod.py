@@ -22,7 +22,7 @@ from services.broker.base import (
     Position,
     Quotation,
 )
-from services.broker.tinkoff_base import TinkoffRestBase, parse_order_state
+from services.broker.tinkoff_base import TinkoffRestBase, parse_order_state, parse_positions
 
 log = logging.getLogger("broker.tinkoff_prod")
 
@@ -110,14 +110,7 @@ class TinkoffProdClient(TinkoffRestBase):
 
     def get_positions(self, account_id: str) -> list[Position]:
         data = self._post("OperationsService/GetPositions", {"accountId": account_id})
-        out: list[Position] = []
-        for s in (data.get("securities") or []):
-            uid = s.get("instrumentUid") or ""
-            if uid:
-                out.append(Position(instrument_uid=uid,
-                                    balance_shares=float(s.get("balance", 0) or 0),
-                                    blocked_shares=float(s.get("blocked", 0) or 0)))
-        return out
+        return parse_positions(data)
 
     def get_money_rub(self, account_id: str) -> float:
         """Свободные рубли (поле money — без заблокированных под заявки)."""

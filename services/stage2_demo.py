@@ -1684,6 +1684,21 @@ def phase_overnight(*, now: dt.datetime | None = None, prod: bool = False,
             used.add(po["signal_id"])
             accepted.append(po)
 
+        # Лимит ночного риска по VaR (services/risk_limits.py). По умолчанию
+        # ВЫКЛЮЧЕН: OVERNIGHT_VAR_BUDGET_RUB = 0 → корзина не трогается и
+        # поведение контура прежнее. Считается ДО продажи паёв, чтобы не
+        # расконсервировать казначейство под заявки, которые всё равно срежутся.
+        from services import risk_limits
+        accepted, over_limit, var_info = risk_limits.trim_to_budget(accepted)
+        res.data["overnight_var"] = var_info
+        for po in over_limit:
+            rejected.append({**po, "skip_reason": "лимит ночного VaR"})
+        if over_limit:
+            res.check(False, f"лимит ночного VaR: срезано {len(over_limit)} заявок, "
+                             f"VaR {var_info['var_before_rub']:.0f} → "
+                             f"{var_info['var_after_rub']:.0f} ₽ при бюджете "
+                             f"{var_info['budget_rub']:.0f} ₽", critical=False)
+
         # UNPARK (ТЗ Treasury, задача 3): паи фонда продаются ровно под ночную
         # корзину и ДО заявок по акциям. Не хватило паёв — корзина урезается под
         # фактический кэш: держать акции ночью на заёмные деньги нельзя.

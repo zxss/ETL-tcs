@@ -20,6 +20,7 @@ import os
 
 import config
 from services import account_status
+from services.broker.base import POSITION_SECTIONS
 
 log = logging.getLogger("stage2.balance")
 
@@ -45,14 +46,22 @@ def capture(broker, account_id: str, *, run_id: str, phase: str,
     snap = account_status.snapshot(broker, account_id, sandbox=sandbox)
     pf = snap.get("portfolio", {}) or {}
     skip = set(exclude_uids or ())
-    positions = [p for p in (snap.get("positions", {}) or {}).get("securities", []) or []
-                 if int(p.get("balance", 0) or 0) != 0
+    # Позиции — по ВСЕМ разделам ответа, а не только securities: срочные
+    # инструменты лежат в futures/options и раньше в счётчик не попадали.
+    pos_raw = snap.get("positions", {}) or {}
+    positions = [p for section in POSITION_SECTIONS for p in (pos_raw.get(section) or [])
+                 if float(p.get("balance", 0) or 0) != 0
                  and p.get("instrumentUid") not in skip]
+    # Контур берём у клиента, а не из аргумента: отчёт по боевому счёту
+    # «Робот» подписывался как SANDBOX, и это ровно та ошибка, из-за которой
+    # боевой отчёт можно прочитать как демонстрационный.
+    is_sandbox = "Sandbox" in str(getattr(broker, "ORDERS_METHOD", ""))
     return {
         "run_id": run_id,
         "phase": phase,
         "captured_at": dt.datetime.now(MSK).isoformat(timespec="seconds"),
         "account_id": account_id,
+        "sandbox": is_sandbox,
         "total_portfolio_rub": round(_money(pf.get("totalAmountPortfolio")), 4),
         "free_cash_rub": round(_money(pf.get("totalAmountCurrencies")), 4),
         "shares_value_rub": round(_money(pf.get("totalAmountShares")), 4),
@@ -116,6 +125,8 @@ def collect_day(trading_day: dt.date, run_dirs: dict[str, str],
     return {
         "trading_day": trading_day.isoformat(),
         "account_id": account_id,
+        "sandbox": next((b.get("sandbox") for b in raw.values()
+                         if b.get("sandbox") is not None), None),
         "opening_balance_rub": opening,
         "closing_balance_rub": closing,
         "day_change_rub": round(day_change, 4) if day_change is not None else None,
@@ -168,11 +179,13 @@ def build_report(*, start_balance: float | None = None,
     target = target_days if target_days is not None \
         else int(getattr(config, "STAGE2_TARGET_DAYS", 15))
     account = next((s.get("account_id") for s in summaries if s.get("account_id")), "—")
+    sandbox = next((s.get("sandbox") for s in summaries if s.get("sandbox") is not None), None)
+    env = "SANDBOX" if sandbox else ("PROD (РЕАЛЬНЫЕ ДЕНЬГИ)" if sandbox is False else "СЧЁТ")
 
     L = []
     L.append(f"ОТЧЁТ ПО ТЕСТОВОМУ БАЛАНСУ — {getattr(config, 'STAGE2_TEST_ID', 'stage2-demo')}")
     start_txt = f"{start:,.2f}".replace(",", "\u00a0").replace(".", ",")
-    L.append(f"Счёт: SANDBOX {account}   Стартовый баланс: {start_txt} ₽")
+    L.append(f"Счёт: {env} {account}   Стартовый баланс: {start_txt} ₽")
     L.append(f"Торговых дней пройдено: {len(summaries)} из {target}")
     L.append("")
     L.append(f"{'День':<12}{'Открытие':>12}{'PREP':>10}{'CLOSE':>10}{'ORDER':>10}"
@@ -204,10 +217,21 @@ def build_report(*, start_balance: float | None = None,
         vals = [s.get(key) for s in summaries if s.get(key) is not None]
         return sum(vals) if vals else None
 
+    intraday = _sum("intraday_pnl_rub")
+    carry = _sum("overnight_carry_rub")
+    unreal = summaries[-1].get("unrealised_pnl_rub") if summaries else None
+    # Остаток итога после торговых компонент — это в основном доход паёв
+    # казначейства (TMON). Без отдельной строки он молча приписывался торговле:
+    # на r4 за 5 дней это половина всего прироста.
+    treasury = None
+    if total is not None:
+        known = sum(v for v in (intraday, carry, unreal) if v is not None)
+        treasury = total - known
     L += ["", "РАЗЛОЖЕНИЕ",
-          f"  Внутридневной P&L      {_fmt(_sum('intraday_pnl_rub'), 12)} ₽",
-          f"  Перенос через ночь     {_fmt(_sum('overnight_carry_rub'), 12)} ₽",
-          f"  Нереализованный P&L    {_fmt(summaries[-1].get('unrealised_pnl_rub') if summaries else None, 12)} ₽"]
+          f"  Внутридневной P&L      {_fmt(intraday, 12)} ₽",
+          f"  Перенос через ночь     {_fmt(carry, 12)} ₽",
+          f"  Нереализованный P&L    {_fmt(unreal, 12)} ₽",
+          f"  Казначейство и прочее  {_fmt(treasury, 12)} ₽   (остаток итога)"]
 
     if execution:
         placed = execution.get("orders") or 0

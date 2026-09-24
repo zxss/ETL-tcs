@@ -118,6 +118,10 @@ class Instrument:
 # ── Состояние заявки ─────────────────────────────────────────────────────────
 
 
+# Разделы ответа GetPositions, в которых лежат открытые позиции.
+POSITION_SECTIONS = ("securities", "futures", "options")
+
+
 @dataclass(frozen=True)
 class Position:
     """Открытая позиция по инструменту (из GetPositions)."""

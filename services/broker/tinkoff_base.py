@@ -26,8 +26,10 @@ from services.broker.base import (
     BrokerClient,
     BrokerError,
     Instrument,
+    POSITION_SECTIONS,
     NotSupportedError,
     OrderState,
+    Position,
     Quotation,
     StopOrderInfo,
     StopOrderRecord,
@@ -104,6 +106,26 @@ def parse_order_state(d: dict[str, Any]) -> OrderState:
 def new_order_id() -> str:
     """UUID v4 — ключ идемпотентности заявки."""
     return str(uuid.uuid4())
+
+
+def parse_positions(data: dict) -> list["Position"]:
+    """securities + futures + options → список Position (штуки, +long/−short).
+
+    Раньше читался только securities: 24.09.2026 шорт фьючерса MXZ6 оказался
+    НЕВИДИМ для get_positions, и код счёл бы позицию отсутствующей. Для контура
+    это дыра в защите — CLEANUP не закрыл бы такую позицию, PROTECT не поставил
+    бы стоп. На счетах без срочных инструментов разделы пусты, поведение прежнее.
+    """
+    out: list[Position] = []
+    for section in POSITION_SECTIONS:
+        for s in (data.get(section) or []):
+            uid = s.get("instrumentUid") or ""
+            if not uid:
+                continue
+            out.append(Position(instrument_uid=uid,
+                                balance_shares=float(s.get("balance", 0) or 0),
+                                blocked_shares=float(s.get("blocked", 0) or 0)))
+    return out
 
 
 class TinkoffRestBase(BrokerClient):

@@ -343,6 +343,16 @@ BEST_TRADES_TOP_N: int = int(os.getenv("BEST_TRADES_TOP_N", "5"))
 # в активном риске. До r4 было 10 000 ₽ при депозите 2 млн.
 BEST_TRADES_POSITION_RUB: float = float(os.getenv("BEST_TRADES_POSITION_RUB", "100000"))
 
+# Лимит ночного риска (services/risk_limits.py, доработка 24.09.2026).
+# OVERNIGHT_VAR_PCT — ночной VaR 99 % в % от стоимости корзины. 2,3 % — замер на
+# нетронутой выборке 2024-05…2026-09 историческим моделированием, прошедшим
+# Kupiec и Christoffersen (research/vol/tail_risk.py).
+# OVERNIGHT_VAR_BUDGET_RUB — сколько рублей готовы потерять в худшую ночь из ста.
+# 0 = ЛИМИТ ВЫКЛЮЧЕН, корзина не урезается (поведение контура прежнее).
+# Для r4 ориентир: 5 × 100 000 ₽ экспозиции → VaR ≈ 11 500 ₽.
+OVERNIGHT_VAR_PCT: float = float(os.getenv("OVERNIGHT_VAR_PCT", "2.3"))
+OVERNIGHT_VAR_BUDGET_RUB: float = float(os.getenv("OVERNIGHT_VAR_BUDGET_RUB", "0"))
+
 # LIMIT_ENTRY_FRACTION — насколько лимитка прижата к экстремуму прогнозного
 # коридора (доля 0..1): 0 = спот, 1 = ровно на F.High/F.Low.
 # SHORT тянется к ВЕРХНЕЙ границе, LONG — к НИЖНЕЙ. Default 0.2 — заявка стоит
