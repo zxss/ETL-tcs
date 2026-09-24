@@ -1,0 +1,18 @@
+# Форвардный сбор стакана и ленты сделок (C2, решение пользователя 24.09.2026).
+# Исследовательская копия /opt/etl-r4, только чтение MarketDataService — заявок нет.
+#
+# Установка (от root):
+#   install -o root -g root -m 644 scripts/r4_orderflow_crontab /etc/cron.d/etl-r4-orderflow
+# Снять:  rm /etc/cron.d/etl-r4-orderflow
+#
+# Отдельный файл в /etc/cron.d: торговое расписание (crontab -u etl) не трогается.
+# Нагрузка ~40 запросов/мин по GetOrderBook — это ДРУГИЕ методы, чем у торгового
+# контура (OrdersService), лимиты у них раздельные, поэтому фазы r4 не задеваются.
+# Процесс сам останавливается в 23:50; flock не даёт запустить второй экземпляр.
+# Данные: /opt/etl-r4/audit/r4_research/orderflow/{book,trades}_ГГГГ-ММ-ДД.csv.gz
+
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+MAILTO=""
+
+5 9 * * 1-5  etl  cd /opt/etl-r4 && flock -n /tmp/etl-r4-orderflow.lock /opt/etl-tcs/.venv/bin/python -W ignore -m research.orderflow.collector >> /opt/etl-r4/audit/r4_research/orderflow/cron.log 2>&1
