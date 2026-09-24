@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from services import stage2_demo as s2                   # noqa: E402
 
-PROD_ACC = "2018145468"
+PROD_ACC = "9999999999"
 
 
 def result():

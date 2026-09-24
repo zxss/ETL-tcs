@@ -162,8 +162,8 @@ class TestContourFallbackForOldSummaries(unittest.TestCase):
                 return stage2_balance.build_report(start_balance=1e6, target_days=24)
 
     def test_numeric_account_is_prod(self):
-        self.assertIn("PROD (РЕАЛЬНЫЕ ДЕНЬГИ)", self._report("2018145468"))
+        self.assertIn("PROD (РЕАЛЬНЫЕ ДЕНЬГИ)", self._report("9999999999"))
 
     def test_uuid_account_is_sandbox(self):
         self.assertIn("Счёт: SANDBOX",
-                      self._report("1639899c-2aca-49fe-b5d8-d68e8b84f225"))
+                      self._report("00000000-0000-0000-0000-000000000000"))

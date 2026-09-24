@@ -20,7 +20,7 @@ from services import adopt_position as ap
 from services import place_orders as po
 from services.broker.base import Quotation
 
-ACC = "2018145468"
+ACC = "9999999999"
 UID = "8e2b0325-0292-4654-8a18-4f63ed3b0e09"
 STEP = Quotation(units=0, nano=10_000_000)        # шаг 0,01
 

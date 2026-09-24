@@ -34,7 +34,7 @@ DIR=audit/stage2-tournament
 50,55 6 * * 1-5    cd $PROJECT && mkdir -p audit/stage2-demo && $PY -m services.stage2_demo protect >> audit/stage2-demo/cron.log 2>&1
 */5 7-23 * * 1-5   cd $PROJECT && mkdir -p audit/stage2-demo && $PY -m services.stage2_demo protect >> audit/stage2-demo/cron.log 2>&1
 
-# ── Турнир, боевой счёт «Робот» 2018145468 (+3 минуты к каждой фазе) ────────
+# ── Турнир, боевой счёт «Робот» (номер — в .env.tournament; +3 минуты к фазам) ──
 33  8 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo prep      --prod >> $LOG 2>&1
 13  9 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo close     --prod >> $LOG 2>&1
 28  9 * * 1-5  cd $PROJECT && mkdir -p $DIR && set -a && . .env.tournament && set +a && $PY -m services.stage2_demo order     --prod >> $LOG 2>&1

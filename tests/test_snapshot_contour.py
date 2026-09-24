@@ -47,7 +47,7 @@ class TestSnapshotFollowsClient(unittest.TestCase):
 
     def test_prod_client_never_calls_sandbox_service(self):
         c = FakeClient(PROD_M)
-        snap = account_status.snapshot(c, "2018145468")
+        snap = account_status.snapshot(c, "9999999999")
         self.assertIn(PROD_M, c.calls)
         self.assertFalse([m for m in c.calls if m.startswith("SandboxService/")])
         self.assertFalse(snap["sandbox"])
@@ -62,14 +62,14 @@ class TestSnapshotFollowsClient(unittest.TestCase):
         """Ровно тот случай, что уронил PARK: боевой клиент + sandbox=True."""
         c = FakeClient(PROD_M)
         with self.assertLogs("services.account_status", level="WARNING"):
-            snap = account_status.snapshot(c, "2018145468", sandbox=True)
+            snap = account_status.snapshot(c, "9999999999", sandbox=True)
         self.assertIn(PROD_M, c.calls)
         self.assertFalse([m for m in c.calls if m.startswith("SandboxService/")])
         self.assertFalse(snap["sandbox"])
 
     def test_balance_capture_defaults_to_client(self):
         c = FakeClient(PROD_M)
-        stage2_balance.capture(c, "2018145468", run_id="r", phase="PARK")
+        stage2_balance.capture(c, "9999999999", run_id="r", phase="PARK")
         self.assertFalse([m for m in c.calls if m.startswith("SandboxService/")])
 
 

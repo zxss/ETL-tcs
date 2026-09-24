@@ -275,7 +275,7 @@ class TestProdUnreachable(Stage2TestCase):
         self.assertTrue(res.errors)
 
     def test_7c_preflight_rejects_filled_prod_account(self):
-        config.PROD_ACCOUNT_ID = "2018145468"
+        config.PROD_ACCOUNT_ID = "9999999999"
         res = s2.PhaseResult("ORDER", "rid", self.tmp)
         s2.preflight(res, env="SANDBOX", prod_flag=False)
         self.assertTrue(any("PROD_ACCOUNT_ID" in e for e in res.errors))

@@ -515,7 +515,7 @@ footer{
       <tr><td class="k">INVEST_TOKEN</td><td class="v">— обязателен</td><td>Bearer-токен T-Invest. Читается как <code>os.environ[...]</code> — <b>без него падает любой импорт config</b>, включая чисто аналитические сценарии.</td></tr>
       <tr><td class="k">API_BASE_URL</td><td class="v">invest-public-api.tbank.ru/rest</td><td>Боевой REST-контур для свечей и котировок.</td></tr>
       <tr><td class="k">SANDBOX_API_BASE_URL</td><td class="v">sandbox-invest-public-api…</td><td>Песочница: виртуальные счета, исполнение по last price.</td></tr>
-      <tr><td class="k">PROD_ACCOUNT_ID</td><td class="v">2018145468</td><td>Боевой счёт. <b>Реальный номер зашит дефолтом в отслеживаемый git файл.</b></td></tr>
+      <tr><td class="k">PROD_ACCOUNT_ID</td><td class="v">(номер боевого счёта — в .env.tournament)</td><td>Боевой счёт. <b>Реальный номер зашит дефолтом в отслеживаемый git файл.</b> <i>Исправлено: дефолт пустой, номер берётся из .env; номер вычищен из репозитория 24.09.2026.</i></td></tr>
       <tr><td class="k">SANDBOX_ACCOUNT_ID</td><td class="v">из .env</td><td>Переиспользуемый sandbox-счёт; пусто — создаётся новый и пополняется.</td></tr>
       <tr><td class="k">SANDBOX_PAYIN_RUB</td><td class="v">100 000</td><td>Виртуальное пополнение нового sandbox-счёта.</td></tr>
       <tr><td class="k">INVEST_TLS_VERIFY</td><td class="v">0</td><td>Проверка TLS-сертификата брокера. <b>По умолчанию выключена.</b></td></tr>
