@@ -31,3 +31,11 @@
 {"ts": "2026-09-24T19:00:00", "sprint": 22, "stage": "treasury_carry_B3", "trials": 2, "revision": "dc3e283"}
 {"ts": "2026-09-24T19:12:00", "sprint": 23, "stage": "longhist_factors_C1_2014_2024", "trials": 4, "revision": "dc3e283"}
 {"ts": "2026-09-24T19:25:00", "sprint": 23, "stage": "longhist_momentum_holdout_2024_2026", "trials": 2, "revision": "dc3e283"}
+{"ts": "2026-09-24T23:02", "sprint": 24, "stage": "wave3_regime_HR1", "trials": 2, "revision": "wave3"}
+{"ts": "2026-09-24T23:03", "sprint": 24, "stage": "wave3_vol_sizing_HV2", "trials": 2, "revision": "wave3"}
+{"ts": "2026-09-24T23:05", "sprint": 24, "stage": "wave3_conformal_HU1", "trials": 2, "revision": "wave3"}
+{"ts": "2026-09-24T23:06", "sprint": 24, "stage": "wave4_tail_risk_HV3", "trials": 2, "revision": "wave4"}
+{"ts": "2026-09-24T22:45", "sprint": 24, "stage": "wave1_har_rv_HV1", "trials": 3, "revision": "wave1"}
+{"ts": "2026-09-24T22:50", "sprint": 24, "stage": "wave2_ml_xsec_HC1", "trials": 3, "revision": "wave2"}
+{"ts": "2026-09-24T22:52", "sprint": 24, "stage": "wave2_ipca_HC2", "trials": 2, "revision": "wave2"}
+{"ts": "2026-09-24T22:40", "sprint": 24, "stage": "wave2_fresh_slice_HC3", "trials": 2, "revision": "wave2"}
