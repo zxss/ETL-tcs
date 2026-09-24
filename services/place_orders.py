@@ -610,7 +610,8 @@ def attach_stops(broker: BrokerClient, account_id: str, *,
     fills_journaled, closed_externally — для уведомлений и вердикта."""
     from services import exec_journal
     rep = report if report is not None else {}
-    for k in ("oco_closed", "breach_exits", "closed_externally", "breach_failed"):
+    for k in ("oco_closed", "breach_exits", "closed_externally", "breach_failed",
+              "flat_unconfirmed"):
         rep.setdefault(k, [])
     rep.setdefault("fills_journaled", 0)
 
@@ -661,6 +662,13 @@ def attach_stops(broker: BrokerClient, account_id: str, *,
         # ── 2. позиция закрыта без известной ноги
         if abs(bal) < 1e-9:
             if bracketed:
+                # Ноль у брокера — ещё не закрытие. Снимать защиту можно только
+                # по факту сделки выхода (см. exit_confirmed).
+                if exit_confirmed(broker, account_id, r) is False:
+                    print(f"[HOLD]  {tk}: брокер показывает ноль, но сделки выхода "
+                          f"нет — запись и условные заявки сохранены.")
+                    rep["flat_unconfirmed"].append(tk)
+                    continue
                 _reconcile_closed(broker, account_id, r, stop_orders, dry_run, writer, env)
                 if r.get("closed") and not dry_run:
                     r["closed_reason"] = r.get("closed_reason") or "closed_externally"
@@ -841,6 +849,35 @@ def _await_order(broker: BrokerClient, account_id: str, order_id: str, *,
         time.sleep(1.0)
         st = broker.get_order_state(account_id=account_id, order_id=order_id)
     return st
+
+
+def exit_confirmed(broker: BrokerClient, account_id: str, r: dict) -> bool | None:
+    """Есть ли по записи ФАКТИЧЕСКАЯ сделка выхода.
+
+    Нулевой баланс у брокера сам по себе не означает, что позиция закрыта.
+    23.09.2026, боевой счёт: тейк по UPRO сработал в 22:57, с 22:58 GetPositions
+    показывал ноль, а в 23:53 позиция вернулась — продажа прошла только утром
+    в 09:15. За эти 55 минут PROTECT успел снять стоп и закрыть запись, и ночь
+    позиция простояла без защиты; утром CLOSE увидел её и уронил тест в halt.
+
+    True  — выход подтверждён сделками;
+    False — сделок выхода нет, данные брокера ещё не устоялись: запись и
+            условные заявки трогать нельзя;
+    None  — операции недоступны, подтвердить нечем (решение — на вызывающем).
+    """
+    from services import exec_journal
+    uid = r.get("instrument_uid")
+    if not uid:
+        return None
+    try:
+        trades, _ = broker.get_trades(account_id,
+                                      exec_journal.utc_iso(r.get("created")), uid)
+    except (NotSupportedError, BrokerError, AttributeError) as e:
+        print(f"[WARN]  {r.get('ticker')}: операции недоступны ({e}) — "
+              f"выход подтвердить нечем.")
+        return None
+    side = _exit_dir(r)
+    return any(t.side == side and t.quantity for t in trades)
 
 
 def _reconcile_closed(broker: BrokerClient, account_id: str, r: dict,

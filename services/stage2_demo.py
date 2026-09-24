@@ -1534,11 +1534,13 @@ def cmd_protect(*, prod: bool = False) -> int:
     naked = [r.get("ticker") for r in recs
              if r.get("instrument_uid") in open_uids and not r.get("stop_placed")]
     log.info("[PROTECT] стопов поставлено %d, без стопа %d, OCO закрыто %d, "
-             "аварийных выходов %d (сбоев %d), заливок в журнал %d",
+             "аварийных выходов %d (сбоев %d), заливок в журнал %d, "
+             "нулевой баланс без сделки выхода %d",
              len(newly), len(naked), len(rep["oco_closed"]), len(rep["breach_exits"]),
-             len(rep["breach_failed"]), rep["fills_journaled"])
+             len(rep["breach_failed"]), rep["fills_journaled"],
+             len(rep.get("flat_unconfirmed", [])))
     if newly or naked or rep["oco_closed"] or rep["breach_exits"] or rep["breach_failed"] \
-            or rep["closed_externally"]:
+            or rep["closed_externally"] or rep.get("flat_unconfirmed"):
         try:
             from services import notify
             if notify.enabled():
@@ -1554,6 +1556,10 @@ def cmd_protect(*, prod: bool = False) -> int:
                                  + notify.esc(", ".join(rep["breach_failed"])))
                 if naked:
                     lines.append("⛔ без стопа: " + notify.esc(", ".join(naked)))
+                if rep.get("flat_unconfirmed"):
+                    lines.append("⚠️ нулевой баланс без сделки выхода — защита "
+                                 "сохранена: "
+                                 + notify.esc(", ".join(rep["flat_unconfirmed"])))
                 notify.send("\n".join(lines),
                             silent=not (naked or rep["breach_failed"] or rep["breach_exits"]))
         except Exception as e:                   # noqa: BLE001
