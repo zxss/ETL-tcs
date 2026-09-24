@@ -49,8 +49,8 @@ P1 = (dt.date(2014, 1, 1), dt.date(2022, 2, 18))
 P2 = (dt.date(2022, 3, 24), dt.date(2024, 5, 20))
 
 
-def load() -> dict[str, pd.DataFrame]:
-    df = pd.concat([pd.read_csv(p) for p in sorted(glob.glob(os.path.join(DATA_DIR, "tqbr_*.csv.gz")))])
+def load(prefix: str = "tqbr") -> dict[str, pd.DataFrame]:
+    df = pd.concat([pd.read_csv(p) for p in sorted(glob.glob(os.path.join(DATA_DIR, f"{prefix}_*.csv.gz")))])
     df = df[(df["CLOSE"] > 0) & (df["VALUE"] > 0)].copy()
     df["d"] = pd.to_datetime(df["TRADEDATE"]).dt.date
     df = df.drop_duplicates(["SECID", "d"])
@@ -59,7 +59,7 @@ def load() -> dict[str, pd.DataFrame]:
     close = wide["CLOSE"]
     # дивиденды: ex-дата = первый торговый день после последнего дня покупки
     div = pd.DataFrame(0.0, index=close.index, columns=close.columns)
-    dp = os.path.join(DATA_DIR, "dividends.csv")
+    dp = os.path.join(DATA_DIR, "dividends.csv" if prefix == "tqbr" else f"dividends_{prefix}.csv")
     if os.path.exists(dp) and os.path.getsize(dp) > 5:
         dv = pd.read_csv(dp)
         days = np.array(close.index)
@@ -155,6 +155,26 @@ def tstat(s: pd.Series, periods_per_year: float) -> dict:
             "t": t, "p": float(2 * stats.t.sf(abs(t), n - 1)), "hit": float((s > 0).mean())}
 
 
+def run_holdout() -> dict:
+    """Предрегистрация 24.09.2026 ПОСЛЕ прогона 2014–2024 (намёки моментума там
+    пост-хок): на нетронутом 2024-05-21…2026-09-22 (загрузка prefix=tqbrh, с
+    годом разгона 2023-05) проверяются ровно 2 утверждения с заданным знаком:
+    H-mom: моментум 12-1 > 0; H-1m: нижний квинтиль месячной доходности
+    ХУЖЕ универса (< 0, т. е. месячный моментум, а не разворот). T1/T2 —
+    справочно, без счёта испытаний."""
+    D = load("tqbrh")
+    ic = ic_daily(D)
+    pf = portfolios(D)
+    per = (dt.date(2024, 5, 21), dt.date(2026, 9, 22))
+    ics = ic[[in_period(d, per) for d in ic.index]]
+    p = pf[[in_period(d, per) for d in pf["d"]]]
+    return {"period": [str(x) for x in per],
+            "H_mom_12_1": tstat(p["mom_pct"], 252 / H), "H_1m_bottom_minus_uni": tstat(p["rev_pct"], 252 / H),
+            "ref_T1_ic_atr": {**tstat(ics, 1), "mean_ic": float(ics.mean()) if len(ics) else None},
+            "ref_T2_lowvol": tstat(p["lowvol_pct"], 252 / H),
+            "universe_ew_annual_pct": float(p["uni_pct"].mean() * 252 / H) if len(p) else None}
+
+
 def run() -> dict:
     D = load()
     log.info("данные: %d дней × %d бумаг", *D["close"].shape)
@@ -183,8 +203,13 @@ def run() -> dict:
 
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    res = run()
-    with open(os.path.join(DATA_DIR, "factors_results.json"), "w", encoding="utf-8") as f:
+    if "--holdout" in sys.argv:
+        res = run_holdout()
+        name = "factors_holdout_results.json"
+    else:
+        res = run()
+        name = "factors_results.json"
+    with open(os.path.join(DATA_DIR, name), "w", encoding="utf-8") as f:
         json.dump(res, f, ensure_ascii=False, indent=1, default=str)
     print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
     return 0

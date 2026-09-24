@@ -58,10 +58,10 @@ def day_slice(d: dt.date) -> list[list]:
         start += len(data)
 
 
-def load_year(y: int) -> pd.DataFrame:
+def load_year(y: int, first: dt.date = dt.date(1990, 1, 1), last: dt.date = LAST_DAY) -> pd.DataFrame:
     rows = []
-    d = dt.date(y, 1, 1)
-    end = min(dt.date(y, 12, 31), LAST_DAY)
+    d = max(dt.date(y, 1, 1), first)
+    end = min(dt.date(y, 12, 31), last)
     while d <= end:
         if d.weekday() < 5:
             rows += day_slice(d)
@@ -101,7 +101,7 @@ def dividends(secids: list[str]) -> pd.DataFrame:
         if its:
             rows += parse_dividends(sid, post("InstrumentsService/GetDividends", {
                 "instrumentId": its[0]["uid"], "from": "2013-01-01T00:00:00Z",
-                "to": "2024-12-31T00:00:00Z"}))
+                "to": "2026-12-31T00:00:00Z"}))
         time.sleep(0.4)
     return pd.DataFrame(rows)
 
@@ -111,21 +111,26 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--from", dest="y0", type=int, default=2014)
     ap.add_argument("--to", dest="y1", type=int, default=2024)
+    ap.add_argument("--first-day", default="1990-01-01")
+    ap.add_argument("--last-day", default=str(LAST_DAY))
+    ap.add_argument("--prefix", default="tqbr", help="holdout 2024-05…2026-09 грузится с prefix=tqbrh")
     a = ap.parse_args()
+    first, last = dt.date.fromisoformat(a.first_day), dt.date.fromisoformat(a.last_day)
     os.makedirs(OUT_DIR, exist_ok=True)
     secids: set[str] = set()
     for y in range(a.y0, a.y1 + 1):
-        path = os.path.join(OUT_DIR, f"tqbr_{y}.csv.gz")
+        path = os.path.join(OUT_DIR, f"{a.prefix}_{y}.csv.gz")
         if os.path.exists(path):
             df = pd.read_csv(path)
         else:
             t0 = time.time()
-            df = load_year(y)
+            df = load_year(y, first, last)
             df.to_csv(path, index=False)
             log.info("%d: %d строк, %d бумаг, %.0f с", y, len(df), df["SECID"].nunique(), time.time() - t0)
         secids |= set(df["SECID"].unique())
     dv = dividends(sorted(secids))
-    dv.to_csv(os.path.join(OUT_DIR, "dividends.csv"), index=False)
+    dv.to_csv(os.path.join(OUT_DIR, "dividends.csv" if a.prefix == "tqbr" else f"dividends_{a.prefix}.csv"),
+              index=False)
     log.info("дивиденды: %d записей по %d бумагам", len(dv), dv["ticker"].nunique() if len(dv) else 0)
     return 0
 
