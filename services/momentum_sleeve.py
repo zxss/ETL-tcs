@@ -56,6 +56,7 @@ MSK = dt.timezone(dt.timedelta(hours=3))
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(ROOT, "audit", "momentum")
 LEDGER = os.path.join(OUT_DIR, "ledger.jsonl")
+ACCOUNT_FILE = os.path.join(OUT_DIR, "account.txt")   # номер счёта песочницы, не секрет
 
 TOP_N, LIQ_WIN, LIQ_MIN = 50, 60, 50
 LOOKBACK, SKIP = 252, 21
@@ -90,6 +91,8 @@ def long_share() -> float:
 def open_account(broker: TinkoffSandboxClient) -> str:
     """Отдельный sandbox-счёт рукава. Совпадение со счётом r4 или с боевым — отказ."""
     pref = str(_cfg("MOMENTUM_ACCOUNT_ID", "")).strip()
+    if not pref and os.path.exists(ACCOUNT_FILE):        # .env не трогаем: свой файл
+        pref = open(ACCOUNT_FILE, encoding="utf-8").read().strip()
     prod = str(getattr(config, "PROD_ACCOUNT_ID", "") or "").strip()
     r4 = str(getattr(config, "SANDBOX_ACCOUNT_ID", "") or "").strip()
     if prod and pref == prod:
@@ -104,8 +107,11 @@ def open_account(broker: TinkoffSandboxClient) -> str:
         raise RuntimeError("получен счёт r4 — отказ")
     if not pref or account_id != pref:
         broker.pay_in(account_id, capital_rub(), currency="rub")
-        log.warning("СОХРАНИТЕ в .env: MOMENTUM_ACCOUNT_ID=%s (счёт песочницы живёт "
-                    "3 месяца от последнего обращения)", account_id)
+        log.warning("новый счёт песочницы %s пополнен на %.0f ₽ (счета песочницы живут "
+                    "3 месяца от последнего обращения)", account_id, capital_rub())
+    os.makedirs(OUT_DIR, exist_ok=True)
+    with open(ACCOUNT_FILE, "w", encoding="utf-8") as f:
+        f.write(account_id + "\n")
     return account_id
 
 
@@ -227,6 +233,18 @@ def plan_rebalance(broker, account_id: str, tgt: dict) -> dict:
             "trades": trades}
 
 
+def bench_price(broker) -> float | None:
+    """Цена эталона. TMON через ShareBy не ищется: тот же фонд торгуется как
+    TMON@ на СПБ — берём листинг так же, как это делает казначейство."""
+    try:
+        from services.treasury import choose_listing
+        item = choose_listing(broker.find_instrument_listings(BENCH_TICKER), BENCH_TICKER)
+        return _px(broker, item["uid"]) if item and item.get("uid") else None
+    except Exception as e:                       # noqa: BLE001
+        log.warning("эталон %s недоступен: %s", BENCH_TICKER, e)
+        return None
+
+
 def equity(broker, account_id: str) -> dict:
     """Оценка капитала рукава: деньги + рыночная стоимость позиций."""
     money = broker.get_money_rub(account_id)
@@ -282,11 +300,7 @@ def run_rebalance(dry_run: bool) -> int:
                  t["lots"], line["status"])
 
     after = equity(broker, account_id) if not dry_run else before
-    bench_px = None
-    try:
-        bench_px = _px(broker, broker.find_instrument(BENCH_TICKER).instrument_uid)
-    except BrokerError as e:
-        log.warning("эталон %s недоступен: %s", BENCH_TICKER, e)
+    bench_px = bench_price(broker)
     rec = {"run_id": run_id, "ts": dt.datetime.now(MSK).isoformat(timespec="seconds"),
            "account_id": account_id, "dry_run": dry_run, "picks": tgt["picks"],
            "asof": tgt["asof"], "future": plan["future"], "future_lots": plan["future_lots"],
