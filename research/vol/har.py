@@ -223,12 +223,17 @@ def forecasts_for_ticker(g: pd.DataFrame, h: int) -> pd.DataFrame:
     rets = g["ret"].to_numpy(float)
     atr2 = (g["atr14"].to_numpy(float)) ** 2
 
+    rv_all = g["rv"].to_numpy(float)
     start = TRAIN_MIN
     while start + EMBARGO < n:
         tr = np.arange(0, start - h)                     # хвост обучения обрезан на горизонт
         te = np.arange(start + EMBARGO, min(start + EMBARGO + REFIT, n))
         if len(tr) < TRAIN_MIN // 2 or len(te) == 0:
             break
+        # пол прогноза: 5 % медианной RV обучения. Линейная модель положительной
+        # величины может уйти в минус; пол 1e-6 превращал бы QLIKE в бесконечность.
+        # Один и тот же пол для ВСЕХ моделей, иначе сравнение нечестное.
+        flo = max(1e-6, 0.05 * float(np.nanmedian(rv_all[tr])))
         for spec in SPECS:
             X = _design(g, spec)
             ok = np.isfinite(X[tr]).all(axis=1) & np.isfinite(y[tr])
@@ -236,21 +241,21 @@ def forecasts_for_ticker(g: pd.DataFrame, h: int) -> pd.DataFrame:
                 continue
             beta = _ols(X[tr][ok], y[tr][ok])
             pred = X[te] @ beta
-            out[spec][te] = np.where(np.isfinite(pred), np.maximum(pred, 1e-6), np.nan)
+            out[spec][te] = np.where(np.isfinite(pred), np.maximum(pred, flo), np.nan)
         # GARCH: подгон на обучении, путь по всему ряду, масштаб к RV на обучении
         w, a, b = garch11_fit(rets[tr])
         s2 = garch_path(rets, w, a, b)
         with np.errstate(invalid="ignore"):
             scale = np.nanmean(g["rv"].to_numpy(float)[tr]) / np.nanmean(s2[tr])
         if np.isfinite(scale) and scale > 0:
-            out["GARCH"][te] = np.maximum(s2[te] * scale, 1e-6)
+            out["GARCH"][te] = np.maximum(s2[te] * scale, flo)
         # ATR-прокси: OLS RV_{t+h} ~ a + b·ATR²  (честная калибровка масштаба)
         Xa = np.column_stack([np.ones(n), atr2])
         ok = np.isfinite(Xa[tr]).all(axis=1) & np.isfinite(y[tr])
         if ok.sum() >= 60:
             ba = _ols(Xa[tr][ok], y[tr][ok])
             pa = Xa[te] @ ba
-            out["ATR"][te] = np.where(np.isfinite(pa), np.maximum(pa, 1e-6), np.nan)
+            out["ATR"][te] = np.where(np.isfinite(pa), np.maximum(pa, flo), np.nan)
         start += REFIT
 
     res = pd.DataFrame({"ticker": g["ticker"], "d": g["d"], "y": y})
