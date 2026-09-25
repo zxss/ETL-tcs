@@ -167,3 +167,40 @@ class TestContourFallbackForOldSummaries(unittest.TestCase):
     def test_uuid_account_is_sandbox(self):
         self.assertIn("Счёт: SANDBOX",
                       self._report("00000000-0000-0000-0000-000000000000"))
+
+
+class TestOrphanOvernightPositions(unittest.TestCase):
+    """CLOSE обязан разгребать позицию, пережившую свою закрытую запись.
+
+    25.09.2026 на боевом счёте «Робот» остаток HYDR 18 000 шт остался с закрытой
+    записью: CLOSE его не трогал, а проверка «после CLOSE нет ночных позиций»
+    валила тест в halt каждое утро — выйти было нельзя ничем, кроме ручной сделки.
+    """
+
+    def test_close_reopens_orphan_records(self):
+        import inspect
+        from services import stage2_demo as s2
+        src = inspect.getsource(s2.close_overnight_positions)
+        self.assertIn("orphans", src)
+        # сироты подмешиваются к обычным записям ДО выхода по «нечего закрывать»
+        self.assertLess(src.index("recs += orphans"), src.index("if not recs:"))
+        # и позиции читаются до отбора сирот, иначе не с чем сверять
+        self.assertLess(src.index("positions = {p.instrument_uid"),
+                        src.index("orphans = ["))
+
+    def test_orphan_selection_rule(self):
+        """Сирота = запись закрыта И стратегия ночная И позиция жива."""
+        positions = {"u-hydr": object()}
+        pending = [
+            {"ticker": "HYDR", "strategy": "long_overnight", "closed": True,
+             "instrument_uid": "u-hydr"},                      # сирота
+            {"ticker": "MGNT", "strategy": "long_overnight", "closed": True,
+             "instrument_uid": "u-mgnt"},                      # закрыта, позиции нет
+            {"ticker": "VTBR", "strategy": "intraday_short", "closed": True,
+             "instrument_uid": "u-hydr"},                      # не ночная
+        ]
+        from services.stage2_demo import _OVERNIGHT
+        orphans = [r for r in pending
+                   if r.get("closed") and r.get("strategy") in _OVERNIGHT
+                   and r.get("instrument_uid") in positions]
+        self.assertEqual([r["ticker"] for r in orphans], ["HYDR"])

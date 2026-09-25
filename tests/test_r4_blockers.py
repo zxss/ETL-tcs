@@ -149,15 +149,36 @@ class TestOco(unittest.TestCase):
         self.assertEqual(rep["oco_closed"], ["SNGS"])
 
     def test_sl_canceled_when_tp_filled_even_if_position_still_shown(self):
-        """Нога исполнена, а позиция у брокера ещё не обновилась — парную всё равно снять."""
+        """Нога исполнена, а позиция ещё видна — парную снять, но запись НЕ закрывать.
+
+        25.09.2026, боевой счёт: вход 51 лот HYDR, стопы поставлены на 33 (остальное
+        долилось позже), стоп сработал на 33 000 шт — 18 000 остались БЕЗ ЗАЩИТЫ, а
+        запись была закрыта. CLOSE их больше не трогал, и тест вставал в halt каждое
+        утро. Теперь запись остаётся открытой, флаги защиты сброшены, и следующий
+        прогон PROTECT ставит стопы на фактический остаток по свежему балансу.
+        """
         rec = self._bracketed()
         b = Broker(positions=[Pos("u1", 36)],
                    active_stops=[_stop("u1", "STOP_LOSS", "sl-1")],
                    history=[StopOrderRecord("tp-1", "u1", "TAKE_PROFIT", "EXECUTED")])
-        run_attach(b, [rec])
+        rep = run_attach(b, [rec])
         self.assertIn(("cancel_stop", "sl-1"), b.calls)
+        self.assertFalse(rec["closed"], "запись с живой позицией закрывать нельзя")
+        self.assertFalse(rec["stop_placed"])
+        self.assertFalse(rec["tp_placed"])
+        self.assertEqual(rec["pending_exit_reason"], "target")
+        self.assertEqual(rep.get("partial_exits"), ["SNGS"])
+        self.assertFalse([c for c in b.calls if c[0] == "stop"])   # в этом прогоне не ставим
+
+    def test_full_exit_still_closes_record(self):
+        """Позиции не осталось — поведение прежнее: запись закрывается с причиной."""
+        rec = self._bracketed()
+        b = Broker(positions=[],
+                   active_stops=[_stop("u1", "STOP_LOSS", "sl-1")],
+                   history=[StopOrderRecord("tp-1", "u1", "TAKE_PROFIT", "EXECUTED")])
+        run_attach(b, [rec])
+        self.assertTrue(rec["closed"])
         self.assertEqual(rec["closed_reason"], "target")
-        self.assertFalse([c for c in b.calls if c[0] == "stop"])   # новых стопов не ставим
 
     def test_record_stays_open_if_sibling_cancel_fails(self):
         rec = self._bracketed()

@@ -642,19 +642,47 @@ def attach_stops(broker: BrokerClient, account_id: str, *,
         fired = _fired_leg(r, history)
         if fired:
             kind, rec_ = fired
-            if abs(bal) > 1e-9:
-                print(f"[WARN]  {tk}: {kind} исполнен, а брокер ещё показывает "
-                      f"позицию {bal:.0f} шт — снимаю парную ногу всё равно.")
+            partial = abs(bal) > 1e-9
             if dry_run:
-                print(f"[DRY]   {tk}: {kind} исполнен — снять парную ногу.")
+                print(f"[DRY]   {tk}: {kind} исполнен — снять парную ногу"
+                      f"{'; остаток ' + f'{abs(bal):.0f} шт — перезащитить' if partial else ''}.")
                 continue
-            if _cancel_uid_stops(broker, account_id, r, stop_orders, writer, env, "oco_cancel"):
-                r["closed"] = True
-                r["closed_reason"] = "stop" if kind == "STOP_LOSS" else "target"
-                exec_journal.journal_exit(broker, account_id, conn, r, r["closed_reason"],
-                                          exit_at=exec_journal.parse_ts(rec_.activated_at))
-                rep["oco_closed"].append(tk)
-                print(f"[OCO]   {tk}: {kind} исполнен, парная нога снята, запись закрыта.")
+            if not _cancel_uid_stops(broker, account_id, r, stop_orders, writer, env,
+                                     "oco_cancel"):
+                continue
+            if partial:
+                # ЧАСТИЧНЫЙ ВЫХОД. Нога закрыла не всю позицию: стопы ставятся на
+                # количество, которое было залито НА МОМЕНТ постановки, и если
+                # входная лимитка долилась позже, остаток ими не покрыт.
+                # 24.09.2026 на боевом счёте: вход 51 лот HYDR, стопы на 33,
+                # стоп сработал на 33 000 шт, 18 000 остались БЕЗ ЗАЩИТЫ, а
+                # запись была закрыта — CLEANUP и CLOSE их больше не трогали,
+                # и тест вставал в halt каждое утро.
+                # Правильно: запись НЕ закрывать, флаги защиты сбросить — и
+                # следующий прогон PROTECT поставит стопы на фактический остаток.
+                r["stop_placed"] = False
+                r["tp_placed"] = False
+                r["stop_order_id"] = None
+                r["tp_order_id"] = None
+                r["partial_exits"] = int(r.get("partial_exits", 0)) + 1
+                # Причину выхода запоминаем: если остаток окажется отставанием
+                # брокера и следующий прогон увидит ноль, запись закроется этой
+                # причиной, а не обезличенным closed_externally — иначе метрика
+                # «взятие тейка» из ТЗ портилась бы на каждом таком случае.
+                r["pending_exit_reason"] = "stop" if kind == "STOP_LOSS" else "target"
+                _logrow(writer, env=env, account_id=account_id, ticker=tk,
+                        action="oco_partial", status="partial",
+                        info=f"{kind} исполнен, остаток {abs(bal):.0f} шт — перезащита")
+                rep.setdefault("partial_exits", []).append(tk)
+                print(f"[OCO]   {tk}: {kind} исполнен частично, остаток {abs(bal):.0f} шт — "
+                      f"запись оставлена, защита будет поставлена заново.")
+                continue
+            r["closed"] = True
+            r["closed_reason"] = "stop" if kind == "STOP_LOSS" else "target"
+            exec_journal.journal_exit(broker, account_id, conn, r, r["closed_reason"],
+                                      exit_at=exec_journal.parse_ts(rec_.activated_at))
+            rep["oco_closed"].append(tk)
+            print(f"[OCO]   {tk}: {kind} исполнен, парная нога снята, запись закрыта.")
             continue
 
         bracketed = r.get("stop_placed") or r.get("tp_placed")
@@ -671,8 +699,10 @@ def attach_stops(broker: BrokerClient, account_id: str, *,
                     continue
                 _reconcile_closed(broker, account_id, r, stop_orders, dry_run, writer, env)
                 if r.get("closed") and not dry_run:
-                    r["closed_reason"] = r.get("closed_reason") or "closed_externally"
-                    exec_journal.journal_exit(broker, account_id, conn, r, "closed_externally")
+                    reason = (r.get("closed_reason") or r.get("pending_exit_reason")
+                              or "closed_externally")
+                    r["closed_reason"] = reason
+                    exec_journal.journal_exit(broker, account_id, conn, r, reason)
                     rep["closed_externally"].append(tk)
             else:
                 print(f"[WAIT]  {tk}: лимитка {r['order_id']} ещё не залилась — в очереди.")

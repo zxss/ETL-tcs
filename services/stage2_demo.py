@@ -1218,14 +1218,29 @@ def close_overnight_positions(broker, account_id: str, conn, *, dry_run: bool,
                                        _stop_history)
 
     out = {"overnight_before": 0, "closed": [], "failed": [],
-           "orders_cancelled": 0, "registry_reconciled": 0}
+           "orders_cancelled": 0, "registry_reconciled": 0, "orphans": []}
     pending = _load_pending()
+    positions = {p.instrument_uid: p for p in broker.get_positions(account_id) if p.is_open}
     recs = [r for r in pending.get(account_id, [])
             if not r.get("closed") and r.get("strategy") in _OVERNIGHT]
+    # СИРОТЫ: запись уже закрыта, а позиция по ней жива. Так бывает, когда нога
+    # OCO закрыла лишь часть позиции (25.09.2026, боевой счёт: остаток 18 000 шт
+    # HYDR). Без этого CLOSE их не трогает — запись закрыта, — а проверка
+    # «после CLOSE не осталось ночных позиций» валит тест в halt каждое утро,
+    # и выйти из него нельзя ничем, кроме ручного закрытия.
+    orphans = [r for r in pending.get(account_id, [])
+               if r.get("closed") and r.get("strategy") in _OVERNIGHT
+               and r.get("instrument_uid") in positions]
+    for r in orphans:
+        r["closed"] = False
+        r["closed_reason"] = None
+        out["orphans"].append(r.get("ticker", "?"))
+        log.warning("[CLOSE] %s: запись была закрыта, а позиция %s шт жива — "
+                    "закрываю как ночную", r.get("ticker"),
+                    f'{abs(positions[r["instrument_uid"]].balance_shares):.0f}')
+    recs += orphans
     if not recs:
         return out
-
-    positions = {p.instrument_uid: p for p in broker.get_positions(account_id) if p.is_open}
     try:
         stop_orders = broker.get_active_stop_orders(account_id)
     except NotSupportedError:
