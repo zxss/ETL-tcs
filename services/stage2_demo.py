@@ -734,8 +734,14 @@ def validate_plan(plan: dict | None, day: dt.date, current_ds: dict) -> list[str
     return errs
 
 
-def check_order_allowed(po: dict, *, env: str, used_ids: set[str]) -> str | None:
-    """Проверки перед отправкой каждой заявки (§5.3). None — можно ставить."""
+def check_order_allowed(po: dict, *, env: str, used_ids: set[str],
+                        ex_div: dict[str, dict] | None = None) -> str | None:
+    """Проверки перед отправкой каждой заявки (§5.3). None — можно ставить.
+
+    ex_div — календарь отсечек на день входа ({TICKER: инфо}, см.
+    services/dividends.py). Передаётся только ночной фазой: внутридневные
+    стратегии считают close/open, обе цены уже после гэпа.
+    """
     from tft_forecast.combined import non_shortable_tickers, trading_strategies
 
     bad = contour_ok(env)
@@ -744,6 +750,9 @@ def check_order_allowed(po: dict, *, env: str, used_ids: set[str]) -> str | None
     st = po.get("strategy_type")
     if st not in trading_strategies():
         return f"стратегия {st} вне TRADING_STRATEGIES"
+    if ex_div and st in _OVERNIGHT and po["ticker"].upper() in ex_div:
+        from services import dividends as div_svc
+        return div_svc.SKIP_REASON
     if po.get("direction") == "SHORT" and po["ticker"].upper() in non_shortable_tickers():
         return "шорт недоступен у брокера"
     lots = po.get("quantity_lots") or 0
@@ -1688,11 +1697,25 @@ def phase_overnight(*, now: dt.datetime | None = None, prod: bool = False,
             for n in notes:
                 res.check(False, f"вход по рынку: {n}", critical=False)
 
+        # Календарь дивидендных отсечек на ДЕНЬ ВХОДА. Вход вечером
+        # last_buy_date означает: дивиденд получен, но утренний гэп съеден
+        # целиком, а выплата придёт через недели и за вычетом НДФЛ (итог ≈ −13 %
+        # от дивиденда), плюс стоп выносится в аукционе открытия. Подробно —
+        # services/dividends.py.
+        from services import dividends as div_svc
+        ex_div = div_svc.ex_div_block(day, conn)
+        res.data["ex_div"] = {tk: info.get("gap_pct") for tk, info in ex_div.items()}
+        for tk, info in ex_div.items():
+            log.info("[OVERNIGHT] отсечка сегодня — %s", div_svc.describe(tk, info))
+        if div_svc.calendar_stale(day, conn):
+            res.check(False, "календарь отсечек пуст на 45 дней вперёд — "
+                             "проверить шаг Dividends в ETL", critical=False)
+
         used: set[str] = set()
         accepted, rejected = [], []
         for o in night:
             po = _plan_order(o, {}, day)
-            reason = check_order_allowed(po, env=env, used_ids=used)
+            reason = check_order_allowed(po, env=env, used_ids=used, ex_div=ex_div)
             if reason:
                 rejected.append({**po, "skip_reason": reason})
                 continue
@@ -1703,9 +1726,20 @@ def phase_overnight(*, now: dt.datetime | None = None, prod: bool = False,
         # ВЫКЛЮЧЕН: OVERNIGHT_VAR_BUDGET_RUB = 0 → корзина не трогается и
         # поведение контура прежнее. Считается ДО продажи паёв, чтобы не
         # расконсервировать казначейство под заявки, которые всё равно срежутся.
+        # Поправка на режим волатильности: 2,3 % замерены на окне, где вола
+        # ходила от 0,64 до 2,24 %/день. Множитель только расширяет оценку и
+        # никогда не опускает её ниже откалиброванного уровня.
         from services import risk_limits
-        accepted, over_limit, var_info = risk_limits.trim_to_budget(accepted)
+        vol_factor, vol_info = risk_limits.vol_widen(conn)
+        accepted, over_limit, var_info = risk_limits.trim_to_budget(
+            accepted, vol_factor=vol_factor)
+        var_info["vol"] = vol_info
         res.data["overnight_var"] = var_info
+        if vol_factor > 1.0:
+            log.info("[OVERNIGHT] режим волатильности: вола %.2f %%/день против "
+                     "медианы %.2f %% — оценка VaR расширена ×%.2f",
+                     vol_info.get("vol_now_pct") or 0.0,
+                     risk_limits.VOL_REF_PCT, vol_factor)
         for po in over_limit:
             rejected.append({**po, "skip_reason": "лимит ночного VaR"})
         if over_limit:

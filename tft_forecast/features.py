@@ -27,7 +27,7 @@ WEEK_H = max(1, int(getattr(config, "WEEK_HORIZON_DAYS", 5)))
 FEATURE_COLS = [
     "log_ret",       # лог-доходность close-to-close
     "intraday",      # (close/open - 1) * 100
-    "overnight",     # (open/prev_close - 1) * 100
+    "overnight",     # ((open + див) / prev_close - 1) * 100 — полная доходность
     "range_pct",     # (high-low)/prev_close * 100  — реализованный дневной диапазон
     "atr_pct",       # ATR(14) / close * 100
     "vol_z",         # z-оценка объёма за 20 дней
@@ -50,7 +50,7 @@ FEATURE_COLS = [
 TARGET_COLS = [
     "next_low_pct",
     "next_high_pct",
-    "next_overnight",   # (next_open / today_close - 1) * 100   → long_overnight
+    "next_overnight",   # ((next_open + див)/today_close - 1)*100 → long_overnight
     "next_intraday",    # (next_close / next_open - 1) * 100     → long/short intraday
     "next_total",       # (next_close / today_close - 1) * 100   → short_hold (с минусом)
     "week_low_pct",     # (min(low[t+1..t+H]) / today_close - 1) * 100
@@ -96,6 +96,44 @@ def _load_raw(conn, ticker: str) -> pd.DataFrame | None:
     return df
 
 
+def _div_gap_series(df: pd.DataFrame, payments: list[dict]) -> pd.Series:
+    """Дивиденд (₽), гэп которого приходится на каждый день ряда.
+
+    Свечи T-Invest не скорректированы на дивиденды: в день отсечки open
+    проваливается на величину выплаты. Гэп ложится на открытие ПЕРВОГО торгового
+    дня строго после last_buy_date — его и ищем поиском по отсортированным датам
+    (та же привязка, что в research/xsec/panel.py).
+
+    Выплата, чей гэп приходится за пределы ряда, отбрасывается. Две отсечки в
+    один день (редко, но бывает после объединения выпусков) складываются.
+    """
+    div = pd.Series(0.0, index=df.index)
+    if not payments:
+        return div
+    days = df["date"].to_numpy()
+    for p in payments:
+        lb = p.get("last_buy_date")
+        amount = float(p.get("dividend_net") or 0.0)
+        if lb is None or amount <= 0:
+            continue
+        i = int(np.searchsorted(days, np.datetime64(pd.Timestamp(lb)), side="right"))
+        if 0 < i < len(div):
+            div.iat[i] += amount
+    return div
+
+
+def _load_dividends(conn, ticker: str) -> list[dict]:
+    """Календарь отсечек по бумаге. Пустой список — поведение как прежде."""
+    if not getattr(config, "DIVIDEND_ADJUST_FEATURES", True):
+        return []
+    try:
+        import database
+        return database.get_dividends(ticker, conn)
+    except Exception as e:  # noqa: BLE001 — таблицы может не быть на старой базе
+        log.warning("  [%s] календарь отсечек недоступен: %s", ticker, e)
+        return []
+
+
 def _is_sane(df: pd.DataFrame) -> bool:
     """Грубая проверка масштаба цены — отсекаем битые серии (ср. TGKA)."""
     med = df["close"].median()
@@ -106,21 +144,31 @@ def _is_sane(df: pd.DataFrame) -> bool:
     return True
 
 
-def _build_features(df: pd.DataFrame) -> pd.DataFrame:
+def _build_features(df: pd.DataFrame, payments: list[dict] | None = None) -> pd.DataFrame:
     d = df.copy()
     prev_close = d["close"].shift(1)
 
-    d["log_ret"] = np.log(d["close"] / prev_close)
+    # Дивидендная поправка. В день отсечки цена падает на выплату, а держатель
+    # её получает: полная доходность ночи = (open + D) / prev_close − 1. Без
+    # поправки признак overnight в такие дни — не доходность, а дивиденд с
+    # обратным знаком (медиана 5,2 %, максимум 20 % против обычных 0,5 %), и в
+    # квантильном лоссе он тянет q10 вниз, то есть задирает стопы.
+    # Правятся ТОЛЬКО сравнения с ВЧЕРАШНИМ закрытием. Внутридневные
+    # (intraday = close/open) дивидендом не задеты: обе цены уже после гэпа.
+    div = _div_gap_series(d, payments or [])
+    d["div_gap"] = div
+
+    d["log_ret"] = np.log((d["close"] + div) / prev_close)
     d["intraday"] = (d["close"] / d["open"] - 1) * 100
-    d["overnight"] = (d["open"] / prev_close - 1) * 100
+    d["overnight"] = ((d["open"] + div) / prev_close - 1) * 100
     d["range_pct"] = (d["high"] - d["low"]) / prev_close * 100
 
     # ATR(14) на истинном диапазоне
     tr = pd.concat(
         [
             d["high"] - d["low"],
-            (d["high"] - prev_close).abs(),
-            (d["low"] - prev_close).abs(),
+            (d["high"] + div - prev_close).abs(),
+            (d["low"] + div - prev_close).abs(),
         ],
         axis=1,
     ).max(axis=1)
@@ -160,11 +208,14 @@ def _build_features(df: pd.DataFrame) -> pd.DataFrame:
     # предсказываем будущее, признаки — только до текущего дня включительно).
     nopen = d["open"].shift(-1)
     nclose = d["close"].shift(-1)
-    d["next_low_pct"] = (d["low"].shift(-1) / d["close"] - 1) * 100
-    d["next_high_pct"] = (d["high"].shift(-1) / d["close"] - 1) * 100
-    d["next_overnight"] = (nopen / d["close"] - 1) * 100
+    # Дивиденд ЗАВТРАШНЕГО гэпа: цели сравнивают завтрашние цены с сегодняшним
+    # закрытием, значит поправка нужна та же, что и в признаках.
+    ndiv = div.shift(-1).fillna(0.0)
+    d["next_low_pct"] = ((d["low"].shift(-1) + ndiv) / d["close"] - 1) * 100
+    d["next_high_pct"] = ((d["high"].shift(-1) + ndiv) / d["close"] - 1) * 100
+    d["next_overnight"] = ((nopen + ndiv) / d["close"] - 1) * 100
     d["next_intraday"] = (nclose / nopen - 1) * 100
-    d["next_total"] = (nclose / d["close"] - 1) * 100
+    d["next_total"] = ((nclose + ndiv) / d["close"] - 1) * 100
 
     # Недельные цели: экстремумы и close за следующие WEEK_H торговых дней.
     # Reverse-rolling: rolling по перевёрнутому ряду в позиции t покрывает
@@ -172,9 +223,14 @@ def _build_features(df: pd.DataFrame) -> pd.DataFrame:
     # Последние H строк остаются NaN — dataset их не берёт в обучение.
     fwd_min_low = d["low"][::-1].rolling(WEEK_H, min_periods=WEEK_H).min()[::-1].shift(-1)
     fwd_max_high = d["high"][::-1].rolling(WEEK_H, min_periods=WEEK_H).max()[::-1].shift(-1)
-    d["week_low_pct"] = (fwd_min_low / d["close"] - 1) * 100
-    d["week_high_pct"] = (fwd_max_high / d["close"] - 1) * 100
-    d["week_total"] = (d["close"].shift(-WEEK_H) / d["close"] - 1) * 100
+    # Дивиденды, выплаченные ВНУТРИ окна [t+1 .. t+H]. Для week_total поправка
+    # точная. Для экстремумов приближённая: истинная зависит от того, до или
+    # после отсечки случился минимум. Окно — неделя, отсечка в нём редкость,
+    # а без поправки ошибка равна всему дивиденду, с ней — доле от него.
+    fwd_div = div[::-1].rolling(WEEK_H, min_periods=WEEK_H).sum()[::-1].shift(-1).fillna(0.0)
+    d["week_low_pct"] = ((fwd_min_low + fwd_div) / d["close"] - 1) * 100
+    d["week_high_pct"] = ((fwd_max_high + fwd_div) / d["close"] - 1) * 100
+    d["week_total"] = ((d["close"].shift(-WEEK_H) + fwd_div) / d["close"] - 1) * 100
 
     return d
 
@@ -191,7 +247,7 @@ def load_panel(conn, tickers: list[str]) -> list[TickerFrame]:
             log.warning("  [%s] пропуск: подозрительный масштаб цены (median close=%.4f)",
                         tk, raw["close"].median())
             continue
-        feat = _build_features(raw)
+        feat = _build_features(raw, _load_dividends(conn, tk))
         last_close = float(raw["close"].iloc[-1])
         last_date = raw["date"].iloc[-1].date()
         frames.append(TickerFrame(tk, feat, last_close, last_date))

@@ -622,6 +622,25 @@ def attach_stops(broker: BrokerClient, account_id: str, *,
         print("Реестр пуст — нечего привязывать.")
         return
 
+    # Дивидендный гэп этого утра. Штатный контур сюда не попадает: ночной вход
+    # вечером last_buy_date блокируется (OVERNIGHT_SKIP_EX_DIV). Но позиция
+    # может прийти из adopt_position или пережить сбой, и тогда стоп в 1 % от
+    # входа срабатывает в аукционе открытия на гэпе 5 % — не на движении рынка,
+    # а на выплате. Стоп НЕ переставляем: расширение стопа увеличивает риск, это
+    # решение пользователя. Громко предупреждаем, чтобы разбор не занял день.
+    try:
+        from services import dividends as div_svc
+        gaps = div_svc.gap_today(dt.date.today(), conn)
+        for r in active:
+            info = gaps.get(str(r.get("ticker", "")).upper())
+            if info:
+                rep.setdefault("ex_div_today", []).append(r.get("ticker"))
+                print(f"  !! {div_svc.describe(r.get('ticker', '?'), info)} — "
+                      f"гэп приходится на сегодняшнее открытие, стоп может "
+                      f"сработать на выплате, а не на движении цены")
+    except Exception as e:  # noqa: BLE001 — защита важнее календаря
+        print(f"  (календарь отсечек недоступен: {e})")
+
     positions = {p.instrument_uid: p.balance_shares
                  for p in broker.get_positions(account_id) if p.is_open}
     try:

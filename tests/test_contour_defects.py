@@ -204,3 +204,111 @@ class TestOrphanOvernightPositions(unittest.TestCase):
                    if r.get("closed") and r.get("strategy") in _OVERNIGHT
                    and r.get("instrument_uid") in positions]
         self.assertEqual([r["ticker"] for r in orphans], ["HYDR"])
+
+
+class TestVarVolScaling(unittest.TestCase):
+    """26.09.2026: 2,3 % замерены на окне, где вола IMOEX шла 0,64…2,24 %/день.
+
+    Фиксированный процент занижает риск в стрессе — ровно тогда, когда лимит и
+    нужен. Множитель режима только РАСШИРЯЕТ оценку: опускать её ниже
+    откалиброванного уровня значит торговать риском, которого не замеряли.
+    """
+
+    ORDERS = [{"signal_id": f"s{i}", "total_rub": 100_000.0, "final_score": 10 - i}
+              for i in range(5)]
+
+    def test_factor_one_keeps_calibrated_estimate(self):
+        self.assertAlmostEqual(risk_limits.basket_var_rub(500_000.0, 5, 1.0),
+                               500_000.0 * 0.023, places=2)
+
+    def test_factor_widens_estimate(self):
+        v1 = risk_limits.basket_var_rub(500_000.0, 5, 1.0)
+        v2 = risk_limits.basket_var_rub(500_000.0, 5, 1.6)
+        self.assertAlmostEqual(v2 / v1, 1.6, places=6)
+
+    def test_factor_below_one_ignored(self):
+        """Спокойный рынок не повод занижать откалиброванный VaR."""
+        self.assertAlmostEqual(risk_limits.basket_var_rub(500_000.0, 5, 0.5),
+                               risk_limits.basket_var_rub(500_000.0, 5, 1.0), places=6)
+
+    def test_high_vol_trims_basket_that_fit_before(self):
+        """Корзина, влезавшая в бюджет при обычной воле, в стрессе срезается."""
+        budget = 12_000.0
+        kept_calm, dropped_calm, _ = risk_limits.trim_to_budget(
+            self.ORDERS, budget=budget, vol_factor=1.0)
+        kept_stress, dropped_stress, info = risk_limits.trim_to_budget(
+            self.ORDERS, budget=budget, vol_factor=1.6)
+        self.assertEqual(len(kept_calm), 5)
+        self.assertEqual(dropped_calm, [])
+        self.assertLess(len(kept_stress), 5)
+        self.assertLessEqual(info["var_after_rub"], budget)
+        self.assertEqual(info["vol_factor"], 1.6)
+
+    def test_scaling_disabled_by_flag(self):
+        from unittest import mock
+        import config as cfg
+        with mock.patch.object(cfg, "OVERNIGHT_VAR_VOL_SCALING", False):
+            factor, info = risk_limits.vol_widen()
+        self.assertEqual(factor, 1.0)
+        self.assertFalse(info["scaling"])
+
+    def test_missing_index_history_falls_back_to_one(self):
+        """Нет истории индекса — лимит остаётся откалиброванным, а не отключается."""
+        from unittest import mock
+        import config as cfg
+
+        class _Cur:
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+            def execute(self, *a): pass
+            def fetchall(self): return [(100.0,), (101.0,)]
+
+        class _Conn:
+            def cursor(self): return _Cur()
+
+        with mock.patch.object(cfg, "OVERNIGHT_VAR_VOL_SCALING", True):
+            factor, info = risk_limits.vol_widen(_Conn())
+        self.assertEqual(factor, 1.0)
+        self.assertIn("reason", info)
+
+    def test_vol_measured_from_index_closes(self):
+        """Ровный ряд — нулевая вола — множитель 1, а не деление на ноль."""
+        from unittest import mock
+        import config as cfg
+
+        closes = [(100.0,)] * (risk_limits.VOL_WINDOW + 1)
+
+        class _Cur:
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+            def execute(self, *a): pass
+            def fetchall(self): return closes
+
+        class _Conn:
+            def cursor(self): return _Cur()
+
+        with mock.patch.object(cfg, "OVERNIGHT_VAR_VOL_SCALING", True):
+            factor, info = risk_limits.vol_widen(_Conn())
+        self.assertEqual(factor, 1.0)
+        self.assertEqual(info["vol_now_pct"], 0.0)
+
+    def test_widen_capped(self):
+        """Предохранитель от битой свечи: множитель не уходит в бесконечность."""
+        from unittest import mock
+        import config as cfg
+
+        closes = [(100.0,) if i % 2 == 0 else (10.0,)
+                  for i in range(risk_limits.VOL_WINDOW + 1)]
+
+        class _Cur:
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+            def execute(self, *a): pass
+            def fetchall(self): return closes
+
+        class _Conn:
+            def cursor(self): return _Cur()
+
+        with mock.patch.object(cfg, "OVERNIGHT_VAR_VOL_SCALING", True):
+            factor, _ = risk_limits.vol_widen(_Conn())
+        self.assertEqual(factor, risk_limits.VOL_WIDEN_MAX)

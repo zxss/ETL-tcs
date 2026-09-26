@@ -31,7 +31,8 @@ import database
 from services.load_history import run
 from services import run_validation
 from services import backfill_daily
-from services import load_index, load_instruments
+from services import (load_dividends, load_index, load_instruments,
+                      load_macro)
 from services.data_freshness import StaleDataError, ensure_fresh_data
 from services import calendar as trading_calendar_svc
 import config
@@ -133,6 +134,18 @@ def main() -> None:
         log.info("Загрузка биржевых индексов (IMOEX)...")
         with st.stage("index", "Index"):
             load_index.run(conn)
+
+        # Календарь дивидендных отсечек. Идёт ПОСЛЕ instruments: UID бумаг
+        # берётся из кэша справочника. Нужен и торговому контуру (не входить в
+        # ночь перед гэпом), и обучающей выборке (дивидендная поправка).
+        with st.stage("dividends", "Dividends"):
+            load_dividends.run(conn)
+
+        # Ключевая ставка ЦБ — планка доходности контура: свободные деньги
+        # лежат в фонде денежного рынка, фонд идёт за ставкой, значит торговля
+        # соревнуется со ставкой, а не с нулём (models/macro.py).
+        with st.stage("macro", "Key rate"):
+            load_macro.run(conn)
 
         # Достраиваем дневные свечи из 5M, если официальный дневной бар ещё
         # не опубликован брокером (вечер/ночь). Самокорректируется позже.

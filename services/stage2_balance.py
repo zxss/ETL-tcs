@@ -160,6 +160,59 @@ def _fmt(v, width=10, digits=2, dash="—"):
     return f"{txt:>{width}}"
 
 
+def _benchmark_block(summaries: list[dict], base: float | None,
+                     total: float | None) -> list[str]:
+    """Безрисковая планка: что те же деньги дали бы по ключевой ставке.
+
+    Итог контура сам по себе ничего не говорит: свободные деньги лежат в фонде
+    денежного рынка, фонд идёт за ставкой ЦБ. Поэтому «плюс за N дней» имеет
+    смысл только рядом со ставкой за те же N дней. Ставка считается как 365
+    календарных дней в году: это доходность «лежать в деньгах», она начисляется
+    и в выходные, а не только в торговые сессии.
+
+    Без таблицы ставки блок не печатается — выдумывать планку нельзя.
+    """
+    if not summaries or not base or total is None:
+        return []
+    first, last = summaries[0].get("trading_day"), summaries[-1].get("trading_day")
+    if not first or not last:
+        return []
+    try:
+        d0 = dt.date.fromisoformat(str(first)[:10])
+        d1 = dt.date.fromisoformat(str(last)[:10])
+    except ValueError:
+        return []
+    try:
+        import database
+        rate = database.get_key_rate_avg(d0, d1)
+        asof_date, rate_now = database.get_key_rate(d1)
+    except Exception:  # noqa: BLE001 — отчёт важнее бенчмарка
+        return []
+    if not rate:
+        return []
+    # Календарные дни, а не торговые: деньги в фонде работают каждый день.
+    held = max(1, (d1 - d0).days + 1)
+    rf_pct = float(rate) * held / 365.0
+    rf_rub = base * rf_pct / 100.0
+    got_pct = total / base * 100.0
+    alpha = total - rf_rub
+    verdict = "ВЫШЕ ставки" if alpha > 0 else "НИЖЕ ставки"
+
+    def _pct(x: float, nd: int = 3) -> str:
+        return f"{x:.{nd}f}".replace(".", ",")
+
+    out = ["", "БЕЗРИСКОВАЯ ПЛАНКА"]
+    if rate_now is not None:
+        out.append(f"  Ключевая ставка ЦБ     {_pct(rate_now, 2):>12} %   "
+                   f"(с {asof_date}, средняя за период {_pct(float(rate), 2)} %)")
+    out += [
+        f"  Ставка за {held:>3} дн.       {_fmt(rf_rub, 12)} ₽   ({_pct(rf_pct)} %)",
+        f"  Результат контура      {_fmt(total, 12)} ₽   ({_pct(got_pct)} %)",
+        f"  Сверх ставки           {_fmt(alpha, 12)} ₽   {verdict}",
+    ]
+    return out
+
+
 def build_report(*, start_balance: float | None = None,
                  target_days: int | None = None,
                  execution: dict | None = None) -> str:
@@ -239,6 +292,8 @@ def build_report(*, start_balance: float | None = None,
           f"  Перенос через ночь     {_fmt(carry, 12)} ₽",
           f"  Нереализованный P&L    {_fmt(unreal, 12)} ₽",
           f"  Казначейство и прочее  {_fmt(treasury, 12)} ₽   (остаток итога)"]
+
+    L += _benchmark_block(summaries, cum_base, total)
 
     if execution:
         placed = execution.get("orders") or 0

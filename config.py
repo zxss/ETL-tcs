@@ -190,6 +190,42 @@ INDEX_TICKERS: list[str] = (
     os.getenv("INDEX_TICKERS").split() if os.getenv("INDEX_TICKERS") else ["IMOEX"]
 )
 
+# --- Календарь дивидендных отсечек (services/load_dividends.py) --------------
+# Свечи T-Invest не скорректированы на дивиденды. Календарь нужен двум местам:
+# торговому контуру (не входить в ночь перед гэпом) и обучающей выборке
+# (дивидендная поправка ночной доходности вместо винзоризации). Подробно —
+# models/dividends.py.
+LOAD_DIVIDENDS: bool = get_bool_env("LOAD_DIVIDENDS", 1)
+DIVIDENDS_HISTORY_YEARS: int = int(os.getenv("DIVIDENDS_HISTORY_YEARS", "12"))
+
+# OVERNIGHT_SKIP_EX_DIV — не открывать ночную позицию вечером last_buy_date.
+# Вход в этот вечер даёт право на дивиденд, но утренний гэп съедается целиком,
+# а выплата приходит через недели и за вычетом НДФЛ: ожидание ≈ −13 % от
+# дивиденда, при медианном гэпе 5,2 % это −0,68 % на позицию против издержек
+# круга 0,08 %. Плюс стоп на 1 % выносится в аукционе открытия по
+# неконтролируемой цене. Включено: блокировка входа снижает риск.
+OVERNIGHT_SKIP_EX_DIV: bool = get_bool_env("OVERNIGHT_SKIP_EX_DIV", 1)
+
+# DIVIDEND_ADJUST_FEATURES — дивидендная поправка признаков и целей обучения
+# (open/close в день гэпа сравниваются с prev_close с добавленным дивидендом).
+# Точная замена костылю VALIDATION_WINSORIZE_GAPS: правит причину, а не выброс.
+DIVIDEND_ADJUST_FEATURES: bool = get_bool_env("DIVIDEND_ADJUST_FEATURES", 1)
+
+# OVERNIGHT_VAR_VOL_SCALING — расширять оценку ночного VaR по текущему режиму
+# волатильности (services/risk_limits.vol_widen). 2,3 % замерены на окне, где
+# 21-дневная вола IMOEX шла от 0,64 до 2,24 %/день: фиксированный процент в
+# стрессе занижает риск ровно тогда, когда лимит нужен. Множитель НИКОГДА не
+# меньше 1 — в спокойном рынке лимит остаётся откалиброванным.
+OVERNIGHT_VAR_VOL_SCALING: bool = get_bool_env("OVERNIGHT_VAR_VOL_SCALING", 1)
+
+# --- Безрисковая планка (services/load_macro.py) -----------------------------
+# Ключевая ставка ЦБ. Не признак модели: макро как предиктор доходностей закрыто
+# и литературой, и нашими тестами. Это ЗНАМЕНАТЕЛЬ отчёта — свободные деньги
+# лежат в фонде денежного рынка, фонд идёт за ставкой, поэтому «плюс за день»
+# имеет смысл только выше ставки.
+LOAD_MACRO: bool = get_bool_env("LOAD_MACRO", 1)
+MACRO_HISTORY_DAYS: int = int(os.getenv("MACRO_HISTORY_DAYS", "400"))
+
 # Окно одного запроса к API (чанкинг)
 CHUNK_DAYS_DAILY: int = 365   # дневные: до года за запрос
 CHUNK_DAYS_5M:    int = 1     # 5-мин: не более 1 дня за запрос (лимит API)

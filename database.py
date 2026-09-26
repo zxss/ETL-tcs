@@ -42,6 +42,14 @@ from models.instruments import (
     CREATE_INSTRUMENTS_SQL, UPSERT_INSTRUMENT_SQL, SELECT_LOTS_SQL,
     SELECT_INSTRUMENTS_SQL,
 )
+from models.dividends import (
+    CREATE_DIVIDENDS_SQL, UPSERT_DIVIDEND_SQL, SELECT_DIVIDENDS_SQL,
+    SELECT_DIVIDENDS_ON_SQL,
+)
+from models.macro import (
+    CREATE_MACRO_RATES_SQL, UPSERT_MACRO_RATE_SQL, SELECT_KEY_RATE_ASOF_SQL,
+    SELECT_KEY_RATE_AVG_SQL,
+)
 
 log = logging.getLogger("database")
 
@@ -157,12 +165,14 @@ def init_db(conn=None) -> None:
             cur.execute(CREATE_INSTRUMENTS_SQL)
             cur.execute(CREATE_EXECUTION_AUDIT_SQL)
             cur.execute(CREATE_TREASURY_LEDGER_SQL)
+            cur.execute(CREATE_DIVIDENDS_SQL)
+            cur.execute(CREATE_MACRO_RATES_SQL)
             # Миграции существующих баз (идемпотентны).
             cur.execute(MIGRATE_MARKET_DATA_SOURCE_SQL)
         if conn is not None:
             c.commit()   # DDL у владельца коннекта фиксируем сразу
     log.info("Схема БД инициализирована (market_data + market_data_5m + "
-             "forecasts + instruments + execution_audit)")
+             "forecasts + instruments + execution_audit + dividends + macro_rates)")
 
 
 # --- Свечи -------------------------------------------------------------------
@@ -276,6 +286,141 @@ def save_instruments(rows: list[dict], conn=None) -> int:
             psycopg2.extras.execute_batch(cur, UPSERT_INSTRUMENT_SQL, payload,
                                           page_size=100)
     return len(payload)
+
+
+def save_dividends(rows: list[dict], conn=None) -> int:
+    """Upsert календаря отсечек по ключу (ticker, last_buy_date).
+
+    rows — список dict с ключами колонок dividends. Строки без тикера, без
+    last_buy_date или с неположительной выплатой отбрасываются: они не несут
+    информации о гэпе, а UNIQUE-ключу нужна дата.
+    """
+    if not rows:
+        return 0
+    cols = ("ticker", "last_buy_date", "record_date", "payment_date",
+            "dividend_net", "close_price", "currency")
+    payload = []
+    for r in rows:
+        rec = {k: r.get(k) for k in cols}
+        if not rec.get("ticker") or not rec.get("last_buy_date"):
+            continue
+        try:
+            rec["dividend_net"] = float(rec.get("dividend_net") or 0.0)
+        except (TypeError, ValueError):
+            continue
+        if rec["dividend_net"] <= 0:
+            continue
+        rec["ticker"] = str(rec["ticker"]).upper()
+        payload.append(rec)
+    if not payload:
+        return 0
+    with _tx(conn) as c:
+        with c.cursor() as cur:
+            psycopg2.extras.execute_batch(cur, UPSERT_DIVIDEND_SQL, payload,
+                                          page_size=100)
+    return len(payload)
+
+
+def get_dividends(ticker: str, conn=None) -> list[dict]:
+    """Все выплаты по бумаге: [{last_buy_date, dividend_net, close_price}, ...].
+
+    Нужна дивидендная поправка обучающей выборки (tft_forecast/features.py).
+    Пустая таблица — пустой список: контур обязан работать и без календаря.
+    """
+    try:
+        with _tx(conn) as c:
+            with c.cursor() as cur:
+                cur.execute(SELECT_DIVIDENDS_SQL, (str(ticker).upper(),))
+                rows = cur.fetchall()
+    except Exception as e:  # noqa: BLE001 — таблицы может ещё не быть
+        log.warning("Не удалось прочитать дивиденды %s: %s", ticker, e)
+        return []
+    return [{"ticker": r[0], "last_buy_date": r[1],
+             "dividend_net": float(r[2]),
+             "close_price": float(r[3]) if r[3] is not None else None}
+            for r in rows]
+
+
+def get_dividends_on(day, conn=None) -> dict[str, dict]:
+    """Отсечки, у которых last_buy_date == day: {TICKER: {...}}.
+
+    Вход вечером этого дня = право на дивиденд и гэп на утреннем открытии.
+    """
+    try:
+        with _tx(conn) as c:
+            with c.cursor() as cur:
+                cur.execute(SELECT_DIVIDENDS_ON_SQL, (day,))
+                rows = cur.fetchall()
+    except Exception as e:  # noqa: BLE001
+        log.warning("Не удалось прочитать дивиденды на %s: %s", day, e)
+        return {}
+    out = {}
+    for tk, last_buy, record, amount, close in rows:
+        px = float(close) if close else 0.0
+        out[str(tk).upper()] = {
+            "last_buy_date": last_buy, "record_date": record,
+            "dividend_net": float(amount), "close_price": px,
+            "gap_pct": (float(amount) / px * 100.0) if px > 0 else None,
+        }
+    return out
+
+
+def save_key_rates(rows: list[dict], conn=None) -> int:
+    """Upsert ключевой ставки по ключу date."""
+    if not rows:
+        return 0
+    payload = []
+    for r in rows:
+        if not r.get("date"):
+            continue
+        try:
+            rate = float(r.get("key_rate_pct") or 0.0)
+        except (TypeError, ValueError):
+            continue
+        if rate <= 0:
+            continue
+        payload.append({"date": r["date"], "key_rate_pct": rate,
+                        "source": r.get("source") or "cbr"})
+    if not payload:
+        return 0
+    with _tx(conn) as c:
+        with c.cursor() as cur:
+            psycopg2.extras.execute_batch(cur, UPSERT_MACRO_RATE_SQL, payload,
+                                          page_size=200)
+    return len(payload)
+
+
+def get_key_rate(day, conn=None) -> tuple[date | None, float | None]:
+    """(дата установления, ставка %) — действующая НЕ ПОЗЖЕ day.
+
+    Ставка ступенчатая: между заседаниями значение то же, поэтому берётся
+    последнее известное, а не строго совпадающее с датой. (None, None) —
+    таблица пуста, вызывающий обязан обойтись без бенчмарка.
+    """
+    try:
+        with _tx(conn) as c:
+            with c.cursor() as cur:
+                cur.execute(SELECT_KEY_RATE_ASOF_SQL, (day,))
+                row = cur.fetchone()
+    except Exception as e:  # noqa: BLE001 — таблицы может ещё не быть
+        log.warning("Не удалось прочитать ключевую ставку: %s", e)
+        return None, None
+    if not row:
+        return None, None
+    return row[0], float(row[1])
+
+
+def get_key_rate_avg(frm, to, conn=None) -> float | None:
+    """Средняя ключевая ставка за период — безрисковая планка отрезка."""
+    try:
+        with _tx(conn) as c:
+            with c.cursor() as cur:
+                cur.execute(SELECT_KEY_RATE_AVG_SQL, (frm, to))
+                row = cur.fetchone()
+    except Exception as e:  # noqa: BLE001
+        log.warning("Не удалось посчитать среднюю ставку: %s", e)
+        return None
+    return float(row[0]) if row and row[0] is not None else None
 
 
 def get_instrument_lots(conn=None) -> dict[str, int]:
