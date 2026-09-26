@@ -22,7 +22,8 @@
     cd /opt/etl-tcs && set -a && . .env.tournament && set +a
     .venv/bin/python -m scripts.flatten_account --prod          # холостой
     .venv/bin/python -m scripts.flatten_account --prod --go     # отправить
-Песочница: без --prod. Паи фонда (TMON) — только с --fund.
+Песочница: без --prod. Паи фонда (TMON) — только с --fund. Биржа закрыта —
+только с --dealer (сделка с брокером по его котировке).
 """
 from __future__ import annotations
 
@@ -38,16 +39,23 @@ from services.place_orders import (_load_pending, _make_broker_and_account,
 from services.stage2_demo import contour_ok
 
 EXCHANGE_OK = "SECURITY_TRADING_STATUS_NORMAL_TRADING"
+DEALER_OK = "SECURITY_TRADING_STATUS_DEALER_NORMAL_TRADING"
 
 
-def trading_status(br, uid: str) -> dict:
-    """Статус торгов по бумаге. Любая ошибка → «торговать нельзя»."""
+def trading_status(br, uid: str, dealer: bool = False) -> dict:
+    """Статус торгов по бумаге. Любая ошибка → «торговать нельзя».
+
+    dealer=True разрешает и внебиржевой режим брокера (биржа закрыта, сделка с
+    брокером по ЕГО котировке — обычно шире биржевого спреда). 26.09.2026 в таком
+    режиме прошла рыночная продажа 1 шт AKRN по 17 364 ₽.
+    """
     try:
         s = br._post("MarketDataService/GetTradingStatus", {"instrumentId": uid})
     except BrokerError as e:
         return {"ok": False, "why": f"статус недоступен: {e}"}
     status = s.get("tradingStatus") or "?"
-    if status != EXCHANGE_OK:
+    allowed = (EXCHANGE_OK, DEALER_OK) if dealer else (EXCHANGE_OK,)
+    if status not in allowed:
         return {"ok": False, "why": status}
     if not s.get("marketOrderAvailableFlag") or not s.get("apiTradeAvailableFlag"):
         return {"ok": False, "why": "рыночная заявка через API недоступна"}
@@ -88,6 +96,9 @@ def main(argv=None) -> int:
     ap.add_argument("--prod", action="store_true", help="боевой счёт (реальные деньги)")
     ap.add_argument("--go", action="store_true", help="отправить заявки (иначе холостой)")
     ap.add_argument("--fund", action="store_true", help="продать и паи фонда")
+    ap.add_argument("--dealer", action="store_true",
+                    help="разрешить внебиржевой режим брокера (биржа закрыта, цена — "
+                         "котировка брокера, спред шире)")
     a = ap.parse_args(argv)
 
     br, acc, env = _make_broker_and_account(a.prod)
@@ -106,14 +117,18 @@ def main(argv=None) -> int:
         print(f"контур {env} · позиций {len(pos)} · условных {len(stops)} · лимиток {len(orders)}")
         plan = []
         for tk, inst, uid, bal in pos:
-            st = trading_status(br, uid)
+            st = trading_status(br, uid, a.dealer)
             lots = int(abs(bal) // int(inst.lot or 1))
             mark = "✓" if st["ok"] and lots > 0 else "✗"
             print(f"  {mark} {tk:<6} {bal:+.0f} шт = {lots} лот · {st['why']}")
             if st["ok"] and lots > 0:
                 plan.append((tk, inst, uid, bal, lots))
+        if a.dealer:
+            print("  ВНИМАНИЕ: --dealer — продажа по котировке брокера вне биржи, "
+                  "цена может быть заметно хуже биржевой")
         if not plan:
-            print("\nпродавать сейчас нечего или биржа закрыта — ничего не тронуто")
+            print("\nпродавать сейчас нечего или биржа закрыта — ничего не тронуто"
+                  + ("" if a.dealer else " (вне биржи — только с --dealer)"))
             return 1 if pos else 0
         if not a.go:
             print(f"\nхолостой прогон: к продаже {len(plan)} из {len(pos)} (добавьте --go)")

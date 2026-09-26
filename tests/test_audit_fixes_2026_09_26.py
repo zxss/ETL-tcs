@@ -258,6 +258,18 @@ class TestFlatten(unittest.TestCase):
         self._main(br, ["--go"])
         self.assertEqual(br.calls, [], "на закрытой бирже защиту снимать нельзя")
 
+    def test_dealer_mode_only_with_flag(self):
+        """С --dealer внебиржевой режим разрешён: стоп бумаги снят, продажа ушла."""
+        br = self._Br("SECURITY_TRADING_STATUS_DEALER_NORMAL_TRADING")
+        br.get_order_state = lambda **kw: types.SimpleNamespace(
+            execution_report_status="EXECUTION_REPORT_STATUS_FILL")
+        br.post_market_order = lambda **kw: (br.calls.append(("market", kw)),
+                                             types.SimpleNamespace(order_id="m1"))[1]
+        with mock.patch("scripts.flatten_account._load_pending", return_value={}), \
+             mock.patch("scripts.flatten_account._save_pending"):
+            self._main(br, ["--go", "--dealer"])
+        self.assertEqual([c[0] for c in br.calls], ["cancel_stop", "market"])
+
     def test_dry_run_touches_nothing(self):
         br = self._Br("SECURITY_TRADING_STATUS_NORMAL_TRADING")
         self._main(br, [])
