@@ -29,7 +29,7 @@ log = logging.getLogger("run_validation")
 # date, open, high, low, close, volume.
 _EXPORT_SQL_TMPL = """
     SELECT date, open, high, low, close, volume
-    FROM market_data
+    FROM {table}
     WHERE ticker = %s{session_filter}
     ORDER BY date ASC;
 """
@@ -39,7 +39,11 @@ _HEADER = ["date", "open", "high", "low", "close", "volume"]
 
 def export_ticker_csv(conn, ticker: str, out_dir: str) -> tuple[str, int]:
     """Выгружает дневные свечи тикера в {ticker}_candles.csv. Возвращает (path, n)."""
+    # Те же бары, что у модели (config.MODEL_BARS): контур проверяет торгуемое
+    # окно, а не ночь 23:45→06:55 дневной свечи (аудит 26.09, F2/F5).
+    from tft_forecast.features import bars_table
     sql = _EXPORT_SQL_TMPL.format(
+        table=bars_table(),
         session_filter=trading_calendar.sql_session_filter("date"))
     with conn.cursor() as cur:
         cur.execute(sql, (ticker,))
@@ -120,13 +124,17 @@ def run(conn, quiet: bool = False) -> list | None:
         len(report_exported), len(config.VALIDATION_STRATS), len(universe_exported),
         config.VALIDATION_BOOT, config.VALIDATION_COST_RT, config.VALIDATION_WINSORIZE_GAPS,
     )
+    # Поштучные издержки из матрицы; ручной VALIDATION_COST_RT_MAP важнее.
+    from services import cost_model
+    cmap = cost_model.cost_map(universe_exported) if cost_model.enabled() else {}
+    cmap.update(config.VALIDATION_COST_RT_MAP or {})
     rows = verdict.run(
         [t.lower() for t in report_exported],
         config.VALIDATION_STRATS,
         out_dir,
         B=config.VALIDATION_BOOT,
         cost_rt=config.VALIDATION_COST_RT,
-        cost_map=config.VALIDATION_COST_RT_MAP,
+        cost_map=cmap,
         winsorize=config.VALIDATION_WINSORIZE_GAPS,
         universe_tickers=[t.lower() for t in universe_exported],
         oos_fraction=config.VALIDATION_OOS_FRACTION,

@@ -94,8 +94,14 @@ def build_panel(frames: list[TickerFrame], lookback: int = LOOKBACK) -> Panel | 
     iT = np.asarray(infer_T, dtype=np.int64)
     iWd = np.nan_to_num(np.asarray(infer_Wd, dtype=np.float64), nan=-1.0).astype(np.int64)
 
-    # глобальное масштабирование признаков (по обучающему пулу)
-    flat = X.reshape(-1, X.shape[-1])
+    # Глобальное масштабирование признаков — ТОЛЬКО по обучающей части. Раньше
+    # среднее и разброс считались по всем окнам, включая хвост, на котором потом
+    # меряется покрытие (аудит 26.09, F9). Граница та же, что в _train_tft:
+    # последние 15 % дат целей минус эмбарго в lookback.
+    cutoff = np.quantile(W, 0.85)
+    tr_mask = W < (cutoff - lookback)
+    base = X[tr_mask] if int(tr_mask.sum()) >= 10 else X
+    flat = base.reshape(-1, X.shape[-1])
     feat_mean = flat.mean(axis=0)
     feat_std = flat.std(axis=0)
     feat_std[feat_std < 1e-8] = 1.0

@@ -32,7 +32,7 @@ from services.load_history import run
 from services import run_validation
 from services import backfill_daily
 from services import (load_dividends, load_index, load_instruments,
-                      load_macro)
+                      load_macro, session_bars)
 from services.data_freshness import StaleDataError, ensure_fresh_data
 from services import calendar as trading_calendar_svc
 import config
@@ -151,6 +151,11 @@ def main() -> None:
         # не опубликован брокером (вечер/ночь). Самокорректируется позже.
         with st.stage("backfill", "Backfill 1D←5M"):
             backfill_daily.backfill(conn, config.TICKERS)
+
+        # Бары основной сессии из 5-минуток — источник признаков, целей модели и
+        # контура валидации (config.MODEL_BARS=session, аудит 26.09 F1/F2/F13).
+        with st.stage("session_bars", "Session bars"):
+            session_bars.run(conn)
 
         # Календарь биржи: подтягиваем расписание MOEX на ближайшие 2 недели.
         # Сбой сети/API не критичен — TradingCalendar прозрачно остаётся на

@@ -643,10 +643,12 @@ def attach_stops(broker: BrokerClient, account_id: str, *,
 
     positions = {p.instrument_uid: p.balance_shares
                  for p in broker.get_positions(account_id) if p.is_open}
+    stops_known = True
     try:
         stop_orders = broker.get_active_stop_orders(account_id)
     except NotSupportedError:
         stop_orders = []
+        stops_known = False
         print("[WARN]  GetStopOrders не поддержан — дедуп стопов по реестру.")
     history = _stop_history(broker, account_id, active)
     existing_sl = {s.instrument_uid for s in stop_orders if s.kind == "STOP_LOSS"}
@@ -742,6 +744,24 @@ def attach_stops(broker: BrokerClient, account_id: str, *,
         if qty != r.get("api_qty"):
             print(f"[INFO]  {tk}: позиция {abs(bal):.0f} шт → {qty} лот "
                   f"(заявлено {r.get('api_qty')}).")
+
+        # ── 3а. Сверка с брокером: реестр говорит «стоп стоит», а у брокера его
+        # нет и ни одна нога не исполнилась (шаг 1 это уже проверил). Значит, стоп
+        # снят вне контура или истёк. 26.09.2026 скрипт ручного закрытия снял стопы
+        # боевого счёта, продажа не прошла (биржа закрыта), а PROTECT по флагу
+        # реестра считал позиции защищёнными. Перевыставляем, только если объём
+        # позиции тот же, под который ставилась защита: иначе это частичный выход,
+        # его разбирает шаг 1.
+        if stops_known and qty == int(r.get("protected_qty") or qty):
+            if r.get("stop_placed") and uid not in existing_sl:
+                print(f"[REARM] {tk}: STOP_LOSS из реестра у брокера не найден — "
+                      f"перевыставляю.")
+                r["stop_placed"], r["stop_order_id"] = False, None
+                rep.setdefault("rearmed", []).append(tk)
+            if r.get("tp_placed") and uid not in existing_tp:
+                print(f"[REARM] {tk}: TAKE_PROFIT из реестра у брокера не найден — "
+                      f"перевыставляю.")
+                r["tp_placed"], r["tp_order_id"] = False, None
         edir = _exit_dir(r)
 
         inst = None
@@ -769,6 +789,7 @@ def attach_stops(broker: BrokerClient, account_id: str, *,
                                          qty, stop_q, "STOP_LOSS", writer, env)
                 if sid:
                     r["stop_placed"], r["stop_order_id"] = True, sid
+                    r["protected_qty"] = qty
                 elif _stop_breached(broker, uid, edir, stop_q.as_float()):
                     # отказ брокера пришёл, потому что цена успела пройти стоп
                     _breach_exit(broker, account_id, r, inst, bal, stop_orders,

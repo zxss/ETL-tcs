@@ -352,7 +352,8 @@ class FakeConn:
                     r = conn.rows.get(params[0])
                     self._one = None if r is None else (
                         r["requested_price"], r["filled"], r.get("filled_price"),
-                        r.get("filled_at"), r.get("fee_rub"))
+                        r.get("filled_at"), r.get("fee_rub"), r.get("qty_lots"),
+                        r.get("lot_size"))
                 elif "filled = TRUE" in sql:
                     conn.rows[params["order_id"]].update(
                         filled=True, filled_price=params["filled_price"],
@@ -419,6 +420,25 @@ class TestExecutionJournal(unittest.TestCase):
 
     def test_no_conn_is_harmless(self):
         self.assertFalse(exec_journal.journal_fill(JournalBroker(), ACC, None, _rec()))
+
+    def test_exit_recorded_when_order_state_404(self):
+        """Боевой API на следующий день отвечает на GetOrderState 404 «Order not
+        found» — 26.09.2026 так пропали выходы 6 из 12 заливок боевого счёта.
+        Вход берётся из операций по счёту, объём выхода — из сделок выхода."""
+        from services.broker.base import BrokerError
+
+        class Gone(JournalBroker):
+            def get_order_state(self, *, account_id, order_id):
+                raise BrokerError("HTTP 404 Order not found 50005")
+
+        conn = FakeConn({"o-SNGS": {"requested_price": 16.1404, "filled": False,
+                                    "qty_lots": 61, "lot_size": 100}})
+        ok = exec_journal.journal_exit(Gone(), ACC, conn, _rec(lot=100), "stop")
+        row = conn.rows["o-SNGS"]
+        self.assertTrue(ok, "выход обязан записаться без GetOrderState")
+        self.assertTrue(row["filled"])
+        self.assertEqual(row["exit_reason"], "stop")
+        self.assertAlmostEqual(row["exit_price"], 16.015)
 
     def test_utc_iso_treats_naive_registry_time_as_msk(self):
         self.assertEqual(exec_journal.utc_iso("2026-09-16T18:41:44"), "2026-09-16T15:41:44Z")

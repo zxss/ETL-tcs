@@ -49,6 +49,12 @@ def ensure_fresh_data(conn, *, refresh: bool = True) -> dt.date:
             backfill_daily.backfill(conn, config.TICKERS)
         except Exception as e:  # noqa: BLE001
             log.warning("backfill дневных из 5M не отработал: %s", e)
+        # Бары основной сессии — источник признаков модели (config.MODEL_BARS).
+        # В PREP это закрывает вчерашний бар, в OVERNIGHT — собирает сегодняшний
+        # частичный: прогноз ночи строится от сегодняшнего закрытия, а не от
+        # вчерашнего (аудит 26.09, F1).
+        from services import session_bars
+        session_bars.run(conn)
 
     today_msk = dt.datetime.now(_MSK).date()
     with conn.cursor() as cur:
@@ -68,5 +74,18 @@ def ensure_fresh_data(conn, *, refresh: bool = True) -> dt.date:
         raise StaleDataError(
             f"дневные свечи устарели: last_date={md_max}, а последняя завершённая "
             f"сессия={expected}. Догрузка не помогла (источник данных недоступен?).")
+    if str(getattr(config, "MODEL_BARS", "session")).lower() != "daily":
+        with conn.cursor() as cur:
+            try:
+                cur.execute("SELECT MAX(date) FROM market_data_session;")
+                sb_max = cur.fetchone()[0]
+            except Exception:  # noqa: BLE001 — таблицы ещё нет
+                conn.rollback()
+                sb_max = None
+        if sb_max is None or (expected is not None and sb_max < expected):
+            raise StaleDataError(
+                f"бары основной сессии устарели: last={sb_max}, а последняя "
+                f"завершённая сессия={expected}. Модель считается на них "
+                f"(MODEL_BARS=session) — проверьте services/session_bars.")
     log.info("Данные актуальны: market_data до %s (сессия=%s).", md_max, expected)
     return md_max

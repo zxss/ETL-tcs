@@ -84,7 +84,8 @@ def strategy_pnl(pred_targets: np.ndarray, strategy: str, cost_rt: float) -> dic
 
 def build_rows(infer_pred: np.ndarray, infer_tickers: list[str],
                tickers: list[str], strats: list[str], cost_rt: float,
-               coridor: dict | None = None) -> list[dict]:
+               coridor: dict | None = None,
+               cost_by_ticker: dict[str, float] | None = None) -> list[dict]:
     """
     Собирает строки направленного прогноза по (ticker, strategy).
     infer_pred: (M, n_targets, n_quantiles); infer_tickers — порядок строк.
@@ -98,8 +99,11 @@ def build_rows(infer_pred: np.ndarray, infer_tickers: list[str],
             continue
         pt = infer_pred[idx[key]]
         cor = (coridor or {}).get(key) or (coridor or {}).get(tk.upper()) or {}
+        # Поштучный круг (services/cost_model): плоские 0,128 % занижали
+        # издержки неликвидных бумаг и тянули отбор к ним (аудит 26.09, F12).
+        c = (cost_by_ticker or {}).get(tk.upper(), cost_rt)
         for st in strats:
-            m = strategy_pnl(pt, st, cost_rt)
+            m = strategy_pnl(pt, st, c)
             if m is None:
                 continue
             rows.append({
@@ -109,6 +113,7 @@ def build_rows(infer_pred: np.ndarray, infer_tickers: list[str],
                 "Downside": m["Downside"],
                 "Upside": m["Upside"],
                 "ProbProfit": m["ProbProfit"],
+                "CostRT": c,
                 "ForecastLow": cor.get("ForecastLow"),
                 "ForecastHigh": cor.get("ForecastHigh"),
             })

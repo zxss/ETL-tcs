@@ -567,17 +567,25 @@ def phase_prep(*, now: dt.datetime | None = None, prod: bool = False) -> int:
             for k, v in sorted(cfg_snap.items()):
                 f.write(f"{k}={' '.join(map(str, v)) if isinstance(v, list) else v}\n")
 
-        # 6. расчёт
-        val_rows = run_validation.run(conn, quiet=True)
-        forecasts = tft_forecast.run(conn, quiet=True) or {}
-        universe = [k for k in forecasts if k != "__meta__"] or config.VALIDATION_TICKERS
-        top = cmb.select_top_rows(
-            val_rows, forecasts, universe, config.VALIDATION_STRATS,
-            top_n=int(getattr(config, "BEST_TRADES_TOP_N", 5)))
-        orders = cmb.build_orders(
-            top, float(getattr(config, "BEST_TRADES_POSITION_RUB", 10000)),
-            float(getattr(config, "LIMIT_ENTRY_FRACTION", 0.2)),
-            tp_frac=float(getattr(config, "LIMIT_TP_FRACTION", 0.5)))
+        # 6. расчёт. Входы выключены (STAGE2_NEW_ENTRIES=0) — модель не считаем:
+        # заявки всё равно отклонились бы, а 8 минут обучения на двух ядрах
+        # совпадают по времени с расчётом второго счёта и сдвигают его входы.
+        if bool(getattr(config, "STAGE2_NEW_ENTRIES", True)):
+            val_rows = run_validation.run(conn, quiet=True)
+            forecasts = tft_forecast.run(conn, quiet=True) or {}
+            universe = [k for k in forecasts if k != "__meta__"] or config.VALIDATION_TICKERS
+            top = cmb.select_top_rows(
+                val_rows, forecasts, universe, config.VALIDATION_STRATS,
+                top_n=int(getattr(config, "BEST_TRADES_TOP_N", 5)))
+            orders = cmb.build_orders(
+                top, float(getattr(config, "BEST_TRADES_POSITION_RUB", 10000)),
+                float(getattr(config, "LIMIT_ENTRY_FRACTION", 0.2)),
+                tp_frac=float(getattr(config, "LIMIT_TP_FRACTION", 0.5)))
+        else:
+            log.info("[PREP] новые входы отключены (STAGE2_NEW_ENTRIES=0) — "
+                     "модель не считается, план пуст")
+            forecasts, universe, top, orders = {}, [], [], []
+            res.data["entries"] = "disabled"
 
         # 7. signals.json — всё, что посчитано; plan.json — только исполнимое
         _write_json(os.path.join(run_dir, "signals.json"), top)
@@ -619,6 +627,11 @@ def phase_prep(*, now: dt.datetime | None = None, prod: bool = False) -> int:
     return _finish(res, state)
 
 
+def _expected_cost(ticker: str) -> float:
+    from services import cost_model
+    return round(cost_model.round_trip_pct(ticker), 4)
+
+
 def _plan_order(o, row: dict, day: dt.date) -> dict:
     """Order + строка дашборда → запись плана (§3, формат plan.json)."""
     return {
@@ -636,7 +649,7 @@ def _plan_order(o, row: dict, day: dt.date) -> dict:
         "total_rub": o.total_rub,
         "exp_pnl_pct": row.get("exp_pnl"),
         "final_score": row.get("final_score"),
-        "expected_cost_pct": float(getattr(config, "TFT_COST_RT", 0.128)),
+        "expected_cost_pct": _expected_cost(o.ticker),
         "verdict": row.get("verdict"),
     }
 
@@ -747,6 +760,8 @@ def check_order_allowed(po: dict, *, env: str, used_ids: set[str],
     bad = contour_ok(env)
     if bad:
         return bad
+    if not bool(getattr(config, "STAGE2_NEW_ENTRIES", True)):
+        return "новые входы отключены (STAGE2_NEW_ENTRIES=0)"
     st = po.get("strategy_type")
     if st not in trading_strategies():
         return f"стратегия {st} вне TRADING_STRATEGIES"
@@ -1679,12 +1694,21 @@ def phase_overnight(*, now: dt.datetime | None = None, prod: bool = False,
         preflight(res, env=env, prod_flag=prod, account_id=account_id)
         _snapshot_account(broker, account_id, run_dir, run_id, "OVERNIGHT", "before")
 
-        # 2. пересчёт только ночной стратегии
-        orders, meta = compute_orders(
-            int(getattr(config, "BEST_TRADES_TOP_N", 5)),
-            float(getattr(config, "BEST_TRADES_POSITION_RUB", 10000)),
-            float(getattr(config, "LIMIT_ENTRY_FRACTION", 0.2)),
-            quiet=True, refresh=False)
+        # 2. пересчёт только ночной стратегии (при выключенных входах — не нужен)
+        orders, meta = [], {}
+        if bool(getattr(config, "STAGE2_NEW_ENTRIES", True)):
+            orders, meta = compute_orders(
+                int(getattr(config, "BEST_TRADES_TOP_N", 5)),
+                float(getattr(config, "BEST_TRADES_POSITION_RUB", 10000)),
+                float(getattr(config, "LIMIT_ENTRY_FRACTION", 0.2)),
+                # refresh=True: догрузить сегодняшние 5-минутки и собрать частичный
+                # бар основной сессии. Без этого последний бар — вчерашний, и модель
+                # прогнозирует уже случившуюся ночь (аудит 26.09, F1).
+                quiet=True, refresh=True)
+        else:
+            log.info("[OVERNIGHT] новые входы отключены (STAGE2_NEW_ENTRIES=0) — "
+                     "модель не считается")
+            res.data["entries"] = "disabled"
         night = [o for o in orders if o.strategy == "long_overnight" and o.is_placeable]
         mode = str(getattr(config, "OVERNIGHT_ENTRY_MODE", "forecast")).lower()
         res.data["entry_mode"] = mode
@@ -1711,10 +1735,16 @@ def phase_overnight(*, now: dt.datetime | None = None, prod: bool = False,
             res.check(False, "календарь отсечек пуст на 45 дней вперёд — "
                              "проверить шаг Dividends в ETL", critical=False)
 
+        # Строка дашборда к каждой заявке: прогноз, рейтинг и вердикт уходят в план
+        # и в execution_audit. До 26.09.2026 здесь стоял пустой словарь — в 47 из
+        # 47 записей журнала не было ни ExpPnL, ни рейтинга, а лимит ночного VaR
+        # резал «худших по final_score» только благодаря порядку заявок.
+        row_by_key = {(str(r.get("ticker", "")).upper(), r.get("strategy")): r
+                      for r in (meta.get("top_rows") or [])}
         used: set[str] = set()
         accepted, rejected = [], []
         for o in night:
-            po = _plan_order(o, {}, day)
+            po = _plan_order(o, row_by_key.get((o.ticker.upper(), o.strategy), {}), day)
             reason = check_order_allowed(po, env=env, used_ids=used, ex_div=ex_div)
             if reason:
                 rejected.append({**po, "skip_reason": reason})

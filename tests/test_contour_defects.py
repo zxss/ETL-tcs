@@ -89,11 +89,56 @@ class TestBalanceReportContour(unittest.TestCase):
     def test_sandbox_account_still_labelled_sandbox(self):
         self.assertIn("Счёт: SANDBOX", self._report(sandbox=True))
 
-    def test_treasury_line_present(self):
-        """Итог 1000 ₽ − (100 интрадей + 50 ночь + 0 нереализ.) = 850 ₽ казначейства."""
+    def test_decomposition_by_fund_value(self):
+        """Аудит 26.09 (F6): казначейство = Δ стоимости паёв − чистые покупки паёв.
+
+        Счёт +1 000 ₽, паи подорожали на 900 ₽, но 500 ₽ из них — докупка паёв
+        внутри периода. Доход паёв 400 ₽, торговля 600 ₽. Прежний отчёт выдал бы
+        «внутридневной P&L» из переоценки паёв и остаток «казначейство и прочее».
+        """
+        import datetime as dt
+        import json
+        import os
+        import tempfile
+        from contextlib import contextmanager
+        from unittest import mock
+        from services import stage2_balance
+
+        snaps = [("20260925-091000-CLOSE", "2026-09-25T09:10:00+03:00", 1_000_000.0, 100_000.0),
+                 ("20260925-183500-OVERNIGHT", "2026-09-25T18:35:00+03:00", 1_001_000.0, 100_900.0)]
+        ledger = [(dt.datetime(2026, 9, 25, 10, 5, tzinfo=dt.timezone.utc), "BUY", 500.0)]
+
+        class Cur:
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+            def execute(self, *a): pass
+            def fetchall(self): return ledger
+
+        class Conn:
+            def cursor(self): return Cur()
+
+        @contextmanager
+        def fake_conn():
+            yield Conn()
+
+        with tempfile.TemporaryDirectory() as tmp:
+            for run, ts, total, etf in snaps:
+                os.makedirs(os.path.join(tmp, "runs", run))
+                with open(os.path.join(tmp, "runs", run, "balance.json"), "w") as f:
+                    json.dump({"captured_at": ts, "account_id": "acc",
+                               "total_portfolio_rub": total, "etf_value_rub": etf}, f)
+            with mock.patch("database.get_db_connection", fake_conn):
+                d = stage2_balance.decompose(tmp, "acc")
+        self.assertAlmostEqual(d["total"], 1000.0)
+        self.assertAlmostEqual(d["treasury"], 400.0)
+        self.assertAlmostEqual(d["trading"], 600.0)
+        self.assertEqual(d["fund_ops"], 1)
+
+    def test_old_misleading_lines_gone(self):
         text = self._report(sandbox=True)
-        self.assertIn("Казначейство и прочее", text)
-        self.assertIn("850", text.replace(" ", ""))
+        self.assertNotIn("Внутридневной P&L", text)
+        self.assertNotIn("Перенос через ночь", text)
+        self.assertNotIn("Казначейство и прочее", text)
 
 
 class TestOvernightVarLimit(unittest.TestCase):

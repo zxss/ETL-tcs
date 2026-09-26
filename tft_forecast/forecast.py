@@ -96,13 +96,39 @@ def _train_tft(panel, epochs: int, hidden: int):
         if ep == 0 or (ep + 1) % max(1, epochs // 5) == 0:
             log.info("    epoch %2d/%d  train pinball=%.4f", ep + 1, epochs, tot / len(tr_idx))
 
-    # прогноз на инференс-окнах
+    # Прогноз на валидации — ДО дообучения: калибровка покрытия остаётся честной.
     model.eval()
+    with torch.no_grad():
+        val_pred = model(Xva, Tva).cpu().numpy()      # (n_val, n_targets, Q)
+
+    # Дообучение на ВСЕХ окнах, включая валидационный хвост и эмбарго. Без него
+    # боевой прогноз шёл от модели, не видевшей последних ~15 % выборки плюс
+    # 30 дней: в сентябре 2026 это данные по 22.04 (аудит 26.09, F8). Несколько
+    # эпох с тем же оптимизатором — дешевле полного переобучения, а свежий режим
+    # рынка в веса попадает.
+    refit = int(getattr(config, "TFT_REFIT_EPOCHS", 5))
+    if refit > 0 and len(val_idx) and len(tr_idx) < N:
+        all_ds = TensorDataset(torch.tensor(panel.X, device=dev),
+                               torch.tensor(panel.T, device=dev),
+                               torch.tensor(panel.Y, device=dev))
+        all_loader = DataLoader(all_ds, batch_size=256, shuffle=True)
+        model.train()
+        for ep in range(refit):
+            tot = 0.0
+            for xb, tb, yb in all_loader:
+                opt.zero_grad()
+                loss = quantile_loss(model(xb, tb), yb)
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                opt.step()
+                tot += loss.item() * len(xb)
+        log.info("    дообучение на всей выборке: %d эпох, pinball=%.4f", refit, tot / N)
+        model.eval()
+
     with torch.no_grad():
         iX = torch.tensor(panel.infer_X, device=dev)
         iT = torch.tensor(panel.infer_T, device=dev)
-        infer_pred = model(iX, iT).cpu().numpy()      # (M, 2, Q)
-        val_pred = model(Xva, Tva).cpu().numpy()      # (n_val, 2, Q)
+        infer_pred = model(iX, iT).cpu().numpy()      # (M, n_targets, Q)
 
     return infer_pred, val_pred, Tva.cpu().numpy(), Yva
 
@@ -305,13 +331,19 @@ def _assemble(frames, panel, infer_pred, per_tk_cov, global_cov, quotes=None,
 # ── Реализованное движение → пересчёт оставшейся доходности ────────────────────
 
 def _session_tau(as_of) -> float:
-    """Доля прошедшей основной сессии (10:00–18:40 MSK) на момент запуска."""
-    from .intraday import SESSION_END_MIN, SESSION_START_MIN
+    """Доля прошедшей основной сессии на момент запуска.
+
+    Начало — по эпохе расписания (10:00 до 14.09.2026, 09:10 после), конец 18:40,
+    как у баров основной сессии. Раньше тут стояли жёсткие 10:00–18:40.
+    """
+    from services.session_bars import CLOSE_CUTOFF, main_open
     if as_of is None:
         return 0.5
+    o = main_open(as_of.date())
+    start = o.hour * 60 + o.minute
+    end = CLOSE_CUTOFF.hour * 60 + CLOSE_CUTOFF.minute
     minutes = as_of.hour * 60 + as_of.minute
-    span = max(1, SESSION_END_MIN - SESSION_START_MIN)
-    return float(min(max((minutes - SESSION_START_MIN) / span, 0.0), 1.0))
+    return float(min(max((minutes - start) / max(1, end - start), 0.0), 1.0))
 
 
 def _adjust_for_realized(infer_pred, panel, frames, ctx, intraday_model=None,
@@ -332,12 +364,21 @@ def _adjust_for_realized(infer_pred, panel, frames, ctx, intraday_model=None,
     if not ctx or not ctx.market_open or not ctx.quotes:
         return adj
     sigma_by_tk = sigma_by_tk or {}
-    tau = _session_tau(getattr(ctx, "as_of", None))
+    as_of = getattr(ctx, "as_of", None)
+    tau = _session_tau(as_of)
+    today = as_of.date() if as_of is not None else None
     fr_by_tk = {f.ticker: f for f in frames}
     for m, tk in enumerate(panel.infer_tickers):
         q = ctx.quotes.get(tk)
         f = fr_by_tk.get(tk)
         if q is None or f is None:
+            continue
+        # Бар сегодняшнего дня уже в выборке → прогноз относится к СЛЕДУЮЩЕМУ
+        # дню, а сегодняшнее движение уже внутри признаков. Вычитать его нельзя.
+        # До 26.09.2026 в 18:38 последним был вчерашний бар, прогноз относился к
+        # уже случившейся ночи, и из него вычитался сегодняшний утренний гэп:
+        # ночной рейтинг совпадал с −гэпом на −0,9…−1,0 (аудит, F1).
+        if today is not None and f.last_date is not None and f.last_date >= today:
             continue
         yest_close = f.last_close
         last_price = q.price
@@ -618,16 +659,19 @@ def run(conn, quiet: bool = False) -> dict | None:
         # только по VALIDATION_TICKERS (у остальных не будет лишь стат-метрик
         # валидации — White RC / PBO / FDR — они останутся «—»).
         from . import directional
+        from services import cost_model
         cost_rt = float(getattr(config, "TFT_COST_RT", 0.08))
         all_fc_tickers = list(panel.infer_tickers)
         dir_rows = directional.build_rows(
             infer_pred_adj, panel.infer_tickers, all_fc_tickers, val_strats,
             cost_rt=cost_rt, coridor=forecasts,
+            cost_by_ticker=cost_model.cost_map(all_fc_tickers),
         )
         for r in dir_rows:
             forecasts.setdefault(r["ticker"], {}).setdefault("directional", {})[
                 r["strategy"]
-            ] = {k: r[k] for k in ("ExpPnL", "Downside", "Upside", "ProbProfit")}
+            ] = {k: r[k] for k in ("ExpPnL", "Downside", "Upside", "ProbProfit",
+                                    "CostRT")}
 
         # Отдельные таблицы (не combined-режим) печатаем по VALIDATION_TICKERS.
         if not quiet and val_tickers:

@@ -61,14 +61,29 @@ TARGET_COLS = [
 # Минимум наблюдений у тикера, чтобы он попал в обучающий пул.
 MIN_ROWS = 120
 
+# Доходность больше этого по модулю, % — смена масштаба цены, а не рынок (см.
+# _build_features). Тот же порог, что MAX_ABS_R = 0,40 в исследованиях.
+MAX_ABS_RET_PCT = 40.0
+
 # Фильтр сессий подставляется на КАЖДЫЙ вызов (не на импорте): режим
 # INCLUDE_WEEKEND_TRADING может меняться между прогонами и в тестах.
 _EXPORT_SQL_TMPL = """
     SELECT date, open, high, low, close, volume
-    FROM market_data
+    FROM {table}
     WHERE ticker = %s{session_filter}
     ORDER BY date ASC;
 """
+
+
+def bars_table() -> str:
+    """Источник дневных баров модели и валидации (config.MODEL_BARS).
+
+    "session" — бары основной сессии (market_data_session): overnight совпадает с
+    торгуемым окном 18:40 → открытие основной сессии. "daily" — свеча брокера на
+    весь день. Подробно — models/session_bars.py.
+    """
+    return ("market_data" if str(getattr(config, "MODEL_BARS", "session")).lower() == "daily"
+            else "market_data_session")
 
 
 @dataclass
@@ -81,6 +96,7 @@ class TickerFrame:
 
 def _load_raw(conn, ticker: str) -> pd.DataFrame | None:
     sql = _EXPORT_SQL_TMPL.format(
+        table=bars_table(),
         session_filter=trading_calendar.sql_session_filter("date"))
     with conn.cursor() as cur:
         cur.execute(sql, (ticker,))
@@ -181,6 +197,8 @@ def _build_features(df: pd.DataFrame, payments: list[dict] | None = None,
     d["div_gap"] = div
 
     d["log_ret"] = np.log((d["close"] + div) / prev_close)
+    # смена масштаба цены не должна попасть в скользящие статистики ниже
+    d.loc[d["log_ret"].abs() > np.log1p(MAX_ABS_RET_PCT / 100.0), "log_ret"] = np.nan
     d["intraday"] = (d["close"] / d["open"] - 1) * 100
     d["overnight"] = ((d["open"] + div) / prev_close - 1) * 100
     d["range_pct"] = (d["high"] - d["low"]) / prev_close * 100
@@ -253,6 +271,17 @@ def _build_features(df: pd.DataFrame, payments: list[dict] | None = None,
     d["week_low_pct"] = ((fwd_min_low + fwd_div) / d["close"] - 1) * 100
     d["week_high_pct"] = ((fwd_max_high + fwd_div) / d["close"] - 1) * 100
     d["week_total"] = ((d["close"].shift(-WEEK_H) + fwd_div) / d["close"] - 1) * 100
+
+    # Предохранитель от неотражённых сплитов и битых сделок: доходность больше
+    # MAX_ABS_RET_PCT по модулю — не движение рынка, а смена масштаба цены.
+    # Цель такого дня выпадает из обучения (строка без полной цели пропускается),
+    # признак обнуляется при сборке окна. 26.09.2026 без этого сплит VTBR 5000:1
+    # в 5-минутках дал «ночь» +502 663 % и pinball 22 вместо 0,55.
+    for c in ("log_ret", "intraday", "overnight", "range_pct",
+              "next_low_pct", "next_high_pct", "next_overnight", "next_intraday",
+              "next_total", "week_low_pct", "week_high_pct", "week_total"):
+        lim = np.log1p(MAX_ABS_RET_PCT / 100.0) if c == "log_ret" else MAX_ABS_RET_PCT
+        d.loc[d[c].abs() > lim, c] = np.nan
 
     return d
 

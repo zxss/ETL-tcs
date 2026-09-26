@@ -46,6 +46,7 @@ from models.dividends import (
     CREATE_DIVIDENDS_SQL, UPSERT_DIVIDEND_SQL, SELECT_DIVIDENDS_SQL,
     SELECT_DIVIDENDS_ON_SQL,
 )
+from models.session_bars import CREATE_SESSION_SQL
 from models.macro import (
     CREATE_MACRO_RATES_SQL, UPSERT_MACRO_RATE_SQL, SELECT_KEY_RATE_ASOF_SQL,
     SELECT_KEY_RATE_AVG_SQL,
@@ -167,6 +168,7 @@ def init_db(conn=None) -> None:
             cur.execute(CREATE_TREASURY_LEDGER_SQL)
             cur.execute(CREATE_DIVIDENDS_SQL)
             cur.execute(CREATE_MACRO_RATES_SQL)
+            cur.execute(CREATE_SESSION_SQL)
             # Миграции существующих баз (идемпотентны).
             cur.execute(MIGRATE_MARKET_DATA_SOURCE_SQL)
         if conn is not None:

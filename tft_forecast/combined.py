@@ -541,8 +541,8 @@ def _overnight_edge_ok(r: dict, k: float) -> bool | None:
         return None
     cost = r.get("cost_rt")
     if cost is None:
-        import config as _cfg
-        cost = float(getattr(_cfg, "TFT_COST_RT", 0.08))
+        from services import cost_model
+        cost = cost_model.round_trip_pct(r.get("ticker", ""))
     return bool(exp > k * float(cost))
 
 

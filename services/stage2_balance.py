@@ -160,6 +160,70 @@ def _fmt(v, width=10, digits=2, dash="—"):
     return f"{txt:>{width}}"
 
 
+def _load_snapshots(stage_dir: str, account_id: str | None) -> list[dict]:
+    """balance.json всех фаз по времени снимка (только этот счёт)."""
+    import glob
+    out = []
+    for f in glob.glob(os.path.join(stage_dir, "runs", "*", "balance.json")):
+        b = _read_json(f)
+        if not b or b.get("total_portfolio_rub") is None or not b.get("captured_at"):
+            continue
+        if account_id and b.get("account_id") and b["account_id"] != account_id:
+            continue
+        try:
+            t = dt.datetime.fromisoformat(str(b["captured_at"]))
+        except ValueError:
+            continue
+        if t.tzinfo is None:
+            t = t.replace(tzinfo=dt.timezone(dt.timedelta(hours=3)))
+        out.append({**b, "captured": t})
+    return sorted(out, key=lambda x: x["captured"])
+
+
+def decompose(stage_dir: str, account_id: str | None) -> dict | None:
+    """Казначейство отдельно от торговли по снимкам фаз и treasury_ledger.
+
+    Метод аудита r3 (audit/stage2_decompose.py) в телескопической форме:
+        казначейство = Δ стоимости паёв − чистые покупки паёв (mode=broker);
+        торговля      = Δ счёта − казначейство.
+    Считается по первому и последнему снимку, поэтому смещение времени операций
+    с паями внутри отдельных интервалов в итог не попадает.
+
+    Зачем (аудит 26.09.2026, F6). Прежние строки врали: «внутридневной P&L» =
+    CLEANUP − ORDER показывал на r4 +7 715 ₽ при НУЛЕ внутридневных сделок — это
+    переоценка паёв днём; «перенос через ночь» мерил 18:20→18:35; настоящая ночь
+    (выход в CLOSE утром) и основной доход паёв падали в «Казначейство и прочее».
+    Правильно на r4: торговля +1 483 ₽, казначейство +14 117 ₽ из +15 600 ₽.
+    """
+    snaps = _load_snapshots(stage_dir, account_id)
+    if len(snaps) < 2:
+        return None
+    first, last = snaps[0], snaps[-1]
+    flows, n = 0.0, 0
+    try:
+        import database
+        with database.get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT ts, side, amount_rub FROM treasury_ledger "
+                            "WHERE mode = 'broker' AND ts > %s AND ts <= %s "
+                            "AND (%s::text IS NULL OR account_id = %s)",
+                            (first["captured"], last["captured"],
+                             account_id, account_id))
+                for _ts, side, amount in cur.fetchall():
+                    amt = float(amount or 0.0)
+                    flows += amt if str(side).upper() == "BUY" else -amt
+                    n += 1
+    except Exception as e:  # noqa: BLE001 — без реестра разложения нет
+        log.warning("Реестр казначейства недоступен, разложение не построено: %s", e)
+        return None
+    etf0 = float(first.get("etf_value_rub") or 0.0)
+    etf1 = float(last.get("etf_value_rub") or 0.0)
+    total = float(last["total_portfolio_rub"]) - float(first["total_portfolio_rub"])
+    treasury = (etf1 - etf0) - flows
+    return {"from": first["captured"], "to": last["captured"], "total": total,
+            "treasury": treasury, "trading": total - treasury, "fund_ops": n}
+
+
 def _benchmark_block(summaries: list[dict], base: float | None,
                      total: float | None) -> list[str]:
     """Безрисковая планка: что те же деньги дали бы по ключевой ставке.
@@ -277,21 +341,18 @@ def build_report(*, start_balance: float | None = None,
         vals = [s.get(key) for s in summaries if s.get(key) is not None]
         return sum(vals) if vals else None
 
-    intraday = _sum("intraday_pnl_rub")
-    carry = _sum("overnight_carry_rub")
     unreal = summaries[-1].get("unrealised_pnl_rub") if summaries else None
-    # Остаток итога после торговых компонент — это в основном доход паёв
-    # казначейства (TMON). Без отдельной строки он молча приписывался торговле:
-    # на r4 за 5 дней это половина всего прироста.
-    treasury = None
-    if total is not None:
-        known = sum(v for v in (intraday, carry, unreal) if v is not None)
-        treasury = total - known
-    L += ["", "РАЗЛОЖЕНИЕ",
-          f"  Внутридневной P&L      {_fmt(intraday, 12)} ₽",
-          f"  Перенос через ночь     {_fmt(carry, 12)} ₽",
-          f"  Нереализованный P&L    {_fmt(unreal, 12)} ₽",
-          f"  Казначейство и прочее  {_fmt(treasury, 12)} ₽   (остаток итога)"]
+    d = decompose(base, account if account != "—" else None)
+    L += ["", "РАЗЛОЖЕНИЕ (снимки фаз + реестр казначейства)"]
+    if d:
+        L += [f"  Торговля               {_fmt(d['trading'], 12)} ₽",
+              f"  Казначейство (паи)     {_fmt(d['treasury'], 12)} ₽",
+              f"  Итого по снимкам       {_fmt(d['total'], 12)} ₽   "
+              f"({d['from']:%d.%m %H:%M} → {d['to']:%d.%m %H:%M}, "
+              f"операций с паями {d['fund_ops']})",
+              f"  из торговли не закрыто {_fmt(unreal, 12)} ₽   (нереализованный P&L)"]
+    else:
+        L.append("  недоступно: нет снимков фаз или реестра казначейства")
 
     L += _benchmark_block(summaries, cum_base, total)
 

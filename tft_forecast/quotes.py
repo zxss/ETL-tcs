@@ -74,11 +74,16 @@ def is_market_open(now_msk: datetime) -> bool:
 
 # ── Открытие текущей сессии из 5M (для реализованного движения) ────────────────
 
+# Открытие ОСНОВНОЙ сессии, а не первая сделка дня: с 26.09.2026 признаки и
+# цели модели строятся на барах основной сессии (services/session_bars.py), и
+# «реализованное» движение обязано мериться от того же открытия. Первая 5-минутка
+# дня — это 06:55 утренней сессии, а в части дней вообще метка 02:00 МСК.
 _TODAY_OPEN_SQL = """
     SELECT open
     FROM market_data_5m
     WHERE ticker = %(tk)s
       AND (ts AT TIME ZONE 'Europe/Moscow')::date = %(today)s
+      AND (ts AT TIME ZONE 'Europe/Moscow')::time >= %(open_t)s
     ORDER BY ts ASC
     LIMIT 1;
 """
@@ -87,7 +92,9 @@ _TODAY_OPEN_SQL = """
 def _today_open(conn, ticker: str, today_msk) -> float | None:
     try:
         with conn.cursor() as cur:
-            cur.execute(_TODAY_OPEN_SQL, {"tk": ticker, "today": today_msk})
+            from services.session_bars import main_open
+            cur.execute(_TODAY_OPEN_SQL, {"tk": ticker, "today": today_msk,
+                                          "open_t": main_open(today_msk)})
             row = cur.fetchone()
         return float(row[0]) if row and row[0] is not None else None
     except Exception:  # noqa: BLE001
