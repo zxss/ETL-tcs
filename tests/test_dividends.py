@@ -112,6 +112,26 @@ class TestDivGapSeries(unittest.TestCase):
     def test_no_payments(self):
         self.assertEqual(_div_gap_series(self._frame(), []).sum(), 0.0)
 
+    def test_absurd_yield_rejected(self):
+        """FIXR 13.12.2024: дивиденд 35,31 ₽ по расписке FIXP против цены акции
+        FIXR 1,30 ₽ — «дивдоходность» 2708 %. Это рассогласование масштаба акции
+        после редомициляции, и поправка на него внесла бы в обучающую выборку
+        ошибку в двадцать семь раз больше той, которую лечит."""
+        df = self._frame()                     # цена 100 ₽
+        pays = [{"last_buy_date": dt.date(2025, 6, 4), "dividend_net": 2708.0}]
+        self.assertEqual(_div_gap_series(df, pays).sum(), 0.0)
+
+    def test_large_but_real_dividend_kept(self):
+        """Настоящий максимум универса — VTBR 11.07.2025 с 27,4 % — проходит."""
+        df = self._frame()                     # цена 100 ₽
+        pays = [{"last_buy_date": dt.date(2025, 6, 4), "dividend_net": 27.4}]
+        self.assertAlmostEqual(_div_gap_series(df, pays).sum(), 27.4)
+
+    def test_threshold_is_documented_constant(self):
+        from tft_forecast.features import MAX_DIV_YIELD_PCT
+        self.assertGreater(MAX_DIV_YIELD_PCT, 27.4, "настоящие выплаты не резать")
+        self.assertLess(MAX_DIV_YIELD_PCT, 100.0, "выплата больше цены — не дивиденд")
+
 
 class TestFeatureAdjustment(unittest.TestCase):
     """Гэп отсечки не должен попадать в признаки и цели как доходность."""

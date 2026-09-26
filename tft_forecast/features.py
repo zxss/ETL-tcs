@@ -96,7 +96,18 @@ def _load_raw(conn, ticker: str) -> pd.DataFrame | None:
     return df
 
 
-def _div_gap_series(df: pd.DataFrame, payments: list[dict]) -> pd.Series:
+# Потолок правдоподобной дивдоходности одной выплаты, % от цены. Выше — это не
+# дивиденд, а рассогласование масштаба акции: выплата объявлена по СТАРОЙ бумаге,
+# а ряд цен идёт по новой после редомициляции или сплита. Живой пример: FIXR
+# 13.12.2024 — дивиденд 35,31 ₽ по расписке FIXP против цены акции FIXR 1,30 ₽,
+# то есть «дивдоходность» 2708 %. Без потолка поправка внесла бы в обучающую
+# выборку ошибку в двадцать семь раз больше той, которую лечит.
+# Порог 50 %: настоящий максимум в нашем универсе — VTBR 11.07.2025 с 27,4 %.
+MAX_DIV_YIELD_PCT = 50.0
+
+
+def _div_gap_series(df: pd.DataFrame, payments: list[dict],
+                    ticker: str = "?") -> pd.Series:
     """Дивиденд (₽), гэп которого приходится на каждый день ряда.
 
     Свечи T-Invest не скорректированы на дивиденды: в день отсечки open
@@ -106,19 +117,29 @@ def _div_gap_series(df: pd.DataFrame, payments: list[dict]) -> pd.Series:
 
     Выплата, чей гэп приходится за пределы ряда, отбрасывается. Две отсечки в
     один день (редко, но бывает после объединения выпусков) складываются.
+    Выплата, несопоставимая с масштабом цены, отбрасывается с предупреждением —
+    см. MAX_DIV_YIELD_PCT.
     """
     div = pd.Series(0.0, index=df.index)
     if not payments:
         return div
     days = df["date"].to_numpy()
+    prev_close = df["close"].shift(1)
     for p in payments:
         lb = p.get("last_buy_date")
         amount = float(p.get("dividend_net") or 0.0)
         if lb is None or amount <= 0:
             continue
         i = int(np.searchsorted(days, np.datetime64(pd.Timestamp(lb)), side="right"))
-        if 0 < i < len(div):
-            div.iat[i] += amount
+        if not (0 < i < len(div)):
+            continue
+        px = float(prev_close.iat[i]) if np.isfinite(prev_close.iat[i]) else 0.0
+        if px > 0 and amount / px * 100.0 > MAX_DIV_YIELD_PCT:
+            log.warning("  [%s] выплата %.4f ₽ на %s отброшена: %.0f %% цены %.4f ₽ — "
+                        "масштаб акции не совпадает (сплит/редомициляция)",
+                        ticker, amount, lb, amount / px * 100.0, px)
+            continue
+        div.iat[i] += amount
     return div
 
 
@@ -144,7 +165,8 @@ def _is_sane(df: pd.DataFrame) -> bool:
     return True
 
 
-def _build_features(df: pd.DataFrame, payments: list[dict] | None = None) -> pd.DataFrame:
+def _build_features(df: pd.DataFrame, payments: list[dict] | None = None,
+                    ticker: str = "?") -> pd.DataFrame:
     d = df.copy()
     prev_close = d["close"].shift(1)
 
@@ -155,7 +177,7 @@ def _build_features(df: pd.DataFrame, payments: list[dict] | None = None) -> pd.
     # квантильном лоссе он тянет q10 вниз, то есть задирает стопы.
     # Правятся ТОЛЬКО сравнения с ВЧЕРАШНИМ закрытием. Внутридневные
     # (intraday = close/open) дивидендом не задеты: обе цены уже после гэпа.
-    div = _div_gap_series(d, payments or [])
+    div = _div_gap_series(d, payments or [], ticker)
     d["div_gap"] = div
 
     d["log_ret"] = np.log((d["close"] + div) / prev_close)
@@ -247,7 +269,7 @@ def load_panel(conn, tickers: list[str]) -> list[TickerFrame]:
             log.warning("  [%s] пропуск: подозрительный масштаб цены (median close=%.4f)",
                         tk, raw["close"].median())
             continue
-        feat = _build_features(raw, _load_dividends(conn, tk))
+        feat = _build_features(raw, _load_dividends(conn, tk), tk)
         last_close = float(raw["close"].iloc[-1])
         last_date = raw["date"].iloc[-1].date()
         frames.append(TickerFrame(tk, feat, last_close, last_date))
