@@ -298,10 +298,7 @@ def cmd_rebalance(dry: bool, if_due: bool) -> int:
             json.dump(target, f, ensure_ascii=False, indent=1, default=str)
         _jsonl({"ts": now.isoformat(), "kind": "rebalance", "target": os.path.basename(path),
                 "orders": orders})
-    print(json.dumps({"month": month, "key_rate": key, "universe": meta, "eligible": res["eligible"],
-                      "n": len(target["weights"]), "excluded": res["excluded"],
-                      "picks": target["picks"], "orders": orders}, ensure_ascii=False, indent=1,
-                     default=str)[:6000])
+    report(target, orders, dry)
     return 0
 
 
@@ -315,6 +312,24 @@ def month_exits(month: str) -> dict:
             if r.get("kind") == "monitor" and str(r.get("ts", "")).startswith(month):
                 out.update(r.get("exits") or {})
     return out
+
+
+def report(target: dict, orders: list, dry: bool) -> None:
+    from collections import Counter
+    picks = target["picks"]
+    print(f"{target['month']}: ставка {target['key_rate']} %, вселенная {target['universe']}, "
+          f"прошли фильтры {target['eligible']}, в портфеле {len(picks)}"
+          + (" (ПРОБНЫЙ ПРОГОН, заявки не отправлялись)" if dry else ""))
+    print("исключены:", ", ".join(f"{k} {v}" for k, v in sorted(target["excluded"].items(), key=lambda x: -x[1])))
+    for p in picks:
+        print(f"  {p['secid']}  {str(p['name'])[:14]:<14} {p['rating']:<5} доходн. {p['yield_pct']:5.1f} %  "
+              f"дюр. {p['duration_y']:.2f}  цена {p['price_pct']:6.2f}  {p['issuer']} / {p['sector']}")
+    if picks:
+        n = len(picks)
+        print(f"средняя доходность {sum(p['yield_pct'] for p in picks) / n:.1f} %, "
+              f"дюрация {sum(p['duration_y'] for p in picks) / n:.2f}; сектора "
+              + ", ".join(f"{k} {v}" for k, v in Counter(p["sector"] for p in picks).most_common()))
+    print(f"заявок {len(orders)}:", dict(Counter(o["status"] for o in orders)))
 
 
 def cmd_monitor(dry: bool) -> int:
