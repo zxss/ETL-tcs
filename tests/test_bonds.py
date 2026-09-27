@@ -147,3 +147,70 @@ class TestBondReturn(unittest.TestCase):
         r, note = self._run([self.row("2024-01-01", 90, 0), self.row("2024-01-05", 40, 0)])
         self.assertIn("дефолт", note)
         self.assertAlmostEqual(r, 400 * 0.5 / 900 - 1, places=9)
+
+
+# ── живая система: расчёт заявок без брокера ─────────────────────────────────
+
+class _FakeBroker:
+    """Песочница в памяти: позиции, деньги, стакан, статус торгов."""
+
+    def __init__(self, positions, money, book=(99.0, 99.2), status="SECURITY_TRADING_STATUS_NORMAL_TRADING"):
+        self.positions, self.money, self.book, self.status = positions, money, book, status
+
+    def _post(self, method, payload=None):
+        if method.endswith("GetSandboxPositions"):
+            return {"money": [{"currency": "rub", "units": str(int(self.money)), "nano": 0}],
+                    "securities": [{"instrumentUid": u, "balance": str(q)} for u, q in self.positions.items()]}
+        if method.endswith("GetOrderBook"):
+            bid, ask = self.book
+            px = lambda v: {"price": {"units": str(int(v)), "nano": int(round((v % 1) * 1e9))}}
+            return {"bids": [px(bid)] if bid else [], "asks": [px(ask)] if ask else []}
+        if method.endswith("GetTradingStatus"):
+            return {"tradingStatus": self.status, "limitOrderAvailableFlag": True}
+        raise AssertionError(method)
+
+
+def _live(secid, price=99.0, accrued=10.0):
+    return {"secid": secid, "uid": "u" + secid, "price_pct": price, "nominal": 1000.0,
+            "accrued": accrued, "lot": 1, "min_step": 0.01}
+
+
+class LiveTrader(unittest.TestCase):
+
+    def test_unit_cost_percent_of_face_plus_accrued(self):
+        from bonds.trader import unit_cost
+        self.assertAlmostEqual(unit_cost(_live("A", 96.27, 26.34)), 962.7 + 26.34, places=6)
+
+    def test_limit_price_caps_slippage_and_rounds_to_step(self):
+        from bonds.trader import _limit_price
+        b = _live("A", 99.0)
+        br = _FakeBroker({}, 0, book=(98.0, 100.5))          # ask дальше, чем 0,5 % от last
+        self.assertAlmostEqual(_limit_price(br, b, "BUY", 0.5), 99.49, places=6)
+        br.book = (98.9, 99.1)
+        self.assertAlmostEqual(_limit_price(br, b, "BUY", 0.5), 99.1, places=6)
+        self.assertAlmostEqual(_limit_price(br, b, "SELL", 0.5), 98.9, places=6)
+        br.status = "SECURITY_TRADING_STATUS_DEALER_NORMAL_TRADING"   # внебиржевой режим
+        self.assertIsNone(_limit_price(br, b, "BUY", 0.5))
+        br.status, br.book = "SECURITY_TRADING_STATUS_NORMAL_TRADING", (None, None)
+        b["price_pct"] = None
+        self.assertIsNone(_limit_price(br, b, "BUY", 0.5))
+
+    def test_trade_to_target_sells_first_and_sizes_by_nav(self):
+        from bonds.trader import trade_to_target
+        rules = load_rules()
+        a, b, c = _live("A"), _live("B"), _live("C")          # 1 000 ₽ за штуку
+        br = _FakeBroker({"uA": 30, "uC": 10}, money=60_000)  # NAV 100 000
+        target = {"weights": {"A": 0.10, "B": 0.05}}
+        orders = trade_to_target(br, "acc", target, {x["uid"]: x for x in (a, b, c)},
+                                 {x["secid"]: x for x in (a, b, c)}, rules, dry=True)
+        got = [(o["secid"], o["side"], o["lots"]) for o in orders]
+        self.assertEqual(got, [("A", "SELL", 20), ("C", "SELL", 10), ("B", "BUY", 5)])
+
+    def test_trade_to_target_exit_blocks_rebuy(self):
+        from bonds.trader import trade_to_target
+        rules = load_rules()
+        a = _live("A")
+        br = _FakeBroker({"uA": 10}, money=90_000)
+        orders = trade_to_target(br, "acc", {"weights": {"A": 0.10}}, {"uA": a}, {"A": a}, rules,
+                                 dry=True, exits={"A": "цена < стоп"})
+        self.assertEqual([(o["side"], o["lots"]) for o in orders], [("SELL", 10)])
