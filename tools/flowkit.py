@@ -35,11 +35,19 @@ def versioned(directory: str, stem: str, ext: str) -> str:
 
 
 def git_rev() -> str:
+    """Коммит кода, которым получен результат. Без .git (копия на сервере) —
+    файл REVISION в корне копии: его пишет выкладка (`git rev-parse --short HEAD >
+    REVISION`), иначе происхождение результата теряется."""
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     try:
-        return subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True,
-                              text=True, timeout=10).stdout.strip() or "?"
-    except Exception:  # noqa: BLE001 — на сервере без .git
-        return "?"
+        rev = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=root,
+                             capture_output=True, text=True, timeout=10).stdout.strip()
+        if rev:
+            return rev
+    except Exception:  # noqa: BLE001
+        pass
+    path = os.path.join(root, "REVISION")
+    return open(path, encoding="utf-8").read().strip() if os.path.exists(path) else "?"
 
 
 class Checks:
