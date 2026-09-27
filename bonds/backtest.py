@@ -75,8 +75,11 @@ def to_bond(r: dict, asof: dt.date, flags: dict) -> dict | None:
             "tradable": True, "rating_num": None}
 
 
-def bond_return(secid: str, a: dt.date, b: dt.date, cache: str) -> tuple[float, str]:
-    """Доходность выпуска с закрытия a по закрытие b: (цена+НКД+купоны+амортизация)."""
+def bond_return(secid: str, a: dt.date, b: dt.date, cache: str,
+                cal: list[dt.date] | None = None) -> tuple[float, str]:
+    """Доходность выпуска с закрытия a по закрытие b: (цена+НКД+купоны+амортизация).
+    cal — календарь торговых дней: тогда «остановка торгов» = пропущены ≥ 3 последних
+    торговых дня окна (PREREG_distress); без него — прежнее правило «> 7 дней» (№ 287)."""
     rows = [r for r in iss.daily(secid, a, b, cache)
             if (r.get("CLOSE") or r.get("LEGALCLOSEPRICE")) and r.get("FACEVALUE")]
     if not rows:
@@ -95,7 +98,12 @@ def bond_return(secid: str, a: dt.date, b: dt.date, cache: str) -> tuple[float, 
     mat = iss._date(last.get("MATDATE"))
     v1 = px(last) / 100 * last["FACEVALUE"] + (last.get("ACCINT") or 0)
     note = ""
-    if (b - last_day).days > 7:                   # перестал торговаться до конца периода
+    if cal is not None:
+        wd = [x for x in cal if a <= x <= b]
+        stale = len(wd) >= 3 and last_day < wd[-3]
+    else:
+        stale = (b - last_day).days > 7
+    if stale:                                     # перестал торговаться до конца периода
         if mat and mat <= b:
             cash += last["FACEVALUE"] + (last.get("ACCINT") or 0)          # погашение
             v1, note = 0.0, "погашен"
