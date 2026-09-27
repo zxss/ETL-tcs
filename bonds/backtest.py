@@ -198,6 +198,8 @@ def main(argv=None) -> int:
                   and s1["dsr"] >= 0.95)
     chk = Checks("bonds-backtest")
     chk.eq("месяцев в статистике = в ряду", s1["months"], len(rows))
+    chk.eq("ряд покрывает весь период (нет обрыва календаря)", len(rows),
+           (end.year - start.year) * 12 + end.month - start.month)
     chk.ok("ограничения портфеля соблюдены каждый месяц", all(not m["violations"] for m in rows))
     chk.ok("число выпусков ≤ N", all(m["n"] <= rules["portfolio"]["n_bonds"] for m in rows))
     chk.ok("оборот в [0, 2]", all(0 <= m["turnover"] <= 2 + 1e-9 for m in rows))

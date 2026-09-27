@@ -20,6 +20,7 @@ import urllib.request
 
 ISS = "https://iss.moex.com/iss"
 BOARD = "TQCB"
+CAL_INDEX = "RUCBTRNS"
 
 
 def _get(url: str, tries: int = 6) -> dict:
@@ -131,9 +132,15 @@ def daily(secid: str, a: dt.date, b: dt.date, cache: str | None) -> list[dict]:
 
 
 def trading_days(a: dt.date, b: dt.date, cache: str | None) -> list[dt.date]:
-    """Торговые дни — по истории индекса корпоративных облигаций RUCBITR."""
+    """Торговые дни — по истории индекса корпоративных облигаций RUCBTRNS.
+    RUCBITR в ISS оборвался 31.05.2023 (обнаружено 27.09.2026) — поэтому самопроверка:
+    календарь, который кончается раньше b больше чем на 10 дней, — ошибка, а не данные."""
     def fetch():
-        return _paged(f"{ISS}/history/engines/stock/markets/index/securities/RUCBITR.json"
+        return _paged(f"{ISS}/history/engines/stock/markets/index/securities/{CAL_INDEX}.json"
                       f"?iss.meta=off&from={a}&till={b}&history.columns=TRADEDATE", "history")
-    rows = _cached(cache, f"days_{a}_{b}.json", fetch)
-    return sorted({dt.date.fromisoformat(r["TRADEDATE"]) for r in rows})
+    rows = _cached(cache, f"days_{CAL_INDEX}_{a}_{b}.json", fetch)
+    days = sorted({dt.date.fromisoformat(r["TRADEDATE"]) for r in rows})
+    if not days or (min(b, dt.date.today()) - days[-1]).days > 10:
+        raise RuntimeError(f"календарь {CAL_INDEX} обрывается на {days[-1] if days else '—'} "
+                           f"при запрошенном конце {b}")
+    return days
