@@ -185,7 +185,7 @@ def parse_page(html_text: str) -> list[dict]:
 # ── Загрузка ─────────────────────────────────────────────────────────────────
 
 def _user_agent() -> str:
-    return str(getattr(config, "NEWS_TG_USER_AGENT", "") or
+    return str(config.NEWS_TG_USER_AGENT or
                "Mozilla/5.0 (compatible; etl-tcs/1.0)")
 
 
@@ -313,7 +313,7 @@ def _log_run(conn, stat: dict, started: dt.datetime) -> None:
 
 
 def channels() -> list[str]:
-    raw = str(getattr(config, "NEWS_TG_CHANNELS", "") or "")
+    raw = str(config.NEWS_TG_CHANNELS or "")
     return [c.strip().lstrip("@") for c in raw.replace(",", " ").split() if c.strip()]
 
 

@@ -135,7 +135,7 @@ def run(conn=None) -> int:
     if not getattr(config, "LOAD_DIVIDENDS", True):
         log.info("LOAD_DIVIDENDS=0 — календарь отсечек не обновляется.")
         return 0
-    tickers = list(getattr(config, "TICKERS", []) or [])
+    tickers = list(config.TICKERS or [])
     if not tickers:
         return 0
     years = int(getattr(config, "DIVIDENDS_HISTORY_YEARS", 12))

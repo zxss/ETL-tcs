@@ -13,3 +13,6 @@ validation_data/
 
 # Рантайм-журналы автозаявок и реестр ожидающих стопов (содержит account_id)
 data/order_log/
+
+# Аудит кода: версии результатов воспроизводятся командой python -m tools.code_audit.audit
+audit/out/code_audit_w*

@@ -215,11 +215,11 @@ class TreasuryService:
 
     @property
     def buffer(self) -> float:
-        return float(getattr(config, "TREASURY_CASH_BUFFER_RUB", 1000.0))
+        return float(config.TREASURY_CASH_BUFFER_RUB)
 
     @property
     def min_sweep(self) -> float:
-        return float(getattr(config, "TREASURY_MIN_SWEEP_RUB", 2000.0))
+        return float(config.TREASURY_MIN_SWEEP_RUB)
 
     @property
     def max_premium_pct(self) -> float:
