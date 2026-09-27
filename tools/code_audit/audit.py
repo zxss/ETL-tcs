@@ -218,7 +218,10 @@ def analyse() -> dict:
                     and len(node.args) >= 2 and isinstance(node.args[1], ast.Constant) \
                     and str(node.args[1].value).startswith("w") \
                     and f.startswith(("audit/", "research/", "tools/")) \
-                    and not f.startswith("tools/flowkit") and "versioned(" not in src:
+                    and not f.startswith("tools/flowkit") and "versioned(" not in src \
+                    and "flow-state" not in src.split("\n")[node.lineno - 1]:
+                # «# flow-state» на строке open(...) — осознанная запись состояния
+                # (номер счёта, правка исходника), а не перезапись артефакта
                 writes.append({"file": f, "line": node.lineno})
             elif isinstance(node, ast.Constant) and isinstance(node.value, str) \
                     and ABS_PATH.match(node.value) and not f.startswith("tests/"):

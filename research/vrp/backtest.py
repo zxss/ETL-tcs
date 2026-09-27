@@ -399,10 +399,29 @@ def main(argv=None) -> int:
             and (r["dev_mean"] or -1) > 0 and (r["hold_mean"] or -1) > 0
             and r["p_holm"] < 0.05 and np.isfinite(r["dsr"]) and r["dsr"] >= 0.95
             and (r2["mean_excess"] or -1) > 0)
-    out = os.path.join(a.data, "backtest_result.json")
-    with open(out, "w", encoding="utf-8") as f:
-        json.dump({"results": results, "cycles": all_cycles}, f, ensure_ascii=False,
-                  indent=1, default=str)
+    import sys as _sys
+    _sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    from tools.flowkit import Checks, save_state, versioned
+    chk = Checks("vrp-backtest")
+    for r in results:
+        cyc = all_cycles[f"{r['trial']} ×{r['cost_mult']:g}"]
+        chk.eq(f"{r['trial']} ×{r['cost_mult']:g}: циклов в сводке = в списке", r["n"], len(cyc))
+        if cyc:
+            chk.close(f"{r['trial']} ×{r['cost_mult']:g}: средний избыток пересчитан",
+                      r["mean_excess"], float(np.mean([c["excess"] for c in cyc])), tol=1e-12)
+            chk.ok(f"{r['trial']} ×{r['cost_mult']:g}: убыток цикла не больше максимального",
+                   all(c["pnl"] >= -c["max_loss"] - 1e-6 for c in cyc))
+    for r in base:
+        chk.ok(f"{r['trial']}: ПРОЙДЕН ⇒ все условия порога", (not r["passed"]) or (
+            r["t"] >= 2 and r["p_holm"] < 0.05 and r["dsr"] >= 0.95))
+    out = versioned(a.data, "backtest_result", "json")
+    save_state(out, params={"WING": WING, "LOOKBACK_DAYS": LOOKBACK_DAYS, "COST_PCT": COST_PCT,
+                            "COST_TICKS": COST_TICKS, "FEE_RUB": FEE_RUB, "N_TRIALS": N_TRIALS,
+                            "DEV_END": DEV_END},
+               results={"results": results, "cycles": all_cycles}, checks=chk,
+               inputs={"data": a.data, "prereg": "research/vrp/PREREG.md"})
+    print(chk.report())
+    print("результат:", out)
     print("=" * 96)
     print(f"{'испытание':<22}{'изд.':>5}{'циклов':>7}{'изб./цикл':>10}{'t':>7}"
           f"{'Холм p':>8}{'худший':>9}{'в плюс':>8}{'разраб.':>9}{'отлож.':>9}{'DSR':>7}{'ПРОЙДЕН':>9}")

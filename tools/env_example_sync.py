@@ -79,7 +79,7 @@ def main(argv=None) -> int:
         print(f".env.example: {'УСТАРЕЛ' if stale else 'актуален'} (ключей в авто-блоке {len(missing)})")
         return 1 if stale else 0
     if new != old:
-        with open(path, "w", encoding="utf-8") as f:
+        with open(path, "w", encoding="utf-8") as f:  # flow-state
             f.write(new)
     # самопроверка: после записи все ключи кода описаны
     left = set(code_env_keys()) - env_example_keys(path)

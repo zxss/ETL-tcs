@@ -165,11 +165,27 @@ def run(longhist: str) -> dict:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--longhist", default="/opt/etl-r4/audit/r4_research/longhist")
-    ap.add_argument("--out", default="/opt/research-data/levmom_backtest.json")
+    ap.add_argument("--out-dir", default="/opt/research-data/levmom")
     a = ap.parse_args(argv)
     r = run(a.longhist)
-    with open(a.out, "w", encoding="utf-8") as f:
-        json.dump(r, f, ensure_ascii=False, indent=1, default=str)
+    import sys as _sys
+    _sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    from tools.flowkit import Checks, save_state, versioned
+    chk = Checks("levmom-backtest")
+    chk.ok("выбранное плечо не выше обоих ограничений",
+           r["L_chosen"] <= min(r["l_margin"], r["l_margin_call"]) + 1e-9)
+    g0 = next((g for g in r["grid"] if g["L"] == 0.0), None)
+    chk.ok("тождество: без плеча доходность = ставка (все деньги в фонде)",
+           g0 is not None and abs(g0["annual"] - g0["annual_rf"]) < 1e-12)
+    chk.close("t спреда пересчитан из среднего и разброса",
+              r["spread_t"], r["spread_mean_m"] / (r["spread_sd_m"] / math.sqrt(r["months"])), tol=1e-9)
+    out = versioned(a.out_dir, "levmom_backtest", "json")
+    save_state(out, params={"TOP_N": TOP_N, "GO_STOCK": GO_STOCK, "GO_INDEX": GO_INDEX,
+                            "MARGIN_BUFFER": MARGIN_BUFFER, "STOCK_FUT_RT": STOCK_FUT_RT,
+                            "INDEX_FUT_RT": INDEX_FUT_RT, "UNIVERSE": FUT_UNIVERSE},
+               results=r, checks=chk, inputs={"longhist": a.longhist})
+    print(chk.report())
+    print("результат:", out)
     print(f"месяцев {r['months']} ({r['period']}), бумаг с фьючерсом {r['names']}")
     print(f"спред топ-10 − индекс (1×, нетто): {r['spread_mean_m']*100:+.2f} %/мес, "
           f"t {r['spread_t']:+.2f}, худший месяц {r['worst_month_1x']*100:+.1f} %")

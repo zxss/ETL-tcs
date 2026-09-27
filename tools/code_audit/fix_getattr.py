@@ -59,7 +59,7 @@ def fix_file(path: str, sites: list[dict], dry: bool) -> int:
         print(f"  ✗ {os.path.relpath(path, ROOT)}: правка ломает синтаксис ({e}) — пропуск")
         return 0
     if not dry and spans:
-        with open(path, "w", encoding="utf-8") as f:
+        with open(path, "w", encoding="utf-8") as f:  # flow-state
             f.write(new)
     for ln, _a, _b, repl in spans:
         print(f"  {os.path.relpath(path, ROOT)}:{ln} → {repl}")

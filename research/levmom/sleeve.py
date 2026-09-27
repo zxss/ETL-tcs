@@ -88,7 +88,7 @@ def open_account(br: TinkoffSandboxClient) -> str:
         br.pay_in(acc, CAPITAL_RUB, currency="rub")
         log.warning("новый счёт песочницы %s пополнен на %.0f ₽", acc, CAPITAL_RUB)
         os.makedirs(OUT_DIR, exist_ok=True)
-        with open(ACCOUNT_FILE, "w", encoding="utf-8") as f:
+        with open(ACCOUNT_FILE, "w", encoding="utf-8") as f:  # flow-state
             f.write(acc + "\n")
     return acc
 

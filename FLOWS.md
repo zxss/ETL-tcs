@@ -15,6 +15,10 @@
 | Аудит кода | [tools/code_audit](tools/code_audit/КАК_ЗАПУСТИТЬ.md) | `python -m tools.code_audit.audit` | `audit/out/code_audit_wNN.{json,md}` |
 | Инструменты потоков, синхронизация `.env.example` | [tools](tools/КАК_ЗАПУСТИТЬ.md) | `python -m tools.env_example_sync` | авто-блок в `.env.example` |
 | Обслуживание данных | [flows/maintenance](flows/maintenance/КАК_ЗАПУСТИТЬ.md) | `python -m scripts.cleanup_stale_tickers --dry-run` | правки таблиц БД |
+| Премия за волатильность (закрыт 27.09) | [research/vrp](research/vrp/КАК_ЗАПУСТИТЬ.md) | `python -m research.vrp.backtest --data …` | `backtest_result_wNN.json` |
+| Моментум с плечом — песочница | [research/levmom](research/levmom/КАК_ЗАПУСТИТЬ.md) | `python -m research.levmom.sleeve status` | журналы `/opt/research-data/levmom` |
+
+Модули исследовательских потоков: `research.vrp.download`, `research.vrp.backtest`, `research.vrp.secid`, `research.levmom.backtest`, `research.levmom.sleeve`.
 
 Исследовательские потоки живут в ветках `research/*`, у каждого свой
 `КАК_ЗАПУСТИТЬ.md` рядом с кодом (например, `research/vrp`, `research/levmom` в
