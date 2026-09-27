@@ -649,8 +649,8 @@ def run(conn, quiet: bool = False) -> dict | None:
     if not quiet:
         _print_full(forecasts)
 
-    val_tickers = getattr(config, "VALIDATION_TICKERS", [])
-    val_strats = getattr(config, "VALIDATION_STRATS", [])
+    val_tickers = config.VALIDATION_TICKERS
+    val_strats = config.VALIDATION_STRATS
     if val_strats:
         # направленный прогноз: ожидаемый PnL стратегии с учётом коридора
         # (на пересчитанных под текущую цену квантилях оставшейся доходности).
@@ -660,7 +660,7 @@ def run(conn, quiet: bool = False) -> dict | None:
         # валидации — White RC / PBO / FDR — они останутся «—»).
         from . import directional
         from services import cost_model
-        cost_rt = float(getattr(config, "TFT_COST_RT", 0.08))
+        cost_rt = float(config.TFT_COST_RT)
         all_fc_tickers = list(panel.infer_tickers)
         dir_rows = directional.build_rows(
             infer_pred_adj, panel.infer_tickers, all_fc_tickers, val_strats,

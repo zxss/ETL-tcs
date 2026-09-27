@@ -69,10 +69,10 @@ _MAX_DATE_SQL = "SELECT max(date) FROM market_data;"
 
 def _tracked_tickers() -> set[str]:
     """Тикеры, которые проект сопровождает сейчас."""
-    tracked = set(t.upper() for t in getattr(config, "TICKERS", []))
+    tracked = set(t.upper() for t in config.TICKERS)
     tracked |= set(t.upper() for t in getattr(config, "INDEX_TICKERS", []))
     tracked |= set(t.upper() for t in getattr(config, "TFT_TICKERS", []))
-    tracked |= set(t.upper() for t in getattr(config, "VALIDATION_TICKERS", []))
+    tracked |= set(t.upper() for t in config.VALIDATION_TICKERS)
     return tracked
 
 

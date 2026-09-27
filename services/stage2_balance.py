@@ -307,7 +307,7 @@ def build_report(*, start_balance: float | None = None,
     env = "SANDBOX" if sandbox else ("PROD (РЕАЛЬНЫЕ ДЕНЬГИ)" if sandbox is False else "СЧЁТ")
 
     L = []
-    L.append(f"ОТЧЁТ ПО ТЕСТОВОМУ БАЛАНСУ — {getattr(config, 'STAGE2_TEST_ID', 'stage2-demo')}")
+    L.append(f"ОТЧЁТ ПО ТЕСТОВОМУ БАЛАНСУ — {config.STAGE2_TEST_ID}")
     start_txt = f"{start:,.2f}".replace(",", "\u00a0").replace(".", ",")
     L.append(f"Счёт: {env} {account}   Стартовый баланс: {start_txt} ₽")
     L.append(f"Торговых дней пройдено: {len(summaries)} из {target}")

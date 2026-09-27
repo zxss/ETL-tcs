@@ -357,7 +357,7 @@ def _score_row(r, strict: bool, raw_alpha: bool | None = None,
     if hard_exclude is None:
         hard_exclude = bool(getattr(_cfg, "RAW_ALPHA_HARD_EXCLUDE", True))
     if apply_penalties is None:
-        apply_penalties = bool(getattr(_cfg, "APPLY_RISK_PENALTIES", True))
+        apply_penalties = bool(_cfg.APPLY_RISK_PENALTIES)
 
     long = r["direction"] == "LONG"
     regime = r["regime"]
@@ -828,9 +828,9 @@ def print_combined(val_rows, forecasts, tickers, strats, show_all: bool = False,
         )
     print("=" * W)
 
-    best_top_n    = int(getattr(config, "BEST_TRADES_TOP_N",         10))
-    best_position = float(getattr(config, "BEST_TRADES_POSITION_RUB", 10_000.0))
-    entry_frac    = float(getattr(config, "LIMIT_ENTRY_FRACTION",    0.8))
+    best_top_n    = int(config.BEST_TRADES_TOP_N)
+    best_position = float(config.BEST_TRADES_POSITION_RUB)
+    entry_frac    = float(config.LIMIT_ENTRY_FRACTION)
 
     _print_legend()
     _print_flags(rows)
@@ -889,7 +889,7 @@ def print_weekly_dashboard(forecasts, top_n: int = 50) -> None:
 
     fc = dict(forecasts or {})
     meta = fc.pop("__meta__", None) or {}
-    cost_rt = float(getattr(_cfg, "TFT_COST_RT", 0.08))
+    cost_rt = float(_cfg.TFT_COST_RT)
 
     rows = []
     for tk, r in fc.items():

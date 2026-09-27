@@ -40,27 +40,10 @@ _LOG_DIR = Path(__file__).resolve().parent.parent / "data" / "order_log"
 _PENDING_PATH = _LOG_DIR / "pending_stops.json"
 
 
-# ── Журнал (тот же CSV-формат, что у place_orders) ────────────────────────────
-
-_LOG_FIELDS = ["ts", "env", "account_id", "ticker", "direction", "action",
-               "order_id", "qty_lots_api", "qty_shares", "price", "status", "info"]
-
-
-def _open_log():
-    _LOG_DIR.mkdir(parents=True, exist_ok=True)
-    path = _LOG_DIR / f"{dt.date.today().isoformat()}.csv"
-    new = not path.exists()
-    fp = open(path, "a", newline="", encoding="utf-8")
-    w = csv.DictWriter(fp, fieldnames=_LOG_FIELDS)
-    if new:
-        w.writeheader()
-    return w, fp
-
-
-def _logrow(writer: csv.DictWriter, **kw) -> None:
-    row = {k: kw.get(k, "") for k in _LOG_FIELDS}
-    row["ts"] = dt.datetime.now().isoformat(timespec="seconds")
-    writer.writerow(row)
+# ── Журнал: ОДНО определение на оба модуля (place_orders) ─────────────────────
+# Раньше формат и функции были скопированы сюда дословно; добавь поле в одном
+# месте — заголовок общего CSV разъехался бы с другим (аудит кода 27.09.2026).
+from services.place_orders import _LOG_FIELDS, _logrow, _open_log  # noqa: E402,F401
 
 
 # ── Сбор того, что снимать ────────────────────────────────────────────────────

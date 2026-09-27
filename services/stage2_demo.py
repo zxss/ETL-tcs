@@ -234,7 +234,7 @@ def contour_ok(env: str) -> str | None:
     Полумеры недопустимы: боевой счёт при TRADING_MODE≠prod или песочница при
     TRADING_MODE=prod — это перепутанный профиль .env, а не конфигурация.
     """
-    mode = str(getattr(config, "TRADING_MODE", "")).lower()
+    mode = str(config.TRADING_MODE).lower()
     prod_account = str(getattr(config, "PROD_ACCOUNT_ID", "") or "").strip()
     if env == "SANDBOX":
         return None if mode != "prod" else "TRADING_MODE=prod в песочнице"
@@ -265,7 +265,7 @@ def preflight(res: PhaseResult, *, env: str, prod_flag: bool,
     Проверка совпадения счёта — главная: без неё опечатка в PROD_ACCOUNT_ID
     направила бы заявки на другой реальный счёт пользователя.
     """
-    mode = str(getattr(config, "TRADING_MODE", "")).lower()
+    mode = str(config.TRADING_MODE).lower()
     prod_account = str(getattr(config, "PROD_ACCOUNT_ID", "") or "").strip()
     if not prod_flag:
         res.check(env == "SANDBOX", f"контур не SANDBOX: {env}")
@@ -284,8 +284,8 @@ def preflight(res: PhaseResult, *, env: str, prod_flag: bool,
               "ALLOW_UNATTENDED_PROD ≠ 1 — автозапуск по крону не разрешён")
     res.check(os.path.basename(os.path.normpath(base_dir())) != "stage2-demo",
               "STAGE2_DIR не отделён от песочницы — счётчики смешаются")
-    cap = float(getattr(config, "PROD_MAX_POSITION_RUB", 0) or 0)
-    pos = float(getattr(config, "BEST_TRADES_POSITION_RUB", 0) or 0)
+    cap = float(config.PROD_MAX_POSITION_RUB or 0)
+    pos = float(config.BEST_TRADES_POSITION_RUB or 0)
     res.check(not cap or pos <= cap,
               f"позиция {pos:.0f} ₽ выше предела PROD_MAX_POSITION_RUB {cap:.0f} ₽")
 
@@ -578,7 +578,7 @@ def phase_prep(*, now: dt.datetime | None = None, prod: bool = False) -> int:
                 val_rows, forecasts, universe, config.VALIDATION_STRATS,
                 top_n=int(getattr(config, "BEST_TRADES_TOP_N", 5)))
             orders = cmb.build_orders(
-                top, float(getattr(config, "BEST_TRADES_POSITION_RUB", 10000)),
+                top, float(config.BEST_TRADES_POSITION_RUB),
                 float(getattr(config, "LIMIT_ENTRY_FRACTION", 0.2)),
                 tp_frac=float(getattr(config, "LIMIT_TP_FRACTION", 0.5)))
         else:
@@ -773,7 +773,7 @@ def check_order_allowed(po: dict, *, env: str, used_ids: set[str],
     lots = po.get("quantity_lots") or 0
     if lots <= 0:
         return "quantity_lots <= 0"
-    cap = float(getattr(config, "BEST_TRADES_POSITION_RUB", 10000))
+    cap = float(config.BEST_TRADES_POSITION_RUB)
     if (po.get("total_rub") or 0) > cap:
         return f"сумма {po.get('total_rub')} превышает лимит позиции {cap}"
     if po.get("signal_id") in used_ids:
@@ -1699,7 +1699,7 @@ def phase_overnight(*, now: dt.datetime | None = None, prod: bool = False,
         if bool(getattr(config, "STAGE2_NEW_ENTRIES", True)):
             orders, meta = compute_orders(
                 int(getattr(config, "BEST_TRADES_TOP_N", 5)),
-                float(getattr(config, "BEST_TRADES_POSITION_RUB", 10000)),
+                float(config.BEST_TRADES_POSITION_RUB),
                 float(getattr(config, "LIMIT_ENTRY_FRACTION", 0.2)),
                 # refresh=True: догрузить сегодняшние 5-минутки и собрать частичный
                 # бар основной сессии. Без этого последний бар — вчерашний, и модель
@@ -1710,13 +1710,13 @@ def phase_overnight(*, now: dt.datetime | None = None, prod: bool = False,
                      "модель не считается")
             res.data["entries"] = "disabled"
         night = [o for o in orders if o.strategy == "long_overnight" and o.is_placeable]
-        mode = str(getattr(config, "OVERNIGHT_ENTRY_MODE", "forecast")).lower()
+        mode = str(config.OVERNIGHT_ENTRY_MODE).lower()
         res.data["entry_mode"] = mode
         if night and mode == "marketable":
             night, notes = reprice_marketable(
                 broker, night,
                 slip_pct=float(getattr(config, "OVERNIGHT_MARKETABLE_SLIP_PCT", 0.1)),
-                position_rub=float(getattr(config, "BEST_TRADES_POSITION_RUB", 10000)))
+                position_rub=float(config.BEST_TRADES_POSITION_RUB))
             night = [o for o in night if o.is_placeable]
             for n in notes:
                 res.check(False, f"вход по рынку: {n}", critical=False)
@@ -1799,8 +1799,7 @@ def phase_overnight(*, now: dt.datetime | None = None, prod: bool = False,
                 res.check(False, f"казначейство: кэш под ночные покупки не высвобожден "
                                  f"({e})", critical=False)
                 cash = _money_rub(broker, account_id)
-                available = (cash or 0.0) - float(getattr(config, "TREASURY_CASH_BUFFER_RUB",
-                                                          1000.0))
+                available = (cash or 0.0) - float(config.TREASURY_CASH_BUFFER_RUB)
             if not dry_run:
                 accepted, cut = fit_budget(accepted, available)
                 for c in cut:

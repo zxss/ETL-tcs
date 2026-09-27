@@ -23,7 +23,8 @@ next_overnight = открытие основной сессии D+1 / закры
 
 Запуск на сервере (≈ 1 час, только чтение БД):
     cd /opt/etl-tcs && sudo -u etl .venv/bin/python -m audit.walkforward_session
-Результат: audit/out/walkforward_session.json и таблица в stdout.
+Результат: audit/out/walkforward_session_wNN.json (версии не перезаписываются,
+внутри параметры, самопроверки и итоги) и таблица в stdout.
 """
 from __future__ import annotations
 
@@ -45,7 +46,7 @@ EMBARGO_DAYS = 30
 TOP_N = 5
 EDGE_K = 0.5
 N_TRIALS = int(os.getenv("WF_TRIALS", "282"))     # реестр программы 281 + это испытание
-OUT = os.path.join(ROOT, "audit", "out", "walkforward_session.json")
+OUT_DIR = os.path.join(ROOT, "audit", "out")
 
 log = logging.getLogger("wf")
 
@@ -191,9 +192,24 @@ def main() -> int:
            "book_days_traded": int(np.sum([d["n_top"] > 0 for d in days])),
            "dsr": dsr, "n_trials": N_TRIALS, "passed_real_money_gate": passed,
            "by_day": days}
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    with open(OUT, "w", encoding="utf-8") as f:
-        json.dump(res, f, ensure_ascii=False, indent=1)
+    # самопроверка: итоги пересчитываются независимо от накопленных выше
+    from tools.flowkit import Checks, save_state, versioned
+    chk = Checks("walkforward-session")
+    chk.eq("дней в сводке = дней в разбивке", res["days"], len(res["by_day"]))
+    chk.close("средний IC = среднее по дням", res["mean_ic"],
+              float(np.nanmean([d["ic"] for d in res["by_day"]])), tol=1e-12)
+    xs = np.array([d["excess"] for d in res["by_day"] if np.isfinite(d["excess"])])
+    if len(xs) > 2:
+        chk.close("t превышения пересчитан", res["t_excess"],
+                  float(xs.mean() / (xs.std(ddof=1) / math.sqrt(len(xs)))), tol=1e-9)
+    chk.ok("порог пройден ⇒ все условия", (not res["passed_real_money_gate"]) or (
+        res["t_excess"] >= 2 and res["dsr"] >= 0.95 and res["t_ic"] >= 2))
+    out = versioned(OUT_DIR, "walkforward_session", "json")
+    params = {k: res.pop(k) for k in ("folds", "epochs", "embargo_days", "n_trials")}
+    save_state(out, params={**params, "TOP_N": TOP_N, "EDGE_K": EDGE_K},
+               results=res, checks=chk)
+    print(chk.report())
+    print("результат:", out)
     print("=" * 72)
     print(f"WALK-FORWARD long_overnight, окно 18:40 → открытие основной сессии")
     print(f"месяцев {N_FOLDS}, дней {len(days)}, эмбарго {EMBARGO_DAYS} дн., эпох {EPOCHS}")

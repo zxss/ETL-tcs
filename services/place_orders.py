@@ -976,7 +976,7 @@ MSK = dt.timezone(dt.timedelta(hours=3))
 
 
 def _square_off_time() -> dt.time:
-    raw = str(getattr(config, "INTRADAY_SQUARE_OFF_TIME", "18:35")).strip()
+    raw = str(config.INTRADAY_SQUARE_OFF_TIME).strip()
     try:
         hh, mm = raw.split(":")
         return dt.time(int(hh), int(mm))
@@ -1565,15 +1565,15 @@ def main(argv: Optional[list[str]] = None) -> int:
                         "срабатывает только после INTRADAY_SQUARE_OFF_TIME; "
                         "--force закрывает немедленно.")
     p.add_argument("--top-n", type=int,
-                   default=int(getattr(config, "BEST_TRADES_TOP_N", 10)))
+                   default=int(config.BEST_TRADES_TOP_N))
     p.add_argument("--position", type=float,
-                   default=float(getattr(config, "BEST_TRADES_POSITION_RUB", 10_000.0)))
+                   default=float(config.BEST_TRADES_POSITION_RUB))
     p.add_argument("--budget", type=float, default=None,
                    help="Общий бюджет в ТЫСЯЧАХ ₽ (--budget 100 = 100 000 ₽). "
                         "Распределяется по бумагам РИСК-ПАРИТЕТОМ (вес ∝ 1/стоп%%), "
                         "перекрывает --position.")
     p.add_argument("--entry-frac", type=float,
-                   default=float(getattr(config, "LIMIT_ENTRY_FRACTION", 0.8)))
+                   default=float(config.LIMIT_ENTRY_FRACTION))
     p.add_argument("--tp-frac", type=float,
                    default=float(getattr(config, "LIMIT_TP_FRACTION", 0.5)),
                    help="Цель take-profit как доля пути до дальней границы коридора (0..1).")
@@ -1588,7 +1588,7 @@ def main(argv: Optional[list[str]] = None) -> int:
                    help="Не догружать свечи перед расчётом (если main.py только что "
                         "отработал). Проверка свежести всё равно выполняется.")
     p.add_argument("--wait-fill", type=float,
-                   default=float(getattr(config, "ORDER_FILL_WAIT_SEC", 30.0)),
+                   default=float(config.ORDER_FILL_WAIT_SEC),
                    help="Секунд ждать исполнения лимиток перед привязкой стопов "
                         "(0 — не ждать). По умолч. из config.ORDER_FILL_WAIT_SEC.")
     p.add_argument("--immediate-stop", action="store_true",
