@@ -214,3 +214,8 @@ class LiveTrader(unittest.TestCase):
         orders = trade_to_target(br, "acc", {"weights": {"A": 0.10}}, {"uA": a}, {"A": a}, rules,
                                  dry=True, exits={"A": "цена < стоп"})
         self.assertEqual([(o["side"], o["lots"]) for o in orders], [("SELL", 10)])
+
+    def test_order_price_in_rubles_for_sandbox(self):
+        from bonds.trader import order_price_rub
+        self.assertAlmostEqual(order_price_rub({"nominal": 1000.0}, 97.79), 977.9, places=6)
+        self.assertAlmostEqual(order_price_rub({"nominal": 500.0}, 101.2), 506.0, places=6)

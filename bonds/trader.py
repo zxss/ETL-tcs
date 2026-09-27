@@ -16,7 +16,8 @@
 
 ТОЛЬКО ПЕСОЧНИЦА: клиент TinkoffSandboxClient, боевого пути нет; чужие счета отклоняются.
 Сделки — лимитные, только при биржевых торгах (SECURITY_TRADING_STATUS_NORMAL_TRADING),
-цена облигации в API — в процентах номинала (сверено с ISS 27.09.2026).
+цена облигации в стакане API и ISS — в % номинала, а в заявке песочницы — в рублях за
+штуку (order_price_rub, проверено 27.09.2026).
 """
 from __future__ import annotations
 
@@ -204,16 +205,24 @@ def _limit_price(br, b: dict, side: str, slip_pct: float) -> float | None:
     return round(math.floor(p / step + 1e-9) * step if side == "BUY" else math.ceil(p / step - 1e-9) * step, 6)
 
 
+def order_price_rub(b: dict, pct: float) -> float:
+    """Цена заявки для песочницы — РУБЛИ за штуку (без НКД), а не % номинала:
+    27.09.2026 заявка 97.79 отклонена «price is outside the limits» (30099),
+    977.9 ₽ принята (initialSecurityPrice 977.9, с НКД 993.8). Стакан и ISS — в %."""
+    return round(pct / 100 * (b.get("nominal") or 1000), 6)
+
+
 def place(br, acc: str, b: dict, side: str, lots: int, rules: dict, dry: bool) -> dict:
     px = _limit_price(br, b, side, rules["execution"]["limit_slippage_pct"])
-    rec = {"secid": b["secid"], "side": side, "lots": lots, "price_pct": px}
+    rec = {"secid": b["secid"], "side": side, "lots": lots, "price_pct": px,
+           "price_rub": order_price_rub(b, px) if px else None}
     if px is None:
         return {**rec, "status": "нет биржевых торгов — отложено"}
     if dry:
         return {**rec, "status": "DRY"}
     try:
         st = br.post_limit_order(account_id=acc, instrument=_instrument(b), direction=side,
-                                 quantity_lots=lots, price=Quotation.from_float(px),
+                                 quantity_lots=lots, price=Quotation.from_float(rec["price_rub"]),
                                  order_id=new_order_id())
         return {**rec, "status": st.execution_report_status}
     except BrokerError as e:
