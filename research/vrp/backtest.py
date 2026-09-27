@@ -80,15 +80,18 @@ def load_options(data: str, asset: str):
 
 def load_futures(data: str, asset: str) -> dict:
     """{secid: {date: settle}} только одиночные контракты (без спредов)."""
-    rx = re.compile(rf"^{PREFIX[asset]}[HMUZ]\d$")
+    # старые контракты ISS отдаёт с суффиксом года (RIH4_2014): суффикс снимается,
+    # десятилетия внутри одного кода разделяет близость даты к экспирации
+    rx = re.compile(rf"^({PREFIX[asset]}[HMUZ]\d)(?:_\d{{4}})?$")
     out = defaultdict(dict)
     for path in sorted(glob.glob(os.path.join(data, f"futures_{asset}_*.csv"))):
         with open(path, encoding="utf-8") as f:
             for r in csv.DictReader(f):
-                if rx.match(r["SECID"]):
+                m = rx.match(r["SECID"])
+                if m:
                     s = _f(r["SETTLEPRICE"])
                     if s:
-                        out[r["SECID"]][dt.date.fromisoformat(r["TRADEDATE"])] = s
+                        out[m.group(1)][dt.date.fromisoformat(r["TRADEDATE"])] = s
     return out
 
 
