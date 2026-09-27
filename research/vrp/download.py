@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import http.client
 import datetime as dt
 import json
 import logging
@@ -49,7 +50,9 @@ def _get(url: str, tries: int = 6) -> dict:
         try:
             with urllib.request.urlopen(url, timeout=60) as r:
                 return json.loads(r.read())
-        except (urllib.error.URLError, TimeoutError, ValueError) as e:
+        # OSError покрывает обрыв соединения (ConnectionResetError) и ошибки TLS:
+        # 27.09.2026 в 01:05 один такой обрыв уронил поток на 12 794-м задании из 12 796.
+        except (OSError, ValueError, http.client.HTTPException) as e:
             wait = min(60, 2 ** k)
             log.warning("ISS: %s — повтор через %d с", e, wait)
             time.sleep(wait)
