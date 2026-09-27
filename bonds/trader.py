@@ -366,26 +366,55 @@ def cmd_monitor(dry: bool) -> int:
     return 0
 
 
-def cmd_status() -> int:
+def cmd_status(as_json: bool = False) -> int:
+    """Стоимость и структура; --json — таблица позиций с ценой покупки (средняя
+    брокера, ₽ за штуку без НКД), доходностью при покупке (из цели месяца) и сейчас."""
     rules = load_rules()
     br = TinkoffSandboxClient()
     acc = open_account(br)
     bonds, _ = universe(br, dt.date.today())
     by_uid = {b["uid"]: b for b in bonds}
     st = nav(br, acc, by_uid)
+    pf = br._post("SandboxService/GetSandboxPortfolio", {"accountId": acc})
+    avg = {x["instrumentUid"]: Quotation.from_payload(x.get("averagePositionPrice")).as_float()
+           for x in pf.get("positions") or []}
+    tgt = latest_target() or {}
+    at_buy = {p["secid"]: p for p in tgt.get("picks", [])}
     port = []
     for uid, v in st["values"].items():
         b = by_uid[uid]
-        port.append({"secid": b["secid"], "issuer": b["issuer"], "sector": b.get("sector"),
-                     "weight": v / st["nav"] if st["nav"] else 0, "duration_y": b.get("duration_y") or 0,
-                     "rating": rating_name(b.get("rating_num")), "yield_pct": b.get("yield_pct")})
+        qty = st["positions"][uid]
+        nom = b.get("nominal") or 1000
+        buy_rub = avg.get(uid) or 0.0
+        port.append({"secid": b["secid"], "name": b.get("name"), "issuer": b["issuer"],
+                     "sector": b.get("sector"), "rating": rating_name(b.get("rating_num")),
+                     "qty": qty, "buy_pct": buy_rub / nom * 100 if buy_rub else None,
+                     "price_pct": b.get("price_pct"), "accrued": b.get("accrued"),
+                     "yield_at_buy": (at_buy.get(b["secid"]) or {}).get("yield_pct"),
+                     "yield_pct": b.get("yield_pct"), "duration_y": b.get("duration_y") or 0,
+                     "event": b.get("event"), "coupon_pct": b.get("coupon_pct"),
+                     "value_rub": v, "weight": v / st["nav"] if st["nav"] else 0,
+                     "price_pnl_rub": qty * ((b.get("price_pct") or 0) / 100 * nom - buy_rub)
+                     if buy_rub else None})
+    port.sort(key=lambda x: -x["weight"])
+    bad = check_portfolio(port, rules)
+    pending = [{"secid": by_uid.get(o.instrument_uid, {}).get("secid", o.instrument_uid),
+                "side": o.direction, "lots": o.lots} for o in br.get_active_orders(acc)]
+    if as_json:
+        print(json.dumps({"asof": dt.datetime.now(MSK).isoformat(timespec="minutes"),
+                          "account": acc, "nav": st["nav"], "money": st["money"],
+                          "capital": CAPITAL_RUB, "target": tgt.get("month"),
+                          "key_rate": tgt.get("key_rate"), "positions": port,
+                          "pending": pending, "violations": bad}, ensure_ascii=False, default=str))
+        return 0
     print(f"счёт {acc}: стоимость {st['nav']:,.0f} ₽ ({(st['nav']/CAPITAL_RUB-1)*100:+.2f} %), "
           f"деньги {st['money']:,.0f} ₽, выпусков {len(port)}".replace(",", " "))
-    for p in sorted(port, key=lambda x: -x["weight"]):
+    for p in port:
         print(f"  {p['secid']}  {p['weight']*100:5.1f} %  {p['rating']:<5} доходн. {p['yield_pct'] or 0:5.1f} %  "
               f"дюр. {p['duration_y']:.2f}  {p['issuer']} / {p['sector']}")
-    bad = check_portfolio(port, rules)
     print("ограничения:", "соблюдены" if not bad else "; ".join(bad))
+    if pending:
+        print("активные заявки:", pending)
     if st["unknown"]:
         print("позиции вне вселенной (проверить вручную):", st["unknown"])
     return 0
@@ -413,6 +442,7 @@ def main(argv=None) -> int:
     ap.add_argument("cmd", choices=["rebalance", "monitor", "status", "flags"])
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--if-due", action="store_true")
+    ap.add_argument("--json", action="store_true", help="status: позиции в JSON")
     ap.add_argument("--out", default=os.path.join(DATA, "flags.json"))
     a = ap.parse_args(argv)
     if a.cmd == "rebalance":
@@ -421,7 +451,7 @@ def main(argv=None) -> int:
         return cmd_monitor(a.dry_run)
     if a.cmd == "flags":
         return cmd_flags(a.out)
-    return cmd_status()
+    return cmd_status(a.json)
 
 
 if __name__ == "__main__":
