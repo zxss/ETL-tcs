@@ -1,0 +1,61 @@
+{
+  "_описание": "Правила модуля ВДО, версия 1 (27.09.2026). Меняются новой версией файла rules_wNN.json, старые не правятся. Решение о правилах — за пользователем.",
+  "universe": {
+    "board": "TQCB",
+    "currency": "rub",
+    "exclude_qual_only": true,
+    "exclude_required_tests": true,
+    "exclude_floating_coupon": true,
+    "exclude_subordinated": true,
+    "exclude_perpetual": true,
+    "min_issue_size_rub": 300000000,
+    "min_days_to_event": 60
+  },
+  "yield": {
+    "_": "доходность к ближайшему событию (оферта или погашение) относительно ключевой ставки ЦБ, п.п.",
+    "min_spread_to_key_pp": 3.0,
+    "max_spread_to_key_pp": 15.0
+  },
+  "price": {"min_pct_of_face": 85.0, "max_pct_of_face": 105.0},
+  "duration_years": {"min": 0.3, "max": 2.5},
+  "liquidity": {
+    "min_day_value_rub": 1000000,
+    "max_bid_ask_pct": 1.0,
+    "_": "в бэктесте — оборот дня месячного среза (истории стакана нет)"
+  },
+  "credit": {
+    "_": "только в живой системе: истории рейтингов у бесплатных источников нет",
+    "rating_floor": "BB-",
+    "rating_cap": "A-",
+    "require_rating": true,
+    "exclude_negative_watch": true,
+    "sources": ["tinvest", "smartlab"]
+  },
+  "ranking": {
+    "_": "дешевизна: доходность минус медиана доходности своей рейтинговой корзины (в бэктесте — корзины по дюрации)",
+    "method": "yield_vs_bucket_median"
+  },
+  "portfolio": {
+    "n_bonds": 20,
+    "max_weight_bond": 0.05,
+    "max_weight_issuer": 0.05,
+    "max_weight_sector": 0.25,
+    "max_portfolio_duration": 2.0,
+    "cash_reserve": 0.05,
+    "hold_buffer_rank": 40,
+    "_hold": "держим выпуск, пока он в топ-40 и проходит фильтры: меньше оборота"
+  },
+  "exit": {
+    "price_stop_pct_of_face": 80.0,
+    "days_to_event_roll": 30,
+    "on_downgrade_below_floor": true,
+    "on_trading_halt": true
+  },
+  "execution": {
+    "order": "limit",
+    "limit_slippage_pct": 0.5,
+    "fee_side_pct": 0.04,
+    "assumed_round_trip_pct_backtest": 0.3
+  },
+  "schedule": {"rebalance": "monthly, first trading day after month end", "monitor": "daily"}
+}
