@@ -63,7 +63,7 @@ def to_bond(r: dict, asof: dt.date, flags: dict) -> dict | None:
     price = r.get("CLOSE") or r.get("LEGALCLOSEPRICE")
     det = str(r.get("COUPON_DETAILS") or "").lower()
     f = flags.get(r.get("SECID"), {})
-    return {"secid": r["SECID"], "issuer": f.get("issuer") or issuer_of(r.get("SHORTNAME")),
+    return {"secid": r["SECID"], "issuer": issuer_of(r.get("SHORTNAME")),   # одно правило для живых и погашенных
             "sector": f.get("sector"), "yield_pct": y, "price_pct": price,
             "duration_y": (r.get("DURATION") or 0) / 365 if r.get("DURATION") else None,
             "days_to_event": (ev - asof).days if ev else None,
