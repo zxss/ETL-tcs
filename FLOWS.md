@@ -15,7 +15,7 @@
 | Аудит кода | [tools/code_audit](tools/code_audit/КАК_ЗАПУСТИТЬ.md) | `python -m tools.code_audit.audit` | `audit/out/code_audit_wNN.{json,md}` |
 | Инструменты потоков, синхронизация `.env.example` | [tools](tools/КАК_ЗАПУСТИТЬ.md) | `python -m tools.env_example_sync` | авто-блок в `.env.example` |
 | Обслуживание данных | [flows/maintenance](flows/maintenance/КАК_ЗАПУСТИТЬ.md) | `python -m scripts.cleanup_stale_tickers --dry-run` | правки таблиц БД |
-| Портфель ВДО: бэктест по предрегистрации и живая система в песочнице (ветка `feature/bonds`) | [bonds](bonds/КАК_ЗАПУСТИТЬ.md) | `python -m bonds.trader rebalance --if-due` · `monitor` · `status`; `python -m bonds.backtest --cache …` | `$BONDS_DIR/target_YYYY-MM_wNN.json`, `ledger.jsonl`, `cache/results/bonds_backtest_wNN.json` |
+| Портфель ВДО: бэктест по предрегистрации и живая система в песочнице (ветка `feature/bonds`) | [bonds](bonds/КАК_ЗАПУСТИТЬ.md) | `python -m bonds.trader rebalance --if-due` · `monitor` · `status`; `python -m bonds.backtest --cache …`, `python -m bonds.distress --cache …` | `$BONDS_DIR/target_YYYY-MM_wNN.json`, `ledger.jsonl`, `cache/results/bonds_backtest_wNN.json` |
 
 Исследовательские потоки живут в ветках `research/*`, у каждого свой
 `КАК_ЗАПУСТИТЬ.md` рядом с кодом (например, `research/vrp`, `research/levmom` в
@@ -31,7 +31,7 @@
 `audit.fullaudit_2026_09_26.audit_mech`, `audit.fullaudit_2026_09_26.audit_window`,
 `audit.fullaudit_2026_09_26.audit_fwd`, `audit.fullaudit_2026_09_26.audit_data_exec`,
 `tools.code_audit.audit`, `tools.code_audit.fix_getattr`, `tools.env_example_sync`,
-`bonds.trader`, `bonds.backtest`,
+`bonds.trader`, `bonds.backtest`, `bonds.distress`,
 `strategy_validation.validation.bootstrap`, `strategy_validation.validation.entropy`,
 `strategy_validation.validation.monte_carlo`, `strategy_validation.validation.probability_of_ruin`,
 `strategy_validation.validation.risk_metrics`, `strategy_validation.validation.serial_dependence`,
