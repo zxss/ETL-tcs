@@ -195,29 +195,45 @@ def fund_instrument(br):
     return br.find_instrument_by_uid(item["uid"]) if item and item.get("uid") else None
 
 
-def money_total(br, acc: str) -> float:
-    """Рубли СВОБОДНЫЕ + ЗАБЛОКИРОВАННЫЕ. get_money_rub клиента отдаёт только
-    свободные, а под фьючерсы блокируется ГО: без этой суммы капитал после первого
-    ребаланса занижался бы на всё ГО, и следующий расчёт урезал бы позиции."""
+def money_parts(br, acc: str) -> dict:
+    """Рубли счёта по полям брокера (исправлено 01.10.2026).
+
+    В песочнице ГО под фьючерсы УЖЕ входит в positions.money (money 851 298 ₽ =
+    portfolio.totalAmountCurrencies), а positions.blocked показывает его отдельно.
+    Прежняя формула money + blocked считала ГО дважды: капитал 1,46 млн вместо 0,97,
+    и ребаланс 01.10 построил бы плечо ≈ 3,4 вместо 2,25. Деньги под активные
+    заявки на покупку (лимитки на паи фонда) из money вычитаются — их возвращаем
+    по initialOrderPrice."""
     data = br._post("SandboxService/GetSandboxPositions", {"accountId": acc})
-    tot = 0.0
-    for key in ("money", "blocked"):
-        for m in (data.get(key) or []):
-            if m.get("currency") == "rub":
-                tot += Quotation.from_payload(m).as_float()
-    return tot
+    rub = lambda key: sum(Quotation.from_payload(m).as_float()
+                          for m in (data.get(key) or []) if m.get("currency") == "rub")
+    orders = br._post("SandboxService/GetSandboxOrders", {"accountId": acc}).get("orders") or []
+    reserved = sum(Quotation.from_payload(o.get("initialOrderPrice")).as_float()
+                   for o in orders if o.get("direction") == "ORDER_DIRECTION_BUY")
+    return {"money": rub("money"), "blocked": rub("blocked"), "reserved_orders": reserved}
+
+
+def open_varmargin(br, acc: str) -> float:
+    """Нерасчётная вариационная маржа открытых фьючерсов (до клиринга в деньгах её нет)."""
+    p = br._post("SandboxService/GetSandboxPortfolio", {"accountId": acc})
+    return sum(Quotation.from_payload(x.get("varMargin")).as_float()
+               for x in (p.get("positions") or []) if x.get("varMargin"))
 
 
 def equity(br, acc: str) -> dict:
-    """Капитал = все рубли + паи фонда (фьючерсы входят через вариационную маржу)."""
-    money = money_total(br, acc)
+    """Капитал = деньги (ГО в них уже есть) + резерв под заявки на покупку + паи фонда
+    + открытая вариационная маржа. go_broker — фактически заблокированное ГО."""
+    mp = money_parts(br, acc)
+    vm = open_varmargin(br, acc)
     fund = fund_instrument(br)
     pos = positions(br, acc)
     fund_val = 0.0
     if fund and fund.instrument_uid in pos:
         fund_val = pos[fund.instrument_uid] * (br.get_last_price(fund.instrument_uid) or 0.0)
-    return {"money": money, "fund": fund_val, "equity": money + fund_val, "positions": pos,
-            "fund_ins": fund}
+    money = mp["money"] + mp["reserved_orders"]
+    return {"money": money, "fund": fund_val, "varmargin": vm, "equity": money + fund_val + vm,
+            "go_broker": max(mp["blocked"] - mp["reserved_orders"], 0.0),
+            "positions": pos, "fund_ins": fund}
 
 
 # ── план и исполнение ────────────────────────────────────────────────────────
@@ -365,9 +381,11 @@ def cmd_check(dry: bool) -> int:
             go += abs(bal) * (ci["go_buy"] if bal > 0 else ci["go_sell"])
         except BrokerError:
             pass
-    load = (go + CASH_BUFFER * eq["equity"]) / eq["equity"] if eq["equity"] else 0.0
+    go_used = eq["go_broker"] or go            # фактическое ГО брокера; оценка — если его нет
+    load = (go_used + CASH_BUFFER * eq["equity"]) / eq["equity"] if eq["equity"] else 0.0
     rec = {"ts": now.isoformat(timespec="seconds"), "kind": "check", "equity": eq["equity"],
-           "money": eq["money"], "fund": eq["fund"], "go": round(go, 2),
+           "money": eq["money"], "fund": eq["fund"], "varmargin": round(eq["varmargin"], 2),
+           "go": round(go_used, 2), "go_est": round(go, 2),
            "go_load": round(load, 3), "roll": roll}
     if (roll or load > GO_ALARM) and os.path.exists(LEDGER):
         # тот же состав, перерасчёт под текущий капитал: ролл и/или разгрузка
