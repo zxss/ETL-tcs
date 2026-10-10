@@ -27,6 +27,7 @@ import zipfile
 
 S3 = "https://s3-ap-northeast-1.amazonaws.com/data.binance.vision"
 DL = "https://data.binance.vision/"
+API = "https://data-api.binance.vision/api/v3/klines"   # отдаёт и делистингованные пары
 PREFIX = "data/spot/monthly/klines/"
 LAST_MONTH = "2026-09"
 
@@ -90,7 +91,47 @@ def to_ts(x: str) -> dt.date:
     return dt.datetime.fromtimestamp(v, tz=dt.timezone.utc).date()
 
 
+def fetch_api(sym: str) -> dict:
+    """Дневные свечи через API порциями по 1000 дней (тот же источник, что архив)."""
+    rows, start = {}, int(dt.datetime(2017, 1, 1, tzinfo=dt.timezone.utc).timestamp() * 1000)
+    end_ms = int(dt.datetime(2026, 10, 1, tzinfo=dt.timezone.utc).timestamp() * 1000)
+    while start < end_ms:
+        q = urllib.parse.urlencode({"symbol": sym, "interval": "1d", "startTime": start, "endTime": end_ms - 1,
+                                    "limit": 1000})
+        data = json.loads(get(f"{API}?{q}"))
+        if not isinstance(data, list) or not data:
+            break
+        for r in data:
+            rows[to_ts(str(r[0]))] = (r[1], r[2], r[3], r[4], r[7])
+        start = int(data[-1][0]) + 86_400_000
+        if len(data) < 1000:
+            break
+    return rows
+
+
 def fetch_symbol(sym: str, out: str) -> tuple[str, int]:
+    try:
+        rows = fetch_api(sym)
+    except Exception:  # noqa: BLE001
+        rows = {}
+    if rows:
+        return write_daily(sym, out, rows)
+    return fetch_zip(sym, out)
+
+
+def write_daily(sym: str, out: str, rows: dict) -> tuple[str, int]:
+    dest = os.path.join(out, "daily", f"{sym}.csv")
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
+    with open(dest, "w", newline="") as f:  # flow-state: дневной ряд пары
+        w = csv.writer(f)
+        w.writerow(["date", "open", "high", "low", "close", "quote_volume"])
+        for d in sorted(rows):
+            if d <= dt.date(2026, 9, 30):
+                w.writerow([d.isoformat(), *rows[d]])
+    return sym, len(rows)
+
+
+def fetch_zip(sym: str, out: str) -> tuple[str, int]:
     _, keys = list_prefix(f"{PREFIX}{sym}/1d/", delimiter=False)
     zips = sorted(k for k in keys if k.endswith(".zip") and k[-11:-4] <= LAST_MONTH)
     rows = {}
@@ -109,14 +150,7 @@ def fetch_symbol(sym: str, out: str) -> tuple[str, int]:
                     if not r or not r[0].isdigit():
                         continue
                     rows[to_ts(r[0])] = (r[1], r[2], r[3], r[4], r[7])
-    dest = os.path.join(out, "daily", f"{sym}.csv")
-    os.makedirs(os.path.dirname(dest), exist_ok=True)
-    with open(dest, "w", newline="") as f:  # flow-state: дневной ряд пары
-        w = csv.writer(f)
-        w.writerow(["date", "open", "high", "low", "close", "quote_volume"])
-        for d in sorted(rows):
-            w.writerow([d.isoformat(), *rows[d]])
-    return sym, len(rows)
+    return write_daily(sym, out, rows)
 
 
 def main(argv=None) -> int:
