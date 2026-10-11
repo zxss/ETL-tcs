@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/opt/etl-r4/research/vol/har.py", line 323, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/opt/etl-r4/research/vol/har.py", line 269, in main
+    f = forecasts_for_ticker(g, h)
+  File "/opt/etl-r4/research/vol/har.py", line 233, in forecasts_for_ticker
+    w, a, b = garch11_fit(rets[tr])
+              ~~~~~~~~~~~^^^^^^^^^^
+  File "/opt/etl-r4/research/vol/har.py", line 185, in garch11_fit
+    a = 1.0 / (1.0 + math.exp(-bp[1]))
+                     ~~~~~~~~^^^^^^^^
+OverflowError: math range error
+[dev_2022_2024] дней-тикеров: 34386, бумаг: 49, 2022-01-03…2024-05-20

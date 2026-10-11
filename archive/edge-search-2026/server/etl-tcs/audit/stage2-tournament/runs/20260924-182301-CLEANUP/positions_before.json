@@ -1,0 +1,319 @@
+{
+  "account_id": "<PROD_ACCOUNT>",
+  "sandbox": false,
+  "portfolio": {
+    "totalAmountShares": {
+      "currency": "rub",
+      "units": "-19887",
+      "nano": -500000000
+    },
+    "totalAmountBonds": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "totalAmountEtf": {
+      "currency": "rub",
+      "units": "936564",
+      "nano": 60000000
+    },
+    "totalAmountCurrencies": {
+      "currency": "rub",
+      "units": "123962",
+      "nano": 740000000
+    },
+    "totalAmountFutures": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "expectedYield": {
+      "units": "0",
+      "nano": 20000000
+    },
+    "positions": [
+      {
+        "figi": "BBG004S68BH6",
+        "instrumentType": "share",
+        "quantity": {
+          "units": "-37",
+          "nano": 0
+        },
+        "averagePositionPrice": {
+          "currency": "rub",
+          "units": "536",
+          "nano": 400000000
+        },
+        "expectedYield": {
+          "units": "-39",
+          "nano": -700000000
+        },
+        "averagePositionPricePt": {
+          "units": "0",
+          "nano": 0
+        },
+        "currentPrice": {
+          "currency": "rub",
+          "units": "537",
+          "nano": 500000000
+        },
+        "averagePositionPriceFifo": {
+          "currency": "rub",
+          "units": "536",
+          "nano": 400000000
+        },
+        "quantityLots": {
+          "units": "-37",
+          "nano": 0
+        },
+        "blocked": false,
+        "blockedLots": {
+          "units": "0",
+          "nano": 0
+        },
+        "positionUid": "d8b8bd17-fedd-40f9-8942-a8e866c76605",
+        "instrumentUid": "03d5e771-fc10-438e-8892-85a40733612d",
+        "varMargin": {
+          "currency": "",
+          "units": "0",
+          "nano": 0
+        },
+        "expectedYieldFifo": {
+          "units": "-39",
+          "nano": -700000000
+        },
+        "dailyYield": {
+          "currency": "rub",
+          "units": "-39",
+          "nano": -700000000
+        },
+        "ticker": "PIKK",
+        "classCode": "TQBR",
+        "varMarginSettled": {
+          "currency": "",
+          "units": "0",
+          "nano": 0
+        }
+      },
+      {
+        "figi": "TCS70A106DL2",
+        "instrumentType": "etf",
+        "quantity": {
+          "units": "5682",
+          "nano": 0
+        },
+        "averagePositionPrice": {
+          "currency": "rub",
+          "units": "164",
+          "nano": 780000000
+        },
+        "expectedYield": {
+          "units": "272",
+          "nano": 100000000
+        },
+        "averagePositionPricePt": {
+          "units": "0",
+          "nano": 0
+        },
+        "currentPrice": {
+          "currency": "rub",
+          "units": "164",
+          "nano": 830000000
+        },
+        "averagePositionPriceFifo": {
+          "currency": "rub",
+          "units": "164",
+          "nano": 780000000
+        },
+        "quantityLots": {
+          "units": "5682",
+          "nano": 0
+        },
+        "blocked": false,
+        "blockedLots": {
+          "units": "0",
+          "nano": 0
+        },
+        "positionUid": "96a4604c-79d9-4a30-8a46-95a80dfd9f02",
+        "instrumentUid": "498ec3ff-ef27-4729-9703-a5aac48d5789",
+        "varMargin": {
+          "currency": "",
+          "units": "0",
+          "nano": 0
+        },
+        "expectedYieldFifo": {
+          "units": "272",
+          "nano": 100000000
+        },
+        "dailyYield": {
+          "currency": "rub",
+          "units": "272",
+          "nano": 100000000
+        },
+        "ticker": "TMON@",
+        "classCode": "SPBRU",
+        "varMarginSettled": {
+          "currency": "",
+          "units": "0",
+          "nano": 0
+        }
+      },
+      {
+        "figi": "RUB000UTSTOM",
+        "instrumentType": "currency",
+        "quantity": {
+          "units": "123962",
+          "nano": 740000000
+        },
+        "averagePositionPrice": {
+          "currency": "rub",
+          "units": "1",
+          "nano": 0
+        },
+        "expectedYield": {
+          "units": "0",
+          "nano": 0
+        },
+        "averagePositionPricePt": {
+          "units": "0",
+          "nano": 0
+        },
+        "currentPrice": {
+          "currency": "rub",
+          "units": "1",
+          "nano": 0
+        },
+        "averagePositionPriceFifo": {
+          "currency": "rub",
+          "units": "1",
+          "nano": 0
+        },
+        "quantityLots": {
+          "units": "123962",
+          "nano": 740000000
+        },
+        "blocked": false,
+        "blockedLots": {
+          "units": "0",
+          "nano": 0
+        },
+        "positionUid": "33e24a92-aab0-409c-88b8-f2d57415b920",
+        "instrumentUid": "a92e2e25-a698-45cc-a781-167cf465257c",
+        "varMargin": {
+          "currency": "",
+          "units": "0",
+          "nano": 0
+        },
+        "expectedYieldFifo": {
+          "units": "0",
+          "nano": 0
+        },
+        "dailyYield": {
+          "currency": "rub",
+          "units": "0",
+          "nano": 0
+        },
+        "ticker": "RUB000UTSTOM",
+        "classCode": "CETS",
+        "varMarginSettled": {
+          "currency": "",
+          "units": "0",
+          "nano": 0
+        }
+      }
+    ],
+    "accountId": "<PROD_ACCOUNT>",
+    "totalAmountOptions": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "totalAmountSp": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "totalAmountPortfolio": {
+      "currency": "rub",
+      "units": "1040639",
+      "nano": 300000000
+    },
+    "virtualPositions": [],
+    "dailyYield": {
+      "currency": "rub",
+      "units": "232",
+      "nano": 400000000
+    },
+    "dailyYieldRelative": {
+      "units": "0",
+      "nano": 20000000
+    }
+  },
+  "positions": {
+    "money": [
+      {
+        "currency": "rub",
+        "units": "123962",
+        "nano": 740000000
+      }
+    ],
+    "blocked": [],
+    "securities": [
+      {
+        "figi": "TCS70A106DL2",
+        "blocked": "0",
+        "balance": "5682",
+        "positionUid": "96a4604c-79d9-4a30-8a46-95a80dfd9f02",
+        "instrumentUid": "498ec3ff-ef27-4729-9703-a5aac48d5789",
+        "ticker": "TMON@",
+        "classCode": "SPBRU",
+        "exchangeBlocked": false,
+        "instrumentType": "etf"
+      },
+      {
+        "figi": "BBG004S68BH6",
+        "blocked": "0",
+        "balance": "-37",
+        "positionUid": "d8b8bd17-fedd-40f9-8942-a8e866c76605",
+        "instrumentUid": "03d5e771-fc10-438e-8892-85a40733612d",
+        "ticker": "PIKK",
+        "classCode": "TQBR",
+        "exchangeBlocked": false,
+        "instrumentType": "share"
+      }
+    ],
+    "limitsLoadingInProgress": false,
+    "futures": [],
+    "options": [],
+    "accountId": "<PROD_ACCOUNT>"
+  },
+  "orders": [],
+  "stops": [
+    {
+      "stopOrderId": "3bc51831-89ed-4e0f-adbd-93739175c4bf",
+      "lotsRequested": "37",
+      "figi": "BBG004S68BH6",
+      "direction": "STOP_ORDER_DIRECTION_BUY",
+      "currency": "rub",
+      "orderType": "STOP_ORDER_TYPE_STOP_LOSS",
+      "createDate": "2026-09-24T12:18:03.449234Z",
+      "price": {
+        "currency": "",
+        "units": "0",
+        "nano": 0
+      },
+      "stopPrice": {
+        "currency": "rub",
+        "units": "541",
+        "nano": 500000000
+      },
+      "instrumentUid": "03d5e771-fc10-438e-8892-85a40733612d",
+      "takeProfitType": "TAKE_PROFIT_TYPE_REGULAR",
+      "status": "STOP_ORDER_STATUS_ACTIVE",
+      "exchangeOrderType": "EXCHANGE_ORDER_TYPE_MARKET",
+      "ticker": "PIKK",
+      "classCode": "TQBR",
+      "instantExecution": false
+    }
+  ]
+}

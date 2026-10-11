@@ -1,0 +1,25 @@
+{
+  "run_id": "20260915-091001-CLOSE",
+  "phase": "CLOSE",
+  "finished_at": "2026-09-15T09:10:08+03:00",
+  "verdict": "PASS",
+  "errors": [],
+  "warnings": [],
+  "partial": [],
+  "skipped": null,
+  "treasury_parked_rub": 1998879.94,
+  "treasury": {
+    "ticker": "TMON@",
+    "tmon_lots": 12169,
+    "tmon_price": 164.26,
+    "tmon_value_rub": 1998879.94,
+    "free_cash_rub": 1120.06,
+    "cash_rub": 2000000.0,
+    "virtual_lots": 12169,
+    "mode": "virtual"
+  },
+  "overnight_before": 0,
+  "positions_closed": 0,
+  "orders_cancelled": 0,
+  "registry_reconciled": 0
+}

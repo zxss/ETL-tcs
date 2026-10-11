@@ -1,0 +1,69 @@
+{
+ "design": "ACI split-conformal, номинал 80 %, гейт покрытия ±5 пп",
+ "samples": {
+  "dev_2022_2024": {
+   "n_obs": 2108,
+   "n_days": 461,
+   "nominal_coverage": 0.8,
+   "empirical_coverage": 0.8036053130929791,
+   "mean_width_pct": 1.5276982056437627,
+   "gate_calibrated": true,
+   "narrow_minus_wide": {
+    "annual_pp": 59.449917488430536,
+    "n": 41,
+    "t": 1.5306476762604553,
+    "p_one_sided": 0.06292824595194316
+   },
+   "narrow_minus_full": {
+    "annual_pp": 1.3450744738098193,
+    "n": 461,
+    "t": 1.47506539379441,
+    "p_one_sided": 0.07009748159348811
+   },
+   "narrow": {
+    "annual_pct": -20.157979147374682,
+    "sharpe": -2.231720622814671
+   },
+   "wide": {
+    "annual_pct": -85.89842610395327,
+    "sharpe": -6.64398266892122
+   },
+   "full": {
+    "annual_pct": -21.503053621184502,
+    "sharpe": -2.4312443565909443
+   }
+  },
+  "holdout_2024_2026": {
+   "n_obs": 2521,
+   "n_days": 507,
+   "nominal_coverage": 0.8,
+   "empirical_coverage": 0.793732645775486,
+   "mean_width_pct": 1.8828884191317001,
+   "gate_calibrated": true,
+   "narrow_minus_wide": {
+    "annual_pp": -5.4350769468880475,
+    "n": 37,
+    "t": -0.1414966828084603,
+    "p_one_sided": 0.5562612097927251
+   },
+   "narrow_minus_full": {
+    "annual_pp": 0.10567037700464366,
+    "n": 507,
+    "t": 0.15616596156509988,
+    "p_one_sided": 0.43795110312291136
+   },
+   "narrow": {
+    "annual_pct": -24.662565677484757,
+    "sharpe": -2.021125817981343
+   },
+   "wide": {
+    "annual_pct": 5.085544313263282,
+    "sharpe": 0.32216162271985543
+   },
+   "full": {
+    "annual_pct": -24.7682360544894,
+    "sharpe": -2.0359581157212774
+   }
+  }
+ }
+}

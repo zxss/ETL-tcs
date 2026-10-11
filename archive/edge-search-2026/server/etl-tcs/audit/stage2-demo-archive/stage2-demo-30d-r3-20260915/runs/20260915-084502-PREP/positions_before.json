@@ -1,0 +1,112 @@
+{
+  "account_id": "1639899c-2aca-49fe-b5d8-d68e8b84f225",
+  "sandbox": true,
+  "portfolio": {
+    "totalAmountShares": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "totalAmountBonds": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "totalAmountEtf": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "totalAmountCurrencies": {
+      "currency": "rub",
+      "units": "2000000",
+      "nano": 0
+    },
+    "totalAmountFutures": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "expectedYield": {
+      "units": "0",
+      "nano": -3700000
+    },
+    "positions": [
+      {
+        "figi": "RUB000UTSTOM",
+        "instrumentType": "currency",
+        "quantity": {
+          "units": "2000000",
+          "nano": 0
+        },
+        "averagePositionPrice": {
+          "currency": "rub",
+          "units": "1",
+          "nano": 0
+        },
+        "averagePositionPricePt": {
+          "units": "0",
+          "nano": 0
+        },
+        "currentPrice": {
+          "currency": "rub",
+          "units": "1",
+          "nano": 0
+        },
+        "quantityLots": {
+          "units": "2000000",
+          "nano": 0
+        },
+        "blocked": false,
+        "blockedLots": {
+          "units": "0",
+          "nano": 0
+        },
+        "positionUid": "33e24a92-aab0-409c-88b8-f2d57415b920",
+        "instrumentUid": "a92e2e25-a698-45cc-a781-167cf465257c",
+        "ticker": "RUB000UTSTOM",
+        "classCode": "CETS"
+      }
+    ],
+    "accountId": "1639899c-2aca-49fe-b5d8-d68e8b84f225",
+    "totalAmountOptions": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "totalAmountSp": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "totalAmountPortfolio": {
+      "currency": "rub",
+      "units": "2000000",
+      "nano": 0
+    },
+    "virtualPositions": []
+  },
+  "positions": {
+    "money": [
+      {
+        "currency": "rub",
+        "units": "2000000",
+        "nano": 0
+      }
+    ],
+    "blocked": [
+      {
+        "currency": "rub",
+        "units": "0",
+        "nano": 0
+      }
+    ],
+    "securities": [],
+    "limitsLoadingInProgress": false,
+    "futures": [],
+    "options": [],
+    "accountId": "1639899c-2aca-49fe-b5d8-d68e8b84f225"
+  },
+  "orders": [],
+  "stops": []
+}

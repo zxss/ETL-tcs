@@ -1,0 +1,169 @@
+{
+ "meta": {
+  "created": "17.09.2026 20:48",
+  "revision": "3dbc665",
+  "rules": "structural-2026-09-17",
+  "from": "2022-09-12",
+  "to": "2024-05-20",
+  "trials_total": 113
+ },
+ "results": {
+  "totm_1a": {
+   "trades": 598,
+   "trades_per_year": 354.0024311183144,
+   "avg_hold_days": 1.585284280936455,
+   "net_excess_pct_trade": -0.006464703154294461,
+   "median_net_excess_pct": -0.08609329366397749,
+   "win_rate": 0.4280936454849498,
+   "t": -0.08963728884617488,
+   "dates": 60,
+   "excess_employed_annual_pct": -1.4670521912196055,
+   "contribution_pct_capital_year": -0.22517863862684157,
+   "pnl_excess_rub": -19019.195076353353,
+   "ir": -0.06661528115365054,
+   "passed": false
+  },
+  "totm_1b": {
+   "trades": 199,
+   "trades_per_year": 117.80348460291734,
+   "avg_hold_days": 5.949748743718593,
+   "net_excess_pct_trade": 0.7582849534758386,
+   "median_net_excess_pct": 0.4817648377699906,
+   "win_rate": 0.5678391959798995,
+   "t": 1.6680052761148476,
+   "dates": 20,
+   "excess_employed_annual_pct": 46.54261852872947,
+   "contribution_pct_capital_year": 8.922142894023217,
+   "pnl_excess_rub": 753588.2499127071,
+   "ir": 1.2031194160188343,
+   "passed": false
+  },
+  "cc": {
+   "trades": 37,
+   "trades_per_year": 21.903160453808752,
+   "avg_hold_days": 21.27027027027027,
+   "net_excess_pct_trade": 0.6328380090527066,
+   "median_net_excess_pct": 0.06573910695002572,
+   "win_rate": 0.5945945945945946,
+   "t": 1.8425119331000526,
+   "dates": 29,
+   "excess_employed_annual_pct": 10.251619837739838,
+   "contribution_pct_capital_year": 0.2351978334699551,
+   "pnl_excess_rub": 19865.443292397304,
+   "ir": 1.4382255225544227,
+   "passed": false
+  },
+  "cc2": {
+   "trades": 32,
+   "trades_per_year": 18.943273905996758,
+   "avg_hold_days": 19.46875,
+   "net_excess_pct_trade": 0.07223766012541476,
+   "median_net_excess_pct": 0.0041158014562064915,
+   "win_rate": 0.5,
+   "t": 1.9450585356337189,
+   "dates": 26,
+   "excess_employed_annual_pct": 1.4429778239966515,
+   "contribution_pct_capital_year": 0.02665156972578915,
+   "pnl_excess_rub": 2251.0634525409864,
+   "ir": 1.3638832496841935,
+   "passed": false
+  },
+  "div_a": {
+   "trades": 12,
+   "trades_per_year": 7.103727714748785,
+   "avg_hold_days": 17.25,
+   "net_excess_pct_trade": -1.1264761381510766,
+   "median_net_excess_pct": 0.09804945920206115,
+   "win_rate": 0.5833333333333334,
+   "t": -1.357884129560825,
+   "dates": 12,
+   "excess_employed_annual_pct": -23.381960505584573,
+   "contribution_pct_capital_year": -0.15474054463680625,
+   "pnl_excess_rub": -13069.803701698762,
+   "ir": -0.6852655647990653,
+   "passed": false
+  },
+  "div_b": {
+   "trades": 15,
+   "trades_per_year": 8.87965964343598,
+   "avg_hold_days": 19.333333333333332,
+   "net_excess_pct_trade": -1.2283363859673817,
+   "median_net_excess_pct": -0.07895631856761975,
+   "win_rate": 0.4666666666666667,
+   "t": -1.3965843256110242,
+   "dates": 13,
+   "excess_employed_annual_pct": -23.124464539582572,
+   "contribution_pct_capital_year": -0.21542825470637067,
+   "pnl_excess_rub": -18195.651355760536,
+   "ir": -0.9737224886604757,
+   "passed": false
+  },
+  "index": {
+   "trades": 13,
+   "trades_per_year": 7.695705024311183,
+   "avg_hold_days": 19.384615384615383,
+   "net_excess_pct_trade": -0.10115757131599505,
+   "median_net_excess_pct": -0.5427612526418941,
+   "win_rate": 0.46153846153846156,
+   "t": 0.19062777969775574,
+   "dates": 5,
+   "excess_employed_annual_pct": -2.0288889139547344,
+   "contribution_pct_capital_year": -0.016461026630338743,
+   "pnl_excess_rub": -1390.3427010156065,
+   "ir": -0.04349203797758577,
+   "passed": false
+  }
+ },
+ "extra": {
+  "totm": {
+   "windows": 20,
+   "totm_basket_gross_mean_pct": 1.0799883565241917,
+   "control_basket_gross_mean_pct": 0.20237959055738405,
+   "control_windows": 68,
+   "welch_t_totm_vs_control": 1.5974976598962092
+  },
+  "cash_and_carry": {
+   "signal_days": {
+    "C&C": 29,
+    "C&C-2": 26
+   },
+   "signal_days_per_year": {
+    "C&C": 17.16734197730956,
+    "C&C-2": 15.391410048622365
+   },
+   "contracts_used": 40,
+   "sizes_found": 40,
+   "max_drawdown_rub": {
+    "C&C": -17060.0,
+    "C&C-2": -185.00000000000045
+   },
+   "open_at_end": {
+    "C&C": 0,
+    "C&C-2": 0
+   }
+  },
+  "dividend_gap": {
+   "events": 51,
+   "skipped": {
+    "гэп закрылся до входа": 5,
+    "нет гэпа": 19
+   },
+   "take_rate_A": 0.5,
+   "take_rate_B": 0.6
+  },
+  "index_rebalance": {
+   "events": 7,
+   "additions": 13,
+   "deletions": 6,
+   "skipped": {},
+   "prices_from_api": [
+    "AGRO",
+    "MTLR",
+    "MTLRP",
+    "QIWI",
+    "SGZH"
+   ],
+   "car_mean_pct": 2.909244845589244
+  }
+ }
+}

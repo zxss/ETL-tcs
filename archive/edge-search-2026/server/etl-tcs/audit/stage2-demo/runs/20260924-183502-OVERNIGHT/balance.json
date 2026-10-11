@@ -1,0 +1,14 @@
+{
+  "run_id": "20260924-183502-OVERNIGHT",
+  "phase": "OVERNIGHT",
+  "captured_at": "2026-09-24T18:42:04+03:00",
+  "account_id": "1639899c-2aca-49fe-b5d8-d68e8b84f225",
+  "total_portfolio_rub": 5018043.9158,
+  "free_cash_rub": 131174.1758,
+  "shares_value_rub": 394757.75,
+  "etf_value_rub": 4492111.99,
+  "unrealised_pnl_rub": 0.3545,
+  "open_positions": 4,
+  "active_orders": 1,
+  "active_stop_orders": 0
+}

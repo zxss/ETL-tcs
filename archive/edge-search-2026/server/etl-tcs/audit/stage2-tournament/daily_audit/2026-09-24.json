@@ -1,0 +1,41 @@
+{
+  "trading_day": "2026-09-24",
+  "prep_run_id": "20260924-084803-PREP",
+  "close_run_id": "20260924-091301-CLOSE",
+  "order_run_id": "20260924-095842-ORDER",
+  "cleanup_run_id": "20260924-182301-CLEANUP",
+  "overnight_run_id": "20260924-184204-OVERNIGHT",
+  "signals_count": 5,
+  "orders_count": 0,
+  "fills_count": 0,
+  "overnight_orders": 5,
+  "execution_audit_available": true,
+  "execution_audit_count": 5,
+  "execution_audit_filled": 0,
+  "slippage_fact_pct": null,
+  "slippage_expected_pct": null,
+  "treasury": {
+    "ticker": "TMON@",
+    "tmon_lots": 5111,
+    "tmon_price": 164.83,
+    "tmon_value_rub": 842446.13,
+    "free_cash_rub": 104262.86,
+    "cash_rub": 104262.86,
+    "virtual_lots": 0,
+    "mode": "broker"
+  },
+  "dataset_hash": "sha256:5f138b87981805052b97f5231e03205cb31a26eb12d5fa96db2d24a413798977",
+  "config_hash": "sha256:71f241625bb75c56ff7024b49e0fbe7bfc3ac7233483d5fa84c77328e91cb545",
+  "checks": {
+    "critical_passed": 9,
+    "critical_failed": 1,
+    "partial": 0,
+    "warnings": 0
+  },
+  "errors": [
+    "после CLOSE остались ночные позиции: UPRO"
+  ],
+  "partial": [],
+  "warnings": [],
+  "verdict": "FAIL"
+}

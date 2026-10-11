@@ -1,0 +1,47 @@
+[
+ {
+  "id": 1,
+  "ts": "2026-09-15 06:10:07.559821+00:00",
+  "account_env": "SANDBOX",
+  "account_id": "1639899c-2aca-49fe-b5d8-d68e8b84f225",
+  "ticker": "TMON",
+  "mode": "virtual",
+  "side": "BUY",
+  "lots": 12169,
+  "price": "164.260000",
+  "amount_rub": "1998879.9400",
+  "reason": "sweep",
+  "run_id": "20260915-091001-CLOSE",
+  "order_id": null
+ },
+ {
+  "id": 2,
+  "ts": "2026-09-15 15:41:47.364686+00:00",
+  "account_env": "SANDBOX",
+  "account_id": "1639899c-2aca-49fe-b5d8-d68e8b84f225",
+  "ticker": "TMON",
+  "mode": "virtual",
+  "side": "SELL",
+  "lots": 268,
+  "price": "164.320000",
+  "amount_rub": "44037.7600",
+  "reason": "overnight",
+  "run_id": "20260915-183502-OVERNIGHT",
+  "order_id": null
+ },
+ {
+  "id": 3,
+  "ts": "2026-09-16 06:10:06.216192+00:00",
+  "account_env": "SANDBOX",
+  "account_id": "1639899c-2aca-49fe-b5d8-d68e8b84f225",
+  "ticker": "TMON",
+  "mode": "virtual",
+  "side": "BUY",
+  "lots": 18501,
+  "price": "164.320000",
+  "amount_rub": "3040084.3200",
+  "reason": "sweep",
+  "run_id": "20260916-091002-CLOSE",
+  "order_id": null
+ }
+]

@@ -1,0 +1,788 @@
+2026-09-28 10:40:01 цель на 2026-09 уже есть — ребаланс месяца сделан
+2026-09-28 15:00:02 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-09-28 15:00:45 Пул соединений PostgreSQL: minconn=1, maxconn=5
+{
+ "ts": "2026-09-28T15:00:02.082358+03:00",
+ "kind": "monitor",
+ "exits": {},
+ "orders": [
+  {
+   "secid": "RU000A10BW88",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 102.26,
+   "price_rub": 1022.6,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10EST2",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 88.96,
+   "price_rub": 889.6,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  }
+ ]
+}
+2026-09-28 17:30:01 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-09-28 17:30:06 Пул соединений PostgreSQL: minconn=1, maxconn=5
+{
+ "ts": "2026-09-28T17:30:01.735700+03:00",
+ "kind": "monitor",
+ "exits": {},
+ "orders": []
+}
+2026-09-29 10:40:02 цель на 2026-09 уже есть — ребаланс месяца сделан
+2026-09-29 15:00:01 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-09-29 15:00:56 Пул соединений PostgreSQL: minconn=1, maxconn=5
+{
+ "ts": "2026-09-29T15:00:01.691190+03:00",
+ "kind": "monitor",
+ "exits": {},
+ "orders": [
+  {
+   "secid": "RU000A10B461",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 103.58,
+   "price_rub": 1035.8,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10EST2",
+   "side": "BUY",
+   "lots": 2,
+   "price_pct": 84.31,
+   "price_rub": 843.1,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10E6D0",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 93.92,
+   "price_rub": 939.2,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  }
+ ]
+}
+2026-09-29 17:30:01 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-09-29 17:30:06 Пул соединений PostgreSQL: minconn=1, maxconn=5
+2026-09-29 17:30:07 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+2026-09-29 17:30:09 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+{
+ "ts": "2026-09-29T17:30:01.632663+03:00",
+ "kind": "monitor",
+ "exits": {},
+ "orders": [
+  {
+   "secid": "RU000A10FX18",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 99.03,
+   "price_rub": 990.3,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10FWZ8",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 99.44,
+   "price_rub": 994.4,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10DY50",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 96.94,
+   "price_rub": 969.4,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10C8F3",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 94.97,
+   "price_rub": 949.7,
+   "status": "EXECUTION_REPORT_STATUS_NEW"
+  },
+  {
+   "secid": "RU000A10EST2",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 82.83,
+   "price_rub": 828.3,
+   "status": "EXECUTION_REPORT_STATUS_NEW"
+  },
+  {
+   "secid": "RU000A10E6D0",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 92.72,
+   "price_rub": 927.2,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10B461",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 102.7,
+   "price_rub": 1027.0,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  }
+ ]
+}
+2026-09-30 10:40:01 цель на 2026-09 уже есть — ребаланс месяца сделан
+2026-09-30 15:00:02 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-09-30 15:00:59 Пул соединений PostgreSQL: minconn=1, maxconn=5
+2026-09-30 15:01:01 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+2026-09-30 15:01:02 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+{
+ "ts": "2026-09-30T15:00:01.949567+03:00",
+ "kind": "monitor",
+ "exits": {},
+ "orders": [
+  {
+   "secid": "RU000A10EST2",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 85.42,
+   "price_rub": 854.2,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10C8F3",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 95.91,
+   "price_rub": 959.1,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10CRB6",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 94.42,
+   "price_rub": 944.2,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10CU97",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 92.02,
+   "price_rub": 920.2,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10FX18",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 99.02,
+   "price_rub": 990.2,
+   "status": "EXECUTION_REPORT_STATUS_NEW"
+  }
+ ]
+}
+2026-09-30 17:30:01 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-09-30 17:30:06 Пул соединений PostgreSQL: minconn=1, maxconn=5
+2026-09-30 17:30:07 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+{
+ "ts": "2026-09-30T17:30:01.740383+03:00",
+ "kind": "monitor",
+ "exits": {},
+ "orders": [
+  {
+   "secid": "RU000A10CRB6",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 94.9,
+   "price_rub": 949.0,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10B461",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 102.98,
+   "price_rub": 1029.8,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10EST2",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 85.25,
+   "price_rub": 852.5,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  }
+ ]
+}
+2026-10-01 10:40:02 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-10-01 10:40:48 Пул соединений PostgreSQL: minconn=1, maxconn=5
+2026-10-01 10:40:49 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+2026-10-01 10:40:51 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+2026-10-01 10:40:53 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+2026-10-01 10:40:55 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+2026-10-01 10:40:57 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+2026-10: ставка 14.0 %, вселенная {'snapshot': 3032, 'with_flags': 1268, 'smartlab': 1552}, прошли фильтры 79, в портфеле 20
+исключены: только для квалов 280, мала доходность 278, плавающий купон 211, мал объём выпуска 124, доходность дистресса 101, рейтинг выше коридора ВДО 91, мала ликвидность 41, близко событие 34, дюрация вне коридора 18, цена вне коридора 8, рейтинг ниже порога 1, не торгуется через API 1, широкий спред 1
+  RU000A10C8F3  Брус 2Р04      A-    доходн.  27.6 %  дюр. 1.51  цена  95.51  brusnika / real_estate
+  RU000A10EPV4  СИМПЛСК1Р2     BBB-  доходн.  29.0 %  дюр. 1.26  цена  94.10  sscap / other
+  RU000A10C6M3  Уралкуз1Р1     BBB+  доходн.  28.4 %  дюр. 0.73  цена  96.32  uralkuz / other
+  RU000A10BNK8  ЭНИКА 1Р06     BBB   доходн.  27.7 %  дюр. 1.60  цена 103.70  energonika / energy
+  RU000A10B461  NSKATD-03      BBB+  доходн.  26.7 %  дюр. 1.19  цена 102.47  nskavtodor / other
+  RU000A10BW39  ВОКСИС-03      BBB+  доходн.  26.4 %  дюр. 1.73  цена 100.62  voxys / other
+  RU000A10E7K3  реСтор1Р3      A-    доходн.  20.6 %  дюр. 1.16  цена  99.89  re-store / consumer
+  RU000A10DCK7  АБЗ-1 2Р04     A-    доходн.  20.5 %  дюр. 1.25  цена 100.91  abz-1 / industrials
+  RU000A10B3Q2  БинФарм1P5     A-    доходн.  20.3 %  дюр. 1.25  цена 100.47  binofarmgroup / health_care
+  RU000A10FWZ8  АЛМ01Р2        A-    доходн.  19.9 %  дюр. 1.58  цена  99.47  alium / health_care
+  RU000A10DY50  Сегежа3P8R     BB-   доходн.  28.9 %  дюр. 1.39  цена  97.70  GK-Serezha / materials
+  RU000A10CJ92  ПР-Лиз 2P3     BBB+  доходн.  28.6 %  дюр. 0.82  цена  95.43  pr-liz / other
+  RU000A10BFP3  МВ ФИН 1Р6     BBB-  доходн.  27.5 %  дюр. 0.49  цена 100.69  mvideo / consumer
+  RU000A10BAP4  ЭталонФин3     BBB+  доходн.  28.3 %  дюр. 0.46  цена 100.15  etalon / real_estate
+  RU000A10CLD5  МСБЛиз3P06     BB+   доходн.  28.2 %  дюр. 0.81  цена  97.49  msb-lizing / financial
+  RU000A10BQM7  РКС2Р5         BBB   доходн.  27.6 %  дюр. 1.33  цена 104.45  rks-dev / consumer
+  RU000A10EDV0  АйДиКол1P7     BBB-  доходн.  24.7 %  дюр. 1.21  цена  98.00  id-collect / financial
+  RU000A1084E6  О'КЕЙ Б1Р6     A-    доходн.  20.2 %  дюр. 0.44  цена  98.95  okmarket / consumer
+  RU000A10EA08  iСЛ 2P2        A-    доходн.  19.8 %  дюр. 1.81  цена 102.30  iSoftLine-Trade / it
+  RU000A10B9Q9  ГЛОРАКС1Р4     BBB+  доходн.  25.0 %  дюр. 1.25  цена 103.67  glorax / real_estate
+средняя доходность 25.3 %, дюрация 1.16; сектора other 5, consumer 4, real_estate 3, health_care 2, financial 2, energy 1, industrials 1, materials 1, it 1
+заявок 19: {'EXECUTION_REPORT_STATUS_FILL': 18, 'EXECUTION_REPORT_STATUS_NEW': 1}
+2026-10-01 15:00:01 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-10-01 15:00:16 Пул соединений PostgreSQL: minconn=1, maxconn=5
+2026-10-01 15:00:17 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+{
+ "ts": "2026-10-01T15:00:01.584717+03:00",
+ "kind": "monitor",
+ "exits": {},
+ "orders": [
+  {
+   "secid": "RU000A10E7K3",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 100.12,
+   "price_rub": 1001.2,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10BW39",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 100.46,
+   "price_rub": 1004.6,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10B9Q9",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 103.56,
+   "price_rub": 1035.6,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10C8F3",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 94.88,
+   "price_rub": 948.8,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10BQM7",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 102.99,
+   "price_rub": 1029.9,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  }
+ ]
+}
+2026-10-01 17:30:02 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-10-01 17:30:07 Пул соединений PostgreSQL: minconn=1, maxconn=5
+{
+ "ts": "2026-10-01T17:30:02.124298+03:00",
+ "kind": "monitor",
+ "exits": {},
+ "orders": [
+  {
+   "secid": "RU000A10C8F3",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 95.28,
+   "price_rub": 952.8,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10BW39",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 100.7,
+   "price_rub": 1007.0,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  }
+ ]
+}
+2026-10-02 10:40:01 цель на 2026-10 уже есть — ребаланс месяца сделан
+2026-10-02 15:00:01 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-10-02 15:01:37 Пул соединений PostgreSQL: minconn=1, maxconn=5
+2026-10-02 15:01:38 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+2026-10-02 15:01:40 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+2026-10-02 15:01:42 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+{
+ "ts": "2026-10-02T15:00:01.302643+03:00",
+ "kind": "monitor",
+ "exits": {},
+ "orders": [
+  {
+   "secid": "RU000A10EA08",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 102.68,
+   "price_rub": 1026.8,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10BQM7",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 103.57,
+   "price_rub": 1035.7,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10C6M3",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 97.07,
+   "price_rub": 970.7,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10DCK7",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 101.34,
+   "price_rub": 1013.4,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10DY50",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 98.83,
+   "price_rub": 988.3,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10BW39",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 100.55,
+   "price_rub": 1005.5,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10E7K3",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 100.49,
+   "price_rub": 1004.9,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10BAP4",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 100.7,
+   "price_rub": 1007.0,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10CLD5",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 96.77,
+   "price_rub": 967.7,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  }
+ ]
+}
+2026-10-02 17:30:02 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-10-02 17:30:08 Пул соединений PostgreSQL: minconn=1, maxconn=5
+{
+ "ts": "2026-10-02T17:30:01.943036+03:00",
+ "kind": "monitor",
+ "exits": {},
+ "orders": [
+  {
+   "secid": "RU000A10BW39",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 100.74,
+   "price_rub": 1007.4,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10DCK7",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 101.41,
+   "price_rub": 1014.1,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  }
+ ]
+}
+2026-10-05 10:40:01 цель на 2026-10 уже есть — ребаланс месяца сделан
+2026-10-05 15:00:02 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-10-05 15:01:24 Пул соединений PostgreSQL: minconn=1, maxconn=5
+2026-10-05 15:01:25 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+{
+ "ts": "2026-10-05T15:00:01.824203+03:00",
+ "kind": "monitor",
+ "exits": {},
+ "orders": [
+  {
+   "secid": "RU000A10B3Q2",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 100.5,
+   "price_rub": 1005.0,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10BW39",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 100.78,
+   "price_rub": 1007.8,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10DY50",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 98.46,
+   "price_rub": 984.6,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10BQM7",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 102.07,
+   "price_rub": 1020.7,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  }
+ ]
+}
+2026-10-05 17:30:02 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-10-05 17:30:07 Пул соединений PostgreSQL: minconn=1, maxconn=5
+{
+ "ts": "2026-10-05T17:30:02.071281+03:00",
+ "kind": "monitor",
+ "exits": {},
+ "orders": [
+  {
+   "secid": "RU000A10BNK8",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 102.18,
+   "price_rub": 1021.8,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10B3Q2",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 100.59,
+   "price_rub": 1005.9,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  }
+ ]
+}
+2026-10-06 10:40:01 цель на 2026-10 уже есть — ребаланс месяца сделан
+2026-10-06 15:00:01 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-10-06 15:01:32 Пул соединений PostgreSQL: minconn=1, maxconn=5
+2026-10-06 15:01:33 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+{
+ "ts": "2026-10-06T15:00:01.233700+03:00",
+ "kind": "monitor",
+ "exits": {},
+ "orders": [
+  {
+   "secid": "RU000A10CLD5",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 96.88,
+   "price_rub": 968.8,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10BNK8",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 102.68,
+   "price_rub": 1026.8,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10EPV4",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 94.83,
+   "price_rub": 948.3,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10BW39",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 100.73,
+   "price_rub": 1007.3,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10EA08",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 102.89,
+   "price_rub": 1028.9,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  }
+ ]
+}
+2026-10-06 17:30:01 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-10-06 17:30:06 Пул соединений PostgreSQL: minconn=1, maxconn=5
+{
+ "ts": "2026-10-06T17:30:01.836668+03:00",
+ "kind": "monitor",
+ "exits": {},
+ "orders": []
+}
+2026-10-07 10:40:01 цель на 2026-10 уже есть — ребаланс месяца сделан
+2026-10-07 15:00:01 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-10-07 15:01:01 Пул соединений PostgreSQL: minconn=1, maxconn=5
+2026-10-07 15:01:02 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+{
+ "ts": "2026-10-07T15:00:01.365641+03:00",
+ "kind": "monitor",
+ "exits": {},
+ "orders": [
+  {
+   "secid": "RU000A10B3Q2",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 100.4,
+   "price_rub": 1004.0,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10DY50",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 98.8,
+   "price_rub": 988.0,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10EPV4",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 94.64,
+   "price_rub": 946.4,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  }
+ ]
+}
+2026-10-07 17:30:01 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-10-07 17:30:09 Пул соединений PostgreSQL: minconn=1, maxconn=5
+{
+ "ts": "2026-10-07T17:30:01.696781+03:00",
+ "kind": "monitor",
+ "exits": {},
+ "orders": [
+  {
+   "secid": "RU000A10DCK7",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 101.27,
+   "price_rub": 1012.7,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10EPV4",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 94.5,
+   "price_rub": 945.0,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  }
+ ]
+}
+2026-10-08 10:40:01 цель на 2026-10 уже есть — ребаланс месяца сделан
+2026-10-08 15:00:02 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-10-08 15:01:02 Пул соединений PostgreSQL: minconn=1, maxconn=5
+2026-10-08 15:01:03 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+{
+ "ts": "2026-10-08T15:00:02.172361+03:00",
+ "kind": "monitor",
+ "exits": {},
+ "orders": [
+  {
+   "secid": "RU000A10EA08",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 102.31,
+   "price_rub": 1023.1,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10BW39",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 100.44,
+   "price_rub": 1004.4,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10EPV4",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 94.0,
+   "price_rub": 940.0,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10DY50",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 97.69,
+   "price_rub": 976.9,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10CLD5",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 96.25,
+   "price_rub": 962.5,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10BQM7",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 100.91,
+   "price_rub": 1009.1,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  }
+ ]
+}
+2026-10-08 17:30:02 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-10-08 17:30:06 Пул соединений PostgreSQL: minconn=1, maxconn=5
+2026-10-08 17:30:07 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+{
+ "ts": "2026-10-08T17:30:02.231492+03:00",
+ "kind": "monitor",
+ "exits": {},
+ "orders": [
+  {
+   "secid": "RU000A10BQM7",
+   "side": "SELL",
+   "lots": 2,
+   "price_pct": 103.09,
+   "price_rub": 1030.9,
+   "status": "EXECUTION_REPORT_STATUS_NEW"
+  },
+  {
+   "secid": "RU000A10C8F3",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 94.36,
+   "price_rub": 943.6,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10EA08",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 102.27,
+   "price_rub": 1022.7,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  }
+ ]
+}
+2026-10-09 10:40:01 цель на 2026-10 уже есть — ребаланс месяца сделан
+2026-10-09 15:00:02 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-10-09 15:01:01 Пул соединений PostgreSQL: minconn=1, maxconn=5
+{
+ "ts": "2026-10-09T15:00:01.993035+03:00",
+ "kind": "monitor",
+ "exits": {
+  "RU000A10DY50": "рейтинг B ниже порога"
+ },
+ "orders": [
+  {
+   "secid": "RU000A10C8F3",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 95.14,
+   "price_rub": 951.4,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10DY50",
+   "side": "SELL",
+   "lots": 47,
+   "price_pct": 97.77,
+   "price_rub": 977.7,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10B461",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 103.54,
+   "price_rub": 1035.4,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10B3Q2",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 100.81,
+   "price_rub": 1008.1,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  }
+ ]
+}
+2026-10-09 17:30:01 Sandbox account a72ae6fe-40cf-4281-8582-0c45a1050af4 найден — переиспользуем.
+2026-10-09 17:30:06 Пул соединений PostgreSQL: minconn=1, maxconn=5
+{
+ "ts": "2026-10-09T17:30:01.484598+03:00",
+ "kind": "monitor",
+ "exits": {
+  "RU000A10DY50": "рейтинг B ниже порога"
+ },
+ "orders": [
+  {
+   "secid": "RU000A10CLD5",
+   "side": "SELL",
+   "lots": 1,
+   "price_pct": 96.13,
+   "price_rub": 961.3,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "secid": "RU000A10BQM7",
+   "side": "BUY",
+   "lots": 1,
+   "price_pct": 102.28,
+   "price_rub": 1022.8,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  }
+ ]
+}

@@ -1,0 +1,123 @@
+{
+ "run_id": "MOMENTUM-20260924-214239",
+ "ts": "2026-09-24T21:42:39+03:00",
+ "account_id": "88c5a4bd-0170-4c60-bf8c-7a1d957f67a4",
+ "dry_run": true,
+ "picks": [
+  "FLOT",
+  "SNGSP",
+  "AKRN",
+  "TATN",
+  "CBOM",
+  "POSI",
+  "SBER",
+  "MOEX",
+  "HYDR",
+  "GMKN"
+ ],
+ "asof": "2026-09-23",
+ "future": "MXZ6",
+ "future_lots": -5,
+ "long_notional_rub": 1184489.52,
+ "equity_before_rub": 1500000.0,
+ "equity_after_rub": 1500000.0,
+ "bench_ticker": "TMON",
+ "bench_price": null,
+ "trades": 11,
+ "errors": 0,
+ "report": [
+  {
+   "ticker": "FLOT",
+   "direction": "BUY",
+   "lots": 145,
+   "current_lots": 0,
+   "target_lots": 145,
+   "status": "dry-run"
+  },
+  {
+   "ticker": "SNGSP",
+   "direction": "BUY",
+   "lots": 296,
+   "current_lots": 0,
+   "target_lots": 296,
+   "status": "dry-run"
+  },
+  {
+   "ticker": "AKRN",
+   "direction": "BUY",
+   "lots": 6,
+   "current_lots": 0,
+   "target_lots": 6,
+   "status": "dry-run"
+  },
+  {
+   "ticker": "TATN",
+   "direction": "BUY",
+   "lots": 187,
+   "current_lots": 0,
+   "target_lots": 187,
+   "status": "dry-run"
+  },
+  {
+   "ticker": "CBOM",
+   "direction": "BUY",
+   "lots": 127,
+   "current_lots": 0,
+   "target_lots": 127,
+   "status": "dry-run"
+  },
+  {
+   "ticker": "POSI",
+   "direction": "BUY",
+   "lots": 114,
+   "current_lots": 0,
+   "target_lots": 114,
+   "status": "dry-run"
+  },
+  {
+   "ticker": "SBER",
+   "direction": "BUY",
+   "lots": 428,
+   "current_lots": 0,
+   "target_lots": 428,
+   "status": "dry-run"
+  },
+  {
+   "ticker": "MOEX",
+   "direction": "BUY",
+   "lots": 80,
+   "current_lots": 0,
+   "target_lots": 80,
+   "status": "dry-run"
+  },
+  {
+   "ticker": "HYDR",
+   "direction": "BUY",
+   "lots": 310,
+   "current_lots": 0,
+   "target_lots": 310,
+   "status": "dry-run"
+  },
+  {
+   "ticker": "GMKN",
+   "direction": "BUY",
+   "lots": 100,
+   "current_lots": 0,
+   "target_lots": 100,
+   "status": "dry-run"
+  },
+  {
+   "ticker": "MXZ6",
+   "direction": "SELL",
+   "lots": 5,
+   "current_lots": 0,
+   "target_lots": -5,
+   "status": "dry-run"
+  }
+ ],
+ "after": {
+  "money_rub": 1500000.0,
+  "positions": [],
+  "equity_rub": 1500000.0
+ }
+}

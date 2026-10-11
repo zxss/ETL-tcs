@@ -1,0 +1,1096 @@
+2026-09-16 08:45:02  INFO      stage2  [PREP] 20260916-084502-PREP, торговый день 2026-09-16
+2026-09-16 08:45:02  INFO      data_freshness  Догрузка свежих свечей (load_history + backfill)...
+2026-09-16 08:45:02  INFO      load_history  ── SBER: поиск инструмента...
+2026-09-16 08:45:02  INFO      load_history  ── VTBR: поиск инструмента...
+2026-09-16 08:45:02  INFO      load_history  ── GAZP: поиск инструмента...
+2026-09-16 08:45:02  INFO      load_history    SBER | Сбербанк | UID=e6123145-9665-43e0-8413-cd61b8aa9b13
+2026-09-16 08:45:02  INFO      load_history    VTBR | Банк ВТБ | UID=8e2b0325-0292-4654-8a18-4f63ed3b0e09
+2026-09-16 08:45:02  INFO      load_history    GAZP | Газпром | UID=962e2a95-02a9-4171-abd7-aa198dbe643a
+2026-09-16 08:45:02  INFO      database  Пул соединений PostgreSQL: minconn=1, maxconn=5
+2026-09-16 08:45:02  INFO      load_history    [1D] SBER: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:02  INFO      load_history    [1D] VTBR: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:02  INFO      load_history    [1D] GAZP: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:03  INFO      load_history    [5M] VTBR: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:03  INFO      load_history    [5M] GAZP: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:03  INFO      load_history    [5M] SBER: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:03  INFO      load_history    [1D] GAZP: +1 строк
+2026-09-16 08:45:03  INFO      load_history    [5M] GAZP: +75 строк
+2026-09-16 08:45:03  INFO      load_history  ── ROSN: поиск инструмента...
+2026-09-16 08:45:03  INFO      load_history    [1D] VTBR: +1 строк
+2026-09-16 08:45:03  INFO      load_history    [5M] VTBR: +75 строк
+2026-09-16 08:45:03  INFO      load_history  ── LKOH: поиск инструмента...
+2026-09-16 08:45:03  INFO      load_history    [1D] SBER: +1 строк
+2026-09-16 08:45:03  INFO      load_history    [5M] SBER: +75 строк
+2026-09-16 08:45:03  INFO      load_history  ── NVTK: поиск инструмента...
+2026-09-16 08:45:03  INFO      load_history    ROSN | Роснефть | UID=fd417230-19cf-4e7b-9623-f7c9ca18ec6b
+2026-09-16 08:45:03  INFO      load_history    LKOH | ЛУКОЙЛ | UID=02cfdf61-6298-4c0f-a9ca-9cabc82afaf3
+2026-09-16 08:45:03  INFO      load_history    [1D] ROSN: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:03  INFO      load_history    [1D] LKOH: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:03  INFO      load_history    NVTK | НОВАТЭК | UID=0da66728-6c30-44c4-9264-df8fac2467ee
+2026-09-16 08:45:03  INFO      load_history    [1D] NVTK: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:03  INFO      load_history    [5M] ROSN: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:03  INFO      load_history    [5M] LKOH: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:03  INFO      load_history    [5M] NVTK: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:04  INFO      load_history    [1D] LKOH: +1 строк
+2026-09-16 08:45:04  INFO      load_history    [5M] LKOH: +75 строк
+2026-09-16 08:45:04  INFO      load_history  ── TATN: поиск инструмента...
+2026-09-16 08:45:04  INFO      load_history    [1D] ROSN: +1 строк
+2026-09-16 08:45:04  INFO      load_history    [5M] ROSN: +75 строк
+2026-09-16 08:45:04  INFO      load_history  ── SNGS: поиск инструмента...
+2026-09-16 08:45:04  INFO      load_history    [1D] NVTK: +1 строк
+2026-09-16 08:45:04  INFO      load_history    [5M] NVTK: +75 строк
+2026-09-16 08:45:04  INFO      load_history  ── SNGSP: поиск инструмента...
+2026-09-16 08:45:04  INFO      load_history    TATN | Татнефть | UID=88468f6c-c67a-4fb4-a006-53eed803883c
+2026-09-16 08:45:04  INFO      load_history    [1D] TATN: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:04  INFO      load_history    SNGS | Сургутнефтегаз | UID=1ffe1bff-d7b7-4b04-b482-34dc9cc0a4ba
+2026-09-16 08:45:04  INFO      load_history    SNGSP | Сургутнефтегаз - привилегированные акции | UID=a797f14a-8513-4b84-b15e-a3b98dc4cc00
+2026-09-16 08:45:04  INFO      load_history    [1D] SNGS: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:04  INFO      load_history    [1D] SNGSP: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:04  INFO      load_history    [5M] TATN: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:04  INFO      load_history    [5M] SNGS: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:04  INFO      load_history    [5M] SNGSP: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:04  INFO      load_history    [1D] TATN: +1 строк
+2026-09-16 08:45:04  INFO      load_history    [5M] TATN: +75 строк
+2026-09-16 08:45:04  INFO      load_history  ── GMKN: поиск инструмента...
+2026-09-16 08:45:04  INFO      load_history    [1D] SNGS: +1 строк
+2026-09-16 08:45:04  INFO      load_history    [5M] SNGS: +75 строк
+2026-09-16 08:45:04  INFO      load_history  ── PLZL: поиск инструмента...
+2026-09-16 08:45:04  INFO      load_history    [1D] SNGSP: +1 строк
+2026-09-16 08:45:04  INFO      load_history    [5M] SNGSP: +75 строк
+2026-09-16 08:45:04  INFO      load_history  ── MAGN: поиск инструмента...
+2026-09-16 08:45:04  INFO      load_history    GMKN | Норильский никель | UID=509edd0c-129c-4ee2-934d-7f6246126da1
+2026-09-16 08:45:04  INFO      load_history    [1D] GMKN: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:04  INFO      load_history    PLZL | Полюс | UID=10620843-28ce-44e8-80c2-f26ceb1bd3e1
+2026-09-16 08:45:04  INFO      load_history    [1D] PLZL: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:04  INFO      load_history    MAGN | Магнитогорский металлургический комбинат | UID=7132b1c9-ee26-4464-b5b5-1046264b61d9
+2026-09-16 08:45:04  INFO      load_history    [1D] MAGN: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:05  INFO      load_history    [5M] GMKN: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:05  INFO      load_history    [5M] PLZL: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:05  INFO      load_history    [5M] MAGN: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:05  INFO      load_history    [1D] GMKN: +1 строк
+2026-09-16 08:45:05  INFO      load_history    [5M] GMKN: +75 строк
+2026-09-16 08:45:05  INFO      load_history  ── CHMF: поиск инструмента...
+2026-09-16 08:45:05  INFO      load_history    [1D] PLZL: +1 строк
+2026-09-16 08:45:05  INFO      load_history    [5M] PLZL: +75 строк
+2026-09-16 08:45:05  INFO      load_history  ── ALRS: поиск инструмента...
+2026-09-16 08:45:05  INFO      load_history    [1D] MAGN: +1 строк
+2026-09-16 08:45:05  INFO      load_history    [5M] MAGN: +75 строк
+2026-09-16 08:45:05  INFO      load_history  ── IRAO: поиск инструмента...
+2026-09-16 08:45:05  INFO      load_history    CHMF | Северсталь | UID=fa6aae10-b8d5-48c8-bbfd-d320d925d096
+2026-09-16 08:45:05  INFO      load_history    [1D] CHMF: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:05  INFO      load_history    ALRS | АЛРОСА | UID=30817fea-20e6-4fee-ab1f-d20fc1a1bb72
+2026-09-16 08:45:05  INFO      load_history    [1D] ALRS: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:05  INFO      load_history    IRAO | Интер РАО | UID=2dfbc1fd-b92a-436e-b011-928c79e805f2
+2026-09-16 08:45:05  INFO      load_history    [1D] IRAO: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:05  INFO      load_history    [5M] CHMF: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:05  INFO      load_history    [5M] ALRS: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:05  INFO      load_history    [5M] IRAO: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:05  INFO      load_history    [1D] CHMF: +1 строк
+2026-09-16 08:45:05  INFO      load_history    [5M] CHMF: +75 строк
+2026-09-16 08:45:05  INFO      load_history  ── FEES: поиск инструмента...
+2026-09-16 08:45:05  INFO      load_history    [1D] ALRS: +1 строк
+2026-09-16 08:45:05  INFO      load_history    [5M] ALRS: +75 строк
+2026-09-16 08:45:05  INFO      load_history  ── HYDR: поиск инструмента...
+2026-09-16 08:45:05  INFO      load_history    [1D] IRAO: +1 строк
+2026-09-16 08:45:05  INFO      load_history    [5M] IRAO: +75 строк
+2026-09-16 08:45:05  INFO      load_history  ── UPRO: поиск инструмента...
+2026-09-16 08:45:06  INFO      load_history    FEES | ФСК Россети | UID=88e130e8-5b68-4b05-b9ae-baf32f5a3f21
+2026-09-16 08:45:06  INFO      load_history    [1D] FEES: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:06  INFO      load_history    HYDR | РусГидро | UID=62560f05-3fd0-4d65-88f0-a27f249cc6de
+2026-09-16 08:45:06  INFO      load_history    [1D] HYDR: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:06  INFO      load_history    UPRO | Юнипро | UID=664921c5-b552-47a6-9ced-8735a3c6ca8a
+2026-09-16 08:45:06  INFO      load_history    [1D] UPRO: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:06  INFO      load_history    [5M] FEES: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:06  INFO      load_history    [5M] HYDR: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:06  INFO      load_history    [5M] UPRO: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:06  INFO      load_history    [1D] FEES: +1 строк
+2026-09-16 08:45:06  INFO      load_history    [5M] FEES: +69 строк
+2026-09-16 08:45:06  INFO      load_history  ── MSNG: поиск инструмента...
+2026-09-16 08:45:06  INFO      load_history    [1D] HYDR: +1 строк
+2026-09-16 08:45:06  INFO      load_history    [5M] HYDR: +73 строк
+2026-09-16 08:45:06  INFO      load_history  ── TGKA: поиск инструмента...
+2026-09-16 08:45:06  INFO      load_history    [1D] UPRO: +1 строк
+2026-09-16 08:45:06  INFO      load_history    [5M] UPRO: +73 строк
+2026-09-16 08:45:06  INFO      load_history  ── OGKB: поиск инструмента...
+2026-09-16 08:45:06  INFO      load_history    MSNG | Мосэнерго | UID=98fc1318-6990-4147-b0d1-b10999326461
+2026-09-16 08:45:06  INFO      load_history    [1D] MSNG: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:06  INFO      load_history    TGKA | ТГК-1 | UID=d74daf58-22c3-4e44-8ada-471e404fb795
+2026-09-16 08:45:06  INFO      load_history    [1D] TGKA: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:06  INFO      load_history    OGKB | Вторая генерирующая компания оптового рынка электроэнергии | UID=3d8f2777-4a11-4713-af60-8038d11e66fa
+2026-09-16 08:45:06  INFO      load_history    [1D] OGKB: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:06  INFO      load_history    [5M] MSNG: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:06  INFO      load_history    [5M] TGKA: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:07  INFO      load_history    [5M] OGKB: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:07  INFO      load_history    [1D] MSNG: +1 строк
+2026-09-16 08:45:07  INFO      load_history    [5M] MSNG: +64 строк
+2026-09-16 08:45:07  INFO      load_history  ── PHOR: поиск инструмента...
+2026-09-16 08:45:07  INFO      load_history    [1D] TGKA: +1 строк
+2026-09-16 08:45:07  INFO      load_history    [5M] TGKA: +74 строк
+2026-09-16 08:45:07  INFO      load_history  ── AKRN: поиск инструмента...
+2026-09-16 08:45:07  INFO      load_history    PHOR | ФосАгро | UID=9978b56f-782a-4a80-a4b1-a48cbecfd194
+2026-09-16 08:45:07  INFO      load_history    [1D] OGKB: +1 строк
+2026-09-16 08:45:07  INFO      load_history    [5M] OGKB: +75 строк
+2026-09-16 08:45:07  INFO      load_history  ── MOEX: поиск инструмента...
+2026-09-16 08:45:07  INFO      load_history    [1D] PHOR: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:07  INFO      load_history    AKRN | Акрон | UID=cd3affd4-3b50-43fd-b008-518f54108d59
+2026-09-16 08:45:07  INFO      load_history    [1D] AKRN: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:07  INFO      load_history    MOEX | Московская Биржа | UID=5e1c2634-afc4-4e50-ad6d-f78fc14a539a
+2026-09-16 08:45:07  INFO      load_history    [1D] MOEX: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:07  INFO      load_history    [5M] PHOR: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:07  INFO      load_history    [5M] AKRN: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:07  INFO      load_history    [5M] MOEX: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:07  INFO      load_history    [1D] PHOR: +1 строк
+2026-09-16 08:45:07  INFO      load_history    [5M] PHOR: +75 строк
+2026-09-16 08:45:07  INFO      load_history  ── MTSS: поиск инструмента...
+2026-09-16 08:45:07  INFO      load_history    [1D] AKRN: +1 строк
+2026-09-16 08:45:07  INFO      load_history    [5M] AKRN: +34 строк
+2026-09-16 08:45:07  INFO      load_history  ── RTKM: поиск инструмента...
+2026-09-16 08:45:08  INFO      load_history    [1D] MOEX: +1 строк
+2026-09-16 08:45:08  INFO      load_history    [5M] MOEX: +75 строк
+2026-09-16 08:45:08  INFO      load_history  ── AFLT: поиск инструмента...
+2026-09-16 08:45:08  INFO      load_history    MTSS | МТС | UID=cd8063ad-73ad-4b31-bd0d-93138d9e99a2
+2026-09-16 08:45:08  INFO      load_history    [1D] MTSS: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:08  INFO      load_history    RTKM | Ростелеком | UID=02eda274-10c4-4815-8e02-a8ee7eaf485b
+2026-09-16 08:45:08  INFO      load_history    [1D] RTKM: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:08  INFO      load_history    AFLT | Аэрофлот | UID=1c69e020-f3b1-455c-affa-45f8b8049234
+2026-09-16 08:45:08  INFO      load_history    [1D] AFLT: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:08  INFO      load_history    [5M] MTSS: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:08  INFO      load_history    [5M] RTKM: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:08  INFO      load_history    [5M] AFLT: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:08  INFO      load_history    [1D] MTSS: +1 строк
+2026-09-16 08:45:08  INFO      load_history    [5M] MTSS: +75 строк
+2026-09-16 08:45:08  INFO      load_history  ── FLOT: поиск инструмента...
+2026-09-16 08:45:08  INFO      load_history    [1D] RTKM: +1 строк
+2026-09-16 08:45:08  INFO      load_history    [5M] RTKM: +75 строк
+2026-09-16 08:45:08  INFO      load_history  ── NMTP: поиск инструмента...
+2026-09-16 08:45:08  INFO      load_history    [1D] AFLT: +1 строк
+2026-09-16 08:45:08  INFO      load_history    [5M] AFLT: +75 строк
+2026-09-16 08:45:08  INFO      load_history  ── MGNT: поиск инструмента...
+2026-09-16 08:45:08  INFO      load_history    FLOT | Совкомфлот | UID=21423d2d-9009-4d37-9325-883b368d13ae
+2026-09-16 08:45:08  INFO      load_history    [1D] FLOT: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:08  INFO      load_history    NMTP | НМТП | UID=93ed8e88-2de2-4aec-a920-3384d24ecb2a
+2026-09-16 08:45:08  INFO      load_history    [1D] NMTP: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:09  INFO      load_history    [5M] FLOT: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:09  INFO      load_history    [5M] NMTP: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:09  INFO      load_history    MGNT | Магнит | UID=ca845f68-6c43-44bc-b584-330d2a1e5eb7
+2026-09-16 08:45:09  INFO      load_history    [1D] MGNT: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:09  INFO      load_history    [1D] FLOT: +1 строк
+2026-09-16 08:45:09  INFO      load_history    [5M] FLOT: +75 строк
+2026-09-16 08:45:09  INFO      load_history  ── X5: поиск инструмента...
+2026-09-16 08:45:09  INFO      load_history    [1D] NMTP: +1 строк
+2026-09-16 08:45:09  INFO      load_history    [5M] NMTP: +73 строк
+2026-09-16 08:45:09  INFO      load_history  ── LENT: поиск инструмента...
+2026-09-16 08:45:09  INFO      load_history    [5M] MGNT: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:09  INFO      load_history    [1D] MGNT: +1 строк
+2026-09-16 08:45:09  INFO      load_history    [5M] MGNT: +75 строк
+2026-09-16 08:45:09  INFO      load_history  ── FIXR: поиск инструмента...
+2026-09-16 08:45:09  INFO      load_history    X5 | Корпоративный Центр Икс 5 | UID=0964acd0-e2cb-4810-a177-ef4ad8856ff0
+2026-09-16 08:45:09  INFO      load_history    [1D] X5: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:09  INFO      load_history    LENT | Лента | UID=5f1e6b0a-4413-489c-b336-40b43730eaf5
+2026-09-16 08:45:09  INFO      load_history    [1D] LENT: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:10  INFO      load_history    FIXR | Фикс Прайс | UID=8be64b53-a46b-451c-8152-1c871f122d5b
+2026-09-16 08:45:10  INFO      load_history    [1D] FIXR: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:10  INFO      load_history    [5M] X5: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:10  INFO      load_history    [5M] LENT: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:10  INFO      load_history    [5M] FIXR: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:10  INFO      load_history    [1D] LENT: +1 строк
+2026-09-16 08:45:10  INFO      load_history    [5M] LENT: +69 строк
+2026-09-16 08:45:10  INFO      load_history  ── YDEX: поиск инструмента...
+2026-09-16 08:45:10  INFO      load_history    [1D] X5: +1 строк
+2026-09-16 08:45:10  INFO      load_history    [5M] X5: +75 строк
+2026-09-16 08:45:10  INFO      load_history  ── VKCO: поиск инструмента...
+2026-09-16 08:45:10  INFO      load_history    [1D] FIXR: +1 строк
+2026-09-16 08:45:10  INFO      load_history    [5M] FIXR: +74 строк
+2026-09-16 08:45:10  INFO      load_history  ── ASTR: поиск инструмента...
+2026-09-16 08:45:10  INFO      load_history    YDEX | Яндекс | UID=7de75794-a27f-4d81-a39b-492345813822
+2026-09-16 08:45:10  INFO      load_history    [1D] YDEX: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:10  INFO      load_history    VKCO | ВК | UID=b71bd174-c72c-41b0-a66f-5f9073e0d1f5
+2026-09-16 08:45:10  INFO      load_history    [1D] VKCO: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:11  INFO      load_history    ASTR | Группа Астра | UID=aae786d8-e8f4-4428-91bb-cffa39ad01e4
+2026-09-16 08:45:11  INFO      load_history    [1D] ASTR: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:11  INFO      load_history    [5M] YDEX: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:11  INFO      load_history    [5M] VKCO: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:11  INFO      load_history    [5M] ASTR: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:11  INFO      load_history    [1D] YDEX: +1 строк
+2026-09-16 08:45:11  INFO      load_history    [5M] YDEX: +75 строк
+2026-09-16 08:45:11  INFO      load_history  ── POSI: поиск инструмента...
+2026-09-16 08:45:11  INFO      load_history    [1D] VKCO: +1 строк
+2026-09-16 08:45:11  INFO      load_history    [5M] VKCO: +75 строк
+2026-09-16 08:45:11  INFO      load_history  ── PIKK: поиск инструмента...
+2026-09-16 08:45:11  INFO      load_history    [1D] ASTR: +1 строк
+2026-09-16 08:45:11  INFO      load_history    [5M] ASTR: +75 строк
+2026-09-16 08:45:11  INFO      load_history  ── SMLT: поиск инструмента...
+2026-09-16 08:45:11  INFO      load_history    POSI | Группа Позитив | UID=de08affe-4fbd-454e-9fd1-46a81b23f870
+2026-09-16 08:45:11  INFO      load_history    [1D] POSI: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:11  INFO      load_history    PIKK | ПИК-Специализированный застройщик | UID=03d5e771-fc10-438e-8892-85a40733612d
+2026-09-16 08:45:11  INFO      load_history    [1D] PIKK: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:11  INFO      load_history    SMLT | ГК Самолет | UID=4d813ab1-8bc9-4670-89ea-12bfbab6017d
+2026-09-16 08:45:11  INFO      load_history    [1D] SMLT: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:11  INFO      load_history    [5M] POSI: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:11  INFO      load_history    [5M] PIKK: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:12  INFO      load_history    [5M] SMLT: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:12  INFO      load_history    [1D] POSI: +1 строк
+2026-09-16 08:45:12  INFO      load_history    [5M] POSI: +75 строк
+2026-09-16 08:45:12  INFO      load_history  ── ETLN: поиск инструмента...
+2026-09-16 08:45:12  INFO      load_history    [1D] PIKK: +1 строк
+2026-09-16 08:45:12  INFO      load_history    [5M] PIKK: +70 строк
+2026-09-16 08:45:12  INFO      load_history  ── RUAL: поиск инструмента...
+2026-09-16 08:45:12  INFO      load_history    [1D] SMLT: +1 строк
+2026-09-16 08:45:12  INFO      load_history    [5M] SMLT: +75 строк
+2026-09-16 08:45:12  INFO      load_history  ── ENPG: поиск инструмента...
+2026-09-16 08:45:12  INFO      load_history    RUAL | РУСАЛ | UID=f866872b-8f68-4b6e-930f-749fe9aa79c0
+2026-09-16 08:45:12  INFO      load_history    ETLN | Эталон Груп | UID=b9dff600-4ca6-4fa9-ba91-df2126548ccc
+2026-09-16 08:45:12  INFO      load_history    [1D] ETLN: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:12  INFO      load_history    [1D] RUAL: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:12  INFO      load_history    ENPG | Эн+ | UID=e2bd2eba-75de-4127-b39c-2f2dbe3866c3
+2026-09-16 08:45:12  INFO      load_history    [1D] ENPG: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:12  INFO      load_history    [5M] ETLN: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:12  INFO      load_history    [5M] RUAL: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:12  INFO      load_history    [5M] ENPG: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:12  INFO      load_history    [1D] ETLN: +1 строк
+2026-09-16 08:45:12  INFO      load_history    [5M] ETLN: +73 строк
+2026-09-16 08:45:12  INFO      load_history  ── SELG: поиск инструмента...
+2026-09-16 08:45:12  INFO      load_history    [1D] RUAL: +1 строк
+2026-09-16 08:45:12  INFO      load_history    [5M] RUAL: +75 строк
+2026-09-16 08:45:12  INFO      load_history  ── BSPB: поиск инструмента...
+2026-09-16 08:45:13  INFO      load_history    SELG | Селигдар | UID=0d28c01b-f841-4e89-9c92-0ee23d12883a
+2026-09-16 08:45:13  INFO      load_history    [1D] SELG: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:13  INFO      load_history    [1D] ENPG: +1 строк
+2026-09-16 08:45:13  INFO      load_history    [5M] ENPG: +75 строк
+2026-09-16 08:45:13  INFO      load_history  ── CBOM: поиск инструмента...
+2026-09-16 08:45:13  INFO      load_history    BSPB | Банк Санкт-Петербург | UID=1e19953d-01c6-4ecd-a5f4-53ae3ed44029
+2026-09-16 08:45:13  INFO      load_history    [1D] BSPB: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:13  INFO      load_history    [5M] SELG: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:13  INFO      load_history    CBOM | МКБ | UID=ebfda284-4291-4337-9dfb-f55610d0a907
+2026-09-16 08:45:13  INFO      load_history    [1D] CBOM: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:13  INFO      load_history    [5M] BSPB: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:13  INFO      load_history    [1D] SELG: +1 строк
+2026-09-16 08:45:13  INFO      load_history    [5M] SELG: +75 строк
+2026-09-16 08:45:13  INFO      load_history  ── MVID: поиск инструмента...
+2026-09-16 08:45:13  INFO      load_history    [5M] CBOM: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:13  INFO      load_history    [1D] BSPB: +1 строк
+2026-09-16 08:45:13  INFO      load_history    [5M] BSPB: +75 строк
+2026-09-16 08:45:13  INFO      load_history    MVID | М.Видео | UID=cf1c6158-a303-43ac-89eb-9b1db8f96043
+2026-09-16 08:45:13  INFO      load_history    [1D] MVID: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:13  INFO      load_history    [1D] CBOM: +1 строк
+2026-09-16 08:45:13  INFO      load_history    [5M] CBOM: +74 строк
+2026-09-16 08:45:13  INFO      load_history    [5M] MVID: 2026-09-15 → 2026-09-16
+2026-09-16 08:45:14  INFO      load_history    [1D] MVID: +1 строк
+2026-09-16 08:45:14  INFO      load_history    [5M] MVID: +71 строк
+2026-09-16 08:45:14  INFO      load_history  Итого: 1D новых=46 пропущено=0 | 5M новых=3366 пропущено=0
+2026-09-16 08:45:23  INFO      data_freshness  Данные актуальны: market_data до 2026-09-15 (сессия=2026-09-15).
+2026-09-16 08:45:24  INFO      run_validation    [ETLN] выгружено 541 дневных свечей → etln_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [SELG] выгружено 591 дневных свечей → selg_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [SMLT] выгружено 591 дневных свечей → smlt_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [MGNT] выгружено 591 дневных свечей → mgnt_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [ALRS] выгружено 591 дневных свечей → alrs_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [UPRO] выгружено 591 дневных свечей → upro_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [SBER] выгружено 592 дневных свечей → sber_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [VTBR] выгружено 587 дневных свечей → vtbr_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [GAZP] выгружено 592 дневных свечей → gazp_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [ROSN] выгружено 592 дневных свечей → rosn_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [LKOH] выгружено 592 дневных свечей → lkoh_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [NVTK] выгружено 592 дневных свечей → nvtk_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [TATN] выгружено 591 дневных свечей → tatn_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [SNGS] выгружено 591 дневных свечей → sngs_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [SNGSP] выгружено 591 дневных свечей → sngsp_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [GMKN] выгружено 592 дневных свечей → gmkn_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [PLZL] выгружено 589 дневных свечей → plzl_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [MAGN] выгружено 591 дневных свечей → magn_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [CHMF] выгружено 591 дневных свечей → chmf_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [IRAO] выгружено 591 дневных свечей → irao_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [FEES] выгружено 591 дневных свечей → fees_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [HYDR] выгружено 591 дневных свечей → hydr_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [MSNG] выгружено 591 дневных свечей → msng_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [TGKA] выгружено 591 дневных свечей → tgka_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [OGKB] выгружено 591 дневных свечей → ogkb_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [PHOR] выгружено 591 дневных свечей → phor_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [AKRN] выгружено 591 дневных свечей → akrn_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [MOEX] выгружено 591 дневных свечей → moex_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [MTSS] выгружено 591 дневных свечей → mtss_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [RTKM] выгружено 591 дневных свечей → rtkm_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [AFLT] выгружено 591 дневных свечей → aflt_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [FLOT] выгружено 591 дневных свечей → flot_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [NMTP] выгружено 591 дневных свечей → nmtp_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [X5] выгружено 431 дневных свечей → x5_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [LENT] выгружено 591 дневных свечей → lent_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [FIXR] выгружено 540 дневных свечей → fixr_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [YDEX] выгружено 564 дневных свечей → ydex_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [VKCO] выгружено 591 дневных свечей → vkco_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [ASTR] выгружено 591 дневных свечей → astr_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [POSI] выгружено 591 дневных свечей → posi_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [PIKK] выгружено 591 дневных свечей → pikk_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [RUAL] выгружено 591 дневных свечей → rual_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [ENPG] выгружено 591 дневных свечей → enpg_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [BSPB] выгружено 591 дневных свечей → bspb_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [CBOM] выгружено 591 дневных свечей → cbom_candles.csv
+2026-09-16 08:45:24  INFO      run_validation    [MVID] выгружено 591 дневных свечей → mvid_candles.csv
+2026-09-16 08:45:25  INFO      run_validation  Запуск контура валидации: отчёт по 6 тикерам × 3 стратегий, FDR-вселенная=46 (B=2000, cost_rt=0.128%, winsorize=False)...
+2026-09-16 08:45:52  INFO      tft.forecast  Multi-Asset TFT: загрузка панели по 46 тикерам...
+2026-09-16 08:45:52  INFO      tft.features    [SBER] 592 дней, last_close=284.91 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [VTBR] 587 дней, last_close=51.24 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [GAZP] 592 дней, last_close=96.69 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [ROSN] 592 дней, last_close=372.65 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [LKOH] 592 дней, last_close=5484.50 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [NVTK] 592 дней, last_close=1052.00 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [TATN] 591 дней, last_close=632.20 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [SNGS] 591 дней, last_close=16.58 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [SNGSP] 591 дней, last_close=42.05 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [GMKN] 592 дней, last_close=129.96 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [PLZL] 589 дней, last_close=990.20 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [MAGN] 591 дней, last_close=21.71 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [CHMF] 591 дней, last_close=637.40 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [ALRS] 591 дней, last_close=20.16 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [IRAO] 591 дней, last_close=2.41 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [FEES] 591 дней, last_close=0.05 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [HYDR] 591 дней, last_close=0.39 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [UPRO] 591 дней, last_close=1.04 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [MSNG] 591 дней, last_close=1.47 (2026-09-15)
+2026-09-16 08:45:52  WARNING   tft.features    [TGKA] пропуск: подозрительный масштаб цены (median close=0.0066)
+2026-09-16 08:45:52  INFO      tft.features    [OGKB] 591 дней, last_close=0.22 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [PHOR] 591 дней, last_close=5319.00 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [AKRN] 591 дней, last_close=18580.00 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [MOEX] 591 дней, last_close=152.19 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [MTSS] 591 дней, last_close=199.90 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [RTKM] 591 дней, last_close=40.26 (2026-09-15)
+2026-09-16 08:45:52  INFO      tft.features    [AFLT] 591 дней, last_close=32.72 (2026-09-15)
+2026-09-16 08:45:53  INFO      tft.features    [FLOT] 591 дней, last_close=83.03 (2026-09-15)
+2026-09-16 08:45:53  INFO      tft.features    [NMTP] 591 дней, last_close=6.72 (2026-09-15)
+2026-09-16 08:45:53  INFO      tft.features    [MGNT] 591 дней, last_close=1594.50 (2026-09-15)
+2026-09-16 08:45:53  INFO      tft.features    [X5] 431 дней, last_close=1829.00 (2026-09-15)
+2026-09-16 08:45:53  INFO      tft.features    [LENT] 591 дней, last_close=1716.00 (2026-09-15)
+2026-09-16 08:45:53  INFO      tft.features    [FIXR] 540 дней, last_close=0.39 (2026-09-15)
+2026-09-16 08:45:53  INFO      tft.features    [YDEX] 564 дней, last_close=3846.50 (2026-09-15)
+2026-09-16 08:45:53  INFO      tft.features    [VKCO] 591 дней, last_close=118.90 (2026-09-15)
+2026-09-16 08:45:53  INFO      tft.features    [ASTR] 591 дней, last_close=218.15 (2026-09-15)
+2026-09-16 08:45:53  INFO      tft.features    [POSI] 591 дней, last_close=1045.80 (2026-09-15)
+2026-09-16 08:45:53  INFO      tft.features    [PIKK] 591 дней, last_close=535.90 (2026-09-15)
+2026-09-16 08:45:53  INFO      tft.features    [SMLT] 591 дней, last_close=269.00 (2026-09-15)
+2026-09-16 08:45:53  INFO      tft.features    [ETLN] 541 дней, last_close=20.18 (2026-09-15)
+2026-09-16 08:45:53  INFO      tft.features    [RUAL] 591 дней, last_close=25.62 (2026-09-15)
+2026-09-16 08:45:53  INFO      tft.features    [ENPG] 591 дней, last_close=313.50 (2026-09-15)
+2026-09-16 08:45:53  INFO      tft.features    [SELG] 591 дней, last_close=37.86 (2026-09-15)
+2026-09-16 08:45:53  INFO      tft.features    [BSPB] 591 дней, last_close=252.79 (2026-09-15)
+2026-09-16 08:45:53  INFO      tft.features    [CBOM] 591 дней, last_close=10.70 (2026-09-15)
+2026-09-16 08:45:53  INFO      tft.features    [MVID] 591 дней, last_close=44.30 (2026-09-15)
+2026-09-16 08:45:54  INFO      tft.forecast  Обучающих окон: 24777, признаков: 12, тикеров: 45
+2026-09-16 08:45:55  INFO      tft.forecast  PyTorch найден — обучение Temporal Fusion Transformer (epochs=30, hidden=32)...
+2026-09-16 08:46:09  INFO      tft.forecast      epoch  1/30  train pinball=0.8456
+2026-09-16 08:47:07  INFO      tft.forecast      epoch  6/30  train pinball=0.6305
+2026-09-16 08:48:20  INFO      tft.forecast      epoch 12/30  train pinball=0.6239
+2026-09-16 08:49:32  INFO      tft.forecast      epoch 18/30  train pinball=0.6056
+2026-09-16 08:50:44  INFO      tft.forecast      epoch 24/30  train pinball=0.5789
+2026-09-16 08:51:53  INFO      tft.forecast      epoch 30/30  train pinball=0.5552
+2026-09-16 08:52:03  INFO      tft.forecast  Котировки: source=Previous Close, рынок закрыт, тикеров с ценой=46, max age=21 мин
+2026-09-16 08:52:03  INFO      tft.forecast  Недельный коридор: сырое покрытие=48%, конформная λ=0.351 → покрытие=80% (цель 80%).
+2026-09-16 08:52:03  INFO      tft.forecast  Прогноз готов (backend=TFT, дневное покрытие=65%, недельное=80%).
+2026-09-16 08:52:03  INFO      tft.combined  [SKIP SHORT] AKRN: шорт недоступен у брокера
+2026-09-16 08:52:03  INFO      tft.combined  [SKIP SHORT] CBOM: шорт недоступен у брокера
+2026-09-16 08:52:03  INFO      tft.combined  [SKIP SHORT] MVID: шорт недоступен у брокера
+2026-09-16 08:52:03  INFO      tft.combined  Специализация: отсеяно по стратегии 17, без импульса 28, риск шорт-сквиза 0, ниже порога 45, рынок перегрет 0; осталось 0.
+2026-09-16 08:52:03  INFO      stage2  [PREP] сигналов 0, в плане 0 заявок
+2026-09-16 08:52:03  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 08:52:04  INFO      stage2  [PREP] вердикт: PASS
+2026-09-16 09:10:02  INFO      stage2  [CLOSE] 20260916-091002-CLOSE, торговый день 2026-09-16
+2026-09-16 09:10:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 09:10:06  INFO      treasury  [TREASURY] инструмент TMON@/SPBRU, лот 1, через API: нет
+2026-09-16 09:10:06  WARNING   treasury  [TREASURY] брокер не исполнил BUY TMON (TMON@: листинг недоступен через API) — виртуальная запись в treasury_ledger
+2026-09-16 09:10:06  INFO      treasury  [TREASURY] Припарковано 3040084.32 ₽ в TMON (18501 шт) — виртуально
+2026-09-16 09:10:06  INFO      stage2  [CLOSE] ночных позиций 0, закрыто 0, снято лимиток 0
+2026-09-16 09:10:06  INFO      stage2  [CLOSE] вердикт: PASS
+2026-09-16 09:15:02  INFO      stage2  [ORDER] 20260916-091502-ORDER, торговый день 2026-09-16
+2026-09-16 09:15:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 09:15:04  INFO      stage2  [ORDER] вердикт: PASS
+2026-09-16 10:05:02  INFO      stage2  [PARK] 20260916-100502-PARK, торговый день 2026-09-16
+2026-09-16 10:05:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 10:05:03  INFO      treasury  [TREASURY] инструмент TMON@/SPBRU, лот 1, через API: да
+2026-09-16 10:05:04  WARNING   stage2  [PARK] ЧАСТИЧНЫЙ ПРОВАЛ: покупка паёв не исполнена: SandboxService/PostSandboxOrder: HTTP 400 
+{"code":3,"message":"Not enough balance","description":"30034"}
+2026-09-16 10:05:04  INFO      stage2  [PARK] вердикт: PARTIAL_FAILURE
+2026-09-16 18:20:01  INFO      stage2  [CLEANUP] 20260916-182001-CLEANUP, торговый день 2026-09-16
+2026-09-16 18:20:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 18:20:04  INFO      treasury  [TREASURY] инструмент TMON@/SPBRU, лот 1, через API: да
+2026-09-16 18:20:04  INFO      stage2  [CLEANUP] закрыто позиций 0, снято лимиток 0
+2026-09-16 18:20:04  INFO      stage2  [CLEANUP] вердикт: PASS
+[SKIP]  1 открытых позиций нет в реестре — не трогаю.
+Внутридневных позиций к закрытию нет.
+2026-09-16 18:35:02  INFO      stage2  [OVERNIGHT] 20260916-183502-OVERNIGHT, торговый день 2026-09-16
+2026-09-16 18:35:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 18:35:06  INFO      data_freshness  Данные актуальны: market_data до 2026-09-15 (сессия=2026-09-15).
+2026-09-16 18:35:06  INFO      run_validation    [ETLN] выгружено 541 дневных свечей → etln_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [SELG] выгружено 591 дневных свечей → selg_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [SMLT] выгружено 591 дневных свечей → smlt_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [MGNT] выгружено 591 дневных свечей → mgnt_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [ALRS] выгружено 591 дневных свечей → alrs_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [UPRO] выгружено 591 дневных свечей → upro_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [SBER] выгружено 592 дневных свечей → sber_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [VTBR] выгружено 587 дневных свечей → vtbr_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [GAZP] выгружено 592 дневных свечей → gazp_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [ROSN] выгружено 592 дневных свечей → rosn_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [LKOH] выгружено 592 дневных свечей → lkoh_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [NVTK] выгружено 592 дневных свечей → nvtk_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [TATN] выгружено 591 дневных свечей → tatn_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [SNGS] выгружено 591 дневных свечей → sngs_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [SNGSP] выгружено 591 дневных свечей → sngsp_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [GMKN] выгружено 592 дневных свечей → gmkn_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [PLZL] выгружено 589 дневных свечей → plzl_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [MAGN] выгружено 591 дневных свечей → magn_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [CHMF] выгружено 591 дневных свечей → chmf_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [IRAO] выгружено 591 дневных свечей → irao_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [FEES] выгружено 591 дневных свечей → fees_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [HYDR] выгружено 591 дневных свечей → hydr_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [MSNG] выгружено 591 дневных свечей → msng_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [TGKA] выгружено 591 дневных свечей → tgka_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [OGKB] выгружено 591 дневных свечей → ogkb_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [PHOR] выгружено 591 дневных свечей → phor_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [AKRN] выгружено 591 дневных свечей → akrn_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [MOEX] выгружено 591 дневных свечей → moex_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [MTSS] выгружено 591 дневных свечей → mtss_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [RTKM] выгружено 591 дневных свечей → rtkm_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [AFLT] выгружено 591 дневных свечей → aflt_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [FLOT] выгружено 591 дневных свечей → flot_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [NMTP] выгружено 591 дневных свечей → nmtp_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [X5] выгружено 431 дневных свечей → x5_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [LENT] выгружено 591 дневных свечей → lent_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [FIXR] выгружено 540 дневных свечей → fixr_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [YDEX] выгружено 564 дневных свечей → ydex_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [VKCO] выгружено 591 дневных свечей → vkco_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [ASTR] выгружено 591 дневных свечей → astr_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [POSI] выгружено 591 дневных свечей → posi_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [PIKK] выгружено 591 дневных свечей → pikk_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [RUAL] выгружено 591 дневных свечей → rual_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [ENPG] выгружено 591 дневных свечей → enpg_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [BSPB] выгружено 591 дневных свечей → bspb_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [CBOM] выгружено 591 дневных свечей → cbom_candles.csv
+2026-09-16 18:35:06  INFO      run_validation    [MVID] выгружено 591 дневных свечей → mvid_candles.csv
+2026-09-16 18:35:07  INFO      run_validation  Запуск контура валидации: отчёт по 6 тикерам × 3 стратегий, FDR-вселенная=46 (B=2000, cost_rt=0.128%, winsorize=False)...
+2026-09-16 18:35:33  INFO      tft.forecast  Multi-Asset TFT: загрузка панели по 46 тикерам...
+2026-09-16 18:35:33  INFO      tft.features    [SBER] 592 дней, last_close=284.91 (2026-09-15)
+2026-09-16 18:35:33  INFO      tft.features    [VTBR] 587 дней, last_close=51.24 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [GAZP] 592 дней, last_close=96.69 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [ROSN] 592 дней, last_close=372.65 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [LKOH] 592 дней, last_close=5484.50 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [NVTK] 592 дней, last_close=1052.00 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [TATN] 591 дней, last_close=632.20 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [SNGS] 591 дней, last_close=16.58 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [SNGSP] 591 дней, last_close=42.05 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [GMKN] 592 дней, last_close=129.96 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [PLZL] 589 дней, last_close=990.20 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [MAGN] 591 дней, last_close=21.71 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [CHMF] 591 дней, last_close=637.40 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [ALRS] 591 дней, last_close=20.16 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [IRAO] 591 дней, last_close=2.41 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [FEES] 591 дней, last_close=0.05 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [HYDR] 591 дней, last_close=0.39 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [UPRO] 591 дней, last_close=1.04 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [MSNG] 591 дней, last_close=1.47 (2026-09-15)
+2026-09-16 18:35:34  WARNING   tft.features    [TGKA] пропуск: подозрительный масштаб цены (median close=0.0066)
+2026-09-16 18:35:34  INFO      tft.features    [OGKB] 591 дней, last_close=0.22 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [PHOR] 591 дней, last_close=5319.00 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [AKRN] 591 дней, last_close=18580.00 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [MOEX] 591 дней, last_close=152.19 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [MTSS] 591 дней, last_close=199.90 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [RTKM] 591 дней, last_close=40.26 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [AFLT] 591 дней, last_close=32.72 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [FLOT] 591 дней, last_close=83.03 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [NMTP] 591 дней, last_close=6.72 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [MGNT] 591 дней, last_close=1594.50 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [X5] 431 дней, last_close=1829.00 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [LENT] 591 дней, last_close=1716.00 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [FIXR] 540 дней, last_close=0.39 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [YDEX] 564 дней, last_close=3846.50 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [VKCO] 591 дней, last_close=118.90 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [ASTR] 591 дней, last_close=218.15 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [POSI] 591 дней, last_close=1045.80 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [PIKK] 591 дней, last_close=535.90 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [SMLT] 591 дней, last_close=269.00 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [ETLN] 541 дней, last_close=20.18 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [RUAL] 591 дней, last_close=25.62 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [ENPG] 591 дней, last_close=313.50 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [SELG] 591 дней, last_close=37.86 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [BSPB] 591 дней, last_close=252.79 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [CBOM] 591 дней, last_close=10.70 (2026-09-15)
+2026-09-16 18:35:34  INFO      tft.features    [MVID] 591 дней, last_close=44.30 (2026-09-15)
+2026-09-16 18:35:35  INFO      tft.forecast  Обучающих окон: 24777, признаков: 12, тикеров: 45
+2026-09-16 18:35:36  INFO      tft.forecast  PyTorch найден — обучение Temporal Fusion Transformer (epochs=30, hidden=32)...
+2026-09-16 18:35:50  INFO      tft.forecast      epoch  1/30  train pinball=0.8456
+2026-09-16 18:36:49  INFO      tft.forecast      epoch  6/30  train pinball=0.6305
+2026-09-16 18:38:01  INFO      tft.forecast      epoch 12/30  train pinball=0.6239
+2026-09-16 18:39:11  INFO      tft.forecast      epoch 18/30  train pinball=0.6056
+2026-09-16 18:40:21  INFO      tft.forecast      epoch 24/30  train pinball=0.5789
+2026-09-16 18:41:30  INFO      tft.forecast      epoch 30/30  train pinball=0.5552
+2026-09-16 18:41:41  INFO      tft.forecast  Котировки: source=Real-time, рынок открыт, тикеров с ценой=46, max age=4 мин
+2026-09-16 18:41:41  INFO      tft.forecast  Недельный коридор: сырое покрытие=48%, конформная λ=0.351 → покрытие=80% (цель 80%).
+2026-09-16 18:41:43  INFO      tft.intraday  Внутридневная поправка: train=186932 val=62878, OOS-corr(β·z↔остаток)=-0.008, покрытие обуч=91% vs безусл=90%, ширина обуч/безусл=1.02 → НЕ применяется — нет OOS-сигнала, остаёмся на арифметике
+2026-09-16 18:41:43  INFO      tft.intraday      τ≈0.08  n=28609  β=-0.160  OOS-corr=-0.037  cov(обуч/безусл)=94%/81%
+2026-09-16 18:41:43  INFO      tft.intraday      τ≈0.25  n=32249  β=+0.053  OOS-corr=-0.008  cov(обуч/безусл)=93%/86%
+2026-09-16 18:41:43  INFO      tft.intraday      τ≈0.42  n=32091  β=-0.014  OOS-corr=+0.065  cov(обуч/безусл)=91%/88%
+2026-09-16 18:41:43  INFO      tft.intraday      τ≈0.58  n=33915  β=+0.077  OOS-corr=-0.080  cov(обуч/безусл)=91%/92%
+2026-09-16 18:41:43  INFO      tft.intraday      τ≈0.75  n=31944  β=+0.016  OOS-corr=-0.056  cov(обуч/безусл)=91%/96%
+2026-09-16 18:41:43  INFO      tft.intraday      τ≈0.92  n=28124  β=-0.003  OOS-corr=+0.070  cov(обуч/безусл)=88%/98%
+2026-09-16 18:41:43  INFO      tft.forecast  Прогноз готов (backend=TFT, дневное покрытие=65%, недельное=80%).
+2026-09-16 18:41:43  INFO      tft.combined  [SKIP SHORT] AKRN: шорт недоступен у брокера
+2026-09-16 18:41:43  INFO      tft.combined  [SKIP SHORT] CBOM: шорт недоступен у брокера
+2026-09-16 18:41:43  INFO      tft.combined  [SKIP SHORT] MVID: шорт недоступен у брокера
+2026-09-16 18:41:43  INFO      tft.combined  Специализация: отсеяно по стратегии 43, без импульса 2, риск шорт-сквиза 0, ниже порога 43, рынок перегрет 0; осталось 2.
+2026-09-16 18:41:43  INFO      treasury  [TREASURY] инструмент TMON@/SPBRU, лот 1, через API: да
+2026-09-16 18:41:44  INFO      treasury  [TREASURY] Продано 1193 шт TMON на сумму ~195615.05 ₽ под ночные лонги.
+2026-09-16 18:41:45  INFO      stage2  [OVERNIGHT] ночных заявок принято 2, выставлено 2
+2026-09-16 18:41:45  INFO      database  Пул соединений PostgreSQL: minconn=1, maxconn=5
+2026-09-16 18:41:45  INFO      stage2  [OVERNIGHT] день засчитан: 1 из 30
+2026-09-16 18:41:45  INFO      stage2  [OVERNIGHT] вердикт: PASS
+Защита от задвоения: активных заявок: 0, открытых позиций: 1, активных стопов: 0.
+[INFO]  RTKM: вход 39.110838 → 39.110000 (шаг 0.01).
+[OK]    RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 → EXECUTION_REPORT_STATUS_NEW (0/255).
+[INFO]  SNGS: вход 16.140433 → 16.140000 (шаг 0.005).
+[OK]    SNGS: лимитка c2c81e0b-f254-457d-a661-ed9a1b957c4d → EXECUTION_REPORT_STATUS_NEW (0/61).
+
+→ 5 позиц. ждут SL/TP. Когда лимитки зальются, выполните:
+    python3 -m services.place_orders --attach-stops
+2026-09-16 18:50:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 18:50:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 1.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+[WAIT]  SNGS: лимитка c2c81e0b-f254-457d-a661-ed9a1b957c4d ещё не залилась — в очереди.
+2026-09-16 19:00:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 19:00:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 1.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+[WAIT]  SNGS: лимитка c2c81e0b-f254-457d-a661-ed9a1b957c4d ещё не залилась — в очереди.
+2026-09-16 19:10:01  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 19:10:01  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 1.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+[WAIT]  SNGS: лимитка c2c81e0b-f254-457d-a661-ed9a1b957c4d ещё не залилась — в очереди.
+2026-09-16 19:20:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 19:20:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 1.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+[WAIT]  SNGS: лимитка c2c81e0b-f254-457d-a661-ed9a1b957c4d ещё не залилась — в очереди.
+2026-09-16 19:30:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 19:30:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 1.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+[WAIT]  SNGS: лимитка c2c81e0b-f254-457d-a661-ed9a1b957c4d ещё не залилась — в очереди.
+2026-09-16 19:40:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 19:40:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 1.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+[WAIT]  SNGS: лимитка c2c81e0b-f254-457d-a661-ed9a1b957c4d ещё не залилась — в очереди.
+2026-09-16 19:50:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 19:50:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 1.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+[WAIT]  SNGS: лимитка c2c81e0b-f254-457d-a661-ed9a1b957c4d ещё не залилась — в очереди.
+2026-09-16 20:00:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 20:00:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 1.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+[WAIT]  SNGS: лимитка c2c81e0b-f254-457d-a661-ed9a1b957c4d ещё не залилась — в очереди.
+2026-09-16 20:10:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 20:10:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 1.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+[WAIT]  SNGS: лимитка c2c81e0b-f254-457d-a661-ed9a1b957c4d ещё не залилась — в очереди.
+2026-09-16 20:20:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 20:20:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 1.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+[WAIT]  SNGS: лимитка c2c81e0b-f254-457d-a661-ed9a1b957c4d ещё не залилась — в очереди.
+2026-09-16 20:30:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 20:30:03  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 1.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+[WAIT]  SNGS: лимитка c2c81e0b-f254-457d-a661-ed9a1b957c4d ещё не залилась — в очереди.
+2026-09-16 20:40:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 20:40:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 1.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+[WAIT]  SNGS: лимитка c2c81e0b-f254-457d-a661-ed9a1b957c4d ещё не залилась — в очереди.
+2026-09-16 20:50:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 20:50:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 1.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+[WAIT]  SNGS: лимитка c2c81e0b-f254-457d-a661-ed9a1b957c4d ещё не залилась — в очереди.
+2026-09-16 21:00:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 21:00:03  INFO      stage2  [PROTECT] поставлено стопов 1, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 2.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+[OK]    SNGS: стоп 01a0ab60-3104-72a0-a683-34418755b64e @ 15.98 (STOP_LOSS).
+[OK]    SNGS: профит 01a0ab60-31df-79e4-855d-bdd496d0b76c @ 16.4 (TAKE_PROFIT).
+2026-09-16 21:10:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 21:10:03  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 2.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+2026-09-16 21:20:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 21:20:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 2.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+2026-09-16 21:30:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 21:30:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 2.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+2026-09-16 21:40:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 21:40:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 2.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+2026-09-16 21:50:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 21:50:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 2.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+2026-09-16 22:00:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 22:00:03  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 2.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+2026-09-16 22:10:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 22:10:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 2.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+2026-09-16 22:20:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 22:20:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 2.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+2026-09-16 22:30:01  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 22:30:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 2.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+2026-09-16 22:40:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 22:40:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 2.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+2026-09-16 22:50:01  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 22:50:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 2.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+2026-09-16 23:00:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 23:00:03  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 2.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+2026-09-16 23:10:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 23:10:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 2.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+2026-09-16 23:20:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 23:20:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 2.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+2026-09-16 23:30:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 23:30:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 2.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+2026-09-16 23:40:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 23:40:02  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 2.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+2026-09-16 23:50:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-16 23:50:03  INFO      stage2  [PROTECT] поставлено стопов 0, позиций без стопа 0
+Записей в работе: 2. Открытых позиций: 2.
+[WAIT]  RTKM: лимитка 41394cc4-ac8d-4c90-b492-abd8bd6817e3 ещё не залилась — в очереди.
+2026-09-17 08:45:02  INFO      stage2  [PREP] 20260917-084502-PREP, торговый день 2026-09-17
+2026-09-17 08:45:02  INFO      data_freshness  Догрузка свежих свечей (load_history + backfill)...
+2026-09-17 08:45:02  INFO      load_history  ── SBER: поиск инструмента...
+2026-09-17 08:45:02  INFO      load_history  ── VTBR: поиск инструмента...
+2026-09-17 08:45:02  INFO      load_history  ── GAZP: поиск инструмента...
+2026-09-17 08:45:02  INFO      load_history    GAZP | Газпром | UID=962e2a95-02a9-4171-abd7-aa198dbe643a
+2026-09-17 08:45:02  INFO      load_history    VTBR | Банк ВТБ | UID=8e2b0325-0292-4654-8a18-4f63ed3b0e09
+2026-09-17 08:45:02  INFO      load_history    SBER | Сбербанк | UID=e6123145-9665-43e0-8413-cd61b8aa9b13
+2026-09-17 08:45:02  INFO      database  Пул соединений PostgreSQL: minconn=1, maxconn=5
+2026-09-17 08:45:02  INFO      load_history    [1D] GAZP: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:02  INFO      load_history    [1D] VTBR: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:02  INFO      load_history    [1D] SBER: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:02  INFO      load_history    [5M] GAZP: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:02  INFO      load_history    [5M] SBER: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:02  INFO      load_history    [5M] VTBR: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:02  INFO      load_history    [1D] GAZP: +1 строк
+2026-09-17 08:45:02  INFO      load_history    [5M] GAZP: +75 строк
+2026-09-17 08:45:02  INFO      load_history  ── ROSN: поиск инструмента...
+2026-09-17 08:45:02  INFO      load_history    [1D] SBER: +1 строк
+2026-09-17 08:45:02  INFO      load_history    [5M] SBER: +75 строк
+2026-09-17 08:45:02  INFO      load_history  ── LKOH: поиск инструмента...
+2026-09-17 08:45:02  INFO      load_history    [1D] VTBR: +1 строк
+2026-09-17 08:45:02  INFO      load_history    [5M] VTBR: +75 строк
+2026-09-17 08:45:02  INFO      load_history  ── NVTK: поиск инструмента...
+2026-09-17 08:45:03  INFO      load_history    ROSN | Роснефть | UID=fd417230-19cf-4e7b-9623-f7c9ca18ec6b
+2026-09-17 08:45:03  INFO      load_history    [1D] ROSN: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:03  INFO      load_history    LKOH | ЛУКОЙЛ | UID=02cfdf61-6298-4c0f-a9ca-9cabc82afaf3
+2026-09-17 08:45:03  INFO      load_history    [1D] LKOH: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:03  INFO      load_history    NVTK | НОВАТЭК | UID=0da66728-6c30-44c4-9264-df8fac2467ee
+2026-09-17 08:45:03  INFO      load_history    [1D] NVTK: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:03  INFO      load_history    [5M] ROSN: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:03  INFO      load_history    [5M] NVTK: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:03  INFO      load_history    [5M] LKOH: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:03  INFO      load_history    [1D] ROSN: +1 строк
+2026-09-17 08:45:03  INFO      load_history    [5M] ROSN: +75 строк
+2026-09-17 08:45:03  INFO      load_history  ── TATN: поиск инструмента...
+2026-09-17 08:45:03  INFO      load_history    [1D] NVTK: +1 строк
+2026-09-17 08:45:03  INFO      load_history    [5M] NVTK: +75 строк
+2026-09-17 08:45:03  INFO      load_history  ── SNGS: поиск инструмента...
+2026-09-17 08:45:03  INFO      load_history    [1D] LKOH: +1 строк
+2026-09-17 08:45:03  INFO      load_history    [5M] LKOH: +75 строк
+2026-09-17 08:45:03  INFO      load_history  ── SNGSP: поиск инструмента...
+2026-09-17 08:45:04  INFO      load_history    TATN | Татнефть | UID=88468f6c-c67a-4fb4-a006-53eed803883c
+2026-09-17 08:45:04  INFO      load_history    SNGSP | Сургутнефтегаз - привилегированные акции | UID=a797f14a-8513-4b84-b15e-a3b98dc4cc00
+2026-09-17 08:45:04  INFO      load_history    [1D] TATN: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:04  INFO      load_history    [1D] SNGSP: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:04  INFO      load_history    SNGS | Сургутнефтегаз | UID=1ffe1bff-d7b7-4b04-b482-34dc9cc0a4ba
+2026-09-17 08:45:04  INFO      load_history    [1D] SNGS: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:04  INFO      load_history    [5M] TATN: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:04  INFO      load_history    [5M] SNGSP: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:04  INFO      load_history    [5M] SNGS: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:04  INFO      load_history    [1D] TATN: +1 строк
+2026-09-17 08:45:04  INFO      load_history    [5M] TATN: +75 строк
+2026-09-17 08:45:04  INFO      load_history  ── GMKN: поиск инструмента...
+2026-09-17 08:45:04  INFO      load_history    [1D] SNGSP: +1 строк
+2026-09-17 08:45:04  INFO      load_history    [5M] SNGSP: +75 строк
+2026-09-17 08:45:04  INFO      load_history  ── PLZL: поиск инструмента...
+2026-09-17 08:45:04  INFO      load_history    [1D] SNGS: +1 строк
+2026-09-17 08:45:04  INFO      load_history    [5M] SNGS: +75 строк
+2026-09-17 08:45:04  INFO      load_history  ── MAGN: поиск инструмента...
+2026-09-17 08:45:05  INFO      load_history    GMKN | Норильский никель | UID=509edd0c-129c-4ee2-934d-7f6246126da1
+2026-09-17 08:45:05  INFO      load_history    [1D] GMKN: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:05  INFO      load_history    PLZL | Полюс | UID=10620843-28ce-44e8-80c2-f26ceb1bd3e1
+2026-09-17 08:45:05  INFO      load_history    [1D] PLZL: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:05  INFO      load_history    MAGN | Магнитогорский металлургический комбинат | UID=7132b1c9-ee26-4464-b5b5-1046264b61d9
+2026-09-17 08:45:05  INFO      load_history    [1D] MAGN: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:05  INFO      load_history    [5M] PLZL: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:05  INFO      load_history    [5M] GMKN: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:05  INFO      load_history    [5M] MAGN: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:05  INFO      load_history    [1D] GMKN: +1 строк
+2026-09-17 08:45:05  INFO      load_history    [5M] GMKN: +75 строк
+2026-09-17 08:45:05  INFO      load_history  ── CHMF: поиск инструмента...
+2026-09-17 08:45:05  INFO      load_history    [1D] PLZL: +1 строк
+2026-09-17 08:45:05  INFO      load_history    [5M] PLZL: +75 строк
+2026-09-17 08:45:05  INFO      load_history  ── ALRS: поиск инструмента...
+2026-09-17 08:45:05  INFO      load_history    [1D] MAGN: +1 строк
+2026-09-17 08:45:05  INFO      load_history    [5M] MAGN: +75 строк
+2026-09-17 08:45:05  INFO      load_history  ── IRAO: поиск инструмента...
+2026-09-17 08:45:05  INFO      load_history    CHMF | Северсталь | UID=fa6aae10-b8d5-48c8-bbfd-d320d925d096
+2026-09-17 08:45:05  INFO      load_history    [1D] CHMF: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:05  INFO      load_history    ALRS | АЛРОСА | UID=30817fea-20e6-4fee-ab1f-d20fc1a1bb72
+2026-09-17 08:45:05  INFO      load_history    [1D] ALRS: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:06  INFO      load_history    IRAO | Интер РАО | UID=2dfbc1fd-b92a-436e-b011-928c79e805f2
+2026-09-17 08:45:06  INFO      load_history    [1D] IRAO: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:06  INFO      load_history    [5M] CHMF: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:06  INFO      load_history    [5M] ALRS: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:06  INFO      load_history    [5M] IRAO: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:06  INFO      load_history    [1D] CHMF: +1 строк
+2026-09-17 08:45:06  INFO      load_history    [5M] CHMF: +75 строк
+2026-09-17 08:45:06  INFO      load_history  ── FEES: поиск инструмента...
+2026-09-17 08:45:06  INFO      load_history    [1D] ALRS: +1 строк
+2026-09-17 08:45:06  INFO      load_history    [5M] ALRS: +75 строк
+2026-09-17 08:45:06  INFO      load_history  ── HYDR: поиск инструмента...
+2026-09-17 08:45:06  INFO      load_history    [1D] IRAO: +1 строк
+2026-09-17 08:45:06  INFO      load_history    [5M] IRAO: +75 строк
+2026-09-17 08:45:06  INFO      load_history  ── UPRO: поиск инструмента...
+2026-09-17 08:45:06  INFO      load_history    FEES | ФСК Россети | UID=88e130e8-5b68-4b05-b9ae-baf32f5a3f21
+2026-09-17 08:45:06  INFO      load_history    [1D] FEES: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:06  INFO      load_history    UPRO | Юнипро | UID=664921c5-b552-47a6-9ced-8735a3c6ca8a
+2026-09-17 08:45:06  INFO      load_history    HYDR | РусГидро | UID=62560f05-3fd0-4d65-88f0-a27f249cc6de
+2026-09-17 08:45:07  INFO      load_history    [1D] UPRO: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:07  INFO      load_history    [1D] HYDR: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:07  INFO      load_history    [5M] FEES: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:07  INFO      load_history    [5M] UPRO: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:07  INFO      load_history    [5M] HYDR: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:07  INFO      load_history    [1D] FEES: +1 строк
+2026-09-17 08:45:07  INFO      load_history    [5M] FEES: +72 строк
+2026-09-17 08:45:07  INFO      load_history  ── MSNG: поиск инструмента...
+2026-09-17 08:45:07  INFO      load_history    [1D] UPRO: +1 строк
+2026-09-17 08:45:07  INFO      load_history    [5M] UPRO: +75 строк
+2026-09-17 08:45:07  INFO      load_history  ── TGKA: поиск инструмента...
+2026-09-17 08:45:07  INFO      load_history    [1D] HYDR: +1 строк
+2026-09-17 08:45:07  INFO      load_history    [5M] HYDR: +74 строк
+2026-09-17 08:45:07  INFO      load_history  ── OGKB: поиск инструмента...
+2026-09-17 08:45:07  INFO      load_history    MSNG | Мосэнерго | UID=98fc1318-6990-4147-b0d1-b10999326461
+2026-09-17 08:45:07  INFO      load_history    [1D] MSNG: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:08  INFO      load_history    OGKB | Вторая генерирующая компания оптового рынка электроэнергии | UID=3d8f2777-4a11-4713-af60-8038d11e66fa
+2026-09-17 08:45:08  INFO      load_history    [1D] OGKB: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:08  INFO      load_history    [5M] MSNG: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:08  INFO      load_history    TGKA | ТГК-1 | UID=d74daf58-22c3-4e44-8ada-471e404fb795
+2026-09-17 08:45:08  INFO      load_history    [1D] TGKA: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:08  INFO      load_history    [5M] OGKB: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:08  INFO      load_history    [1D] MSNG: +1 строк
+2026-09-17 08:45:08  INFO      load_history    [5M] MSNG: +74 строк
+2026-09-17 08:45:08  INFO      load_history  ── PHOR: поиск инструмента...
+2026-09-17 08:45:08  INFO      load_history    [5M] TGKA: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:08  INFO      load_history    [1D] OGKB: +1 строк
+2026-09-17 08:45:08  INFO      load_history    [5M] OGKB: +70 строк
+2026-09-17 08:45:08  INFO      load_history  ── AKRN: поиск инструмента...
+2026-09-17 08:45:08  INFO      load_history    [1D] TGKA: +1 строк
+2026-09-17 08:45:08  INFO      load_history    [5M] TGKA: +62 строк
+2026-09-17 08:45:08  INFO      load_history  ── MOEX: поиск инструмента...
+2026-09-17 08:45:08  INFO      load_history    PHOR | ФосАгро | UID=9978b56f-782a-4a80-a4b1-a48cbecfd194
+2026-09-17 08:45:08  INFO      load_history    [1D] PHOR: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:08  INFO      load_history    AKRN | Акрон | UID=cd3affd4-3b50-43fd-b008-518f54108d59
+2026-09-17 08:45:08  INFO      load_history    [1D] AKRN: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:08  INFO      load_history    [5M] PHOR: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:09  INFO      load_history    MOEX | Московская Биржа | UID=5e1c2634-afc4-4e50-ad6d-f78fc14a539a
+2026-09-17 08:45:09  INFO      load_history    [1D] MOEX: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:09  INFO      load_history    [5M] AKRN: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:09  INFO      load_history    [1D] PHOR: +1 строк
+2026-09-17 08:45:09  INFO      load_history    [5M] PHOR: +75 строк
+2026-09-17 08:45:09  INFO      load_history  ── MTSS: поиск инструмента...
+2026-09-17 08:45:09  INFO      load_history    [5M] MOEX: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:09  INFO      load_history    [1D] AKRN: +1 строк
+2026-09-17 08:45:09  INFO      load_history    [5M] AKRN: +12 строк
+2026-09-17 08:45:09  INFO      load_history  ── RTKM: поиск инструмента...
+2026-09-17 08:45:09  INFO      load_history    [1D] MOEX: +1 строк
+2026-09-17 08:45:09  INFO      load_history    [5M] MOEX: +75 строк
+2026-09-17 08:45:09  INFO      load_history  ── AFLT: поиск инструмента...
+2026-09-17 08:45:09  INFO      load_history    MTSS | МТС | UID=cd8063ad-73ad-4b31-bd0d-93138d9e99a2
+2026-09-17 08:45:09  INFO      load_history    [1D] MTSS: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:09  INFO      load_history    [5M] MTSS: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:09  INFO      load_history    RTKM | Ростелеком | UID=02eda274-10c4-4815-8e02-a8ee7eaf485b
+2026-09-17 08:45:09  INFO      load_history    [1D] RTKM: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:09  INFO      load_history    [1D] MTSS: +1 строк
+2026-09-17 08:45:09  INFO      load_history    [5M] MTSS: +75 строк
+2026-09-17 08:45:09  INFO      load_history  ── FLOT: поиск инструмента...
+2026-09-17 08:45:10  INFO      load_history    AFLT | Аэрофлот | UID=1c69e020-f3b1-455c-affa-45f8b8049234
+2026-09-17 08:45:10  INFO      load_history    [1D] AFLT: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:10  INFO      load_history    [5M] RTKM: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:10  INFO      load_history    [5M] AFLT: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:10  INFO      load_history    [1D] RTKM: +1 строк
+2026-09-17 08:45:10  INFO      load_history    [5M] RTKM: +75 строк
+2026-09-17 08:45:10  INFO      load_history  ── NMTP: поиск инструмента...
+2026-09-17 08:45:10  INFO      load_history    FLOT | Совкомфлот | UID=21423d2d-9009-4d37-9325-883b368d13ae
+2026-09-17 08:45:10  INFO      load_history    [1D] FLOT: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:10  INFO      load_history    [1D] AFLT: +1 строк
+2026-09-17 08:45:10  INFO      load_history    [5M] AFLT: +75 строк
+2026-09-17 08:45:10  INFO      load_history  ── MGNT: поиск инструмента...
+2026-09-17 08:45:10  INFO      load_history    NMTP | НМТП | UID=93ed8e88-2de2-4aec-a920-3384d24ecb2a
+2026-09-17 08:45:10  INFO      load_history    [1D] NMTP: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:10  INFO      load_history    [5M] FLOT: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:10  INFO      load_history    MGNT | Магнит | UID=ca845f68-6c43-44bc-b584-330d2a1e5eb7
+2026-09-17 08:45:10  INFO      load_history    [1D] MGNT: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:10  INFO      load_history    [5M] NMTP: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:10  INFO      load_history    [1D] FLOT: +1 строк
+2026-09-17 08:45:10  INFO      load_history    [5M] FLOT: +75 строк
+2026-09-17 08:45:10  INFO      load_history  ── X5: поиск инструмента...
+2026-09-17 08:45:11  INFO      load_history    [5M] MGNT: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:11  INFO      load_history    [1D] NMTP: +1 строк
+2026-09-17 08:45:11  INFO      load_history    [5M] NMTP: +75 строк
+2026-09-17 08:45:11  INFO      load_history  ── LENT: поиск инструмента...
+2026-09-17 08:45:11  INFO      load_history    X5 | Корпоративный Центр Икс 5 | UID=0964acd0-e2cb-4810-a177-ef4ad8856ff0
+2026-09-17 08:45:11  INFO      load_history    [1D] X5: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:11  INFO      load_history    [1D] MGNT: +1 строк
+2026-09-17 08:45:11  INFO      load_history    [5M] MGNT: +75 строк
+2026-09-17 08:45:11  INFO      load_history  ── FIXR: поиск инструмента...
+2026-09-17 08:45:11  INFO      load_history    [5M] X5: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:11  INFO      load_history    LENT | Лента | UID=5f1e6b0a-4413-489c-b336-40b43730eaf5
+2026-09-17 08:45:11  INFO      load_history    [1D] LENT: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:11  INFO      load_history    FIXR | Фикс Прайс | UID=8be64b53-a46b-451c-8152-1c871f122d5b
+2026-09-17 08:45:11  INFO      load_history    [1D] X5: +1 строк
+2026-09-17 08:45:11  INFO      load_history    [5M] X5: +75 строк
+2026-09-17 08:45:11  INFO      load_history  ── YDEX: поиск инструмента...
+2026-09-17 08:45:11  INFO      load_history    [1D] FIXR: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:11  INFO      load_history    [5M] LENT: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:12  INFO      load_history    [5M] FIXR: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:12  INFO      load_history    [1D] LENT: +1 строк
+2026-09-17 08:45:12  INFO      load_history    [5M] LENT: +73 строк
+2026-09-17 08:45:12  INFO      load_history  ── VKCO: поиск инструмента...
+2026-09-17 08:45:12  INFO      load_history    YDEX | Яндекс | UID=7de75794-a27f-4d81-a39b-492345813822
+2026-09-17 08:45:12  INFO      load_history    [1D] YDEX: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:12  INFO      load_history    [1D] FIXR: +1 строк
+2026-09-17 08:45:12  INFO      load_history    [5M] FIXR: +73 строк
+2026-09-17 08:45:12  INFO      load_history  ── ASTR: поиск инструмента...
+2026-09-17 08:45:12  INFO      load_history    [5M] YDEX: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:12  INFO      load_history    VKCO | ВК | UID=b71bd174-c72c-41b0-a66f-5f9073e0d1f5
+2026-09-17 08:45:12  INFO      load_history    [1D] VKCO: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:12  INFO      load_history    ASTR | Группа Астра | UID=aae786d8-e8f4-4428-91bb-cffa39ad01e4
+2026-09-17 08:45:12  INFO      load_history    [1D] ASTR: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:12  INFO      load_history    [1D] YDEX: +1 строк
+2026-09-17 08:45:12  INFO      load_history    [5M] YDEX: +75 строк
+2026-09-17 08:45:12  INFO      load_history  ── POSI: поиск инструмента...
+2026-09-17 08:45:12  INFO      load_history    [5M] VKCO: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:12  INFO      load_history    [5M] ASTR: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:12  INFO      load_history    POSI | Группа Позитив | UID=de08affe-4fbd-454e-9fd1-46a81b23f870
+2026-09-17 08:45:12  INFO      load_history    [1D] POSI: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:12  INFO      load_history    [1D] VKCO: +1 строк
+2026-09-17 08:45:12  INFO      load_history    [5M] VKCO: +75 строк
+2026-09-17 08:45:12  INFO      load_history  ── PIKK: поиск инструмента...
+2026-09-17 08:45:13  INFO      load_history    [5M] POSI: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:13  INFO      load_history    [1D] ASTR: +1 строк
+2026-09-17 08:45:13  INFO      load_history    [5M] ASTR: +75 строк
+2026-09-17 08:45:13  INFO      load_history  ── SMLT: поиск инструмента...
+2026-09-17 08:45:13  INFO      load_history    PIKK | ПИК-Специализированный застройщик | UID=03d5e771-fc10-438e-8892-85a40733612d
+2026-09-17 08:45:13  INFO      load_history    [1D] PIKK: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:13  INFO      load_history    [1D] POSI: +1 строк
+2026-09-17 08:45:13  INFO      load_history    [5M] POSI: +75 строк
+2026-09-17 08:45:13  INFO      load_history  ── ETLN: поиск инструмента...
+2026-09-17 08:45:13  INFO      load_history    SMLT | ГК Самолет | UID=4d813ab1-8bc9-4670-89ea-12bfbab6017d
+2026-09-17 08:45:13  INFO      load_history    [1D] SMLT: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:13  INFO      load_history    [5M] PIKK: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:13  INFO      load_history    [5M] SMLT: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:13  INFO      load_history    ETLN | Эталон Груп | UID=b9dff600-4ca6-4fa9-ba91-df2126548ccc
+2026-09-17 08:45:13  INFO      load_history    [1D] ETLN: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:13  INFO      load_history    [1D] PIKK: +1 строк
+2026-09-17 08:45:13  INFO      load_history    [5M] PIKK: +69 строк
+2026-09-17 08:45:13  INFO      load_history  ── RUAL: поиск инструмента...
+2026-09-17 08:45:13  INFO      load_history    [5M] ETLN: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:13  INFO      load_history    [1D] SMLT: +1 строк
+2026-09-17 08:45:13  INFO      load_history    [5M] SMLT: +75 строк
+2026-09-17 08:45:13  INFO      load_history  ── ENPG: поиск инструмента...
+2026-09-17 08:45:14  INFO      load_history    RUAL | РУСАЛ | UID=f866872b-8f68-4b6e-930f-749fe9aa79c0
+2026-09-17 08:45:14  INFO      load_history    [1D] RUAL: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:14  INFO      load_history    [1D] ETLN: +1 строк
+2026-09-17 08:45:14  INFO      load_history    [5M] ETLN: +74 строк
+2026-09-17 08:45:14  INFO      load_history  ── SELG: поиск инструмента...
+2026-09-17 08:45:14  INFO      load_history    [5M] RUAL: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:14  INFO      load_history    ENPG | Эн+ | UID=e2bd2eba-75de-4127-b39c-2f2dbe3866c3
+2026-09-17 08:45:14  INFO      load_history    [1D] ENPG: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:14  INFO      load_history    [1D] RUAL: +1 строк
+2026-09-17 08:45:14  INFO      load_history    [5M] RUAL: +75 строк
+2026-09-17 08:45:14  INFO      load_history  ── BSPB: поиск инструмента...
+2026-09-17 08:45:14  INFO      load_history    SELG | Селигдар | UID=0d28c01b-f841-4e89-9c92-0ee23d12883a
+2026-09-17 08:45:14  INFO      load_history    [1D] SELG: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:14  INFO      load_history    [5M] ENPG: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:14  INFO      load_history    [5M] SELG: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:14  INFO      load_history    [1D] ENPG: +1 строк
+2026-09-17 08:45:14  INFO      load_history    [5M] ENPG: +74 строк
+2026-09-17 08:45:14  INFO      load_history  ── CBOM: поиск инструмента...
+2026-09-17 08:45:14  INFO      load_history    BSPB | Банк Санкт-Петербург | UID=1e19953d-01c6-4ecd-a5f4-53ae3ed44029
+2026-09-17 08:45:14  INFO      load_history    [1D] BSPB: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:15  INFO      load_history    CBOM | МКБ | UID=ebfda284-4291-4337-9dfb-f55610d0a907
+2026-09-17 08:45:15  INFO      load_history    [1D] CBOM: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:15  INFO      load_history    [1D] SELG: +1 строк
+2026-09-17 08:45:15  INFO      load_history    [5M] SELG: +75 строк
+2026-09-17 08:45:15  INFO      load_history  ── MVID: поиск инструмента...
+2026-09-17 08:45:15  INFO      load_history    [5M] BSPB: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:15  INFO      load_history    MVID | М.Видео | UID=cf1c6158-a303-43ac-89eb-9b1db8f96043
+2026-09-17 08:45:15  INFO      load_history    [1D] MVID: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:15  INFO      load_history    [5M] CBOM: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:15  INFO      load_history    [1D] BSPB: +1 строк
+2026-09-17 08:45:15  INFO      load_history    [5M] BSPB: +75 строк
+2026-09-17 08:45:15  INFO      load_history    [5M] MVID: 2026-09-16 → 2026-09-17
+2026-09-17 08:45:15  INFO      load_history    [1D] CBOM: +1 строк
+2026-09-17 08:45:15  INFO      load_history    [5M] CBOM: +60 строк
+2026-09-17 08:45:15  INFO      load_history    [1D] MVID: +1 строк
+2026-09-17 08:45:15  INFO      load_history    [5M] MVID: +75 строк
+2026-09-17 08:45:15  INFO      load_history  Итого: 1D новых=46 пропущено=0 | 5M новых=3337 пропущено=0
+2026-09-17 08:45:24  INFO      data_freshness  Данные актуальны: market_data до 2026-09-16 (сессия=2026-09-16).
+2026-09-17 08:45:25  INFO      run_validation    [ETLN] выгружено 542 дневных свечей → etln_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [SELG] выгружено 592 дневных свечей → selg_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [SMLT] выгружено 592 дневных свечей → smlt_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [MGNT] выгружено 592 дневных свечей → mgnt_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [ALRS] выгружено 592 дневных свечей → alrs_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [UPRO] выгружено 592 дневных свечей → upro_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [SBER] выгружено 593 дневных свечей → sber_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [VTBR] выгружено 588 дневных свечей → vtbr_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [GAZP] выгружено 593 дневных свечей → gazp_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [ROSN] выгружено 593 дневных свечей → rosn_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [LKOH] выгружено 593 дневных свечей → lkoh_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [NVTK] выгружено 593 дневных свечей → nvtk_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [TATN] выгружено 592 дневных свечей → tatn_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [SNGS] выгружено 592 дневных свечей → sngs_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [SNGSP] выгружено 592 дневных свечей → sngsp_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [GMKN] выгружено 593 дневных свечей → gmkn_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [PLZL] выгружено 590 дневных свечей → plzl_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [MAGN] выгружено 592 дневных свечей → magn_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [CHMF] выгружено 592 дневных свечей → chmf_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [IRAO] выгружено 592 дневных свечей → irao_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [FEES] выгружено 592 дневных свечей → fees_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [HYDR] выгружено 592 дневных свечей → hydr_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [MSNG] выгружено 592 дневных свечей → msng_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [TGKA] выгружено 592 дневных свечей → tgka_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [OGKB] выгружено 592 дневных свечей → ogkb_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [PHOR] выгружено 592 дневных свечей → phor_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [AKRN] выгружено 592 дневных свечей → akrn_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [MOEX] выгружено 592 дневных свечей → moex_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [MTSS] выгружено 592 дневных свечей → mtss_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [RTKM] выгружено 592 дневных свечей → rtkm_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [AFLT] выгружено 592 дневных свечей → aflt_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [FLOT] выгружено 592 дневных свечей → flot_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [NMTP] выгружено 592 дневных свечей → nmtp_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [X5] выгружено 432 дневных свечей → x5_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [LENT] выгружено 592 дневных свечей → lent_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [FIXR] выгружено 541 дневных свечей → fixr_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [YDEX] выгружено 565 дневных свечей → ydex_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [VKCO] выгружено 592 дневных свечей → vkco_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [ASTR] выгружено 592 дневных свечей → astr_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [POSI] выгружено 592 дневных свечей → posi_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [PIKK] выгружено 592 дневных свечей → pikk_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [RUAL] выгружено 592 дневных свечей → rual_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [ENPG] выгружено 592 дневных свечей → enpg_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [BSPB] выгружено 592 дневных свечей → bspb_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [CBOM] выгружено 592 дневных свечей → cbom_candles.csv
+2026-09-17 08:45:25  INFO      run_validation    [MVID] выгружено 592 дневных свечей → mvid_candles.csv
+2026-09-17 08:45:26  INFO      run_validation  Запуск контура валидации: отчёт по 6 тикерам × 3 стратегий, FDR-вселенная=46 (B=2000, cost_rt=0.128%, winsorize=False)...
+2026-09-17 08:45:52  INFO      tft.forecast  Multi-Asset TFT: загрузка панели по 46 тикерам...
+2026-09-17 08:45:52  INFO      tft.features    [SBER] 593 дней, last_close=279.94 (2026-09-16)
+2026-09-17 08:45:52  INFO      tft.features    [VTBR] 588 дней, last_close=50.38 (2026-09-16)
+2026-09-17 08:45:52  INFO      tft.features    [GAZP] 593 дней, last_close=93.58 (2026-09-16)
+2026-09-17 08:45:52  INFO      tft.features    [ROSN] 593 дней, last_close=356.65 (2026-09-16)
+2026-09-17 08:45:52  INFO      tft.features    [LKOH] 593 дней, last_close=5337.00 (2026-09-16)
+2026-09-17 08:45:52  INFO      tft.features    [NVTK] 593 дней, last_close=1028.30 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [TATN] 592 дней, last_close=623.40 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [SNGS] 592 дней, last_close=16.10 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [SNGSP] 592 дней, last_close=41.62 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [GMKN] 593 дней, last_close=128.80 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [PLZL] 590 дней, last_close=953.20 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [MAGN] 592 дней, last_close=21.27 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [CHMF] 592 дней, last_close=636.60 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [ALRS] 592 дней, last_close=19.57 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [IRAO] 592 дней, last_close=2.37 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [FEES] 592 дней, last_close=0.05 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [HYDR] 592 дней, last_close=0.37 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [UPRO] 592 дней, last_close=1.00 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [MSNG] 592 дней, last_close=1.41 (2026-09-16)
+2026-09-17 08:45:53  WARNING   tft.features    [TGKA] пропуск: подозрительный масштаб цены (median close=0.0066)
+2026-09-17 08:45:53  INFO      tft.features    [OGKB] 592 дней, last_close=0.22 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [PHOR] 592 дней, last_close=5304.00 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [AKRN] 592 дней, last_close=18232.00 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [MOEX] 592 дней, last_close=150.67 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [MTSS] 592 дней, last_close=185.00 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [RTKM] 592 дней, last_close=39.25 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [AFLT] 592 дней, last_close=32.19 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [FLOT] 592 дней, last_close=80.91 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [NMTP] 592 дней, last_close=6.57 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [MGNT] 592 дней, last_close=1559.00 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [X5] 432 дней, last_close=1800.50 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [LENT] 592 дней, last_close=1658.00 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [FIXR] 541 дней, last_close=0.39 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [YDEX] 565 дней, last_close=3766.00 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [VKCO] 592 дней, last_close=111.75 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [ASTR] 592 дней, last_close=215.40 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [POSI] 592 дней, last_close=1020.60 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [PIKK] 592 дней, last_close=536.20 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [SMLT] 592 дней, last_close=255.00 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [ETLN] 542 дней, last_close=19.74 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [RUAL] 592 дней, last_close=25.16 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [ENPG] 592 дней, last_close=309.75 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [SELG] 592 дней, last_close=36.23 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [BSPB] 592 дней, last_close=251.61 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [CBOM] 592 дней, last_close=10.55 (2026-09-16)
+2026-09-17 08:45:53  INFO      tft.features    [MVID] 592 дней, last_close=45.15 (2026-09-16)
+2026-09-17 08:45:54  INFO      tft.forecast  Обучающих окон: 24822, признаков: 12, тикеров: 45
+2026-09-17 08:45:55  INFO      tft.forecast  PyTorch найден — обучение Temporal Fusion Transformer (epochs=30, hidden=32)...
+2026-09-17 08:46:09  INFO      tft.forecast      epoch  1/30  train pinball=0.8426
+2026-09-17 08:47:08  INFO      tft.forecast      epoch  6/30  train pinball=0.6291
+2026-09-17 08:48:21  INFO      tft.forecast      epoch 12/30  train pinball=0.6231
+2026-09-17 08:49:31  INFO      tft.forecast      epoch 18/30  train pinball=0.6039
+2026-09-17 08:50:40  INFO      tft.forecast      epoch 24/30  train pinball=0.5782
+2026-09-17 08:51:52  INFO      tft.forecast      epoch 30/30  train pinball=0.5583
+2026-09-17 08:52:00  INFO      tft.forecast  Котировки: source=Previous Close, рынок закрыт, тикеров с ценой=46, max age=4 мин
+2026-09-17 08:52:00  INFO      tft.forecast  Недельный коридор: сырое покрытие=55%, конформная λ=0.271 → покрытие=80% (цель 80%).
+2026-09-17 08:52:01  INFO      tft.forecast  Прогноз готов (backend=TFT, дневное покрытие=71%, недельное=80%).
+2026-09-17 08:52:01  INFO      tft.combined  [SKIP SHORT] AKRN: шорт недоступен у брокера
+2026-09-17 08:52:01  INFO      tft.combined  [SKIP SHORT] CBOM: шорт недоступен у брокера
+2026-09-17 08:52:01  INFO      tft.combined  [SKIP SHORT] MVID: шорт недоступен у брокера
+2026-09-17 08:52:01  INFO      tft.combined  Специализация: отсеяно по стратегии 25, без импульса 20, риск шорт-сквиза 0, ниже порога 45, рынок перегрет 0; осталось 0.
+2026-09-17 08:52:01  INFO      stage2  [PREP] сигналов 0, в плане 0 заявок
+2026-09-17 08:52:01  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-17 08:52:02  INFO      stage2  [PREP] вердикт: PASS
+2026-09-17 09:10:02  INFO      stage2  [CLOSE] 20260917-091002-CLOSE, торговый день 2026-09-17
+2026-09-17 09:10:02  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-17 09:10:05  INFO      treasury  [TREASURY] инструмент TMON@/SPBRU, лот 1, через API: нет
+2026-09-17 09:10:05  WARNING   treasury  [TREASURY] брокер не исполнил BUY TMON (TMON@: листинг недоступен через API) — виртуальная запись в treasury_ledger
+2026-09-17 09:10:05  INFO      treasury  [TREASURY] Припарковано 197737.11 ₽ в TMON (1203 шт) — виртуально
+2026-09-17 09:10:06  INFO      stage2  [CLOSE] ночных позиций 0, закрыто 0, снято лимиток 0
+2026-09-17 09:10:06  INFO      stage2  [CLOSE] вердикт: PASS
+2026-09-17 09:15:01  INFO      stage2  [ORDER] 20260917-091501-ORDER, торговый день 2026-09-17
+2026-09-17 09:15:01  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-17 09:15:03  INFO      stage2  [ORDER] вердикт: PASS
+2026-09-17 10:05:01  INFO      stage2  [PARK] 20260917-100501-PARK, торговый день 2026-09-17
+2026-09-17 10:05:01  INFO      broker.tinkoff_sandbox  Sandbox account 1639899c-2aca-49fe-b5d8-d68e8b84f225 найден — переиспользуем.
+2026-09-17 10:05:05  INFO      treasury  [TREASURY] инструмент TMON@/SPBRU, лот 1, через API: да
+2026-09-17 10:05:05  INFO      treasury  [TREASURY] PARK: куплено 1202 из 1202 шт TMON по лимиту 164.50 (197644.86 ₽); виртуальных списано 1203
+2026-09-17 10:05:06  INFO      stage2  [PARK] вердикт: PASS

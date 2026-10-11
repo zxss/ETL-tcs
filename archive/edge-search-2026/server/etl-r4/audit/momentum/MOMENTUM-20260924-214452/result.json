@@ -1,0 +1,217 @@
+{
+ "run_id": "MOMENTUM-20260924-214452",
+ "ts": "2026-09-24T21:44:58+03:00",
+ "account_id": "88c5a4bd-0170-4c60-bf8c-7a1d957f67a4",
+ "dry_run": false,
+ "picks": [
+  "FLOT",
+  "SNGSP",
+  "AKRN",
+  "TATN",
+  "CBOM",
+  "POSI",
+  "SBER",
+  "MOEX",
+  "HYDR",
+  "GMKN"
+ ],
+ "asof": "2026-09-23",
+ "future": "MXZ6",
+ "future_lots": -5,
+ "long_notional_rub": 1185234.7,
+ "equity_before_rub": 1500000.0,
+ "equity_after_rub": 1498754.7,
+ "bench_ticker": "TMON",
+ "bench_price": 164.82,
+ "trades": 11,
+ "errors": 0,
+ "report": [
+  {
+   "ticker": "FLOT",
+   "direction": "BUY",
+   "lots": 146,
+   "current_lots": 0,
+   "target_lots": 146,
+   "status": "EXECUTION_REPORT_STATUS_FILL",
+   "order_id": "be22b3f9-1d20-4086-b65d-37b8a8d8aac5",
+   "lots_executed": 146,
+   "executed_price": null
+  },
+  {
+   "ticker": "SNGSP",
+   "direction": "BUY",
+   "lots": 296,
+   "current_lots": 0,
+   "target_lots": 296,
+   "status": "EXECUTION_REPORT_STATUS_FILL",
+   "order_id": "732005fa-8185-4deb-9a12-0558e9439529",
+   "lots_executed": 296,
+   "executed_price": null
+  },
+  {
+   "ticker": "AKRN",
+   "direction": "BUY",
+   "lots": 6,
+   "current_lots": 0,
+   "target_lots": 6,
+   "status": "EXECUTION_REPORT_STATUS_FILL",
+   "order_id": "0723c183-967f-45c2-9f62-227ca0a1823b",
+   "lots_executed": 6,
+   "executed_price": null
+  },
+  {
+   "ticker": "TATN",
+   "direction": "BUY",
+   "lots": 187,
+   "current_lots": 0,
+   "target_lots": 187,
+   "status": "EXECUTION_REPORT_STATUS_FILL",
+   "order_id": "2a228bbf-eab2-4df1-bbc0-9c0eb5868704",
+   "lots_executed": 187,
+   "executed_price": null
+  },
+  {
+   "ticker": "CBOM",
+   "direction": "BUY",
+   "lots": 127,
+   "current_lots": 0,
+   "target_lots": 127,
+   "status": "EXECUTION_REPORT_STATUS_FILL",
+   "order_id": "c65a0ffb-5736-4195-8cb1-625c0353f00f",
+   "lots_executed": 127,
+   "executed_price": null
+  },
+  {
+   "ticker": "POSI",
+   "direction": "BUY",
+   "lots": 114,
+   "current_lots": 0,
+   "target_lots": 114,
+   "status": "EXECUTION_REPORT_STATUS_FILL",
+   "order_id": "a652c70d-c550-4b60-a908-a65e085b2c9c",
+   "lots_executed": 114,
+   "executed_price": null
+  },
+  {
+   "ticker": "SBER",
+   "direction": "BUY",
+   "lots": 428,
+   "current_lots": 0,
+   "target_lots": 428,
+   "status": "EXECUTION_REPORT_STATUS_FILL",
+   "order_id": "c970b4de-4648-4e15-a7d1-fa44f6b8bc40",
+   "lots_executed": 428,
+   "executed_price": null
+  },
+  {
+   "ticker": "MOEX",
+   "direction": "BUY",
+   "lots": 80,
+   "current_lots": 0,
+   "target_lots": 80,
+   "status": "EXECUTION_REPORT_STATUS_FILL",
+   "order_id": "54dadc4e-606f-4224-bd86-69d380a64c66",
+   "lots_executed": 80,
+   "executed_price": null
+  },
+  {
+   "ticker": "HYDR",
+   "direction": "BUY",
+   "lots": 310,
+   "current_lots": 0,
+   "target_lots": 310,
+   "status": "EXECUTION_REPORT_STATUS_FILL",
+   "order_id": "f0831cbf-391c-4523-8757-41a1eed0e9eb",
+   "lots_executed": 310,
+   "executed_price": null
+  },
+  {
+   "ticker": "GMKN",
+   "direction": "BUY",
+   "lots": 100,
+   "current_lots": 0,
+   "target_lots": 100,
+   "status": "EXECUTION_REPORT_STATUS_FILL",
+   "order_id": "1a095852-5c54-44c3-a21f-f61d0592a68b",
+   "lots_executed": 100,
+   "executed_price": null
+  },
+  {
+   "ticker": "MXZ6",
+   "direction": "SELL",
+   "lots": 5,
+   "current_lots": 0,
+   "target_lots": -5,
+   "status": "EXECUTION_REPORT_STATUS_FILL",
+   "order_id": "31ed8cd5-166f-4719-a9db-8efa8771a010",
+   "lots_executed": 5,
+   "executed_price": null
+  }
+ ],
+ "after": {
+  "money_rub": 313451.6,
+  "positions": [
+   {
+    "uid": "21423d2d-9009-4d37-9325-883b368d13ae",
+    "shares": 1460.0,
+    "price": 82.18,
+    "value_rub": 119982.8
+   },
+   {
+    "uid": "509edd0c-129c-4ee2-934d-7f6246126da1",
+    "shares": 1000.0,
+    "price": 119.86,
+    "value_rub": 119860.0
+   },
+   {
+    "uid": "5e1c2634-afc4-4e50-ad6d-f78fc14a539a",
+    "shares": 800.0,
+    "price": 149.85,
+    "value_rub": 119880.0
+   },
+   {
+    "uid": "62560f05-3fd0-4d65-88f0-a27f249cc6de",
+    "shares": 310000.0,
+    "price": 0.3867,
+    "value_rub": 119877.0
+   },
+   {
+    "uid": "88468f6c-c67a-4fb4-a006-53eed803883c",
+    "shares": 187.0,
+    "price": 639.9,
+    "value_rub": 119661.3
+   },
+   {
+    "uid": "a797f14a-8513-4b84-b15e-a3b98dc4cc00",
+    "shares": 2960.0,
+    "price": 40.5,
+    "value_rub": 119880.0
+   },
+   {
+    "uid": "cd3affd4-3b50-43fd-b008-518f54108d59",
+    "shares": 6.0,
+    "price": 17914.0,
+    "value_rub": 107484.0
+   },
+   {
+    "uid": "de08affe-4fbd-454e-9fd1-46a81b23f870",
+    "shares": 114.0,
+    "price": 1046.4,
+    "value_rub": 119289.6
+   },
+   {
+    "uid": "e6123145-9665-43e0-8413-cd61b8aa9b13",
+    "shares": 428.0,
+    "price": 279.8,
+    "value_rub": 119754.4
+   },
+   {
+    "uid": "ebfda284-4291-4337-9dfb-f55610d0a907",
+    "shares": 12700.0,
+    "price": 9.42,
+    "value_rub": 119634.0
+   }
+  ],
+  "equity_rub": 1498754.7
+ }
+}

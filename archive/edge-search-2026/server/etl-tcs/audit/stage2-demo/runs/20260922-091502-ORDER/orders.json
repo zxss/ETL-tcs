@@ -1,0 +1,25 @@
+{
+  "accepted": [],
+  "rejected": [
+    {
+      "signal_id": "20260922-MVID-long_overnight",
+      "ticker": "MVID",
+      "strategy_type": "long_overnight",
+      "direction": "LONG",
+      "order_type": "LIMIT",
+      "anchor_price": 43.75,
+      "entry_price": 43.14619771242142,
+      "stop_price": 42.714735735297204,
+      "tp_price": 45.11815512478352,
+      "quantity_lots": 231,
+      "lot_size": 10,
+      "total_rub": 99667.71671569347,
+      "exp_pnl_pct": 0.09419710052013397,
+      "final_score": 0.5057030619763545,
+      "expected_cost_pct": 0.128,
+      "verdict": null,
+      "skip_reason": "long_overnight — вечерняя фаза"
+    }
+  ],
+  "placed": []
+}

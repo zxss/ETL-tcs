@@ -1,0 +1,49 @@
+{
+ "meta": {
+  "created": "17.09.2026 20:47",
+  "revision": "3dbc665",
+  "rules": "structural-2026-09-17",
+  "from": "2024-05-21",
+  "to": "2026-09-07",
+  "trials_total": 113
+ },
+ "results": {
+  "cc2": {
+   "trades": 73,
+   "trades_per_year": 31.74196428571429,
+   "avg_hold_days": 19.863013698630137,
+   "net_excess_pct_trade": 0.056156816034823545,
+   "median_net_excess_pct": 0.027551893462574473,
+   "win_rate": 0.547945205479452,
+   "t": 2.485462599376494,
+   "dates": 52,
+   "excess_employed_annual_pct": 1.0735139828360916,
+   "contribution_pct_capital_year": 0.03287236363796717,
+   "pnl_excess_rub": 3779.984319766245,
+   "ir": 1.5033449602644786,
+   "passed": false
+  }
+ },
+ "extra": {
+  "cash_and_carry": {
+   "signal_days": {
+    "C&C": 53,
+    "C&C-2": 52
+   },
+   "signal_days_per_year": {
+    "C&C": 23.045535714285716,
+    "C&C-2": 22.610714285714288
+   },
+   "contracts_used": 49,
+   "sizes_found": 49,
+   "max_drawdown_rub": {
+    "C&C": -12142.49999999999,
+    "C&C-2": -208.00000000000364
+   },
+   "open_at_end": {
+    "C&C": 0,
+    "C&C-2": 0
+   }
+  }
+ }
+}

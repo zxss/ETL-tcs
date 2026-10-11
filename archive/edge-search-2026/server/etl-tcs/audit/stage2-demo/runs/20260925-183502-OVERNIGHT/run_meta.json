@@ -1,0 +1,44 @@
+{
+  "run_id": "20260925-183502-OVERNIGHT",
+  "phase": "OVERNIGHT",
+  "finished_at": "2026-09-25T18:43:03+03:00",
+  "verdict": "PASS",
+  "errors": [],
+  "warnings": [],
+  "partial": [],
+  "skipped": null,
+  "entry_mode": "marketable",
+  "overnight_var": {
+    "enabled": true,
+    "budget_rub": 15000.0,
+    "var_pct": 2.3,
+    "notional_before_rub": 428647.22,
+    "var_before_rub": 9858.89,
+    "dropped": 0,
+    "notional_after_rub": 428647.22,
+    "var_after_rub": 9858.89
+  },
+  "treasury_released_lots": 2604,
+  "treasury": {
+    "ticker": "TMON@",
+    "tmon_lots": 27630,
+    "tmon_price": 164.92,
+    "tmon_value_rub": 4556739.6,
+    "free_cash_rub": 30984.31,
+    "cash_rub": 30984.31,
+    "virtual_lots": 0,
+    "mode": "broker"
+  },
+  "overnight_orders": 5,
+  "placed_count": 5,
+  "daily_verdict": "PASS",
+  "day_summary": {
+    "completed": 6,
+    "target": 30,
+    "closing": 5016166.5011,
+    "change": -1877.4147,
+    "change_pct": -0.0374,
+    "cum_pct": 0.3119571097254248,
+    "positions": 3
+  }
+}

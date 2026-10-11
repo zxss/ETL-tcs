@@ -1,0 +1,12 @@
+{
+  "run_id": "20260923-094519-PARK",
+  "phase": "PARK",
+  "finished_at": "2026-09-23T09:45:20+03:00",
+  "verdict": "PASS_WITH_WARNINGS",
+  "errors": [],
+  "warnings": [
+    "NotSupportedError: SandboxService/GetSandboxOrders не поддержан текущим контуром (https://invest-public-api.tbank.ru/rest): HTTP 404 {\"code\":5,\"message\":\"Account not found\",\"description\":\"50004\"}"
+  ],
+  "partial": [],
+  "skipped": null
+}

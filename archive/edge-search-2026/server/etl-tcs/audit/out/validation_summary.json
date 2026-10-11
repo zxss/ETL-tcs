@@ -1,0 +1,38 @@
+{
+ "A_selected_flat_cost": {
+  "rows": 18,
+  "verdicts": {
+   "REJECTED": 18
+  },
+  "fdr_pass": 18,
+  "edge_above_cost": 9,
+  "pbo_median": 0.061507936507936505,
+  "pbo_gt_030": 0,
+  "white_rc_p_median": 0.06621689155422289,
+  "spa_p_median": 0.02498750624687656
+ },
+ "B_selected_real_cost": {
+  "rows": 18,
+  "verdicts": {
+   "REJECTED": 18
+  },
+  "fdr_pass": 18,
+  "edge_above_cost": 9,
+  "pbo_median": 0.02976190476190476,
+  "pbo_gt_030": 3,
+  "white_rc_p_median": 0.24812593703148428,
+  "spa_p_median": 0.14142928535732135
+ },
+ "C_full_universe_real_cost": {
+  "rows": 138,
+  "verdicts": {
+   "REJECTED": 138
+  },
+  "fdr_pass": 42,
+  "edge_above_cost": 25,
+  "pbo_median": 0.12698412698412698,
+  "pbo_gt_030": 36,
+  "white_rc_p_median": 1.0,
+  "spa_p_median": 0.6494252873563219
+ }
+}

@@ -1,0 +1,29 @@
+{
+ "strategy_id": "cash_and_carry",
+ "verdict": "CERTIFICATION_REJECTED",
+ "metrics": {
+  "trades": 32,
+  "dates": 26,
+  "net_excess_pct_trade": 0.0722378125,
+  "t": 1.9450604991472396,
+  "excess_annual_pct": 1.442977815957622,
+  "ir": 1.6070458969445804,
+  "dsr": 0.2116111289171666,
+  "trials": 113,
+  "square_off_violations": 0
+ },
+ "thresholds": {
+  "t_min": 2.0,
+  "excess_annual_min_pct": 2.0,
+  "ir_min": 0.8,
+  "dsr_min": 0.95,
+  "holdout": "2022-09-12…2024-05-20",
+  "square_off_violations_max": 0
+ },
+ "failed": [
+  "t по датам: 1.95 < 2.0",
+  "избыточная доходность сверх фонда, % годовых: 1.44 < 2.0",
+  "DSR: 0.21 < 0.95"
+ ],
+ "created": "2026-09-17T22:44:29"
+}

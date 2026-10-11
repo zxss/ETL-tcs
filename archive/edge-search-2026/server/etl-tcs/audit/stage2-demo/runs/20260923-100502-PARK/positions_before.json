@@ -1,0 +1,174 @@
+{
+  "account_id": "1639899c-2aca-49fe-b5d8-d68e8b84f225",
+  "sandbox": true,
+  "portfolio": {
+    "totalAmountShares": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "totalAmountBonds": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "totalAmountEtf": {
+      "currency": "rub",
+      "units": "4544191",
+      "nano": 830000000
+    },
+    "totalAmountCurrencies": {
+      "currency": "rub",
+      "units": "469850",
+      "nano": 786975000
+    },
+    "totalAmountFutures": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "expectedYield": {
+      "units": "0",
+      "nano": 274500000
+    },
+    "positions": [
+      {
+        "figi": "RUB000UTSTOM",
+        "instrumentType": "currency",
+        "quantity": {
+          "units": "469850",
+          "nano": 786975000
+        },
+        "averagePositionPrice": {
+          "currency": "rub",
+          "units": "1",
+          "nano": 0
+        },
+        "averagePositionPricePt": {
+          "units": "0",
+          "nano": 0
+        },
+        "currentPrice": {
+          "currency": "rub",
+          "units": "1",
+          "nano": 0
+        },
+        "quantityLots": {
+          "units": "469850",
+          "nano": 786975000
+        },
+        "blocked": false,
+        "blockedLots": {
+          "units": "0",
+          "nano": 0
+        },
+        "positionUid": "33e24a92-aab0-409c-88b8-f2d57415b920",
+        "instrumentUid": "a92e2e25-a698-45cc-a781-167cf465257c",
+        "ticker": "RUB000UTSTOM",
+        "classCode": "CETS"
+      },
+      {
+        "figi": "TCS70A106DL2",
+        "instrumentType": "etf",
+        "quantity": {
+          "units": "27579",
+          "nano": 0
+        },
+        "averagePositionPrice": {
+          "currency": "rub",
+          "units": "164",
+          "nano": 420000000
+        },
+        "averagePositionPricePt": {
+          "units": "0",
+          "nano": 0
+        },
+        "currentPrice": {
+          "currency": "rub",
+          "units": "164",
+          "nano": 770000000
+        },
+        "averagePositionPriceFifo": {
+          "currency": "rub",
+          "units": "164",
+          "nano": 430000000
+        },
+        "quantityLots": {
+          "units": "27579",
+          "nano": 0
+        },
+        "blocked": false,
+        "blockedLots": {
+          "units": "0",
+          "nano": 0
+        },
+        "positionUid": "96a4604c-79d9-4a30-8a46-95a80dfd9f02",
+        "instrumentUid": "498ec3ff-ef27-4729-9703-a5aac48d5789",
+        "ticker": "TMON@",
+        "classCode": "SPBRU"
+      }
+    ],
+    "accountId": "1639899c-2aca-49fe-b5d8-d68e8b84f225",
+    "totalAmountOptions": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "totalAmountSp": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "totalAmountPortfolio": {
+      "currency": "rub",
+      "units": "5014042",
+      "nano": 616975000
+    },
+    "virtualPositions": [],
+    "totalVarMargin": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "totalVarMarginSettled": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    }
+  },
+  "positions": {
+    "money": [
+      {
+        "currency": "rub",
+        "units": "469850",
+        "nano": 786975000
+      }
+    ],
+    "blocked": [
+      {
+        "currency": "rub",
+        "units": "0",
+        "nano": 0
+      }
+    ],
+    "securities": [
+      {
+        "figi": "TCS70A106DL2",
+        "blocked": "0",
+        "balance": "27579",
+        "positionUid": "96a4604c-79d9-4a30-8a46-95a80dfd9f02",
+        "instrumentUid": "498ec3ff-ef27-4729-9703-a5aac48d5789",
+        "ticker": "TMON@",
+        "classCode": "SPBRU",
+        "exchangeBlocked": false,
+        "instrumentType": "etf"
+      }
+    ],
+    "limitsLoadingInProgress": false,
+    "futures": [],
+    "options": [],
+    "accountId": "1639899c-2aca-49fe-b5d8-d68e8b84f225"
+  },
+  "orders": [],
+  "stops": []
+}

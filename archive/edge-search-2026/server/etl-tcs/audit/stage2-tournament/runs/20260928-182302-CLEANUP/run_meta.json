@@ -1,0 +1,24 @@
+{
+  "run_id": "20260928-182302-CLEANUP",
+  "phase": "CLEANUP",
+  "finished_at": "2026-09-28T18:23:07+03:00",
+  "verdict": "PASS",
+  "errors": [],
+  "warnings": [],
+  "partial": [],
+  "skipped": null,
+  "treasury": {
+    "ticker": "TMON@",
+    "tmon_lots": 5672,
+    "tmon_price": 165.06,
+    "tmon_value_rub": 936220.32,
+    "free_cash_rub": 104317.03,
+    "cash_rub": 104317.03,
+    "virtual_lots": 0,
+    "mode": "broker"
+  },
+  "intraday_before": 1,
+  "positions_closed": 1,
+  "orders_cancelled": 0,
+  "stops_cancelled": 1
+}

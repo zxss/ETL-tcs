@@ -1,0 +1,7 @@
+{
+  "market_data_max_date": "2026-09-09",
+  "market_data_rows": 32896,
+  "market_data_5m_max_ts": "2026-09-10T06:40:00+00:00",
+  "dataset_hash": "sha256:84bbf2e48ba3cd0eacb074f461c5e82906e6fcbea24165acc48b8ef046c0ff94",
+  "last_date": "2026-09-09"
+}

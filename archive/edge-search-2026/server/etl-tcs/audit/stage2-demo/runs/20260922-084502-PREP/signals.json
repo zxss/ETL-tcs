@@ -1,0 +1,42 @@
+[
+  {
+    "ticker": "MVID",
+    "strategy": "long_overnight",
+    "direction": "LONG",
+    "selected": null,
+    "verdict": null,
+    "white_rc": null,
+    "spa": null,
+    "pbo": null,
+    "fdr": null,
+    "ruin30": null,
+    "lb": null,
+    "exp_pnl": 0.09419710052013397,
+    "prob_profit": 0.5686703839715384,
+    "down": -0.7701117186546326,
+    "up": 1.5201542587280272,
+    "f_low": 40.730988562107086,
+    "f_high": 47.09011253714562,
+    "range_pct": 14.535140514373795,
+    "coverage": 0.7023809523809523,
+    "anchor_price": 43.75,
+    "last_date": "2026-09-21",
+    "price_ts": "2026-09-22 08:47:43.992203+03:00",
+    "max_pos": 400949.82200000004,
+    "liq_score": 9,
+    "regime": "NEUTRAL",
+    "rs": -5.182295482885246,
+    "vol_spike": 2.5669272853713867,
+    "atr_pctl": 6.746031746031746,
+    "atr_pct": 4.386109282422646,
+    "ret1": -1.5873015873015928,
+    "market_atr_pctl": 33.33333333333333,
+    "index_above_ema50": true,
+    "cost_rt": null,
+    "gap_down_prob": 0.03968253968253968,
+    "final_score": 0.5057030619763545,
+    "flags": [
+      "⚠ Volume Climax"
+    ]
+  }
+]

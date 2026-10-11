@@ -1,0 +1,14 @@
+{
+  "run_id": "20260923-100802-PARK",
+  "phase": "PARK",
+  "captured_at": "2026-09-23T10:08:06+03:00",
+  "account_id": "<PROD_ACCOUNT>",
+  "total_portfolio_rub": 1039943.23,
+  "free_cash_rub": 104543.94,
+  "shares_value_rub": 0.0,
+  "etf_value_rub": 935399.29,
+  "unrealised_pnl_rub": -0.01,
+  "open_positions": 0,
+  "active_orders": 0,
+  "active_stop_orders": 0
+}

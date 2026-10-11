@@ -1,0 +1,23 @@
+{
+  "overnight_before": 6,
+  "closed": [
+    "MVID",
+    "SMLT",
+    "LKOH"
+  ],
+  "failed": [
+    "SMLT: не снят TAKE_PROFIT (StopOrdersService/CancelStopOrder не поддержан текущим контуром (https://sandbox-invest-public-api.tbank.ru/rest): HTTP 404 {\"code\":5,\"message\":\"Stop-order not found\",\"description\":\"50006\"})",
+    "SMLT: не снят STOP_LOSS (StopOrdersService/CancelStopOrder не поддержан текущим контуром (https://sandbox-invest-public-api.tbank.ru/rest): HTTP 404 {\"code\":5,\"message\":\"Stop-order not found\",\"description\":\"50006\"})",
+    "LKOH: не снят TAKE_PROFIT (StopOrdersService/CancelStopOrder не поддержан текущим контуром (https://sandbox-invest-public-api.tbank.ru/rest): HTTP 404 {\"code\":5,\"message\":\"Stop-order not found\",\"description\":\"50006\"})",
+    "LKOH: не снят STOP_LOSS (StopOrdersService/CancelStopOrder не поддержан текущим контуром (https://sandbox-invest-public-api.tbank.ru/rest): HTTP 404 {\"code\":5,\"message\":\"Stop-order not found\",\"description\":\"50006\"})",
+    "SMLT: не снят TAKE_PROFIT (StopOrdersService/CancelStopOrder не поддержан текущим контуром (https://sandbox-invest-public-api.tbank.ru/rest): HTTP 404 {\"code\":5,\"message\":\"Stop-order not found\",\"description\":\"50006\"})",
+    "SMLT: не снят STOP_LOSS (StopOrdersService/CancelStopOrder не поддержан текущим контуром (https://sandbox-invest-public-api.tbank.ru/rest): HTTP 404 {\"code\":5,\"message\":\"Stop-order not found\",\"description\":\"50006\"})"
+  ],
+  "orders_cancelled": 0,
+  "registry_reconciled": 0,
+  "orphans": [
+    "SMLT",
+    "LKOH",
+    "SMLT"
+  ]
+}

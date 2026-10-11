@@ -1,0 +1,24 @@
+{
+  "run_id": "20260922-100502-PARK",
+  "phase": "PARK",
+  "finished_at": "2026-09-22T10:05:05+03:00",
+  "verdict": "PASS",
+  "errors": [],
+  "warnings": [],
+  "partial": [],
+  "skipped": null,
+  "treasury_parked_lots": 3012,
+  "treasury_parked_rub": 496136.64,
+  "treasury_converted_lots": 3014,
+  "treasury_limit_price": 164.79,
+  "treasury": {
+    "ticker": "TMON@",
+    "tmon_lots": 30227,
+    "tmon_price": 164.71,
+    "tmon_value_rub": 4978689.17,
+    "free_cash_rub": 30227.61,
+    "cash_rub": 30227.61,
+    "virtual_lots": 0,
+    "mode": "broker"
+  }
+}

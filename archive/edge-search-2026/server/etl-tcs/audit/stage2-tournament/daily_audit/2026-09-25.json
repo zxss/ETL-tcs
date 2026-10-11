@@ -1,0 +1,41 @@
+{
+  "trading_day": "2026-09-25",
+  "prep_run_id": "20260925-083302-PREP",
+  "close_run_id": "20260925-095234-CLOSE",
+  "order_run_id": "20260925-092802-ORDER",
+  "cleanup_run_id": "20260925-182302-CLEANUP",
+  "overnight_run_id": "20260925-184304-OVERNIGHT",
+  "signals_count": 0,
+  "orders_count": 0,
+  "fills_count": 0,
+  "overnight_orders": 5,
+  "execution_audit_available": true,
+  "execution_audit_count": 5,
+  "execution_audit_filled": 0,
+  "slippage_fact_pct": null,
+  "slippage_expected_pct": null,
+  "treasury": {
+    "ticker": "TMON@",
+    "tmon_lots": 5119,
+    "tmon_price": 164.92,
+    "tmon_value_rub": 844225.48,
+    "free_cash_rub": 104255.19,
+    "cash_rub": 104255.19,
+    "virtual_lots": 0,
+    "mode": "broker"
+  },
+  "dataset_hash": "sha256:3f8484515eabfe4fa3cc7e365e4ab1a476a88c717cf5b6f54af3193ce03e1dce",
+  "config_hash": "sha256:71f241625bb75c56ff7024b49e0fbe7bfc3ac7233483d5fa84c77328e91cb545",
+  "checks": {
+    "critical_passed": 9,
+    "critical_failed": 0,
+    "partial": 0,
+    "warnings": 1
+  },
+  "errors": [],
+  "partial": [],
+  "warnings": [
+    "CLOSE 20260925-091302-CLOSE (FAIL), перезапущена: после CLOSE остались ночные позиции: HYDR"
+  ],
+  "verdict": "PASS_WITH_WARNINGS"
+}

@@ -1,0 +1,147 @@
+{
+ "targets": {
+  "asof": "2026-09-23",
+  "universe": 46,
+  "excluded_losers": 9,
+  "picks": [
+   "FLOT",
+   "SNGSP",
+   "AKRN",
+   "TATN",
+   "CBOM",
+   "POSI",
+   "SBER",
+   "MOEX",
+   "HYDR",
+   "GMKN"
+  ],
+  "momentum": {
+   "FLOT": 3.42,
+   "SNGSP": 3.32,
+   "AKRN": -0.7,
+   "TATN": -1.01,
+   "CBOM": -2.46,
+   "POSI": -5.01,
+   "SBER": -9.37,
+   "MOEX": -13.82,
+   "HYDR": -14.6,
+   "GMKN": -15.31
+  },
+  "last_price": {
+   "FLOT": 82.82,
+   "SNGSP": 40.81,
+   "AKRN": 18002.0,
+   "TATN": 638.5,
+   "CBOM": 9.762,
+   "POSI": 1053.0,
+   "SBER": 280.74,
+   "MOEX": 150.57,
+   "HYDR": 0.3844,
+   "GMKN": 127.52
+  }
+ },
+ "future": "MXZ6",
+ "future_lots": -5,
+ "per_name_rub": 120000.0,
+ "trades": [
+  {
+   "ticker": "FLOT",
+   "uid": "21423d2d-9009-4d37-9325-883b368d13ae",
+   "direction": "BUY",
+   "lots": 146,
+   "price": 82.18,
+   "target_lots": 146,
+   "current_lots": 0
+  },
+  {
+   "ticker": "SNGSP",
+   "uid": "a797f14a-8513-4b84-b15e-a3b98dc4cc00",
+   "direction": "BUY",
+   "lots": 296,
+   "price": 40.485,
+   "target_lots": 296,
+   "current_lots": 0
+  },
+  {
+   "ticker": "AKRN",
+   "uid": "cd3affd4-3b50-43fd-b008-518f54108d59",
+   "direction": "BUY",
+   "lots": 6,
+   "price": 17914.0,
+   "target_lots": 6,
+   "current_lots": 0
+  },
+  {
+   "ticker": "TATN",
+   "uid": "88468f6c-c67a-4fb4-a006-53eed803883c",
+   "direction": "BUY",
+   "lots": 187,
+   "price": 639.9,
+   "target_lots": 187,
+   "current_lots": 0
+  },
+  {
+   "ticker": "CBOM",
+   "uid": "ebfda284-4291-4337-9dfb-f55610d0a907",
+   "direction": "BUY",
+   "lots": 127,
+   "price": 9.42,
+   "target_lots": 127,
+   "current_lots": 0
+  },
+  {
+   "ticker": "POSI",
+   "uid": "de08affe-4fbd-454e-9fd1-46a81b23f870",
+   "direction": "BUY",
+   "lots": 114,
+   "price": 1046.4,
+   "target_lots": 114,
+   "current_lots": 0
+  },
+  {
+   "ticker": "SBER",
+   "uid": "e6123145-9665-43e0-8413-cd61b8aa9b13",
+   "direction": "BUY",
+   "lots": 428,
+   "price": 279.8,
+   "target_lots": 428,
+   "current_lots": 0
+  },
+  {
+   "ticker": "MOEX",
+   "uid": "5e1c2634-afc4-4e50-ad6d-f78fc14a539a",
+   "direction": "BUY",
+   "lots": 80,
+   "price": 149.82,
+   "target_lots": 80,
+   "current_lots": 0
+  },
+  {
+   "ticker": "HYDR",
+   "uid": "62560f05-3fd0-4d65-88f0-a27f249cc6de",
+   "direction": "BUY",
+   "lots": 310,
+   "price": 0.3867,
+   "target_lots": 310,
+   "current_lots": 0
+  },
+  {
+   "ticker": "GMKN",
+   "uid": "509edd0c-129c-4ee2-934d-7f6246126da1",
+   "direction": "BUY",
+   "lots": 100,
+   "price": 119.86,
+   "target_lots": 100,
+   "current_lots": 0
+  },
+  {
+   "ticker": "MXZ6",
+   "uid": "3d96c0f8-9e6e-4c0a-bac8-44a5a1db8050",
+   "direction": "SELL",
+   "lots": 5,
+   "price": 234175.0,
+   "target_lots": -5,
+   "current_lots": 0
+  }
+ ]
+}

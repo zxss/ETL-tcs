@@ -1,0 +1,148 @@
+{
+ "meta": {
+  "created": "17.09.2026 20:42",
+  "revision": "b826b00",
+  "rules": "structural-2026-09-17",
+  "from": "2024-05-21",
+  "to": "2026-09-07",
+  "trials_total": 112
+ },
+ "results": {
+  "totm_1a": {
+   "trades": 832,
+   "trades_per_year": 361.7714285714286,
+   "avg_hold_days": 1.6370192307692308,
+   "net_excess_pct_trade": -0.03945571278764449,
+   "median_net_excess_pct": 0.006894961862421112,
+   "win_rate": 0.5048076923076923,
+   "t": -0.41964564926693215,
+   "dates": 84,
+   "excess_employed_annual_pct": -8.804641083077263,
+   "contribution_pct_capital_year": -1.426013888643173,
+   "pnl_excess_rub": -163976.95639428686,
+   "ir": -0.28030171551131655,
+   "passed": false
+  },
+  "totm_1b": {
+   "trades": 279,
+   "trades_per_year": 121.31517857142858,
+   "avg_hold_days": 6.28673835125448,
+   "net_excess_pct_trade": -0.8626043442081707,
+   "median_net_excess_pct": -0.8749179067821594,
+   "win_rate": 0.3727598566308244,
+   "t": -1.4943077982824384,
+   "dates": 28,
+   "excess_employed_annual_pct": -50.04156956677437,
+   "contribution_pct_capital_year": -10.436998888409208,
+   "pnl_excess_rub": -1200147.7161209767,
+   "ir": -0.9600796263905619,
+   "passed": false
+  },
+  "cc": {
+   "trades": 77,
+   "trades_per_year": 33.48125,
+   "avg_hold_days": 22.0,
+   "net_excess_pct_trade": 0.19677568300861525,
+   "median_net_excess_pct": 0.05733192365333739,
+   "win_rate": 0.5844155844155844,
+   "t": 2.4121021524759443,
+   "dates": 53,
+   "excess_employed_annual_pct": 3.0828493682790334,
+   "contribution_pct_capital_year": 0.10816669454277597,
+   "pnl_excess_rub": 12438.059331407503,
+   "ir": 1.7410325592131224,
+   "passed": true
+  },
+  "div_a": {
+   "trades": 26,
+   "trades_per_year": 11.305357142857144,
+   "avg_hold_days": 16.115384615384617,
+   "net_excess_pct_trade": -0.5234041207359391,
+   "median_net_excess_pct": 0.05756923174664674,
+   "win_rate": 0.5,
+   "t": -0.467438543245731,
+   "dates": 22,
+   "excess_employed_annual_pct": -11.681943327117711,
+   "contribution_pct_capital_year": -0.11579677407050969,
+   "pnl_excess_rub": -13315.440139524726,
+   "ir": -0.28606358108068075,
+   "passed": false
+  },
+  "div_b": {
+   "trades": 61,
+   "trades_per_year": 26.524107142857144,
+   "avg_hold_days": 19.983606557377048,
+   "net_excess_pct_trade": -1.0693801400079668,
+   "median_net_excess_pct": 1.2533945493724872,
+   "win_rate": 0.6229508196721312,
+   "t": -1.4948313864911447,
+   "dates": 52,
+   "excess_employed_annual_pct": -19.78363303052522,
+   "contribution_pct_capital_year": -0.5693890721272861,
+   "pnl_excess_rub": -65473.89741094049,
+   "ir": -0.6537989601991396,
+   "passed": false
+  },
+  "index": {
+   "trades": 14,
+   "trades_per_year": 6.0875,
+   "avg_hold_days": 17.857142857142858,
+   "net_excess_pct_trade": 1.0665060476910069,
+   "median_net_excess_pct": 1.6054936949631164,
+   "win_rate": 0.7142857142857143,
+   "t": 0.5996574079545817,
+   "dates": 8,
+   "excess_employed_annual_pct": 22.037502256324238,
+   "contribution_pct_capital_year": 0.13035496381289177,
+   "pnl_excess_rub": 14989.482491831497,
+   "ir": 0.31067708968463903,
+   "passed": false
+  }
+ },
+ "extra": {
+  "totm": {
+   "windows": 28,
+   "totm_basket_gross_mean_pct": -0.4392509119112442,
+   "control_basket_gross_mean_pct": 0.07654008109987397,
+   "control_windows": 94,
+   "welch_t_totm_vs_control": -0.7548349763979122
+  },
+  "cash_and_carry": {
+   "signal_days": 53,
+   "signal_days_per_year": 23.045535714285716,
+   "contracts_used": 49,
+   "sizes_found": 49,
+   "max_drawdown_rub": -12142.49999999999,
+   "open_at_end": 0
+  },
+  "dividend_gap": {
+   "events": 103,
+   "skipped": {
+    "нет гэпа": 3,
+    "гэп закрылся до входа": 12,
+    "нет данных": 1
+   },
+   "take_rate_A": 0.5384615384615384,
+   "take_rate_B": 0.4918032786885246
+  },
+  "index_rebalance": {
+   "events": 12,
+   "additions": 14,
+   "deletions": 15,
+   "skipped": {},
+   "prices_from_api": [
+    "CNRU",
+    "DOMRF",
+    "HEAD",
+    "LEAS",
+    "MDMG",
+    "OZON",
+    "RAGR",
+    "RENI",
+    "SVCB",
+    "UGLD"
+   ],
+   "car_mean_pct": 2.300699151183275
+  }
+ }
+}

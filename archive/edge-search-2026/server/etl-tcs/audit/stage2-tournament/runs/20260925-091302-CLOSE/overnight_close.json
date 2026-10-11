@@ -1,0 +1,10 @@
+{
+  "overnight_before": 2,
+  "closed": [
+    "MGNT",
+    "TATN"
+  ],
+  "failed": [],
+  "orders_cancelled": 0,
+  "registry_reconciled": 0
+}

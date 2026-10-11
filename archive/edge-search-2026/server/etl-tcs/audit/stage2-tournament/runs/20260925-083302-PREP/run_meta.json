@@ -1,0 +1,14 @@
+{
+  "run_id": "20260925-083302-PREP",
+  "phase": "PREP",
+  "finished_at": "2026-09-25T08:40:34+03:00",
+  "verdict": "PASS",
+  "errors": [],
+  "warnings": [],
+  "partial": [],
+  "skipped": null,
+  "signals_count": 0,
+  "plan_orders": 0,
+  "dataset_hash": "sha256:3f8484515eabfe4fa3cc7e365e4ab1a476a88c717cf5b6f54af3193ce03e1dce",
+  "config_hash": "sha256:71f241625bb75c56ff7024b49e0fbe7bfc3ac7233483d5fa84c77328e91cb545"
+}

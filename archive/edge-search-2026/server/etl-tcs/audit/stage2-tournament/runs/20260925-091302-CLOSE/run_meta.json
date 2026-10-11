@@ -1,0 +1,27 @@
+{
+  "run_id": "20260925-091302-CLOSE",
+  "phase": "CLOSE",
+  "finished_at": "2026-09-25T09:13:09+03:00",
+  "verdict": "FAIL",
+  "errors": [
+    "после CLOSE остались ночные позиции: HYDR"
+  ],
+  "warnings": [],
+  "partial": [],
+  "skipped": null,
+  "treasury_parked_rub": 86418.08,
+  "treasury": {
+    "ticker": "TMON@",
+    "tmon_lots": 5635,
+    "tmon_price": 164.92,
+    "tmon_value_rub": 929324.2,
+    "free_cash_rub": 104073.67,
+    "cash_rub": 104073.67,
+    "virtual_lots": 0,
+    "mode": "broker"
+  },
+  "overnight_before": 2,
+  "positions_closed": 2,
+  "orders_cancelled": 0,
+  "registry_reconciled": 0
+}

@@ -1,0 +1,74 @@
+{
+  "test_id": "stage2-demo-30d-r4",
+  "trading_day": "2026-09-21",
+  "run_id": "20260921-084502-PREP",
+  "created_at": "2026-09-21T08:52:26+03:00",
+  "dataset": {
+    "market_data_max_date": "2026-09-20",
+    "market_data_rows": 33411,
+    "market_data_5m_max_ts": "2026-09-21T05:40:00+00:00",
+    "dataset_hash": "sha256:4d7529657ea2612ea5060ed3b9e9721d67369bcbbca92f6b58d122a27e3b2f40"
+  },
+  "config_hash": "sha256:6bdc08a2de8f11a9fa81e5f951701c5f0757b79ee4b907e42dd67f6c9d6886d8",
+  "model": {
+    "backend": "unknown",
+    "epochs": 30,
+    "tickers": 45
+  },
+  "orders": [
+    {
+      "signal_id": "20260921-GAZP-long_overnight",
+      "ticker": "GAZP",
+      "strategy_type": "long_overnight",
+      "direction": "LONG",
+      "order_type": "LIMIT",
+      "anchor_price": 96.22,
+      "entry_price": 95.22339216640472,
+      "stop_price": 94.27115824474068,
+      "tp_price": 97.81488135141373,
+      "quantity_lots": 105,
+      "lot_size": 10,
+      "total_rub": 99984.56177472496,
+      "exp_pnl_pct": 0.06705029916763305,
+      "final_score": 0.5843655411917191,
+      "expected_cost_pct": 0.128,
+      "verdict": null
+    },
+    {
+      "signal_id": "20260921-LENT-long_overnight",
+      "ticker": "LENT",
+      "strategy_type": "long_overnight",
+      "direction": "LONG",
+      "order_type": "LIMIT",
+      "anchor_price": 1656.0,
+      "entry_price": 1640.737597137451,
+      "stop_price": 1624.3302211660766,
+      "tp_price": 1696.9469356040954,
+      "quantity_lots": 60,
+      "lot_size": 1,
+      "total_rub": 98444.25582824707,
+      "exp_pnl_pct": 0.11457665872573852,
+      "final_score": 0.5310729564257944,
+      "expected_cost_pct": 0.128,
+      "verdict": null
+    },
+    {
+      "signal_id": "20260921-ENPG-long_overnight",
+      "ticker": "ENPG",
+      "strategy_type": "long_overnight",
+      "direction": "LONG",
+      "order_type": "LIMIT",
+      "anchor_price": 308.1,
+      "entry_price": 305.69470350494385,
+      "stop_price": 302.6377564698944,
+      "tp_price": 314.8211343781471,
+      "quantity_lots": 327,
+      "lot_size": 1,
+      "total_rub": 99962.16804611664,
+      "exp_pnl_pct": 0.06989734482765197,
+      "final_score": 0.5178490422448542,
+      "expected_cost_pct": 0.128,
+      "verdict": null
+    }
+  ]
+}

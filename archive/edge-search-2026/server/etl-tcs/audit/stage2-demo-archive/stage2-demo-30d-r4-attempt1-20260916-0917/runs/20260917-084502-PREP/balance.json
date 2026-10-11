@@ -1,0 +1,14 @@
+{
+  "run_id": "20260917-084502-PREP",
+  "phase": "PREP",
+  "captured_at": "2026-09-17T08:52:02+03:00",
+  "account_id": "1639899c-2aca-49fe-b5d8-d68e8b84f225",
+  "total_portfolio_rub": 4999127.4973,
+  "free_cash_rub": 227795.1372,
+  "shares_value_rub": 0.0,
+  "etf_value_rub": 4771332.36,
+  "unrealised_pnl_rub": -0.0238,
+  "open_positions": 0,
+  "active_orders": 0,
+  "active_stop_orders": 1
+}

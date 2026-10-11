@@ -1,0 +1,27 @@
+{
+  "run_id": "20260924-091301-CLOSE",
+  "phase": "CLOSE",
+  "finished_at": "2026-09-24T09:13:05+03:00",
+  "verdict": "FAIL",
+  "errors": [
+    "после CLOSE остались ночные позиции: UPRO"
+  ],
+  "warnings": [],
+  "partial": [],
+  "skipped": null,
+  "treasury_parked_rub": 20109.26,
+  "treasury": {
+    "ticker": "TMON@",
+    "tmon_lots": 5564,
+    "tmon_price": 164.83,
+    "tmon_value_rub": 917114.12,
+    "free_cash_rub": 104154.43,
+    "cash_rub": 104154.43,
+    "virtual_lots": 0,
+    "mode": "broker"
+  },
+  "overnight_before": 1,
+  "positions_closed": 1,
+  "orders_cancelled": 0,
+  "registry_reconciled": 0
+}

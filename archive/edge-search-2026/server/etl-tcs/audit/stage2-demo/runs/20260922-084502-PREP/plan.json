@@ -1,0 +1,38 @@
+{
+  "test_id": "stage2-demo-30d-r4",
+  "trading_day": "2026-09-22",
+  "run_id": "20260922-084502-PREP",
+  "created_at": "2026-09-22T08:51:55+03:00",
+  "dataset": {
+    "market_data_max_date": "2026-09-21",
+    "market_data_rows": 33457,
+    "market_data_5m_max_ts": "2026-09-22T05:40:00+00:00",
+    "dataset_hash": "sha256:c79113e1a7c470c950f3e25125a18a9b1b65ddb4e0a6519107db3718e5cc01e9"
+  },
+  "config_hash": "sha256:6bdc08a2de8f11a9fa81e5f951701c5f0757b79ee4b907e42dd67f6c9d6886d8",
+  "model": {
+    "backend": "unknown",
+    "epochs": 30,
+    "tickers": 45
+  },
+  "orders": [
+    {
+      "signal_id": "20260922-MVID-long_overnight",
+      "ticker": "MVID",
+      "strategy_type": "long_overnight",
+      "direction": "LONG",
+      "order_type": "LIMIT",
+      "anchor_price": 43.75,
+      "entry_price": 43.14619771242142,
+      "stop_price": 42.714735735297204,
+      "tp_price": 45.11815512478352,
+      "quantity_lots": 231,
+      "lot_size": 10,
+      "total_rub": 99667.71671569347,
+      "exp_pnl_pct": 0.09419710052013397,
+      "final_score": 0.5057030619763545,
+      "expected_cost_pct": 0.128,
+      "verdict": null
+    }
+  ]
+}

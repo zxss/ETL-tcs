@@ -1,0 +1,19 @@
+{
+  "test_id": "stage2-demo-30d-r4",
+  "started_at": "2026-09-18",
+  "completed_trading_days": 6,
+  "target_trading_days": 30,
+  "status": "halted",
+  "days": [
+    "2026-09-18",
+    "2026-09-21",
+    "2026-09-22",
+    "2026-09-23",
+    "2026-09-24",
+    "2026-09-25"
+  ],
+  "halted_reason": "CLOSE 20260928-091001-CLOSE: ночная позиция не закрыта: SMLT: не снят TAKE_PROFIT (StopOrdersService/CancelStopOrder не поддержан текущим контуром (https://sandbox-invest-public-api.tbank.ru/rest): HTTP 404 {\"code\":5,\"message\":\"Stop-order not found\",\"description\":\"50006\"})",
+  "start_balance_rub": 5000869.18,
+  "start_balance_verified_at": "2026-09-17T12:39+03:00",
+  "previous_run_archive": "audit/stage2-demo-archive/stage2-demo-30d-r4-attempt1-20260916-0917"
+}

@@ -1,0 +1,21 @@
+{
+  "trading_day": "2026-09-24",
+  "account_id": "<PROD_ACCOUNT>",
+  "opening_balance_rub": 1039719.58,
+  "closing_balance_rub": 1040610.56,
+  "day_change_rub": 890.98,
+  "day_change_pct": 0.0857,
+  "by_phase": {
+    "PREP": 1040650.1,
+    "CLOSE": 1040650.14,
+    "ORDER": 1040577.25,
+    "CLEANUP": 1040631.5,
+    "OVERNIGHT": 1040610.56
+  },
+  "intraday_pnl_rub": 54.25,
+  "overnight_carry_rub": -20.94,
+  "unrealised_pnl_rub": 0.02,
+  "positions_overnight": 5,
+  "positions_overnight_value_rub": 86935.35,
+  "incomplete_phases": []
+}

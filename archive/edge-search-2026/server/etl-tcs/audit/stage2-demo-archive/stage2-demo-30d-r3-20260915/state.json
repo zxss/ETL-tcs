@@ -1,0 +1,11 @@
+{
+  "test_id": "stage2-demo-30d-r3",
+  "started_at": "2026-09-15",
+  "completed_trading_days": 1,
+  "target_trading_days": 30,
+  "status": "running",
+  "days": [
+    "2026-09-15"
+  ],
+  "halted_reason": null
+}

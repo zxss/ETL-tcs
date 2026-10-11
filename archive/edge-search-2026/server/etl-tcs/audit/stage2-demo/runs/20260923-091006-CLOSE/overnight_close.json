@@ -1,0 +1,11 @@
+{
+  "overnight_before": 3,
+  "closed": [
+    "MGNT",
+    "CBOM",
+    "AKRN"
+  ],
+  "failed": [],
+  "orders_cancelled": 0,
+  "registry_reconciled": 0
+}

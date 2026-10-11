@@ -1,0 +1,112 @@
+{
+ "run_id": "MOMENTUM-20260924-214618",
+ "ts": "2026-09-24T21:46:19+03:00",
+ "account_id": "88c5a4bd-0170-4c60-bf8c-7a1d957f67a4",
+ "dry_run": true,
+ "picks": [
+  "FLOT",
+  "SNGSP",
+  "AKRN",
+  "TATN",
+  "CBOM",
+  "POSI",
+  "SBER",
+  "MOEX",
+  "HYDR",
+  "GMKN"
+ ],
+ "asof": "2026-09-23",
+ "future": "MXZ6",
+ "future_lots": -5,
+ "long_notional_rub": 1185241.8,
+ "equity_before_rub": 1498693.4,
+ "equity_after_rub": 1498693.4,
+ "bench_ticker": "TMON",
+ "bench_price": 164.82,
+ "trades": 0,
+ "errors": 0,
+ "report": [],
+ "after": {
+  "money_rub": 313451.6,
+  "positions": [
+   {
+    "uid": "21423d2d-9009-4d37-9325-883b368d13ae",
+    "ticker": "FLOT",
+    "shares": 1460.0,
+    "price": 82.18,
+    "value_rub": 119982.8
+   },
+   {
+    "uid": "509edd0c-129c-4ee2-934d-7f6246126da1",
+    "ticker": "GMKN",
+    "shares": 1000.0,
+    "price": 119.88,
+    "value_rub": 119880.0
+   },
+   {
+    "uid": "5e1c2634-afc4-4e50-ad6d-f78fc14a539a",
+    "ticker": "MOEX",
+    "shares": 800.0,
+    "price": 149.82,
+    "value_rub": 119856.0
+   },
+   {
+    "uid": "62560f05-3fd0-4d65-88f0-a27f249cc6de",
+    "ticker": "HYDR",
+    "shares": 310000.0,
+    "price": 0.3864,
+    "value_rub": 119784.0
+   },
+   {
+    "uid": "88468f6c-c67a-4fb4-a006-53eed803883c",
+    "ticker": "TATN",
+    "shares": 187.0,
+    "price": 639.7,
+    "value_rub": 119623.9
+   },
+   {
+    "uid": "a797f14a-8513-4b84-b15e-a3b98dc4cc00",
+    "ticker": "SNGSP",
+    "shares": 2960.0,
+    "price": 40.505,
+    "value_rub": 119894.8
+   },
+   {
+    "uid": "cd3affd4-3b50-43fd-b008-518f54108d59",
+    "ticker": "AKRN",
+    "shares": 6.0,
+    "price": 17914.0,
+    "value_rub": 107484.0
+   },
+   {
+    "uid": "de08affe-4fbd-454e-9fd1-46a81b23f870",
+    "ticker": "POSI",
+    "shares": 114.0,
+    "price": 1046.8,
+    "value_rub": 119335.2
+   },
+   {
+    "uid": "e6123145-9665-43e0-8413-cd61b8aa9b13",
+    "ticker": "SBER",
+    "shares": 428.0,
+    "price": 279.8,
+    "value_rub": 119754.4
+   },
+   {
+    "uid": "ebfda284-4291-4337-9dfb-f55610d0a907",
+    "ticker": "CBOM",
+    "shares": 12700.0,
+    "price": 9.421,
+    "value_rub": 119646.7
+   },
+   {
+    "uid": "3d96c0f8-9e6e-4c0a-bac8-44a5a1db8050",
+    "ticker": "MXZ6",
+    "shares": -5.0,
+    "price": 234175.0,
+    "value_rub": 0.0
+   }
+  ],
+  "equity_rub": 1498693.4
+ }
+}

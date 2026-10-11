@@ -1,0 +1,39 @@
+2026-09-16 20:15:02,466 INFO день 2026-09-16: входов в окне наблюдения нет
+/opt/etl-r4/research/event_study_news.py:465: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(f"SELECT (ts AT TIME ZONE 'Europe/Moscow') AS tm, open, close FROM {table} "
+/opt/etl-r4/research/event_study_news.py:465: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(f"SELECT (ts AT TIME ZONE 'Europe/Moscow') AS tm, open, close FROM {table} "
+2026-09-17 20:15:22,287 INFO дни входа ['2026-09-16']: сделок 2, в журнал добавлено 2
+/opt/etl-r4/research/event_study_news.py:465: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(f"SELECT (ts AT TIME ZONE 'Europe/Moscow') AS tm, open, close FROM {table} "
+/opt/etl-r4/research/event_study_news.py:465: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(f"SELECT (ts AT TIME ZONE 'Europe/Moscow') AS tm, open, close FROM {table} "
+2026-09-18 20:15:24,067 INFO дни входа ['2026-09-16', '2026-09-17']: сделок 4, в журнал добавлено 2
+/opt/etl-r4/research/event_study_news.py:465: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(f"SELECT (ts AT TIME ZONE 'Europe/Moscow') AS tm, open, close FROM {table} "
+/opt/etl-r4/research/event_study_news.py:465: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(f"SELECT (ts AT TIME ZONE 'Europe/Moscow') AS tm, open, close FROM {table} "
+2026-09-21 20:15:28,511 INFO дни входа ['2026-09-16', '2026-09-17', '2026-09-18']: сделок 4, в журнал добавлено 0
+2026-09-22 20:15:17,064 WARNING HTTP 504 MarketDataService/GetCandles. Повтор через 1.0 с
+2026-09-22 20:15:28,837 WARNING HTTP 504 MarketDataService/GetCandles. Повтор через 1.0 с
+2026-09-22 20:15:58,785 WARNING HTTP 504 MarketDataService/GetCandles. Повтор через 1.0 с
+/opt/etl-r4/research/event_study_news.py:465: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(f"SELECT (ts AT TIME ZONE 'Europe/Moscow') AS tm, open, close FROM {table} "
+/opt/etl-r4/research/event_study_news.py:465: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(f"SELECT (ts AT TIME ZONE 'Europe/Moscow') AS tm, open, close FROM {table} "
+2026-09-22 20:16:01,295 INFO дни входа ['2026-09-17', '2026-09-18', '2026-09-21']: сделок 2, в журнал добавлено 0
+/opt/etl-r4/research/event_study_news.py:465: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(f"SELECT (ts AT TIME ZONE 'Europe/Moscow') AS tm, open, close FROM {table} "
+/opt/etl-r4/research/event_study_news.py:465: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(f"SELECT (ts AT TIME ZONE 'Europe/Moscow') AS tm, open, close FROM {table} "
+2026-09-23 20:15:27,814 INFO дни входа ['2026-09-18', '2026-09-21', '2026-09-22']: сделок 2, в журнал добавлено 2
+/opt/etl-r4/research/event_study_news.py:465: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(f"SELECT (ts AT TIME ZONE 'Europe/Moscow') AS tm, open, close FROM {table} "
+/opt/etl-r4/research/event_study_news.py:465: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(f"SELECT (ts AT TIME ZONE 'Europe/Moscow') AS tm, open, close FROM {table} "
+2026-09-24 20:15:25,933 INFO дни входа ['2026-09-21', '2026-09-22', '2026-09-23']: сделок 2, в журнал добавлено 0
+/opt/etl-r4/research/event_study_news.py:465: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(f"SELECT (ts AT TIME ZONE 'Europe/Moscow') AS tm, open, close FROM {table} "
+/opt/etl-r4/research/event_study_news.py:465: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(f"SELECT (ts AT TIME ZONE 'Europe/Moscow') AS tm, open, close FROM {table} "
+2026-09-25 20:15:27,796 INFO дни входа ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24']: сделок 2, в журнал добавлено 0

@@ -1,0 +1,32 @@
+{
+  "run_id": "20260928-091001-CLOSE",
+  "phase": "CLOSE",
+  "finished_at": "2026-09-28T09:10:10+03:00",
+  "verdict": "FAIL",
+  "errors": [
+    "ночная позиция не закрыта: SMLT: не снят TAKE_PROFIT (StopOrdersService/CancelStopOrder не поддержан текущим контуром (https://sandbox-invest-public-api.tbank.ru/rest): HTTP 404 {\"code\":5,\"message\":\"Stop-order not found\",\"description\":\"50006\"})",
+    "ночная позиция не закрыта: SMLT: не снят STOP_LOSS (StopOrdersService/CancelStopOrder не поддержан текущим контуром (https://sandbox-invest-public-api.tbank.ru/rest): HTTP 404 {\"code\":5,\"message\":\"Stop-order not found\",\"description\":\"50006\"})",
+    "ночная позиция не закрыта: LKOH: не снят TAKE_PROFIT (StopOrdersService/CancelStopOrder не поддержан текущим контуром (https://sandbox-invest-public-api.tbank.ru/rest): HTTP 404 {\"code\":5,\"message\":\"Stop-order not found\",\"description\":\"50006\"})",
+    "ночная позиция не закрыта: LKOH: не снят STOP_LOSS (StopOrdersService/CancelStopOrder не поддержан текущим контуром (https://sandbox-invest-public-api.tbank.ru/rest): HTTP 404 {\"code\":5,\"message\":\"Stop-order not found\",\"description\":\"50006\"})",
+    "ночная позиция не закрыта: SMLT: не снят TAKE_PROFIT (StopOrdersService/CancelStopOrder не поддержан текущим контуром (https://sandbox-invest-public-api.tbank.ru/rest): HTTP 404 {\"code\":5,\"message\":\"Stop-order not found\",\"description\":\"50006\"})",
+    "ночная позиция не закрыта: SMLT: не снят STOP_LOSS (StopOrdersService/CancelStopOrder не поддержан текущим контуром (https://sandbox-invest-public-api.tbank.ru/rest): HTTP 404 {\"code\":5,\"message\":\"Stop-order not found\",\"description\":\"50006\"})"
+  ],
+  "warnings": [],
+  "partial": [],
+  "skipped": null,
+  "treasury_parked_rub": 432292.14,
+  "treasury": {
+    "ticker": "TMON@",
+    "tmon_lots": 30249,
+    "tmon_price": 165.05,
+    "tmon_value_rub": 4992597.45,
+    "free_cash_rub": 29996.03,
+    "cash_rub": 29996.03,
+    "virtual_lots": 0,
+    "mode": "broker"
+  },
+  "overnight_before": 6,
+  "positions_closed": 3,
+  "orders_cancelled": 0,
+  "registry_reconciled": 0
+}

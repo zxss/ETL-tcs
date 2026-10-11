@@ -1,0 +1,207 @@
+2026-09-22 14:31:38,792 INFO найдено событий по запросам: 302
+2026-09-22 14:33:29,564 INFO рынков после отбора: 204 (мир 154, война 50)
+2026-09-22 14:33:30,538 INFO [1/204] PEACE | Russia x Ukraine ceasefire by May 31, 2026? | $141250713 | точек 732
+2026-09-22 14:33:39,421 INFO [2/204] PEACE | Russia x Ukraine ceasefire in 2025? | $73752993 | точек 8813
+2026-09-22 14:33:42,350 INFO [3/204] PEACE | Russia x Ukraine ceasefire by June 30, 2026? | $60668118 | точек 2607
+2026-09-22 14:33:44,001 INFO [4/204] PEACE | Russia x Ukraine ceasefire by January 31, 2026? | $26995078 | точек 1589
+2026-09-22 14:33:48,028 INFO [5/204] PEACE | Russia x Ukraine ceasefire before July? | $17125743 | точек 3828
+2026-09-22 14:33:55,139 INFO [6/204] PEACE | Russia x Ukraine ceasefire by end of 2026? | $14502614 | точек 6420
+2026-09-22 14:33:56,764 INFO [7/204] PEACE | Russia x Ukraine ceasefire by April 30, 2026? | $9527883 | точек 1074
+2026-09-22 14:33:57,771 INFO [8/204] PEACE | Russia x Ukraine ceasefire before June? | $7157114 | точек 873
+2026-09-22 14:33:58,777 INFO [9/204] PEACE | Russia x Ukraine ceasefire by February 28, 2026? | $6968929 | точек 870
+2026-09-22 14:34:02,227 INFO [10/204] PEACE | Will Putin meet with Trump in first 100 days? | $6796182 | точек 3130
+2026-09-22 14:34:02,555 INFO [11/204] PEACE | Russia x Ukraine Ceasefire by Friday?  | $5570176 | точек 201
+2026-09-22 14:34:03,533 INFO [12/204] PEACE | Russia x Ukraine ceasefire by November 30? | $4903949 | точек 971
+2026-09-22 14:34:04,162 INFO [13/204] PEACE | Russia x Ukraine ceasefire by August 31? | $4485079 | точек 608
+2026-09-22 14:34:04,485 INFO [14/204] PEACE |  Will Trump meet with Putin by August 15? | $3687571 | точек 216
+2026-09-22 14:34:11,690 INFO [15/204] WAR | Will Russia invade a NATO country by June 30, 2026? | $3653052 | точек 6303
+2026-09-22 14:34:14,406 INFO [16/204] PEACE | Russia x Ukraine Ceasefire in 2024? | $3514408 | точек 2560
+2026-09-22 14:34:16,412 INFO [17/204] PEACE | Will Trump meet with Putin by October 31? | $3166464 | точек 1853
+2026-09-22 14:34:22,234 INFO [18/204] PEACE | Will Putin meet with Zelenskyy in 2025? | $3149483 | точек 5411
+2026-09-22 14:34:23,256 INFO [19/204] PEACE | Will Putin meet with Zelenskyy by August 31? | $2975900 | точек 780
+2026-09-22 14:34:26,279 INFO [20/204] WAR | Will Ukraine recapture Crimean territory by December 31, 2026? | $2830633 | точек 2817
+2026-09-22 14:34:33,954 INFO [21/204] PEACE | Ukraine signs peace deal with Russia before 2027? | $2791306 | точек 7476
+2026-09-22 14:34:37,414 INFO [22/204] PEACE | Will Zelenskyy and Putin meet next in Saudi Arabia? | $2761395 | точек 3242
+2026-09-22 14:34:40,995 INFO [23/204] PEACE | Russia x Ukraine ceasefire agreement by December 31, 2026? | $2652069 | точек 3171
+2026-09-22 14:34:44,785 INFO [24/204] PEACE | Ukraine signs peace deal with Russia in 2025? | $2605914 | точек 3411
+2026-09-22 14:34:48,111 INFO [25/204] PEACE | Will Zelenskyy and Putin not meet? | $2529119 | точек 3241
+2026-09-22 14:34:51,465 INFO [26/204] PEACE | Will Zelenskyy  and Putin meet next in Belarus? | $2524881 | точек 3241
+2026-09-22 14:34:51,795 INFO [27/204] PEACE | Russia x Ukraine Ceasefire by Friday? | $2309321 | точек 84
+2026-09-22 14:34:52,482 INFO [28/204] PEACE | Trump, Putin, and Zelensky meet together by August 31? | $2180594 | точек 590
+2026-09-22 14:34:57,152 INFO [29/204] PEACE | Ukraine agrees not to join NATO by June 30?  | $2172472 | точек 4239
+2026-09-22 14:35:03,181 INFO [30/204] WAR | NATO x Russia military clash by December 31, 2026? | $2149095 | точек 5818
+2026-09-22 14:35:11,393 INFO [31/204] PEACE | Ukraine recognizes Russian sovereignty over its territory by December  | $2130098 | точек 7876
+2026-09-22 14:35:12,379 INFO [32/204] WAR | NATO x Russia military clash by August 31, 2026? | $2122003 | точек 873
+2026-09-22 14:35:15,767 INFO [33/204] PEACE | Will Zelenskyy and Putin meet next in India? | $1938590 | точек 3227
+2026-09-22 14:35:22,459 INFO [34/204] PEACE | Will Trump and Putin meet next in Australia? | $1731848 | точек 6135
+2026-09-22 14:35:25,956 INFO [35/204] PEACE | Will Trump meet with Putin by December 31? | $1731423 | точек 3317
+2026-09-22 14:35:27,265 INFO [36/204] PEACE | Russia x Ukraine ceasefire agreement by June 30, 2026? | $1720097 | точек 1176
+2026-09-22 14:35:27,889 INFO [37/204] PEACE | Will Trump meet with Vladimir Putin in August? | $1717462 | точек 345
+2026-09-22 14:35:31,282 INFO [38/204] PEACE | Russia x Ukraine ceasefire agreement by October 31, 2026? | $1691463 | точек 3171
+2026-09-22 14:35:40,433 INFO [39/204] PEACE | Russia-Ukraine Ceasefire before GTA VI? | $1676302 | точек 8773
+2026-09-22 14:35:41,949 INFO [40/204] PEACE | Trump, Putin, and Zelensky meet together by September 30? | $1671461 | точек 1309
+2026-09-22 14:35:49,976 INFO [41/204] PEACE | Ukraine agrees not to join NATO in 2025?  | $1643258 | точек 7874
+2026-09-22 14:35:50,318 INFO [42/204] PEACE | Russia x Ukraine ceasefire by August 15? | $1574602 | точек 223
+2026-09-22 14:35:53,362 INFO [43/204] WAR | Russian strike on a NATO member by March 31? | $1554950 | точек 2750
+2026-09-22 14:35:54,015 INFO [44/204] PEACE | Sea/Air ceasefire in Ukraine before May?  | $1547772 | точек 507
+2026-09-22 14:35:54,671 INFO [45/204] PEACE | Russia x Ukraine Ceasefire in March? | $1488182 | точек 442
+2026-09-22 14:36:00,030 INFO [46/204] WAR | Will Russia invade a NATO country in 2025? | $1449792 | точек 5212
+2026-09-22 14:36:00,370 INFO [47/204] PEACE | Trump, Putin, and Zelensky meet by August 23? | $1432015 | точек 172
+2026-09-22 14:36:01,053 INFO [48/204] PEACE | Russia x Ukraine ceasefire by February 1? | $1360390 | точек 489
+2026-09-22 14:36:05,558 INFO [49/204] WAR | Will Russia capture all of Stepnohirsk by September 30, 2026? | $1327636 | точек 3471
+2026-09-22 14:36:13,527 INFO [50/204] PEACE | US recognizes Russian sovereignty over Ukraine? | $1238681 | точек 7546
+2026-09-22 14:36:15,875 INFO [51/204] PEACE | Will Trump meet with Putin in Saudi Arabia before June? | $1219774 | точек 2073
+2026-09-22 14:36:20,291 INFO [52/204] WAR | NATO x Russia military clash by June 30, 2026? | $1191855 | точек 3696
+2026-09-22 14:36:23,547 INFO [53/204] PEACE | Will Zelenskyy and Putin meet next in Kazakhstan? | $1186674 | точек 2366
+2026-09-22 14:36:30,269 INFO [54/204] PEACE | Will Trump and Putin meet next in another EU country? | $1095286 | точек 6332
+2026-09-22 14:36:37,445 INFO [55/204] WAR | US x Russia military clash by December 31, 2026? | $1082857 | точек 5769
+2026-09-22 14:36:44,362 INFO [56/204] PEACE | Will Trump and Putin not meet? | $1070646 | точек 6226
+2026-09-22 14:36:47,784 INFO [57/204] PEACE | Will Zelenskyy and Putin meet next in Turkey? | $1070440 | точек 3243
+2026-09-22 14:36:51,103 INFO [58/204] PEACE | Will Zelenskyy and Putin meet next in Qatar / UAE? | $1045614 | точек 3242
+2026-09-22 14:36:58,052 INFO [59/204] WAR | Will Ukraine recapture Crimean territory by June 30, 2026? | $1045077 | точек 6362
+2026-09-22 14:37:01,482 INFO [60/204] PEACE | Will Zelenskyy and Putin meet next in US? | $985172 | точек 3242
+2026-09-22 14:37:02,835 INFO [61/204] PEACE | Will Trump meet with Putin by November 30? | $940360 | точек 1066
+2026-09-22 14:37:04,490 INFO [62/204] WAR | NATO x Russia military clash by October 31, 2026? | $930495 | точек 1380
+2026-09-22 14:37:12,680 INFO [63/204] PEACE | Will Vladimir Putin win the Nobel Peace Prize in 2026? | $922844 | точек 7626
+2026-09-22 14:37:12,680 INFO [64/204] PEACE | Russia x Ukraine ceasefire by December 31, 2026? | $911005 | точек 0
+2026-09-22 14:37:19,448 INFO [65/204] PEACE | Will Trump and Putin meet next in Russia? | $887303 | точек 6103
+2026-09-22 14:37:22,742 INFO [66/204] PEACE | Will Zelenskyy and Putin meet next in Hungary? | $882486 | точек 3242
+2026-09-22 14:37:26,092 INFO [67/204] PEACE | Will Zelenskyy and Putin meet next in Italy / Vatican? | $867918 | точек 3242
+2026-09-22 14:37:29,570 INFO [68/204] PEACE | Will Zelenskyy and Putin meet next in Russia? | $829455 | точек 3242
+2026-09-22 14:37:38,097 INFO [69/204] PEACE | Will Volodymyr Zelenskyy win the Nobel Peace Prize in 2026? | $828438 | точек 7544
+2026-09-22 14:37:38,798 INFO [70/204] PEACE | Russia x Ukraine ceasefire agreement by May 31, 2026? | $817235 | точек 463
+2026-09-22 14:37:46,526 INFO [71/204] PEACE | U.S. recognizes Russian sovereignty over Crimea in 2025?  | $801266 | точек 7587
+2026-09-22 14:37:51,171 INFO [72/204] PEACE | Ukraine signs peace deal with Russia by June 30? | $794282 | точек 4264
+2026-09-22 14:37:54,592 INFO [73/204] WAR | Will Russia capture all of Kupiansk by June 30? | $749839 | точек 2949
+2026-09-22 14:38:01,421 INFO [74/204] PEACE | Will Trump and Putin meet next in Turkey? | $746067 | точек 6293
+2026-09-22 14:38:03,760 INFO [75/204] WAR | NATO article 5 before March? | $738483 | точек 2072
+2026-09-22 14:38:04,508 INFO [76/204] PEACE | Trump, Putin, and Zelensky seen together by August 31? | $724124 | точек 609
+2026-09-22 14:38:04,508 INFO [77/204] PEACE | Russia x Ukraine ceasefire by October 31, 2026? | $714715 | точек 0
+2026-09-22 14:38:05,454 INFO [78/204] PEACE | Ukraine officially agrees to a US backed ceasefire framework by Decemb | $710796 | точек 840
+2026-09-22 14:38:06,460 INFO [79/204] PEACE | Will Trump meet with Volodymyr Zelenskyy in January 2026? | $703308 | точек 974
+2026-09-22 14:38:06,785 INFO [80/204] PEACE | Will Trump and Putin meet next in US? | $679383 | точек 171
+2026-09-22 14:38:10,270 INFO [81/204] PEACE | Will Zelenskyy and Putin meet next in Switzerland? | $667613 | точек 3233
+2026-09-22 14:38:13,703 INFO [82/204] PEACE | Will Zelenskyy and Putin meet next in China? | $655520 | точек 3243
+2026-09-22 14:38:20,282 INFO [83/204] PEACE | Will Trump and Putin meet next in another country? | $632153 | точек 6255
+2026-09-22 14:38:22,988 INFO [84/204] WAR | NATO x Russia military clash in 2025? | $630250 | точек 2383
+2026-09-22 14:38:30,316 INFO [85/204] PEACE | Russia x Ukraine Peace Combo | $622538 | точек 7047
+2026-09-22 14:38:37,058 INFO [86/204] PEACE | Will Trump and Putin meet next in China? | $592808 | точек 6024
+2026-09-22 14:38:39,101 INFO [87/204] PEACE | Russia x Ukraine ceasefire agreement by August 31, 2026? | $586176 | точек 1757
+2026-09-22 14:38:41,051 INFO [88/204] PEACE | Trump x Putin Meeting in Hungary by Dec 31? | $585713 | точек 1814
+2026-09-22 14:38:44,407 INFO [89/204] PEACE | Will Zelenskyy and Putin meet next in Ukraine? | $551544 | точек 3243
+2026-09-22 14:38:46,025 INFO [90/204] WAR | Will Russia capture all of Kupiansk by December 31? | $551269 | точек 1384
+2026-09-22 14:38:50,371 INFO [91/204] WAR | NATO x Russia military clash by March 31, 2026? | $539353 | точек 4105
+2026-09-22 14:38:54,131 INFO [92/204] PEACE | Putin and Zelenskyy shake hands in 2025? | $536627 | точек 3513
+2026-09-22 14:38:54,789 INFO [93/204] PEACE | Will Trump meet with Volodymyr Zelenskyy in August? | $532037 | точек 415
+2026-09-22 14:39:00,783 INFO [94/204] WAR | Will Russia invade another country in 2026? | $521359 | точек 5581
+2026-09-22 14:39:04,095 INFO [95/204] PEACE | Trump, Putin, and Zelensky seen together before July? | $508371 | точек 3321
+2026-09-22 14:39:04,423 INFO [96/204] PEACE | Will Trump meet with Putin in Alaska on August 15? | $506386 | точек 166
+2026-09-22 14:39:05,749 INFO [97/204] PEACE | Will Putin meet with Trump by September 30? | $502934 | точек 1237
+2026-09-22 14:39:07,465 INFO [98/204] PEACE | Ukraine officially agrees to a US backed ceasefire framework by Januar | $493717 | точек 1371
+2026-09-22 14:39:15,109 INFO [99/204] PEACE | Will Zelenskyy and Putin meet next in Qatar / UAE before 2027? | $488161 | точек 7168
+2026-09-22 14:39:15,796 INFO [100/204] WAR | NATO downs another Russian drone by August 31? | $485612 | точек 638
+2026-09-22 14:39:23,461 INFO [101/204] PEACE | Will Zelenskyy and Putin meet next in US before 2027? | $484079 | точек 7368
+2026-09-22 14:39:23,785 INFO [102/204] PEACE | Will Trump and Putin meet next in Russia? | $480325 | точек 171
+2026-09-22 14:39:25,458 INFO [103/204] WAR | Will Russia capture all of Vovchansk by December 31? | $476256 | точек 1380
+2026-09-22 14:39:28,890 INFO [104/204] PEACE | Will Trump meet with Vladimir Putin in 2025? | $471641 | точек 3027
+2026-09-22 14:39:35,613 INFO [105/204] PEACE | Will Trump and Putin meet next in Belarus? | $452021 | точек 6219
+2026-09-22 14:39:39,962 INFO [106/204] WAR | Will Russia capture all of Donetsk Oblast by June 30, 2026? | $431529 | точек 3893
+2026-09-22 14:39:47,014 INFO [107/204] PEACE | Ukraine recognizes Russian sovereignty over its territory by June 30,  | $426895 | точек 6616
+2026-09-22 14:39:52,536 INFO [108/204] WAR | US x Russia military clash by December 31? | $417001 | точек 5212
+2026-09-22 14:40:00,154 INFO [109/204] PEACE | Will Zelenskyy and Putin not meet before 2027? | $410648 | точек 7332
+2026-09-22 14:40:07,099 INFO [110/204] PEACE | Will Trump and Putin meet next in a Gulf country? | $409731 | точек 6092
+2026-09-22 14:40:11,775 INFO [111/204] PEACE | EU/NATO country announces peacekeeping force in Ukraine by June 30? | $397134 | точек 4160
+2026-09-22 14:40:15,540 INFO [112/204] PEACE | Trump, Putin, and Zelensky seen together in 2025? | $392021 | точек 3531
+2026-09-22 14:40:19,189 INFO [113/204] PEACE | Ukraine signs peace deal with Russia by March 31? | $389203 | точек 3436
+2026-09-22 14:40:20,225 INFO [114/204] WAR | Will Russia capture all of Stepnohirsk by January 31, 2026? | $369685 | точек 795
+2026-09-22 14:40:27,126 INFO [115/204] PEACE | Will Trump and Putin meet next in United States? | $360800 | точек 6267
+2026-09-22 14:40:29,449 INFO [116/204] WAR | Will Russia capture all of Prymorske by March 31, 2026? | $358203 | точек 1933
+2026-09-22 14:40:34,492 INFO [117/204] PEACE | Ceasefire between Russia and Ukraine by June 30? | $357703 | точек 4833
+2026-09-22 14:40:34,492 INFO [118/204] WAR | Will Russia invade a NATO country by December 31, 2026? | $353166 | точек 0
+2026-09-22 14:40:38,532 INFO [119/204] PEACE | Will Trump and Putin not meet? | $346675 | точек 2840
+2026-09-22 14:40:39,908 INFO [120/204] PEACE | Will Trump meet with Putin by September 30? | $336888 | точек 1114
+2026-09-22 14:40:47,888 INFO [121/204] PEACE | Will Zelenskyy  and Putin meet next in Belarus before 2027? | $328790 | точек 7202
+2026-09-22 14:40:48,518 INFO [122/204] PEACE | Will Trump meet with Putin by August 31? | $327145 | точек 393
+2026-09-22 14:40:55,370 INFO [123/204] PEACE | Will Trump and Putin meet next in Switzerland? | $323321 | точек 6404
+2026-09-22 14:40:57,730 INFO [124/204] PEACE | Ukraine signs peace deal with Russia by August 31? | $321702 | точек 1778
+2026-09-22 14:41:00,994 INFO [125/204] PEACE | Ceasefire between Russia and Ukraine before October? | $315613 | точек 3106
+2026-09-22 14:41:03,423 INFO [126/204] WAR | Will Russia capture all of Donetsk Oblast by March 31, 2026? | $309715 | точек 1966
+2026-09-22 14:41:04,842 INFO [127/204] PEACE | Will Russia and Ukraine hold any diplomatic meeting by August 31, 2026 | $302859 | точек 1218
+2026-09-22 14:41:09,658 INFO [128/204] PEACE | Ukraine peace referendum scheduled by June 30? | $301597 | точек 4336
+2026-09-22 14:41:10,661 INFO [129/204] PEACE | Will Trump meet with Volodymyr Zelenskyy by November 30? | $296084 | точек 756
+2026-09-22 14:41:11,987 INFO [130/204] PEACE | Russia x Ukraine ceasefire by June 30, 2026? | $290558 | точек 1101
+2026-09-22 14:41:18,748 INFO [131/204] PEACE | Will Trump and Putin meet next in Ukraine? | $284251 | точек 6497
+2026-09-22 14:41:19,459 INFO [132/204] WAR | Will Russia capture all of Kupiansk by November 30? | $266979 | точек 638
+2026-09-22 14:41:20,939 INFO [133/204] WAR | Will Russia capture all of Stepnohirsk by February 28, 2026? | $259558 | точек 1277
+2026-09-22 14:41:24,719 INFO [134/204] PEACE | Will Trump meet with Putin by March 31, 2026? | $252902 | точек 3419
+2026-09-22 14:41:26,697 INFO [135/204] PEACE | Will Putin meet with Trump before July? | $252310 | точек 1784
+2026-09-22 14:41:29,129 INFO [136/204] WAR | Will Russia capture all of Stepnohirsk by March 31, 2026? | $247105 | точек 2203
+2026-09-22 14:41:31,852 INFO [137/204] WAR | Will Russia capture all of Kupiansk by March 31? | $246933 | точек 2589
+2026-09-22 14:41:33,286 INFO [138/204] PEACE | Ukraine signs peace deal with Russia by January 31? | $244534 | точек 1083
+2026-09-22 14:41:41,094 INFO [139/204] PEACE | Will Zelenskyy and Putin meet next in India before 2027? | $243768 | точек 7493
+2026-09-22 14:41:42,110 INFO [140/204] PEACE | Will Russia and Ukraine hold any diplomatic meeting by July 31, 2026? | $240503 | точек 780
+2026-09-22 14:41:49,768 INFO [141/204] PEACE | Will Zelenskyy and Putin meet next in Switzerland before 2027? | $239110 | точек 7263
+2026-09-22 14:41:50,765 INFO [142/204] PEACE | Russia x Ukraine diplomatic meeting by June 30, 2026? | $238994 | точек 798
+2026-09-22 14:41:57,584 INFO [143/204] PEACE | Will Trump and Putin meet next in South Korea? | $238575 | точек 6224
+2026-09-22 14:42:05,373 INFO [144/204] PEACE | Will Zelenskyy and Putin meet next in Ukraine before 2027? | $236464 | точек 7539
+2026-09-22 14:42:08,457 INFO [145/204] PEACE | Ukraine officially agrees to a US backed ceasefire framework by March  | $229782 | точек 2676
+2026-09-22 14:42:11,465 INFO [146/204] WAR | NATO/EU troops fighting in Ukraine before July? | $228580 | точек 2986
+2026-09-22 14:42:19,094 INFO [147/204] PEACE | Will Zelenskyy and Putin meet next in Turkey before 2027? | $226296 | точек 7168
+2026-09-22 14:42:22,524 INFO [148/204] WAR | Will Russia capture all of Donetsk Oblast by December 31, 2026? | $223047 | точек 3133
+2026-09-22 14:42:25,291 INFO [149/204] WAR | Will Russia capture all of Vovchansk by March 31? | $221055 | точек 2328
+2026-09-22 14:42:32,998 INFO [150/204] PEACE | Will Zelenskyy and Putin meet next in Russia before 2027? | $212952 | точек 7373
+2026-09-22 14:42:33,346 INFO [151/204] PEACE | Will Trump and Putin not meet? | $209851 | точек 171
+2026-09-22 14:42:33,680 INFO [152/204] PEACE | Will Putin meet with Trump in February? | $207574 | точек 228
+2026-09-22 14:42:34,025 INFO [153/204] WAR | Successful Ukrainian counterattack in Donbass? | $202479 | точек 250
+2026-09-22 14:42:40,257 INFO [154/204] WAR | US x Russia military clash by June 30, 2026? | $200032 | точек 5393
+2026-09-22 14:42:45,571 INFO [155/204] WAR | Will Russia invade Finland in 2025? | $199994 | точек 5213
+2026-09-22 14:42:48,669 INFO [156/204] PEACE | Trump, Putin, and Zelensky meet together by December 31? | $193209 | точек 2903
+2026-09-22 14:42:49,652 INFO [157/204] PEACE | Russia x Ukraine ceasefire by end of 2027? | $192817 | точек 529
+2026-09-22 14:42:56,382 INFO [158/204] PEACE | Will Trump and Putin meet next in Japan? | $174171 | точек 6154
+2026-09-22 14:42:57,036 INFO [159/204] WAR | NATO downs another Russian drone by September 30? | $173464 | точек 464
+2026-09-22 14:42:58,489 INFO [160/204] WAR | Will Russia capture all of Prymorske by February 28, 2026? | $171081 | точек 1302
+2026-09-22 14:43:06,546 INFO [161/204] WAR | NATO/EU troops fighting in Ukraine in 2025? | $170794 | точек 8022
+2026-09-22 14:43:08,518 INFO [162/204] WAR | Will Russia capture all of Prymorske by April 30, 2026? | $170199 | точек 1295
+2026-09-22 14:43:08,816 INFO [163/204] PEACE | Will Trump and Putin meet next in Qatar, Saudi Arabia, or UAE? | $170149 | точек 171
+2026-09-22 14:43:11,881 INFO [164/204] PEACE | Will Trump and Putin meet next in China? | $166419 | точек 2816
+2026-09-22 14:43:12,229 INFO [165/204] PEACE | Will Trump and Putin meet next in Turkey? | $163741 | точек 171
+2026-09-22 14:43:18,810 INFO [166/204] PEACE | Will Trump and Putin meet next in Finland? | $163428 | точек 6355
+2026-09-22 14:43:19,748 INFO [167/204] PEACE | Russia x Ukraine ceasefire agreement by March 31, 2027? | $160735 | точек 836
+2026-09-22 14:43:20,760 INFO [168/204] WAR | Russian strike on a NATO member by October 31? | $159007 | точек 892
+2026-09-22 14:43:24,455 INFO [169/204] PEACE | Ukraine officially agrees to a US backed ceasefire framework by June 3 | $158153 | точек 3259
+2026-09-22 14:43:31,478 INFO [170/204] WAR | NATO/EU troops fighting in Ukraine in June 30, 2026? | $157751 | точек 6553
+2026-09-22 14:43:39,021 INFO [171/204] PEACE | Ukraine agrees not to join NATO before 2027?  | $155561 | точек 7239
+2026-09-22 14:43:40,988 INFO [172/204] WAR | NATO/EU troops fighting in Ukraine by December 31, 2026? | $153863 | точек 1953
+2026-09-22 14:43:41,968 INFO [173/204] PEACE | Russia x Ukraine ceasefire agreement by June 30, 2027? | $153339 | точек 833
+2026-09-22 14:43:49,465 INFO [174/204] PEACE | Will Zelenskyy and Putin meet next in Saudi Arabia before 2027? | $151819 | точек 7415
+2026-09-22 14:43:52,127 INFO [175/204] PEACE | Trump-Putin-Xi meeting before July? | $150875 | точек 2649
+2026-09-22 14:43:55,164 INFO [176/204] PEACE | Trump meets with Putin by December 31? | $147243 | точек 2840
+2026-09-22 14:43:56,148 INFO [177/204] PEACE | Ukraine peace referendum scheduled by January 31? | $145341 | точек 855
+2026-09-22 14:44:03,702 INFO [178/204] PEACE | Will Zelenskyy and Putin meet next in Kazakhstan before 2027? | $144460 | точек 7380
+2026-09-22 14:44:04,030 INFO [179/204] PEACE | Will Trump and Putin meet next in another country? | $143503 | точек 171
+2026-09-22 14:44:05,358 INFO [180/204] WAR | Will Russia capture all of Kupiansk by January 31? | $140630 | точек 1182
+2026-09-22 14:44:05,989 INFO [181/204] WAR | Will Russia capture all of Vovchansk by November 30? | $135978 | точек 635
+2026-09-22 14:44:09,034 INFO [182/204] WAR | Will Russia capture all of Kupiansk by December 31? | $135440 | точек 2794
+2026-09-22 14:44:09,343 INFO [183/204] PEACE | Will Trump and Putin meet next in China? | $134947 | точек 171
+2026-09-22 14:44:16,650 INFO [184/204] PEACE | EU/NATO country announces peacekeeping force in Ukraine in 2025? | $133019 | точек 7111
+2026-09-22 14:44:16,976 INFO [185/204] PEACE | Will Trump meet with Volodymyr Zelenskyy in 2025? | $129300 | точек 215
+2026-09-22 14:44:24,505 INFO [186/204] PEACE | Will Zelenskyy and Putin meet next in Hungary before 2027? | $125089 | точек 7261
+2026-09-22 14:44:32,227 INFO [187/204] PEACE | Will Zelenskyy and Putin meet next in Italy / Vatican before 2027? | $124865 | точек 7171
+2026-09-22 14:44:34,163 INFO [188/204] PEACE | Russia x Ukraine diplomatic meeting by December 31, 2026? | $124549 | точек 798
+2026-09-22 14:44:41,873 INFO [189/204] PEACE | Will Trump meet with Vladimir Putin in 2026? | $124425 | точек 7076
+2026-09-22 14:44:42,862 INFO [190/204] WAR | Will Russia capture all of Prymorske by January 31, 2026? | $123961 | точек 797
+2026-09-22 14:44:43,778 INFO [191/204] PEACE | Will Trump meet with Volodymyr Zelenskyy in August 2026? | $122462 | точек 754
+2026-09-22 14:44:47,369 INFO [192/204] WAR | Will Russia capture all of Prymorske by December 31, 2026? | $119617 | точек 3448
+2026-09-22 14:44:50,306 INFO [193/204] PEACE | Trump meets with Putin by September 30? | $119551 | точек 2841
+2026-09-22 14:44:51,649 INFO [194/204] PEACE | Will Trump meet with Vladimir Putin in January 2026? | $119275 | точек 1202
+2026-09-22 14:44:52,313 INFO [195/204] WAR | Successful Ukrainian counterattack in Donbass by September 15? | $118341 | точек 465
+2026-09-22 14:44:52,984 INFO [196/204] PEACE | Russia x Ukraine diplomatic meeting by May 31, 2026? | $117138 | точек 663
+2026-09-22 14:45:00,570 INFO [197/204] PEACE | Will Zelenskyy and Putin meet next in China before 2027? | $116835 | точек 7155
+2026-09-22 14:45:04,193 INFO [198/204] WAR | Will Russia capture all of Prymorske by September 30, 2026? | $112734 | точек 3424
+2026-09-22 14:45:07,217 INFO [199/204] PEACE | Will Trump and Putin meet next in Russia? | $107470 | точек 2822
+2026-09-22 14:45:07,541 INFO [200/204] PEACE | Will Trump and Putin meet next in Hungary? | $106483 | точек 171
+2026-09-22 14:45:08,193 INFO [201/204] WAR | US x Russia military clash by January 31, 2026? | $106196 | точек 584
+2026-09-22 14:45:10,816 INFO [202/204] PEACE | Ukraine agrees not to join NATO by March 31?  | $104038 | точек 2404
+2026-09-22 14:45:11,848 INFO [203/204] PEACE | Will Russia and Ukraine hold any diplomatic meeting by September 30, 2 | $101891 | точек 803
+2026-09-22 14:45:12,171 INFO [204/204] PEACE | Will Trump and Putin meet next in another EU country? | $100104 | точек 171
+2026-09-22 14:45:14,014 INFO готово: рынков 204, часовых точек 643333

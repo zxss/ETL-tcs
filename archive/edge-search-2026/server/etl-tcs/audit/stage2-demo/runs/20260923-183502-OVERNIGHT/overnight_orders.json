@@ -1,0 +1,81 @@
+{
+  "accepted": [
+    {
+      "signal_id": "20260923-UPRO-long_overnight",
+      "ticker": "UPRO",
+      "strategy_type": "long_overnight",
+      "direction": "LONG",
+      "order_type": "LIMIT",
+      "anchor_price": 1.006,
+      "entry_price": 1.0055044999999998,
+      "stop_price": 0.9954494549999998,
+      "tp_price": 1.031131013597212,
+      "quantity_lots": 99,
+      "lot_size": 1000,
+      "total_rub": 99544.94549999999,
+      "exp_pnl_pct": null,
+      "final_score": null,
+      "expected_cost_pct": 0.128,
+      "verdict": null
+    },
+    {
+      "signal_id": "20260923-RUAL-long_overnight",
+      "ticker": "RUAL",
+      "strategy_type": "long_overnight",
+      "direction": "LONG",
+      "order_type": "LIMIT",
+      "anchor_price": 24.435,
+      "entry_price": 24.459434999999996,
+      "stop_price": 24.214840649999996,
+      "tp_price": 25.13641780755531,
+      "quantity_lots": 408,
+      "lot_size": 10,
+      "total_rub": 99794.49479999999,
+      "exp_pnl_pct": null,
+      "final_score": null,
+      "expected_cost_pct": 0.128,
+      "verdict": null
+    }
+  ],
+  "rejected": [],
+  "placed": [
+    {
+      "order_id": "593c383f-83d2-442e-b143-cd88be075f7c",
+      "ticker": "UPRO",
+      "strategy": "long_overnight",
+      "instrument_uid": "664921c5-b552-47a6-9ced-8735a3c6ca8a",
+      "lot": 1000,
+      "api_qty": 99,
+      "exit_direction": "SELL",
+      "stop_units": 0,
+      "stop_nano": 995500000,
+      "tp_units": 1,
+      "tp_nano": 31000000,
+      "created": "2026-09-23T18:42:00",
+      "stop_placed": false,
+      "stop_order_id": null,
+      "tp_placed": false,
+      "tp_order_id": null,
+      "closed": false
+    },
+    {
+      "order_id": "20e521b9-ecfc-4e1b-bfab-c5be5999de92",
+      "ticker": "RUAL",
+      "strategy": "long_overnight",
+      "instrument_uid": "f866872b-8f68-4b6e-930f-749fe9aa79c0",
+      "lot": 10,
+      "api_qty": 408,
+      "exit_direction": "SELL",
+      "stop_units": 24,
+      "stop_nano": 215000000,
+      "tp_units": 25,
+      "tp_nano": 135000000,
+      "created": "2026-09-23T18:42:00",
+      "stop_placed": false,
+      "stop_order_id": null,
+      "tp_placed": false,
+      "tp_order_id": null,
+      "closed": false
+    }
+  ]
+}

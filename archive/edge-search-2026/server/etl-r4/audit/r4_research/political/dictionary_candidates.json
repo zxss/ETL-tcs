@@ -1,0 +1,1807 @@
+{
+ "seed_posts": 6312,
+ "other_political_posts": 47833,
+ "seeds": "переговор|перемири|прекращени[ея] огня|мирн\\w* (план|договор|соглашени|урегулировани|процесс)|саммит|встреч\\w* (путина|трампа|путин|трамп)",
+ "top": [
+  {
+   "term": "украина геополи",
+   "z": 36.44,
+   "in_negotiation_posts": 1719,
+   "in_other_political": 3062
+  },
+  {
+   "term": "украина",
+   "z": 28.73,
+   "in_negotiation_posts": 2584,
+   "in_other_political": 7140
+  },
+  {
+   "term": "event",
+   "z": 28.28,
+   "in_negotiation_posts": 1053,
+   "in_other_political": 1895
+  },
+  {
+   "term": "огня",
+   "z": 24.86,
+   "in_negotiation_posts": 350,
+   "in_other_political": 65
+  },
+  {
+   "term": "прекращ огня",
+   "z": 24.36,
+   "in_negotiation_posts": 345,
+   "in_other_political": 58
+  },
+  {
+   "term": "путина",
+   "z": 24.12,
+   "in_negotiation_posts": 556,
+   "in_other_political": 776
+  },
+  {
+   "term": "прекращ",
+   "z": 23.56,
+   "in_negotiation_posts": 456,
+   "in_other_political": 545
+  },
+  {
+   "term": "геополи",
+   "z": 23.12,
+   "in_negotiation_posts": 3541,
+   "in_other_political": 12173
+  },
+  {
+   "term": "зеленск",
+   "z": 22.88,
+   "in_negotiation_posts": 682,
+   "in_other_political": 1218
+  },
+  {
+   "term": "встреча",
+   "z": 22.49,
+   "in_negotiation_posts": 445,
+   "in_other_political": 573
+  },
+  {
+   "term": "урегули",
+   "z": 21.47,
+   "in_negotiation_posts": 406,
+   "in_other_political": 523
+  },
+  {
+   "term": "делегац",
+   "z": 21.29,
+   "in_negotiation_posts": 247,
+   "in_other_political": 134
+  },
+  {
+   "term": "event украина",
+   "z": 20.88,
+   "in_negotiation_posts": 298,
+   "in_other_political": 279
+  },
+  {
+   "term": "украино",
+   "z": 20.87,
+   "in_negotiation_posts": 343,
+   "in_other_political": 390
+  },
+  {
+   "term": "украине",
+   "z": 20.74,
+   "in_negotiation_posts": 962,
+   "in_other_political": 2316
+  },
+  {
+   "term": "встречи",
+   "z": 20.49,
+   "in_negotiation_posts": 329,
+   "in_other_political": 372
+  },
+  {
+   "term": "прогрес",
+   "z": 19.58,
+   "in_negotiation_posts": 213,
+   "in_other_political": 125
+  },
+  {
+   "term": "раунд",
+   "z": 17.46,
+   "in_negotiation_posts": 161,
+   "in_other_political": 44
+  },
+  {
+   "term": "путина трампа",
+   "z": 16.27,
+   "in_negotiation_posts": 139,
+   "in_other_political": 40
+  },
+  {
+   "term": "уиткофф",
+   "z": 16.22,
+   "in_negotiation_posts": 246,
+   "in_other_political": 336
+  },
+  {
+   "term": "соглаше",
+   "z": 16.11,
+   "in_negotiation_posts": 500,
+   "in_other_political": 1121
+  },
+  {
+   "term": "геополи event",
+   "z": 15.81,
+   "in_negotiation_posts": 180,
+   "in_other_political": 182
+  },
+  {
+   "term": "трехсто",
+   "z": 15.65,
+   "in_negotiation_posts": 135,
+   "in_other_political": 77
+  },
+  {
+   "term": "стамбул",
+   "z": 15.57,
+   "in_negotiation_posts": 147,
+   "in_other_political": 110
+  },
+  {
+   "term": "ведет",
+   "z": 15.01,
+   "in_negotiation_posts": 128,
+   "in_other_political": 81
+  },
+  {
+   "term": "мирного",
+   "z": 14.52,
+   "in_negotiation_posts": 233,
+   "in_other_political": 9
+  },
+  {
+   "term": "идут",
+   "z": 13.87,
+   "in_negotiation_posts": 119,
+   "in_other_political": 93
+  },
+  {
+   "term": "лидеров",
+   "z": 13.85,
+   "in_negotiation_posts": 135,
+   "in_other_political": 132
+  },
+  {
+   "term": "договор",
+   "z": 13.84,
+   "in_negotiation_posts": 380,
+   "in_other_political": 864
+  },
+  {
+   "term": "проведе",
+   "z": 13.84,
+   "in_negotiation_posts": 374,
+   "in_other_political": 844
+  },
+  {
+   "term": "вести",
+   "z": 13.76,
+   "in_negotiation_posts": 129,
+   "in_other_political": 120
+  },
+  {
+   "term": "украинс",
+   "z": 13.68,
+   "in_negotiation_posts": 491,
+   "in_other_political": 1265
+  },
+  {
+   "term": "ираном",
+   "z": 13.49,
+   "in_negotiation_posts": 271,
+   "in_other_political": 527
+  },
+  {
+   "term": "иран геополи",
+   "z": 13.44,
+   "in_negotiation_posts": 456,
+   "in_other_political": 1156
+  },
+  {
+   "term": "торговы",
+   "z": 13.14,
+   "in_negotiation_posts": 786,
+   "in_other_political": 2446
+  },
+  {
+   "term": "женеве",
+   "z": 12.99,
+   "in_negotiation_posts": 89,
+   "in_other_political": 40
+  },
+  {
+   "term": "россией",
+   "z": 12.9,
+   "in_negotiation_posts": 371,
+   "in_other_political": 891
+  },
+  {
+   "term": "ушаков",
+   "z": 12.76,
+   "in_negotiation_posts": 115,
+   "in_other_political": 113
+  },
+  {
+   "term": "встрече",
+   "z": 12.57,
+   "in_negotiation_posts": 232,
+   "in_other_political": 447
+  },
+  {
+   "term": "календа",
+   "z": 12.29,
+   "in_negotiation_posts": 499,
+   "in_other_political": 1402
+  },
+  {
+   "term": "россией украино",
+   "z": 12.1,
+   "in_negotiation_posts": 83,
+   "in_other_political": 52
+  },
+  {
+   "term": "путиным",
+   "z": 12.03,
+   "in_negotiation_posts": 272,
+   "in_other_political": 602
+  },
+  {
+   "term": "аляске",
+   "z": 11.97,
+   "in_negotiation_posts": 77,
+   "in_other_political": 39
+  },
+  {
+   "term": "возобно",
+   "z": 11.95,
+   "in_negotiation_posts": 233,
+   "in_other_political": 478
+  },
+  {
+   "term": "даби",
+   "z": 11.88,
+   "in_negotiation_posts": 76,
+   "in_other_political": 39
+  },
+  {
+   "term": "абу даби",
+   "z": 11.88,
+   "in_negotiation_posts": 76,
+   "in_other_political": 39
+  },
+  {
+   "term": "мирных",
+   "z": 11.87,
+   "in_negotiation_posts": 78,
+   "in_other_political": 16
+  },
+  {
+   "term": "абу",
+   "z": 11.82,
+   "in_negotiation_posts": 76,
+   "in_other_political": 41
+  },
+  {
+   "term": "рубио",
+   "z": 11.66,
+   "in_negotiation_posts": 202,
+   "in_other_political": 392
+  },
+  {
+   "term": "россии украины",
+   "z": 11.4,
+   "in_negotiation_posts": 83,
+   "in_other_political": 69
+  },
+  {
+   "term": "цзиньпи",
+   "z": 11.33,
+   "in_negotiation_posts": 146,
+   "in_other_political": 236
+  },
+  {
+   "term": "лидеры",
+   "z": 11.29,
+   "in_negotiation_posts": 135,
+   "in_other_political": 206
+  },
+  {
+   "term": "украины",
+   "z": 11.22,
+   "in_negotiation_posts": 700,
+   "in_other_political": 2300
+  },
+  {
+   "term": "состоят",
+   "z": 11.17,
+   "in_negotiation_posts": 94,
+   "in_other_political": 101
+  },
+  {
+   "term": "talks",
+   "z": 11.14,
+   "in_negotiation_posts": 65,
+   "in_other_political": 27
+  },
+  {
+   "term": "киев",
+   "z": 11.13,
+   "in_negotiation_posts": 169,
+   "in_other_political": 311
+  },
+  {
+   "term": "вашингт",
+   "z": 11.12,
+   "in_negotiation_posts": 358,
+   "in_other_political": 958
+  },
+  {
+   "term": "event сша",
+   "z": 11.03,
+   "in_negotiation_posts": 176,
+   "in_other_political": 336
+  },
+  {
+   "term": "стол",
+   "z": 10.96,
+   "in_negotiation_posts": 65,
+   "in_other_political": 15
+  },
+  {
+   "term": "мск еврозон",
+   "z": 10.94,
+   "in_negotiation_posts": 116,
+   "in_other_political": 164
+  },
+  {
+   "term": "кремль",
+   "z": 10.71,
+   "in_negotiation_posts": 279,
+   "in_other_political": 696
+  },
+  {
+   "term": "геополи зеленск",
+   "z": 10.69,
+   "in_negotiation_posts": 142,
+   "in_other_political": 245
+  },
+  {
+   "term": "урегули конфлик",
+   "z": 10.68,
+   "in_negotiation_posts": 91,
+   "in_other_political": 105
+  },
+  {
+   "term": "пройдет",
+   "z": 10.64,
+   "in_negotiation_posts": 137,
+   "in_other_political": 232
+  },
+  {
+   "term": "мирному",
+   "z": 10.57,
+   "in_negotiation_posts": 84,
+   "in_other_political": 7
+  },
+  {
+   "term": "путина зеленск",
+   "z": 10.56,
+   "in_negotiation_posts": 76,
+   "in_other_political": 8
+  },
+  {
+   "term": "украинс урегули",
+   "z": 10.54,
+   "in_negotiation_posts": 68,
+   "in_other_political": 52
+  },
+  {
+   "term": "продолж",
+   "z": 10.54,
+   "in_negotiation_posts": 595,
+   "in_other_political": 1936
+  },
+  {
+   "term": "достиже",
+   "z": 10.47,
+   "in_negotiation_posts": 111,
+   "in_other_political": 163
+  },
+  {
+   "term": "раунда",
+   "z": 10.42,
+   "in_negotiation_posts": 68,
+   "in_other_political": 9
+  },
+  {
+   "term": "мирный",
+   "z": 10.39,
+   "in_negotiation_posts": 72,
+   "in_other_political": 8
+  },
+  {
+   "term": "проведу",
+   "z": 10.36,
+   "in_negotiation_posts": 95,
+   "in_other_political": 123
+  },
+  {
+   "term": "полях",
+   "z": 10.31,
+   "in_negotiation_posts": 66,
+   "in_other_political": 52
+  },
+  {
+   "term": "мирные",
+   "z": 10.17,
+   "in_negotiation_posts": 57,
+   "in_other_political": 12
+  },
+  {
+   "term": "мирное",
+   "z": 10.16,
+   "in_negotiation_posts": 67,
+   "in_other_political": 8
+  },
+  {
+   "term": "manufac index",
+   "z": 10.08,
+   "in_negotiation_posts": 132,
+   "in_other_political": 235
+  },
+  {
+   "term": "запасы api",
+   "z": 10.08,
+   "in_negotiation_posts": 162,
+   "in_other_political": 328
+  },
+  {
+   "term": "api",
+   "z": 10.01,
+   "in_negotiation_posts": 164,
+   "in_other_political": 337
+  },
+  {
+   "term": "день",
+   "z": 10.01,
+   "in_negotiation_posts": 270,
+   "in_other_political": 703
+  },
+  {
+   "term": "согласи",
+   "z": 9.99,
+   "in_negotiation_posts": 161,
+   "in_other_political": 328
+  },
+  {
+   "term": "заключе",
+   "z": 9.96,
+   "in_negotiation_posts": 160,
+   "in_other_political": 326
+  },
+  {
+   "term": "еврозон",
+   "z": 9.95,
+   "in_negotiation_posts": 129,
+   "in_other_political": 230
+  },
+  {
+   "term": "пройдут",
+   "z": 9.88,
+   "in_negotiation_posts": 67,
+   "in_other_political": 63
+  },
+  {
+   "term": "ведут",
+   "z": 9.86,
+   "in_negotiation_posts": 75,
+   "in_other_political": 83
+  },
+  {
+   "term": "плана",
+   "z": 9.86,
+   "in_negotiation_posts": 96,
+   "in_other_political": 138
+  },
+  {
+   "term": "украинс делегац",
+   "z": 9.79,
+   "in_negotiation_posts": 50,
+   "in_other_political": 20
+  },
+  {
+   "term": "трампа путина",
+   "z": 9.69,
+   "in_negotiation_posts": 55,
+   "in_other_political": 9
+  },
+  {
+   "term": "api мск",
+   "z": 9.59,
+   "in_negotiation_posts": 147,
+   "in_other_political": 298
+  },
+  {
+   "term": "контакт",
+   "z": 9.53,
+   "in_negotiation_posts": 135,
+   "in_other_political": 262
+  },
+  {
+   "term": "мск нефть",
+   "z": 9.5,
+   "in_negotiation_posts": 253,
+   "in_other_political": 669
+  },
+  {
+   "term": "пятница",
+   "z": 9.46,
+   "in_negotiation_posts": 131,
+   "in_other_political": 252
+  },
+  {
+   "term": "россии сша",
+   "z": 9.46,
+   "in_negotiation_posts": 72,
+   "in_other_political": 84
+  },
+  {
+   "term": "брикс",
+   "z": 9.44,
+   "in_negotiation_posts": 75,
+   "in_other_political": 92
+  },
+  {
+   "term": "двустор",
+   "z": 9.41,
+   "in_negotiation_posts": 82,
+   "in_other_political": 111
+  },
+  {
+   "term": "eia",
+   "z": 9.36,
+   "in_negotiation_posts": 207,
+   "in_other_political": 510
+  },
+  {
+   "term": "запасы eia",
+   "z": 9.34,
+   "in_negotiation_posts": 201,
+   "in_other_political": 490
+  },
+  {
+   "term": "мид ирана",
+   "z": 9.33,
+   "in_negotiation_posts": 65,
+   "in_other_political": 69
+  },
+  {
+   "term": "сторон",
+   "z": 9.33,
+   "in_negotiation_posts": 53,
+   "in_other_political": 40
+  },
+  {
+   "term": "заверши",
+   "z": 9.31,
+   "in_negotiation_posts": 132,
+   "in_other_political": 260
+  },
+  {
+   "term": "пока",
+   "z": 9.28,
+   "in_negotiation_posts": 381,
+   "in_other_political": 1175
+  },
+  {
+   "term": "перегов",
+   "z": 9.27,
+   "in_negotiation_posts": 4311,
+   "in_other_political": 0
+  },
+  {
+   "term": "сторона",
+   "z": 9.25,
+   "in_negotiation_posts": 75,
+   "in_other_political": 96
+  },
+  {
+   "term": "неделе",
+   "z": 9.24,
+   "in_negotiation_posts": 234,
+   "in_other_political": 613
+  },
+  {
+   "term": "календа сегодня",
+   "z": 9.2,
+   "in_negotiation_posts": 321,
+   "in_other_political": 944
+  },
+  {
+   "term": "brexit",
+   "z": 9.2,
+   "in_negotiation_posts": 180,
+   "in_other_political": 423
+  },
+  {
+   "term": "eia мск",
+   "z": 9.16,
+   "in_negotiation_posts": 191,
+   "in_other_political": 463
+  },
+  {
+   "term": "встречу",
+   "z": 9.14,
+   "in_negotiation_posts": 164,
+   "in_other_political": 371
+  },
+  {
+   "term": "мск сша",
+   "z": 9.13,
+   "in_negotiation_posts": 302,
+   "in_other_political": 875
+  },
+  {
+   "term": "москве",
+   "z": 9.12,
+   "in_negotiation_posts": 130,
+   "in_other_political": 260
+  },
+  {
+   "term": "участие",
+   "z": 9.1,
+   "in_negotiation_posts": 201,
+   "in_other_political": 501
+  },
+  {
+   "term": "четверг",
+   "z": 9.1,
+   "in_negotiation_posts": 131,
+   "in_other_political": 264
+  },
+  {
+   "term": "мск пресс",
+   "z": 9.09,
+   "in_negotiation_posts": 83,
+   "in_other_political": 121
+  },
+  {
+   "term": "гаранти безопас",
+   "z": 9.09,
+   "in_negotiation_posts": 88,
+   "in_other_political": 135
+  },
+  {
+   "term": "достигн",
+   "z": 9.08,
+   "in_negotiation_posts": 128,
+   "in_other_political": 255
+  },
+  {
+   "term": "процесс",
+   "z": 9.07,
+   "in_negotiation_posts": 165,
+   "in_other_political": 377
+  },
+  {
+   "term": "сша запасы",
+   "z": 9.04,
+   "in_negotiation_posts": 224,
+   "in_other_political": 587
+  },
+  {
+   "term": "состоит",
+   "z": 8.99,
+   "in_negotiation_posts": 107,
+   "in_other_political": 193
+  },
+  {
+   "term": "новый раунд",
+   "z": 8.98,
+   "in_negotiation_posts": 42,
+   "in_other_political": 15
+  },
+  {
+   "term": "сша кнр",
+   "z": 8.98,
+   "in_negotiation_posts": 52,
+   "in_other_political": 44
+  },
+  {
+   "term": "торговы торговы",
+   "z": 8.98,
+   "in_negotiation_posts": 59,
+   "in_other_political": 61
+  },
+  {
+   "term": "киева",
+   "z": 8.97,
+   "in_negotiation_posts": 117,
+   "in_other_political": 224
+  },
+  {
+   "term": "мск натгаз",
+   "z": 8.95,
+   "in_negotiation_posts": 100,
+   "in_other_political": 173
+  },
+  {
+   "term": "среда",
+   "z": 8.94,
+   "in_negotiation_posts": 93,
+   "in_other_political": 153
+  },
+  {
+   "term": "обсужда",
+   "z": 8.88,
+   "in_negotiation_posts": 260,
+   "in_other_political": 730
+  },
+  {
+   "term": "ядерной програм",
+   "z": 8.86,
+   "in_negotiation_posts": 49,
+   "in_other_political": 39
+  },
+  {
+   "term": "index",
+   "z": 8.85,
+   "in_negotiation_posts": 163,
+   "in_other_political": 379
+  },
+  {
+   "term": "российс украинс",
+   "z": 8.82,
+   "in_negotiation_posts": 50,
+   "in_other_political": 42
+  },
+  {
+   "term": "геополи украина",
+   "z": 8.8,
+   "in_negotiation_posts": 395,
+   "in_other_political": 1268
+  },
+  {
+   "term": "fed manufac",
+   "z": 8.75,
+   "in_negotiation_posts": 91,
+   "in_other_political": 152
+  },
+  {
+   "term": "констру",
+   "z": 8.71,
+   "in_negotiation_posts": 57,
+   "in_other_political": 61
+  },
+  {
+   "term": "claims",
+   "z": 8.68,
+   "in_negotiation_posts": 148,
+   "in_other_political": 335
+  },
+  {
+   "term": "jobless claims",
+   "z": 8.67,
+   "in_negotiation_posts": 147,
+   "in_other_political": 332
+  },
+  {
+   "term": "сша украине",
+   "z": 8.66,
+   "in_negotiation_posts": 59,
+   "in_other_political": 67
+  },
+  {
+   "term": "вопрос",
+   "z": 8.64,
+   "in_negotiation_posts": 284,
+   "in_other_political": 836
+  },
+  {
+   "term": "jobless",
+   "z": 8.64,
+   "in_negotiation_posts": 147,
+   "in_other_political": 333
+  },
+  {
+   "term": "трампа зеленск",
+   "z": 8.63,
+   "in_negotiation_posts": 42,
+   "in_other_political": 26
+  },
+  {
+   "term": "сша initial",
+   "z": 8.62,
+   "in_negotiation_posts": 140,
+   "in_other_political": 310
+  },
+  {
+   "term": "мирным",
+   "z": 8.61,
+   "in_negotiation_posts": 39,
+   "in_other_political": 11
+  },
+  {
+   "term": "киевом",
+   "z": 8.6,
+   "in_negotiation_posts": 59,
+   "in_other_political": 68
+  },
+  {
+   "term": "сша украины",
+   "z": 8.6,
+   "in_negotiation_posts": 43,
+   "in_other_political": 29
+  },
+  {
+   "term": "недели",
+   "z": 8.58,
+   "in_negotiation_posts": 193,
+   "in_other_political": 497
+  },
+  {
+   "term": "рияде",
+   "z": 8.57,
+   "in_negotiation_posts": 42,
+   "in_other_political": 27
+  },
+  {
+   "term": "париже",
+   "z": 8.57,
+   "in_negotiation_posts": 44,
+   "in_other_political": 32
+  },
+  {
+   "term": "конфлик",
+   "z": 8.57,
+   "in_negotiation_posts": 416,
+   "in_other_political": 1373
+  },
+  {
+   "term": "кушнер",
+   "z": 8.52,
+   "in_negotiation_posts": 58,
+   "in_other_political": 67
+  },
+  {
+   "term": "axios",
+   "z": 8.52,
+   "in_negotiation_posts": 140,
+   "in_other_political": 314
+  },
+  {
+   "term": "предсто",
+   "z": 8.51,
+   "in_negotiation_posts": 134,
+   "in_other_political": 294
+  },
+  {
+   "term": "initial jobless",
+   "z": 8.51,
+   "in_negotiation_posts": 145,
+   "in_other_political": 331
+  },
+  {
+   "term": "claims мск",
+   "z": 8.5,
+   "in_negotiation_posts": 136,
+   "in_other_political": 301
+  },
+  {
+   "term": "натгаз сша",
+   "z": 8.48,
+   "in_negotiation_posts": 127,
+   "in_other_political": 272
+  },
+  {
+   "term": "календа ключевы",
+   "z": 8.48,
+   "in_negotiation_posts": 81,
+   "in_other_political": 130
+  },
+  {
+   "term": "ядерной",
+   "z": 8.48,
+   "in_negotiation_posts": 107,
+   "in_other_political": 208
+  },
+  {
+   "term": "натгаз",
+   "z": 8.43,
+   "in_negotiation_posts": 128,
+   "in_other_political": 277
+  },
+  {
+   "term": "путин трамп",
+   "z": 8.42,
+   "in_negotiation_posts": 52,
+   "in_other_political": 54
+  },
+  {
+   "term": "initial",
+   "z": 8.41,
+   "in_negotiation_posts": 145,
+   "in_other_political": 335
+  },
+  {
+   "term": "gbp",
+   "z": 8.4,
+   "in_negotiation_posts": 61,
+   "in_other_political": 77
+  },
+  {
+   "term": "источни тасс",
+   "z": 8.39,
+   "in_negotiation_posts": 64,
+   "in_other_political": 85
+  },
+  {
+   "term": "источни",
+   "z": 8.35,
+   "in_negotiation_posts": 265,
+   "in_other_political": 780
+  },
+  {
+   "term": "итогам",
+   "z": 8.34,
+   "in_negotiation_posts": 144,
+   "in_other_political": 334
+  },
+  {
+   "term": "пакиста",
+   "z": 8.31,
+   "in_negotiation_posts": 43,
+   "in_other_political": 34
+  },
+  {
+   "term": "шос",
+   "z": 8.26,
+   "in_negotiation_posts": 39,
+   "in_other_political": 25
+  },
+  {
+   "term": "неделе подробн",
+   "z": 8.26,
+   "in_negotiation_posts": 39,
+   "in_other_political": 25
+  },
+  {
+   "term": "прямых",
+   "z": 8.26,
+   "in_negotiation_posts": 46,
+   "in_other_political": 42
+  },
+  {
+   "term": "промпро",
+   "z": 8.26,
+   "in_negotiation_posts": 110,
+   "in_other_political": 224
+  },
+  {
+   "term": "урегули украине",
+   "z": 8.23,
+   "in_negotiation_posts": 47,
+   "in_other_political": 45
+  },
+  {
+   "term": "плану",
+   "z": 8.23,
+   "in_negotiation_posts": 47,
+   "in_other_political": 45
+  },
+  {
+   "term": "путина байдена",
+   "z": 8.2,
+   "in_negotiation_posts": 35,
+   "in_other_political": 12
+  },
+  {
+   "term": "мединск",
+   "z": 8.2,
+   "in_negotiation_posts": 36,
+   "in_other_political": 18
+  },
+  {
+   "term": "путин байден",
+   "z": 8.2,
+   "in_negotiation_posts": 36,
+   "in_other_political": 18
+  },
+  {
+   "term": "ввп мск",
+   "z": 8.19,
+   "in_negotiation_posts": 113,
+   "in_other_political": 236
+  },
+  {
+   "term": "сша ираном",
+   "z": 8.17,
+   "in_negotiation_posts": 35,
+   "in_other_political": 15
+  },
+  {
+   "term": "ключевы события",
+   "z": 8.15,
+   "in_negotiation_posts": 79,
+   "in_other_political": 132
+  },
+  {
+   "term": "российс делегац",
+   "z": 8.14,
+   "in_negotiation_posts": 35,
+   "in_other_political": 16
+  },
+  {
+   "term": "провест",
+   "z": 8.12,
+   "in_negotiation_posts": 126,
+   "in_other_political": 281
+  },
+  {
+   "term": "ставка мск",
+   "z": 8.11,
+   "in_negotiation_posts": 133,
+   "in_other_political": 305
+  },
+  {
+   "term": "запасы",
+   "z": 8.11,
+   "in_negotiation_posts": 278,
+   "in_other_political": 846
+  },
+  {
+   "term": "вене",
+   "z": 8.11,
+   "in_negotiation_posts": 36,
+   "in_other_political": 20
+  },
+  {
+   "term": "меморан",
+   "z": 8.09,
+   "in_negotiation_posts": 56,
+   "in_other_political": 70
+  },
+  {
+   "term": "кнр",
+   "z": 8.08,
+   "in_negotiation_posts": 336,
+   "in_other_political": 1081
+  },
+  {
+   "term": "посредн",
+   "z": 8.07,
+   "in_negotiation_posts": 52,
+   "in_other_political": 60
+  },
+  {
+   "term": "мск глава",
+   "z": 8.07,
+   "in_negotiation_posts": 80,
+   "in_other_political": 137
+  },
+  {
+   "term": "началис",
+   "z": 8.06,
+   "in_negotiation_posts": 40,
+   "in_other_political": 31
+  },
+  {
+   "term": "огня украине",
+   "z": 8.05,
+   "in_negotiation_posts": 34,
+   "in_other_political": 10
+  },
+  {
+   "term": "прямые",
+   "z": 8.04,
+   "in_negotiation_posts": 42,
+   "in_other_political": 36
+  },
+  {
+   "term": "торговы сша",
+   "z": 8.04,
+   "in_negotiation_posts": 212,
+   "in_other_political": 594
+  },
+  {
+   "term": "готов",
+   "z": 8.03,
+   "in_negotiation_posts": 161,
+   "in_other_political": 406
+  },
+  {
+   "term": "урегули украинс",
+   "z": 8.03,
+   "in_negotiation_posts": 77,
+   "in_other_political": 129
+  },
+  {
+   "term": "сша китай",
+   "z": 8.02,
+   "in_negotiation_posts": 320,
+   "in_other_political": 1020
+  },
+  {
+   "term": "ссылкой",
+   "z": 8.01,
+   "in_negotiation_posts": 107,
+   "in_other_political": 222
+  },
+  {
+   "term": "начнутс",
+   "z": 8.01,
+   "in_negotiation_posts": 43,
+   "in_other_political": 39
+  },
+  {
+   "term": "прошли",
+   "z": 8.0,
+   "in_negotiation_posts": 38,
+   "in_other_political": 27
+  },
+  {
+   "term": "заплани",
+   "z": 7.99,
+   "in_negotiation_posts": 103,
+   "in_other_political": 210
+  },
+  {
+   "term": "ядерной сделке",
+   "z": 7.98,
+   "in_negotiation_posts": 42,
+   "in_other_political": 37
+  },
+  {
+   "term": "токенах неделе",
+   "z": 7.98,
+   "in_negotiation_posts": 37,
+   "in_other_political": 25
+  },
+  {
+   "term": "разблок токенах",
+   "z": 7.98,
+   "in_negotiation_posts": 37,
+   "in_other_political": 25
+  },
+  {
+   "term": "дневном",
+   "z": 7.93,
+   "in_negotiation_posts": 93,
+   "in_other_political": 180
+  },
+  {
+   "term": "провели",
+   "z": 7.92,
+   "in_negotiation_posts": 56,
+   "in_other_political": 73
+  },
+  {
+   "term": "российс америка",
+   "z": 7.89,
+   "in_negotiation_posts": 36,
+   "in_other_political": 24
+  },
+  {
+   "term": "мск",
+   "z": 7.88,
+   "in_negotiation_posts": 479,
+   "in_other_political": 1699
+  },
+  {
+   "term": "мск четверг",
+   "z": 7.87,
+   "in_negotiation_posts": 59,
+   "in_other_political": 82
+  },
+  {
+   "term": "норманд",
+   "z": 7.87,
+   "in_negotiation_posts": 40,
+   "in_other_political": 34
+  },
+  {
+   "term": "примет участие",
+   "z": 7.87,
+   "in_negotiation_posts": 77,
+   "in_other_political": 133
+  },
+  {
+   "term": "ежемеся доклад",
+   "z": 7.84,
+   "in_negotiation_posts": 58,
+   "in_other_political": 80
+  },
+  {
+   "term": "manufac",
+   "z": 7.82,
+   "in_negotiation_posts": 198,
+   "in_other_political": 552
+  },
+  {
+   "term": "event россия",
+   "z": 7.82,
+   "in_negotiation_posts": 103,
+   "in_other_political": 215
+  },
+  {
+   "term": "home sales",
+   "z": 7.81,
+   "in_negotiation_posts": 97,
+   "in_other_political": 196
+  },
+  {
+   "term": "майами",
+   "z": 7.78,
+   "in_negotiation_posts": 33,
+   "in_other_political": 18
+  },
+  {
+   "term": "sales",
+   "z": 7.72,
+   "in_negotiation_posts": 121,
+   "in_other_political": 278
+  },
+  {
+   "term": "еврозон потреби",
+   "z": 7.68,
+   "in_negotiation_posts": 40,
+   "in_other_political": 37
+  },
+  {
+   "term": "вэнс",
+   "z": 7.65,
+   "in_negotiation_posts": 65,
+   "in_other_political": 103
+  },
+  {
+   "term": "глава ецб",
+   "z": 7.65,
+   "in_negotiation_posts": 60,
+   "in_other_political": 89
+  },
+  {
+   "term": "соглаше украине",
+   "z": 7.63,
+   "in_negotiation_posts": 31,
+   "in_other_political": 15
+  },
+  {
+   "term": "мсфо",
+   "z": 7.62,
+   "in_negotiation_posts": 157,
+   "in_other_political": 409
+  },
+  {
+   "term": "ключевы",
+   "z": 7.62,
+   "in_negotiation_posts": 147,
+   "in_other_political": 373
+  },
+  {
+   "term": "мск среда",
+   "z": 7.6,
+   "in_negotiation_posts": 60,
+   "in_other_political": 90
+  },
+  {
+   "term": "brexit gbp",
+   "z": 7.6,
+   "in_negotiation_posts": 48,
+   "in_other_political": 58
+  },
+  {
+   "term": "анкорид",
+   "z": 7.58,
+   "in_negotiation_posts": 34,
+   "in_other_political": 24
+  },
+  {
+   "term": "сегодня",
+   "z": 7.56,
+   "in_negotiation_posts": 666,
+   "in_other_political": 2555
+  },
+  {
+   "term": "ецб лагард",
+   "z": 7.55,
+   "in_negotiation_posts": 60,
+   "in_other_political": 91
+  },
+  {
+   "term": "начать",
+   "z": 7.54,
+   "in_negotiation_posts": 120,
+   "in_other_political": 281
+  },
+  {
+   "term": "токенах",
+   "z": 7.53,
+   "in_negotiation_posts": 37,
+   "in_other_political": 32
+  },
+  {
+   "term": "home",
+   "z": 7.52,
+   "in_negotiation_posts": 105,
+   "in_other_political": 231
+  },
+  {
+   "term": "потреби инфляци",
+   "z": 7.5,
+   "in_negotiation_posts": 53,
+   "in_other_political": 73
+  },
+  {
+   "term": "будапеш",
+   "z": 7.49,
+   "in_negotiation_posts": 33,
+   "in_other_political": 23
+  },
+  {
+   "term": "главой мид",
+   "z": 7.49,
+   "in_negotiation_posts": 33,
+   "in_other_political": 23
+  },
+  {
+   "term": "event геополи",
+   "z": 7.49,
+   "in_negotiation_posts": 48,
+   "in_other_political": 60
+  },
+  {
+   "term": "иранско ядерной",
+   "z": 7.48,
+   "in_negotiation_posts": 31,
+   "in_other_political": 18
+  },
+  {
+   "term": "вопроса",
+   "z": 7.48,
+   "in_negotiation_posts": 126,
+   "in_other_political": 304
+  },
+  {
+   "term": "обсужде",
+   "z": 7.45,
+   "in_negotiation_posts": 144,
+   "in_other_political": 369
+  },
+  {
+   "term": "телефон",
+   "z": 7.44,
+   "in_negotiation_posts": 153,
+   "in_other_political": 402
+  },
+  {
+   "term": "инфляци ожидани",
+   "z": 7.41,
+   "in_negotiation_posts": 67,
+   "in_other_political": 114
+  },
+  {
+   "term": "cpi мск",
+   "z": 7.41,
+   "in_negotiation_posts": 55,
+   "in_other_political": 80
+  },
+  {
+   "term": "мск вторник",
+   "z": 7.4,
+   "in_negotiation_posts": 52,
+   "in_other_political": 72
+  },
+  {
+   "term": "следующ",
+   "z": 7.36,
+   "in_negotiation_posts": 229,
+   "in_other_political": 697
+  },
+  {
+   "term": "иран",
+   "z": 7.35,
+   "in_negotiation_posts": 656,
+   "in_other_political": 2535
+  },
+  {
+   "term": "делегац россии",
+   "z": 7.33,
+   "in_negotiation_posts": 28,
+   "in_other_political": 9
+  },
+  {
+   "term": "мск пятница",
+   "z": 7.32,
+   "in_negotiation_posts": 54,
+   "in_other_political": 79
+  },
+  {
+   "term": "state manufac",
+   "z": 7.3,
+   "in_negotiation_posts": 46,
+   "in_other_political": 58
+  },
+  {
+   "term": "empire",
+   "z": 7.3,
+   "in_negotiation_posts": 46,
+   "in_other_political": 58
+  },
+  {
+   "term": "empire state",
+   "z": 7.3,
+   "in_negotiation_posts": 46,
+   "in_other_political": 58
+  },
+  {
+   "term": "геополи трамп",
+   "z": 7.29,
+   "in_negotiation_posts": 335,
+   "in_other_political": 1135
+  },
+  {
+   "term": "тупик",
+   "z": 7.27,
+   "in_negotiation_posts": 28,
+   "in_other_political": 13
+  },
+  {
+   "term": "события недели",
+   "z": 7.25,
+   "in_negotiation_posts": 55,
+   "in_other_political": 83
+  },
+  {
+   "term": "недели понедел",
+   "z": 7.25,
+   "in_negotiation_posts": 62,
+   "in_other_political": 103
+  },
+  {
+   "term": "сша ведут",
+   "z": 7.23,
+   "in_negotiation_posts": 28,
+   "in_other_political": 14
+  },
+  {
+   "term": "дневног",
+   "z": 7.2,
+   "in_negotiation_posts": 27,
+   "in_other_political": 9
+  },
+  {
+   "term": "япония",
+   "z": 7.2,
+   "in_negotiation_posts": 196,
+   "in_other_political": 576
+  },
+  {
+   "term": "пресс",
+   "z": 7.17,
+   "in_negotiation_posts": 190,
+   "in_other_political": 554
+  },
+  {
+   "term": "обе стороны",
+   "z": 7.16,
+   "in_negotiation_posts": 27,
+   "in_other_political": 12
+  },
+  {
+   "term": "геополи уиткофф",
+   "z": 7.14,
+   "in_negotiation_posts": 45,
+   "in_other_political": 58
+  },
+  {
+   "term": "высшем",
+   "z": 7.12,
+   "in_negotiation_posts": 27,
+   "in_other_political": 13
+  },
+  {
+   "term": "высшем уровне",
+   "z": 7.12,
+   "in_negotiation_posts": 27,
+   "in_other_political": 13
+  },
+  {
+   "term": "мск британи",
+   "z": 7.12,
+   "in_negotiation_posts": 118,
+   "in_other_political": 289
+  },
+  {
+   "term": "обе",
+   "z": 7.09,
+   "in_negotiation_posts": 31,
+   "in_other_political": 24
+  },
+  {
+   "term": "формате",
+   "z": 7.08,
+   "in_negotiation_posts": 48,
+   "in_other_political": 67
+  },
+  {
+   "term": "делегац украины",
+   "z": 7.05,
+   "in_negotiation_posts": 26,
+   "in_other_political": 8
+  },
+  {
+   "term": "вторник",
+   "z": 7.05,
+   "in_negotiation_posts": 119,
+   "in_other_political": 295
+  },
+  {
+   "term": "negotia",
+   "z": 7.04,
+   "in_negotiation_posts": 26,
+   "in_other_political": 11
+  },
+  {
+   "term": "еврозон manufac",
+   "z": 7.03,
+   "in_negotiation_posts": 40,
+   "in_other_political": 47
+  },
+  {
+   "term": "встрети",
+   "z": 7.02,
+   "in_negotiation_posts": 179,
+   "in_other_political": 519
+  },
+  {
+   "term": "дмитрие",
+   "z": 7.02,
+   "in_negotiation_posts": 53,
+   "in_other_political": 82
+  },
+  {
+   "term": "время",
+   "z": 6.99,
+   "in_negotiation_posts": 325,
+   "in_other_political": 1115
+  },
+  {
+   "term": "конкрет",
+   "z": 6.98,
+   "in_negotiation_posts": 70,
+   "in_other_political": 133
+  },
+  {
+   "term": "дивиден",
+   "z": 6.97,
+   "in_negotiation_posts": 212,
+   "in_other_political": 651
+  },
+  {
+   "term": "лидерам",
+   "z": 6.97,
+   "in_negotiation_posts": 64,
+   "in_other_political": 115
+  },
+  {
+   "term": "умеров",
+   "z": 6.96,
+   "in_negotiation_posts": 27,
+   "in_other_political": 16
+  },
+  {
+   "term": "мск канада",
+   "z": 6.93,
+   "in_negotiation_posts": 124,
+   "in_other_political": 317
+  },
+  {
+   "term": "гаранти",
+   "z": 6.91,
+   "in_negotiation_posts": 129,
+   "in_other_political": 336
+  },
+  {
+   "term": "примет",
+   "z": 6.9,
+   "in_negotiation_posts": 127,
+   "in_other_political": 329
+  },
+  {
+   "term": "келлог",
+   "z": 6.86,
+   "in_negotiation_posts": 39,
+   "in_other_political": 47
+  },
+  {
+   "term": "трампа цзиньпи",
+   "z": 6.85,
+   "in_negotiation_posts": 29,
+   "in_other_political": 4
+  },
+  {
+   "term": "позитив",
+   "z": 6.8,
+   "in_negotiation_posts": 66,
+   "in_other_political": 125
+  },
+  {
+   "term": "план",
+   "z": 6.79,
+   "in_negotiation_posts": 173,
+   "in_other_political": 507
+  },
+  {
+   "term": "сорвать",
+   "z": 6.79,
+   "in_negotiation_posts": 28,
+   "in_other_political": 21
+  },
+  {
+   "term": "асеан",
+   "z": 6.79,
+   "in_negotiation_posts": 24,
+   "in_other_political": 8
+  },
+  {
+   "term": "мск япония",
+   "z": 6.79,
+   "in_negotiation_posts": 61,
+   "in_other_political": 110
+  },
+  {
+   "term": "брюссел",
+   "z": 6.77,
+   "in_negotiation_posts": 94,
+   "in_other_political": 217
+  },
+  {
+   "term": "попсовы отчетно",
+   "z": 6.77,
+   "in_negotiation_posts": 134,
+   "in_other_political": 360
+  },
+  {
+   "term": "попсовы",
+   "z": 6.77,
+   "in_negotiation_posts": 134,
+   "in_other_political": 360
+  },
+  {
+   "term": "англии",
+   "z": 6.76,
+   "in_negotiation_posts": 82,
+   "in_other_political": 177
+  },
+  {
+   "term": "согласо",
+   "z": 6.76,
+   "in_negotiation_posts": 142,
+   "in_other_political": 390
+  },
+  {
+   "term": "стороно",
+   "z": 6.75,
+   "in_negotiation_posts": 36,
+   "in_other_political": 41
+  },
+  {
+   "term": "сша промпро",
+   "z": 6.75,
+   "in_negotiation_posts": 41,
+   "in_other_political": 54
+  },
+  {
+   "term": "ходе",
+   "z": 6.73,
+   "in_negotiation_posts": 91,
+   "in_other_political": 208
+  },
+  {
+   "term": "австрал",
+   "z": 6.73,
+   "in_negotiation_posts": 136,
+   "in_other_political": 369
+  },
+  {
+   "term": "делегац сша",
+   "z": 6.72,
+   "in_negotiation_posts": 28,
+   "in_other_political": 22
+  },
+  {
+   "term": "пекине",
+   "z": 6.72,
+   "in_negotiation_posts": 28,
+   "in_other_political": 22
+  },
+  {
+   "term": "мск потреби",
+   "z": 6.72,
+   "in_negotiation_posts": 81,
+   "in_other_political": 175
+  },
+  {
+   "term": "обсудят",
+   "z": 6.72,
+   "in_negotiation_posts": 105,
+   "in_other_political": 257
+  },
+  {
+   "term": "воскрес",
+   "z": 6.69,
+   "in_negotiation_posts": 38,
+   "in_other_political": 47
+  },
+  {
+   "term": "trade talks",
+   "z": 6.69,
+   "in_negotiation_posts": 27,
+   "in_other_political": 4
+  },
+  {
+   "term": "безопас украины",
+   "z": 6.69,
+   "in_negotiation_posts": 36,
+   "in_other_political": 42
+  },
+  {
+   "term": "сделке",
+   "z": 6.66,
+   "in_negotiation_posts": 97,
+   "in_other_political": 231
+  },
+  {
+   "term": "украино россией",
+   "z": 6.65,
+   "in_negotiation_posts": 26,
+   "in_other_political": 18
+  },
+  {
+   "term": "existin home",
+   "z": 6.63,
+   "in_negotiation_posts": 49,
+   "in_other_political": 78
+  },
+  {
+   "term": "понедел",
+   "z": 6.62,
+   "in_negotiation_posts": 130,
+   "in_other_political": 351
+  },
+  {
+   "term": "service composi",
+   "z": 6.6,
+   "in_negotiation_posts": 55,
+   "in_other_political": 96
+  },
+  {
+   "term": "вопросы",
+   "z": 6.6,
+   "in_negotiation_posts": 93,
+   "in_other_political": 219
+  },
+  {
+   "term": "cpi",
+   "z": 6.59,
+   "in_negotiation_posts": 199,
+   "in_other_political": 620
+  },
+  {
+   "term": "торговы баланс",
+   "z": 6.58,
+   "in_negotiation_posts": 92,
+   "in_other_political": 216
+  }
+ ]
+}

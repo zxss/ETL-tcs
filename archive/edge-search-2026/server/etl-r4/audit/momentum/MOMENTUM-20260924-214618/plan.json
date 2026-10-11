@@ -1,0 +1,47 @@
+{
+ "targets": {
+  "asof": "2026-09-23",
+  "universe": 46,
+  "excluded_losers": 9,
+  "picks": [
+   "FLOT",
+   "SNGSP",
+   "AKRN",
+   "TATN",
+   "CBOM",
+   "POSI",
+   "SBER",
+   "MOEX",
+   "HYDR",
+   "GMKN"
+  ],
+  "momentum": {
+   "FLOT": 3.42,
+   "SNGSP": 3.32,
+   "AKRN": -0.7,
+   "TATN": -1.01,
+   "CBOM": -2.46,
+   "POSI": -5.01,
+   "SBER": -9.37,
+   "MOEX": -13.82,
+   "HYDR": -14.6,
+   "GMKN": -15.31
+  },
+  "last_price": {
+   "FLOT": 82.82,
+   "SNGSP": 40.81,
+   "AKRN": 18002.0,
+   "TATN": 638.5,
+   "CBOM": 9.762,
+   "POSI": 1053.0,
+   "SBER": 280.74,
+   "MOEX": 150.57,
+   "HYDR": 0.3844,
+   "GMKN": 127.52
+  }
+ },
+ "future": "MXZ6",
+ "future_lots": -5,
+ "per_name_rub": 120000.0,
+ "trades": []
+}

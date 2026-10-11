@@ -1,0 +1,53 @@
+{
+ "range": "2024-05-21:2026-09-11",
+ "done": {
+  "T:2024": {
+   "ticker": "T",
+   "year": 2024,
+   "archive": true,
+   "bars": 42006,
+   "inserted": 42006,
+   "days": 225
+  },
+  "T:2025": {
+   "ticker": "T",
+   "year": 2025,
+   "archive": true,
+   "bars": 78294,
+   "inserted": 78294,
+   "days": 364
+  },
+  "T:2026": {
+   "ticker": "T",
+   "year": 2026,
+   "archive": true,
+   "bars": 54534,
+   "inserted": 54534,
+   "days": 252
+  },
+  "NLMK:2024": {
+   "ticker": "NLMK",
+   "year": 2024,
+   "archive": true,
+   "bars": 40465,
+   "inserted": 40465,
+   "days": 223
+  },
+  "NLMK:2025": {
+   "ticker": "NLMK",
+   "year": 2025,
+   "archive": true,
+   "bars": 73945,
+   "inserted": 73945,
+   "days": 364
+  },
+  "NLMK:2026": {
+   "ticker": "NLMK",
+   "year": 2026,
+   "archive": true,
+   "bars": 50645,
+   "inserted": 50645,
+   "days": 253
+  }
+ }
+}

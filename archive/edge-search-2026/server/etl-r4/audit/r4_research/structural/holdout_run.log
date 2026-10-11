@@ -1,0 +1,135 @@
+/opt/etl-r4/research/sprint4_gatekeeper.py:80: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(DAILY_SQL.format(table=table), conn, params={"tk": tickers, **_window(d_from, d_to)})
+/opt/etl-r4/research/sprint4_gatekeeper.py:80: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(DAILY_SQL.format(table=table), conn, params={"tk": tickers, **_window(d_from, d_to)})
+2026-09-17 20:48:06,259 INFO модуль totm
+/opt/etl-r4/research/structural/common.py:75: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  frames.append(pd.read_sql(BAR_SQL.format(table=table), conn, params={
+2026-09-17 20:48:12,204 INFO модуль cash_and_carry
+/opt/etl-r4/research/structural/common.py:75: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  frames.append(pd.read_sql(BAR_SQL.format(table=table), conn, params={
+/opt/etl-r4/research/structural/common.py:75: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  frames.append(pd.read_sql(BAR_SQL.format(table=table), conn, params={
+2026-09-17 20:48:14,311 INFO модуль dividend_gap
+/opt/etl-r4/research/sprint4_gatekeeper.py:80: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(DAILY_SQL.format(table=table), conn, params={"tk": tickers, **_window(d_from, d_to)})
+/opt/etl-r4/research/sprint4_gatekeeper.py:80: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(DAILY_SQL.format(table=table), conn, params={"tk": tickers, **_window(d_from, d_to)})
+2026-09-17 20:48:18,785 INFO модуль index_rebalance
+/opt/etl-r4/research/structural/common.py:75: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  frames.append(pd.read_sql(BAR_SQL.format(table=table), conn, params={
+/opt/etl-r4/research/structural/common.py:75: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  frames.append(pd.read_sql(BAR_SQL.format(table=table), conn, params={
+/opt/etl-r4/research/structural/common.py:75: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  frames.append(pd.read_sql(BAR_SQL.format(table=table), conn, params={
+/opt/etl-r4/research/structural/common.py:75: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  frames.append(pd.read_sql(BAR_SQL.format(table=table), conn, params={
+/opt/etl-r4/research/structural/common.py:75: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  frames.append(pd.read_sql(BAR_SQL.format(table=table), conn, params={
+/opt/etl-r4/research/structural/common.py:75: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  frames.append(pd.read_sql(BAR_SQL.format(table=table), conn, params={
+/opt/etl-r4/research/structural/common.py:75: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  frames.append(pd.read_sql(BAR_SQL.format(table=table), conn, params={
+/opt/etl-r4/research/structural/common.py:75: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  frames.append(pd.read_sql(BAR_SQL.format(table=table), conn, params={
+/opt/etl-r4/research/structural/common.py:75: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  frames.append(pd.read_sql(BAR_SQL.format(table=table), conn, params={
+/opt/etl-r4/research/structural/common.py:75: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  frames.append(pd.read_sql(BAR_SQL.format(table=table), conn, params={
+/opt/etl-r4/research/structural/common.py:75: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  frames.append(pd.read_sql(BAR_SQL.format(table=table), conn, params={
+/opt/etl-r4/research/structural/common.py:75: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  frames.append(pd.read_sql(BAR_SQL.format(table=table), conn, params={
+/opt/etl-r4/research/structural/common.py:75: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  frames.append(pd.read_sql(BAR_SQL.format(table=table), conn, params={
+/opt/etl-r4/research/structural/common.py:75: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  frames.append(pd.read_sql(BAR_SQL.format(table=table), conn, params={
+# Структурные модели — отложенная выборка (единственный прогон)
+
+Сформировано 17.09.2026 20:48. Код `3dbc665`, правила `structural-2026-09-17`. Период 2022-09-12 … 2024-05-20. Испытаний в реестре: 113.
+
+| модель | сделок | в год | удержание, дн | нетто сверх фонда, %/сделку (t) | медиана | доля плюсовых | сверх фонда на задействованный капитал, % год | вклад, % капитала 5 млн/год | IR | критерий |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1А. TOTM — ночи конца месяца | 598 | 354.0 | 1.6 | -0,006 (-0,1) | -0,086 | +0,43 | -1,47 | -0,23 | -0,07 | нет |
+| 1Б. TOTM — удержание 4 сессии | 199 | 117.8 | 5.9 | +0,758 (+1,7) | +0,482 | +0,57 | +46,54 | +8,92 | +1,20 | нет |
+| 2. Cash-and-Carry (базис) — СПРАВОЧНО, заглядывание вперёд | 37 | 21.9 | 21.3 | +0,633 (+1,8) | +0,066 | +0,59 | +10,25 | +0,24 | +1,44 | нет |
+| 2′. Cash-and-Carry без заглядывания вперёд | 32 | 18.9 | 19.5 | +0,072 (+1,9) | +0,004 | +0,50 | +1,44 | +0,03 | +1,36 | нет |
+| 3А. Дивидендный гэп — корзина А (cash cows) | 12 | 7.1 | 17.2 | -1,126 (-1,4) | +0,098 | +0,58 | -23,38 | -0,15 | -0,69 | нет |
+| 3Б. Дивидендный гэп — корзина Б (прочие) | 15 | 8.9 | 19.3 | -1,228 (-1,4) | -0,079 | +0,47 | -23,12 | -0,22 | -0,97 | нет |
+| 4. Индексный ребаланс — включения | 13 | 7.7 | 19.4 | -0,101 (+0,2) | -0,543 | +0,46 | -2,03 | -0,02 | -0,04 | нет |
+
+## Подробности модулей
+
+```
+{
+ "totm": {
+  "windows": 20,
+  "totm_basket_gross_mean_pct": 1.0799883565241917,
+  "control_basket_gross_mean_pct": 0.20237959055738405,
+  "control_windows": 68,
+  "welch_t_totm_vs_control": 1.5974976598962092
+ },
+ "cash_and_carry": {
+  "signal_days": {
+   "C&C": 29,
+   "C&C-2": 26
+  },
+  "signal_days_per_year": {
+   "C&C": 17.16734197730956,
+   "C&C-2": 15.391410048622365
+  },
+  "contracts_used": 40,
+  "sizes_found": 40,
+  "max_drawdown_rub": {
+   "C&C": -17060.0,
+   "C&C-2": -185.00000000000045
+  },
+  "open_at_end": {
+   "C&C": 0,
+   "C&C-2": 0
+  }
+ },
+ "dividend_gap": {
+  "events": 51,
+  "skipped": {
+   "гэп закрылся до входа": 5,
+   "нет гэпа": 19
+  },
+  "take_rate_A": 0.5,
+  "take_rate_B": 0.6
+ },
+ "index_rebalance": {
+  "events": 7,
+  "additions": 13,
+  "deletions": 6,
+  "skipped": {},
+  "prices_from_api": [
+   "AGRO",
+   "MTLR",
+   "MTLRP",
+   "QIWI",
+   "SGZH"
+  ],
+  "car_mean_pct": 2.909244845589244
+ }
+}
+```
+
+# Ретро-тест структурных и низкооборотных моделей (Hurdle > TMON)
+
+Разработка: 2024-05-21 … 2026-09-07 (код `b826b00`); отложенная: 2022-09-12 … 2024-05-20 (код `3dbc665`, один прогон). Правила `structural-2026-09-17` (research/structural/rules.json). Испытаний в реестре: 113.
+
+Критерий (ТЗ): избыточная годовая доходность сверх TMON ≥ +2,0 % при t ≥ 2,0 — на задействованный капитал; вклад в % капитала 5 млн зависит от размера позиции и приведён справочно.
+
+| Модель | Сделок / год (разр. / отл.) | Среднее удержание, дн | Net PnL на сделку сверх фонда, % | Годовой вклад к TMON, % капитала | Сверх фонда на задействованный капитал, % год | IR к TMON | t | Holdout подтверждён? |
+|---|---|---|---|---|---|---|---|---|
+| 1А. TOTM — ночи конца месяца | +361,8 / +354,0 | +1,6 / +1,6 | -0,039 / -0,006 | -1,43 / -0,23 | -8,80 / -1,47 | -0,28 / -0,07 | -0,4 / -0,1 | нет |
+| 1Б. TOTM — удержание 4 сессии | +121,3 / +117,8 | +6,3 / +5,9 | -0,863 / +0,758 | -10,44 / +8,92 | -50,04 / +46,54 | -0,96 / +1,20 | -1,5 / +1,7 | нет |
+| 2. Cash-and-Carry (базис) — СПРАВОЧНО, заглядывание вперёд | +33,5 / +21,9 | +22,0 / +21,3 | +0,197 / +0,633 | +0,11 / +0,24 | +3,08 / +10,25 | +1,74 / +1,44 | +2,4 / +1,8 | нет |
+| 2′. Cash-and-Carry без заглядывания вперёд | +31,7 / +18,9 | +19,9 / +19,5 | +0,056 / +0,072 | +0,03 / +0,03 | +1,07 / +1,44 | +1,50 / +1,36 | +2,5 / +1,9 | нет |
+| 3А. Дивидендный гэп — корзина А (cash cows) | +11,3 / +7,1 | +16,1 / +17,2 | -0,523 / -1,126 | -0,12 / -0,15 | -11,68 / -23,38 | -0,29 / -0,69 | -0,5 / -1,4 | нет |
+| 3Б. Дивидендный гэп — корзина Б (прочие) | +26,5 / +8,9 | +20,0 / +19,3 | -1,069 / -1,228 | -0,57 / -0,22 | -19,78 / -23,12 | -0,65 / -0,97 | -1,5 / -1,4 | нет |
+| 4. Индексный ребаланс — включения | +6,1 / +7,7 | +17,9 / +19,4 | +1,067 / -0,101 | +0,13 / -0,02 | +22,04 / -2,03 | +0,31 / -0,04 | +0,6 / +0,2 | нет |
+
+Числа в ячейках — «разработка / отложенная».
+

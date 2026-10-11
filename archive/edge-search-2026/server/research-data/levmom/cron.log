@@ -1,0 +1,338 @@
+2026-09-28 10:15:01 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+2026-09-28 10:15:07 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+2026-09-28 10:15:09 SandboxService/PostSandboxOrder: HTTP 429 — повтор 1/3 через 1.0 с
+{
+ "ts": "2026-09-28T10:15:01+03:00",
+ "kind": "rebalance",
+ "dry": false,
+ "account": "afbe70b4-56ef-439a-aa33-936fb016c8b2",
+ "equity": 1000000.0,
+ "signal": {
+  "asof": "2026-09-25",
+  "picks": [
+   "SNGSP",
+   "SBER",
+   "MOEX",
+   "MTSS",
+   "FLOT",
+   "LENT",
+   "GMKN",
+   "CBOM",
+   "TATN",
+   "YDEX"
+  ],
+  "momentum": {
+   "SNGSP": 0.127,
+   "SBER": 0.0791,
+   "MOEX": 0.059,
+   "MTSS": 0.0525,
+   "FLOT": 0.033,
+   "LENT": 0.0064,
+   "GMKN": -0.0109,
+   "CBOM": -0.0354,
+   "TATN": -0.0544,
+   "YDEX": -0.0705,
+   "VTBR": -0.1228,
+   "POSI": -0.1303,
+   "FIXR": -0.1493,
+   "HYDR": -0.1631,
+   "IRAO": -0.1657,
+   "RUAL": -0.167,
+   "X5": -0.179,
+   "LKOH": -0.1944,
+   "BSPB": -0.2016,
+   "ROSN": -0.2095,
+   "SNGS": -0.2332,
+   "MAGN": -0.2355,
+   "PHOR": -0.2569,
+   "ASTR": -0.2683,
+   "GAZP": -0.2692,
+   "RTKM": -0.2706,
+   "ENPG": -0.2775,
+   "FEES": -0.2868,
+   "AFLT": -0.3096,
+   "UPRO": -0.3207,
+   "MVID": -0.3268,
+   "MGNT": -0.5081,
+   "ALRS": -0.5593,
+   "VKCO": -0.5702,
+   "SMLT": -0.636
+  }
+ },
+ "leverage": 2.25,
+ "leverage_real": 2.252,
+ "go": 748666.65,
+ "want": {
+  "SGZ6": 5,
+  "SRZ6": 8,
+  "MEZ6": 15,
+  "MTZ6": 12,
+  "FLZ6": 27,
+  "LNZ6": 128,
+  "GKZ6": 188,
+  "CMZ6": 25,
+  "TTZ6": 4,
+  "YDZ6": 61,
+  "MXZ6": -10
+ },
+ "fund_target": 151333.35,
+ "fund_pre": {
+  "fund_lots_delta": 0,
+  "dry": false
+ },
+ "fund_post": {
+  "fund_lots_delta": 916,
+  "status": "EXECUTION_REPORT_STATUS_FILL"
+ },
+ "trades": [
+  {
+   "name": "MXZ6",
+   "side": "SELL",
+   "lots": 10,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "name": "SGZ6",
+   "side": "BUY",
+   "lots": 5,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "name": "SRZ6",
+   "side": "BUY",
+   "lots": 8,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "name": "MEZ6",
+   "side": "BUY",
+   "lots": 15,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "name": "MTZ6",
+   "side": "BUY",
+   "lots": 12,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "name": "FLZ6",
+   "side": "BUY",
+   "lots": 27,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "name": "LNZ6",
+   "side": "BUY",
+   "lots": 128,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "name": "GKZ6",
+   "side": "BUY",
+   "lots": 188,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "name": "CMZ6",
+   "side": "BUY",
+   "lots": 25,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "name": "TTZ6",
+   "side": "BUY",
+   "lots": 4,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "name": "YDZ6",
+   "side": "BUY",
+   "lots": 61,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  }
+ ]
+}
+2026-09-28 10:25:01 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+{"ts": "2026-09-28T10:25:01+03:00", "kind": "check", "equity": 1457563.3291000002, "money": 1306359.2091, "fund": 151204.12, "go": 748666.65, "go_load": 0.614, "roll": false}
+2026-09-28 18:30:01 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+{"ts": "2026-09-28T18:30:01+03:00", "kind": "check", "equity": 1457554.1691, "money": 1306359.2091, "fund": 151194.96, "go": 748666.65, "go_load": 0.614, "roll": false}
+2026-09-29 10:15:02 ребаланс этого месяца уже сделан
+2026-09-29 10:25:02 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+{"ts": "2026-09-29T10:25:01+03:00", "kind": "check", "equity": 1453736.8931999998, "money": 1302486.9732, "fund": 151249.92, "go": 745613.89, "go_load": 0.613, "roll": false}
+2026-09-29 18:30:01 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+{"ts": "2026-09-29T18:30:01+03:00", "kind": "check", "equity": 1453727.7332, "money": 1302486.9732, "fund": 151240.76, "go": 745613.89, "go_load": 0.613, "roll": false}
+2026-09-30 10:15:01 ребаланс этого месяца уже сделан
+2026-09-30 10:25:01 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+{"ts": "2026-09-30T10:25:01+03:00", "kind": "check", "equity": 1465756.0140999998, "money": 1314451.1341, "fund": 151304.88, "go": 749700.74, "go_load": 0.611, "roll": false}
+2026-09-30 18:30:01 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+{"ts": "2026-09-30T18:30:01+03:00", "kind": "check", "equity": 1465746.8540999999, "money": 1314451.1341, "fund": 151295.72, "go": 749700.74, "go_load": 0.611, "roll": false}
+{
+ "ts": "2026-10-01T10:12:56+03:00",
+ "kind": "rebalance",
+ "dry": false,
+ "account": "afbe70b4-56ef-439a-aa33-936fb016c8b2",
+ "equity": 976295.435,
+ "signal": {
+  "asof": "2026-09-29",
+  "picks": [
+   "SBER",
+   "SNGSP",
+   "MTSS",
+   "MOEX",
+   "FLOT",
+   "GMKN",
+   "TATN",
+   "LENT",
+   "YDEX",
+   "POSI"
+  ],
+  "momentum": {
+   "SBER": 0.1157,
+   "SNGSP": 0.1024,
+   "MTSS": 0.0973,
+   "MOEX": 0.0894,
+   "FLOT": 0.0853,
+   "GMKN": 0.0643,
+   "TATN": 0.0634,
+   "LENT": 0.0433,
+   "YDEX": -0.0274,
+   "POSI": -0.0647,
+   "HYDR": -0.0841,
+   "VTBR": -0.0859,
+   "CBOM": -0.0923,
+   "LKOH": -0.0994,
+   "RUAL": -0.1151,
+   "FIXR": -0.1214,
+   "IRAO": -0.1238,
+   "X5": -0.1294,
+   "MAGN": -0.1457,
+   "ROSN": -0.1889,
+   "PHOR": -0.1993,
+   "MVID": -0.2073,
+   "BSPB": -0.2075,
+   "FEES": -0.2135,
+   "RTKM": -0.2227,
+   "SNGS": -0.2228,
+   "GAZP": -0.2275,
+   "ENPG": -0.2377,
+   "UPRO": -0.2493,
+   "ASTR": -0.2497,
+   "AFLT": -0.257,
+   "MGNT": -0.4745,
+   "ALRS": -0.5256,
+   "VKCO": -0.5434,
+   "SMLT": -0.5981
+  }
+ },
+ "leverage": 2.25,
+ "leverage_real": 2.212,
+ "go": 683649.12,
+ "want": {
+  "SRZ6": 8,
+  "SGZ6": 5,
+  "MTZ6": 13,
+  "MEZ6": 14,
+  "FLZ6": 27,
+  "GKZ6": 188,
+  "TTZ6": 3,
+  "LNZ6": 119,
+  "YDZ6": 60,
+  "PSZ6": 207,
+  "MXZ6": -9
+ },
+ "fund_target": 195016.77,
+ "fund_pre": {
+  "fund_lots_delta": 0,
+  "dry": false
+ },
+ "fund_post": {
+  "fund_lots_delta": 264,
+  "status": "EXECUTION_REPORT_STATUS_FILL"
+ },
+ "trades": [
+  {
+   "name": "MEZ6",
+   "side": "SELL",
+   "lots": 1,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "name": "TTZ6",
+   "side": "SELL",
+   "lots": 1,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "name": "LNZ6",
+   "side": "SELL",
+   "lots": 9,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "name": "YDZ6",
+   "side": "SELL",
+   "lots": 1,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "name": "CMZ6",
+   "side": "SELL",
+   "lots": 25,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "name": "MTZ6",
+   "side": "BUY",
+   "lots": 1,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "name": "PSZ6",
+   "side": "BUY",
+   "lots": 207,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  },
+  {
+   "name": "MXZ6",
+   "side": "BUY",
+   "lots": 1,
+   "status": "EXECUTION_REPORT_STATUS_FILL"
+  }
+ ]
+}
+2026-10-01 10:15:02 ребаланс этого месяца уже сделан
+2026-10-01 10:25:02 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+{"ts": "2026-10-01T10:25:01+03:00", "kind": "check", "equity": 978325.952, "money": 807281.752, "fund": 194983.2, "varmargin": -23939.0, "go": 413909.73, "go_est": 683649.12, "go_load": 0.523, "roll": false}
+2026-10-01 18:30:02 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+{"ts": "2026-10-01T18:30:01+03:00", "kind": "check", "equity": 981465.952, "money": 807281.752, "fund": 194983.2, "varmargin": -20799.0, "go": 413909.73, "go_est": 683649.12, "go_load": 0.522, "roll": false}
+2026-10-02 10:15:01 ребаланс этого месяца уже сделан
+2026-10-02 10:25:01 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+{"ts": "2026-10-02T10:25:01+03:00", "kind": "check", "equity": 974803.352, "money": 785594.752, "fund": 195077.6, "varmargin": -5869.0, "go": 414397.13, "go_est": 684867.86, "go_load": 0.525, "roll": false}
+2026-10-02 18:30:01 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+{"ts": "2026-10-02T18:30:01+03:00", "kind": "check", "equity": 981968.352, "money": 785594.752, "fund": 195077.6, "varmargin": 1296.0, "go": 414397.13, "go_est": 684867.86, "go_load": 0.522, "roll": false}
+2026-10-05 10:15:01 ребаланс этого месяца уже сделан
+2026-10-05 10:25:01 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+{"ts": "2026-10-05T10:25:01+03:00", "kind": "check", "equity": 979560.752, "money": 785222.752, "fund": 195231.0, "varmargin": -893.0, "go": 414628.84, "go_est": 683931.9, "go_load": 0.523, "roll": false}
+2026-10-05 18:30:01 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+{"ts": "2026-10-05T18:30:01+03:00", "kind": "check", "equity": 988126.752, "money": 785222.752, "fund": 195231.0, "varmargin": 7673.0, "go": 414628.84, "go_est": 683931.9, "go_load": 0.52, "roll": false}
+2026-10-06 10:15:02 ребаланс этого месяца уже сделан
+2026-10-06 10:25:01 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+{"ts": "2026-10-06T10:25:01+03:00", "kind": "check", "equity": 982499.5519999999, "money": 778959.752, "fund": 195301.8, "varmargin": 8238.0, "go": 422388.89, "go_est": 698547.65, "go_load": 0.53, "roll": false}
+2026-10-06 18:30:02 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+{"ts": "2026-10-06T18:30:01+03:00", "kind": "check", "equity": 980957.352, "money": 778959.752, "fund": 195313.6, "varmargin": 6684.0, "go": 422388.89, "go_est": 698547.65, "go_load": 0.531, "roll": false}
+2026-10-07 10:15:01 ребаланс этого месяца уже сделан
+2026-10-07 10:25:01 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+{"ts": "2026-10-07T10:25:01+03:00", "kind": "check", "equity": 977811.152, "money": 797066.752, "fund": 195384.40000000002, "varmargin": -14640.0, "go": 440938.68, "go_est": 698603.49, "go_load": 0.551, "roll": false}
+2026-10-07 18:30:01 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+{"ts": "2026-10-07T18:30:01+03:00", "kind": "check", "equity": 966765.152, "money": 797066.752, "fund": 195384.40000000002, "varmargin": -25686.0, "go": 440938.68, "go_est": 698603.49, "go_load": 0.556, "roll": false}
+2026-10-08 10:15:02 ребаланс этого месяца уже сделан
+2026-10-08 10:25:02 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+{"ts": "2026-10-08T10:25:01+03:00", "kind": "check", "equity": 955275.352, "money": 785715.752, "fund": 195431.6, "varmargin": -25872.0, "go": 462790.38, "go_est": 697697.95, "go_load": 0.584, "roll": false}
+2026-10-08 18:30:01 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+{"ts": "2026-10-08T18:30:01+03:00", "kind": "check", "equity": 955862.152, "money": 785715.752, "fund": 195443.4, "varmargin": -25297.0, "go": 462790.38, "go_est": 697697.95, "go_load": 0.584, "roll": false}
+2026-10-09 10:15:01 ребаланс этого месяца уже сделан
+2026-10-09 10:25:01 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+{"ts": "2026-10-09T10:25:01+03:00", "kind": "check", "equity": 958838.552, "money": 774296.752, "fund": 195537.80000000002, "varmargin": -10996.0, "go": 432746.15, "go_est": 688181.35, "go_load": 0.551, "roll": false}
+2026-10-09 18:30:01 Sandbox account afbe70b4-56ef-439a-aa33-936fb016c8b2 найден — переиспользуем.
+{"ts": "2026-10-09T18:30:01+03:00", "kind": "check", "equity": 949057.5519999999, "money": 774296.752, "fund": 195596.8, "varmargin": -20836.0, "go": 432746.15, "go_est": 688181.35, "go_load": 0.556, "roll": false}

@@ -1,0 +1,143 @@
+{
+  "account_id": "<PROD_ACCOUNT>",
+  "sandbox": false,
+  "portfolio": {
+    "totalAmountShares": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "totalAmountBonds": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "totalAmountEtf": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "totalAmountCurrencies": {
+      "currency": "rub",
+      "units": "1040000",
+      "nano": 0
+    },
+    "totalAmountFutures": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "expectedYield": {
+      "units": "0",
+      "nano": 0
+    },
+    "positions": [
+      {
+        "figi": "RUB000UTSTOM",
+        "instrumentType": "currency",
+        "quantity": {
+          "units": "1040000",
+          "nano": 0
+        },
+        "averagePositionPrice": {
+          "currency": "rub",
+          "units": "1",
+          "nano": 0
+        },
+        "expectedYield": {
+          "units": "0",
+          "nano": 0
+        },
+        "averagePositionPricePt": {
+          "units": "0",
+          "nano": 0
+        },
+        "currentPrice": {
+          "currency": "rub",
+          "units": "1",
+          "nano": 0
+        },
+        "averagePositionPriceFifo": {
+          "currency": "rub",
+          "units": "1",
+          "nano": 0
+        },
+        "quantityLots": {
+          "units": "1040000",
+          "nano": 0
+        },
+        "blocked": false,
+        "blockedLots": {
+          "units": "0",
+          "nano": 0
+        },
+        "positionUid": "33e24a92-aab0-409c-88b8-f2d57415b920",
+        "instrumentUid": "a92e2e25-a698-45cc-a781-167cf465257c",
+        "varMargin": {
+          "currency": "",
+          "units": "0",
+          "nano": 0
+        },
+        "expectedYieldFifo": {
+          "units": "0",
+          "nano": 0
+        },
+        "dailyYield": {
+          "currency": "rub",
+          "units": "0",
+          "nano": 0
+        },
+        "ticker": "RUB000UTSTOM",
+        "classCode": "CETS",
+        "varMarginSettled": {
+          "currency": "",
+          "units": "0",
+          "nano": 0
+        }
+      }
+    ],
+    "accountId": "<PROD_ACCOUNT>",
+    "totalAmountOptions": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "totalAmountSp": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "totalAmountPortfolio": {
+      "currency": "rub",
+      "units": "1040000",
+      "nano": 0
+    },
+    "virtualPositions": [],
+    "dailyYield": {
+      "currency": "rub",
+      "units": "0",
+      "nano": 0
+    },
+    "dailyYieldRelative": {
+      "units": "0",
+      "nano": 0
+    }
+  },
+  "positions": {
+    "money": [
+      {
+        "currency": "rub",
+        "units": "1040000",
+        "nano": 0
+      }
+    ],
+    "blocked": [],
+    "securities": [],
+    "limitsLoadingInProgress": false,
+    "futures": [],
+    "options": [],
+    "accountId": "<PROD_ACCOUNT>"
+  },
+  "orders": [],
+  "stops": []
+}

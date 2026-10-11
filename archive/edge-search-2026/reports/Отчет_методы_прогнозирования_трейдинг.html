@@ -1,0 +1,848 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Методы прогнозирования для трейдинга</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600;7..72,700&display=swap">
+<style>
+:root{
+  color-scheme: light;
+  --paper:#eef0ee;
+  --surface:#fbfbfa;
+  --surface-2:#f2f4f2;
+  --ink:#15201f;
+  --ink-2:#3d4a48;
+  --muted:#6c7a77;
+  --line:#ccd4d1;
+  --line-soft:#e0e5e2;
+  --accent:#0d6b63;
+  --accent-soft:#dbe9e6;
+  --fact:#1d6b45;
+  --infer:#8a5a0d;
+  --hypo:#6a4b96;
+  --warn-bg:#f7efdd;
+  --warn-line:#d9bd7a;
+  --sans:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --serif:"Literata",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --paper:#0f1513;
+    --surface:#151d1b;
+    --surface-2:#1b2421;
+    --ink:#e7ece9;
+    --ink-2:#b7c2be;
+    --muted:#8b9994;
+    --line:#2c3835;
+    --line-soft:#222c2a;
+    --accent:#4ecfbd;
+    --accent-soft:#16302c;
+    --fact:#63c38e;
+    --infer:#d8a748;
+    --hypo:#ab90e0;
+    --warn-bg:#2a2317;
+    --warn-line:#6a5525;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --paper:#0f1513; --surface:#151d1b; --surface-2:#1b2421;
+  --ink:#e7ece9; --ink-2:#b7c2be; --muted:#8b9994;
+  --line:#2c3835; --line-soft:#222c2a;
+  --accent:#4ecfbd; --accent-soft:#16302c;
+  --fact:#63c38e; --infer:#d8a748; --hypo:#ab90e0;
+  --warn-bg:#2a2317; --warn-line:#6a5525;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--serif);
+  font-size:16px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%}
+
+/* ---------- shell ---------- */
+.wrap{max-width:1200px;margin:0 auto;padding-inline:20px;padding-block:0 72px}
+
+header.masthead{
+  border-bottom:1px solid var(--line);
+  padding-block:56px 30px;
+  margin-bottom:34px;
+}
+.eyebrow{
+  font-family:var(--sans);font-size:11.5px;font-weight:600;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--accent);margin:0 0 18px;
+}
+h1{
+  font-family:var(--serif);font-weight:700;
+  font-size:clamp(30px,5.2vw,50px);line-height:1.08;letter-spacing:-.015em;
+  margin:0 0 8px;text-wrap:balance;max-width:19ch;
+}
+.subtitle{
+  font-family:var(--sans);font-size:clamp(15px,2.2vw,18px);color:var(--muted);
+  margin:0 0 30px;max-width:46ch;line-height:1.45;
+}
+.facts{
+  display:grid;gap:14px 30px;
+  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  border-top:1px solid var(--line-soft);padding-top:20px;
+}
+.fact-k{font-family:var(--sans);font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:3px}
+.fact-v{font-family:var(--sans);font-size:14px;color:var(--ink-2);line-height:1.4}
+
+.layout{display:grid;gap:44px;align-items:start}
+@media (min-width:1000px){
+  .layout{grid-template-columns:230px minmax(0,1fr);gap:54px}
+  nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);max-height:calc(100vh - 60px);overflow-y:auto}
+}
+nav.toc{font-family:var(--sans);font-size:13px;line-height:1.35}
+.toc h2{font-size:10.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;padding-bottom:10px;border-bottom:1px solid var(--line-soft)}
+.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.toc a{
+  display:grid;grid-template-columns:26px 1fr;gap:4px;
+  color:var(--ink-2);text-decoration:none;padding:5px 6px;border-radius:4px;
+  border-left:2px solid transparent;
+}
+.toc a:hover{background:var(--surface-2);color:var(--ink)}
+.toc a.on{color:var(--accent);border-left-color:var(--accent);background:var(--accent-soft)}
+.toc .n{font-variant-numeric:tabular-nums;color:var(--muted);font-size:11.5px}
+.toc a.on .n{color:var(--accent)}
+.toc .sub{margin-left:26px;margin-top:2px;margin-bottom:6px;display:flex;flex-direction:column;gap:0}
+.toc .sub a{grid-template-columns:30px 1fr;font-size:12px;padding:3px 6px;color:var(--muted)}
+.toc .sub a:hover{color:var(--ink)}
+
+main{min-width:0}
+
+/* ---------- sections ---------- */
+section{scroll-margin-top:24px}
+section + section{margin-top:56px}
+.sec-head{display:flex;align-items:baseline;gap:14px;border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:26px}
+.sec-num{font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:500;padding-top:4px}
+h2.sec-title{font-family:var(--sans);font-weight:600;font-size:clamp(20px,3vw,26px);letter-spacing:-.01em;margin:0;line-height:1.2;text-wrap:balance}
+h3{font-family:var(--sans);font-weight:600;font-size:17px;letter-spacing:-.005em;margin:34px 0 12px;line-height:1.3;text-wrap:balance}
+h4{font-family:var(--sans);font-weight:600;font-size:14px;margin:22px 0 8px;color:var(--ink)}
+p{margin:0 0 14px;max-width:68ch}
+a{color:var(--accent)}
+strong{font-weight:600}
+.lede{font-size:17.5px;color:var(--ink-2);max-width:62ch}
+
+/* ---------- evidence badges ---------- */
+.ev{
+  font-family:var(--mono);font-size:11px;font-weight:500;line-height:1;
+  display:inline-block;padding:2.5px 5px;border-radius:3px;
+  border:1px solid currentColor;vertical-align:.08em;margin-right:2px;
+  transition:background-color .15s,color .15s;
+}
+.ev.f{color:var(--fact)}
+.ev.v{color:var(--infer)}
+.ev.g{color:var(--hypo)}
+body.hl-f .ev.f,body.hl-v .ev.v,body.hl-g .ev.g{background:currentColor;color:var(--surface)}
+body.hl-f .ev.f{box-shadow:0 0 0 3px color-mix(in srgb,var(--fact) 22%,transparent)}
+body.hl-v .ev.v{box-shadow:0 0 0 3px color-mix(in srgb,var(--infer) 22%,transparent)}
+body.hl-g .ev.g{box-shadow:0 0 0 3px color-mix(in srgb,var(--hypo) 22%,transparent)}
+
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px}
+.legend button{
+  font-family:var(--sans);font-size:12.5px;color:var(--ink-2);
+  background:var(--surface);border:1px solid var(--line);border-radius:999px;
+  padding:6px 13px 6px 9px;cursor:pointer;display:flex;align-items:center;gap:7px;
+  line-height:1.2;
+}
+.legend button:hover{border-color:var(--muted)}
+.legend button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.legend button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.dot{width:9px;height:9px;border-radius:2px;display:inline-block}
+.dot.f{background:var(--fact)}.dot.v{background:var(--infer)}.dot.g{background:var(--hypo)}
+.legend-hint{font-family:var(--sans);font-size:12px;color:var(--muted);align-self:center;margin-left:4px}
+
+.tag{font-family:var(--mono);font-size:11px;padding:1px 5px;border-radius:3px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line-soft);white-space:nowrap}
+.tag.verified{color:var(--fact);border-color:color-mix(in srgb,var(--fact) 35%,transparent)}
+
+/* ---------- callout ---------- */
+.callout{
+  background:var(--warn-bg);border:1px solid var(--warn-line);border-left-width:3px;
+  border-radius:0 6px 6px 0;padding:18px 20px;margin:24px 0;
+}
+.callout p:last-child{margin-bottom:0}
+.callout .c-title{font-family:var(--sans);font-weight:600;font-size:13px;margin-bottom:8px;letter-spacing:.01em}
+
+.note{border-left:3px solid var(--line);padding:2px 0 2px 18px;color:var(--muted);font-size:15px;margin:20px 0}
+.note p{margin-bottom:8px}
+.note p:last-child{margin-bottom:0}
+
+/* ---------- lists ---------- */
+ul.plain{list-style:none;margin:0 0 16px;padding:0;display:flex;flex-direction:column;gap:10px;max-width:68ch}
+ul.plain li{padding-left:18px;position:relative}
+ul.plain li::before{content:"";position:absolute;left:2px;top:.62em;width:6px;height:1.5px;background:var(--accent)}
+ol.num{margin:0 0 16px;padding-left:1.35em;display:flex;flex-direction:column;gap:12px;max-width:68ch}
+ol.num li{padding-left:4px}
+ol.num li::marker{font-family:var(--sans);font-size:13px;color:var(--muted)}
+
+/* ---------- summary cards ---------- */
+.stage{margin-top:26px}
+.stage-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.stage-pill{font-family:var(--sans);font-size:10.5px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;padding:4px 9px;border-radius:3px}
+.stage-pill.now{background:var(--fact);color:var(--surface)}
+.stage-pill.pilot{background:var(--infer);color:var(--surface)}
+.stage-pill.watch{background:var(--hypo);color:var(--surface)}
+.stage-head .t{font-family:var(--sans);font-size:15px;font-weight:600}
+
+.focus{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:22px 24px;margin-top:30px}
+.focus h3{margin-top:0}
+.focus dl{margin:0;display:grid;gap:12px}
+@media (min-width:640px){.focus dl{grid-template-columns:auto 1fr;gap:12px 22px;align-items:baseline}}
+.focus dt{font-family:var(--sans);font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.02em}
+.focus dd{margin:0;font-size:15px}
+
+/* ---------- tables ---------- */
+.scroller{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface);margin:20px 0}
+table{border-collapse:collapse;width:100%;font-family:var(--sans);font-size:13px;line-height:1.42}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+thead th{
+  font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+  background:var(--surface-2);border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0;z-index:2;
+}
+tbody tr:last-child td,tbody tr:last-child th{border-bottom:none}
+tbody tr:hover td,tbody tr:hover th{background:var(--surface-2)}
+.wide table{min-width:1180px}
+.wide tbody th,.wide thead th:first-child{
+  position:sticky;left:0;z-index:1;background:var(--surface);
+  font-weight:600;font-size:13px;color:var(--ink);text-transform:none;letter-spacing:0;
+  border-right:1px solid var(--line);min-width:180px;
+}
+.wide thead th:first-child{z-index:3;background:var(--surface-2)}
+.wide tbody tr:hover th{background:var(--surface-2)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.matrix table{min-width:740px}
+.matrix thead th.num{width:34px}
+.bar{position:relative;display:block;height:6px;border-radius:3px;background:var(--line-soft);min-width:70px;margin-top:5px}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:3px;background:var(--accent)}
+.sum{display:flex;align-items:center;gap:10px;justify-content:flex-end}
+.sum b{font-family:var(--sans);font-weight:600;font-variant-numeric:tabular-nums;font-size:14px}
+.tbl-cap{font-family:var(--sans);font-size:12px;color:var(--muted);margin:-8px 0 20px}
+
+/* ---------- direction blocks ---------- */
+.dir{border-top:1px solid var(--line);padding-top:26px;margin-top:34px}
+.dir:first-of-type{border-top:none;padding-top:0;margin-top:0}
+.dir-head{display:flex;gap:12px;align-items:baseline;margin-bottom:16px}
+.dir-num{font-family:var(--mono);font-size:12.5px;color:var(--accent);flex:none}
+.dir-head h3{margin:0;font-size:18px}
+.dir dl{margin:0;display:grid;gap:14px}
+@media (min-width:720px){.dir dl{grid-template-columns:150px minmax(0,1fr);gap:14px 24px}}
+.dir dt{
+  font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);padding-top:4px;
+}
+.dir dd{margin:0;max-width:66ch}
+.dir dd p{margin-bottom:8px}
+.dir dd p:last-child{margin-bottom:0}
+.dir dd.pilot{background:var(--accent-soft);border-radius:5px;padding:10px 14px;max-width:none}
+code{font-family:var(--mono);font-size:13px;background:var(--surface-2);padding:1.5px 5px;border-radius:3px;border:1px solid var(--line-soft);white-space:nowrap}
+.formula{display:block;overflow-x:auto;white-space:nowrap;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:5px;padding:9px 13px;font-family:var(--mono);font-size:13px;margin:8px 0}
+
+/* ---------- task cards ---------- */
+.tasks{display:grid;gap:18px}
+@media (min-width:860px){.tasks{grid-template-columns:1fr 1fr}}
+.task{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:20px 22px;display:flex;flex-direction:column}
+.task h3{margin:0 0 14px;font-size:15.5px;display:flex;gap:9px;align-items:baseline}
+.task h3 .k{font-family:var(--mono);font-size:12px;color:var(--accent);flex:none}
+.task dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:14px;align-items:baseline}
+.task dt{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-top:3px;white-space:nowrap}
+.task dd{margin:0}
+.task .crit{margin-top:auto;padding-top:14px}
+.task .crit dd{color:var(--ink);font-weight:500}
+
+/* ---------- traps ---------- */
+.traps{display:grid;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface);margin:20px 0}
+.trap{padding:15px 20px;border-bottom:1px solid var(--line-soft)}
+.trap:last-child{border-bottom:none}
+.trap b{font-family:var(--sans);font-size:13.5px;display:block;margin-bottom:3px}
+.trap span{font-size:14.5px;color:var(--ink-2)}
+
+/* ---------- roadmap ---------- */
+.road{list-style:none;margin:20px 0 0;padding:0;display:flex;flex-direction:column}
+.road li{display:grid;grid-template-columns:78px minmax(0,1fr);gap:18px;padding:14px 0;border-top:1px solid var(--line-soft)}
+.road li:first-child{border-top:1px solid var(--line)}
+.road .wk{font-family:var(--mono);font-size:12px;color:var(--accent);padding-top:3px;white-space:nowrap}
+.road .what{font-size:15px;max-width:60ch}
+.road .what b{font-family:var(--sans);font-weight:600;font-size:14px;display:block;margin-bottom:2px}
+
+.shortlist{list-style:none;counter-reset:s;margin:20px 0;padding:0;display:grid;gap:2px}
+.shortlist li{counter-increment:s;display:grid;grid-template-columns:32px minmax(0,1fr);gap:12px;padding:12px 10px;border-bottom:1px solid var(--line-soft);align-items:baseline}
+.shortlist li::before{content:counter(s,decimal-leading-zero);font-family:var(--mono);font-size:12px;color:var(--accent)}
+.shortlist b{font-family:var(--sans);font-weight:600;font-size:14.5px}
+.shortlist span{color:var(--ink-2)}
+
+footer{border-top:1px solid var(--line);margin-top:60px;padding-top:22px;font-family:var(--sans);font-size:13px;color:var(--muted)}
+footer code{font-size:12px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">Систематический обзор · 2020–2026</p>
+  <h1>Методы прогнозирования для трейдинга и финансовых рынков</h1>
+  <p class="subtitle">Что из современного арсенала прогнозирования действительно работает на цене, волатильности и риске — и что пока остаётся академическим экспериментом.</p>
+  <div class="facts">
+    <div><span class="fact-k">Фокус применения</span><span class="fact-v">Цены, доходности, волатильность, риск-метрики (VaR/CVaR/ES), ликвидность, order flow, микроструктура</span></div>
+    <div><span class="fact-k">Горизонты</span><span class="fact-v">От внутридневных (tick / 1–5 мин) до дневных, недельных и квартальных</span></div>
+    <div><span class="fact-k">Период литературы</span><span class="fact-v">2020–2026; базовые модели любых лет — как baseline</span></div>
+    <div><span class="fact-k">Дата отчёта</span><span class="fact-v">24 сентября 2026</span></div>
+  </div>
+</header>
+
+<div class="layout">
+
+<nav class="toc" aria-label="Содержание">
+  <h2>Содержание</h2>
+  <ol>
+    <li><a href="#discipline"><span class="n">00</span><span>Дисциплина доказательности</span></a></li>
+    <li><a href="#summary"><span class="n">01</span><span>Executive summary</span></a></li>
+    <li><a href="#overview"><span class="n">02</span><span>Сводная таблица направлений</span></a></li>
+    <li><a href="#directions"><span class="n">03</span><span>Разбор направлений</span></a>
+      <div class="sub">
+        <a href="#d31"><span class="n">3.1</span><span>Байесовские и state-space</span></a>
+        <a href="#d32"><span class="n">3.2</span><span>Классические ряды, HAR, GARCH</span></a>
+        <a href="#d33"><span class="n">3.3</span><span>Hawkes, rough volatility</span></a>
+        <a href="#d34"><span class="n">3.4</span><span>Современная оптимизация</span></a>
+        <a href="#d35"><span class="n">3.5</span><span>Высокая размерность</span></a>
+        <a href="#d36"><span class="n">3.6</span><span>Неопределённость, conformal</span></a>
+        <a href="#d37"><span class="n">3.7</span><span>Causal inference</span></a>
+        <a href="#d38"><span class="n">3.8</span><span>Графовые модели</span></a>
+        <a href="#d39"><span class="n">3.9</span><span>Гибрид математика + ML</span></a>
+        <a href="#d310"><span class="n">3.10</span><span>Структурные сдвиги</span></a>
+        <a href="#d311"><span class="n">3.11</span><span>Малые и редкие данные</span></a>
+      </div>
+    </li>
+    <li><a href="#matrix"><span class="n">04</span><span>Матрица приоритизации</span></a></li>
+    <li><a href="#practice"><span class="n">05</span><span>Практический фокус по задачам</span></a></li>
+    <li><a href="#validation"><span class="n">06</span><span>Валидация и строгость</span></a></li>
+    <li><a href="#artifacts"><span class="n">07</span><span>Итоговые артефакты</span></a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section id="discipline">
+  <div class="sec-head"><span class="sec-num">00</span><h2 class="sec-title">Дисциплина доказательности — читать первым</h2></div>
+  <p class="lede">Каждое содержательное утверждение в отчёте помечено одним из трёх маркеров. Нажмите на маркер, чтобы подсветить все утверждения этого типа.</p>
+
+  <div class="legend">
+    <button type="button" data-ev="f" aria-pressed="false"><span class="dot f"></span>Ф — Факт</button>
+    <button type="button" data-ev="v" aria-pressed="false"><span class="dot v"></span>В — Вывод</button>
+    <button type="button" data-ev="g" aria-pressed="false"><span class="dot g"></span>Г — Гипотеза</button>
+    <span class="legend-hint">подсветка по всему документу</span>
+  </div>
+
+  <ul class="plain">
+    <li><span class="ev f">Ф</span> <strong>Факт</strong> — прямо подтверждён источником с проверяемой ссылкой.</li>
+    <li><span class="ev v">В</span> <strong>Вывод</strong> — аналитическая дедукция автора из фактов; не выдаётся за факт.</li>
+    <li><span class="ev g">Г</span> <strong>Гипотеза</strong> — предположение, требующее проверки на ваших данных.</li>
+  </ul>
+
+  <h4>Надёжность источников</h4>
+  <ul class="plain">
+    <li><span class="tag verified">verified</span> — проверено фетчем в этой сессии.</li>
+    <li><span class="tag">landmark</span> — устойчиво известная работа, детали подтверждены несколькими независимыми поисковыми выдачами.</li>
+    <li><span class="tag">search-only</span> — известна только по заголовку из поисковой выдачи; <strong>перед цитированием проверить DOI/arXiv вручную</strong>.</li>
+    <li><span class="tag">gap</span> — искомого качественного источника не нашлось.</li>
+  </ul>
+
+  <div class="callout">
+    <div class="c-title">⚠ Важная методическая оговорка</div>
+    <p>Среда датирована сентябрём 2026 г., и поиск возвращает работы 2026 года (arXiv ID вида 26xx). Часть из них подтверждена фетчем и помечена <span class="tag verified">verified</span>. Остальные свежие препринты 2025–2026 держите как <span class="tag">search-only</span> до ручной проверки — не потому что они выдуманы, а потому что я не смог подтвердить точные выходные данные в этой сессии. Это прямо соответствует требованию промта «не выдумывать источники, DOI и результаты».</p>
+  </div>
+</section>
+
+<!-- ============ 1 ============ -->
+<section id="summary">
+  <div class="sec-head"><span class="sec-num">01</span><h2 class="sec-title">Executive summary</h2></div>
+
+  <div class="stage">
+    <div class="stage-head"><span class="stage-pill now">Внедрять сейчас</span><span class="t">1.1. Что доказано и зрело</span></div>
+    <ol class="num">
+      <li><strong>HAR-RV и его расширения — референсный бенчмарк волатильности.</strong> <span class="ev f">Ф</span> HAR (Corsi, 2009) предсказывает волатильность как линейную функцию realized volatility на окнах 5/21/63 дня и устойчиво обыгрывает классические GARCH/ARFIMA-RV при наличии высокочастотных данных. <span class="ev v">В</span> Любой новый метод волатильности обязан сравниваться именно с HAR, а не с наивным baseline.</li>
+      <li><strong>GARCH-EVT-Copula для хвостовых рисков (VaR/CVaR/ES).</strong> <span class="ev f">Ф</span> Двухшаговая схема (GARCH-фильтр → EVT на стандартизованных остатках → copula для зависимости) — де-факто стандарт условной оценки хвостового риска и проходит формальный бэктестинг VaR/ES.</li>
+      <li><strong>Machine Learning в кросс-секционном asset pricing.</strong> <span class="ev f">Ф</span> Gu, Kelly, Xiu (2020, RFS) показали, что деревья и нейросети примерно удваивают результат регрессионных стратегий; главный источник выигрыша — нелинейные взаимодействия признаков; доминирующие сигналы — моментум, ликвидность, волатильность. <span class="ev f">Ф</span> IPCA (Kelly, Pruitt, Su) даёт латентные факторы с меняющимися во времени нагрузками на больших несбалансированных панелях.</li>
+      <li><strong>Conformal prediction для интервалов без предположений о распределении.</strong> <span class="ev f">Ф</span> EnbPI (Xu &amp; Xie, ICML 2021) и Adaptive Conformal Inference (Gibbs &amp; Candès, 2021) дают приблизительно валидное покрытие на нестационарных рядах без переобучения базовой модели. <span class="ev v">В</span> Это самый дешёвый способ «прикрутить» честные интервалы к любой точечной модели, включая ML.</li>
+      <li><strong>DRO-портфели (Wasserstein + CVaR).</strong> <span class="ev f">Ф</span> Data-driven Wasserstein DRO (Mohajerin Esfahani &amp; Kuhn, 2018) даёт tractable-переформулировки и гарантии; эмпирически снижает дисперсию и CVaR портфеля относительно небробастных бенчмарков в rolling-out-of-sample тестах.</li>
+      <li><strong>Hierarchical / probabilistic forecast reconciliation (MinT).</strong> <span class="ev f">Ф</span> MinT (Wickramasuriya et al., 2019) и вероятностная реконсиляция (Panagiotelis et al., 2023) обеспечивают когерентность прогнозов по иерархии (актив → сектор → портфель) и улучшают точность на всех уровнях.</li>
+    </ol>
+  </div>
+
+  <div class="stage">
+    <div class="stage-head"><span class="stage-pill pilot">Нужен пилот</span><span class="t">1.2. Новое, но перспективное</span></div>
+    <ol class="num" start="7">
+      <li><strong>Foundation models для временных рядов (TSFM): Chronos, TimesFM, Moirai, Lag-Llama, TTM.</strong> <span class="ev f">Ф</span> <span class="tag verified">verified</span> Chronos (Ansari et al., 2024) и TimesFM (Das et al., 2023/2024) дают сильный zero-shot прогноз на разнородных данных. <span class="ev f">Ф</span> <span class="tag verified">verified</span> <strong>Но на realized volatility (Brini, 2026, 50 активов, 9 TSFM против 8 эконометрических спецификаций) foundation-модели НЕ обыгрывают эконометрику стабильно</strong> — только маленькая TTM бьёт бенчмарк на всех горизонтах, и с узким отрывом; разброс между архитектурами больше, чем разница «foundation vs эконометрика». <span class="ev v">В</span> Для трейдинга TSFM — кандидат на pretraining/backbone и на редкие/новые ряды, а не готовая замена HAR/GARCH.</li>
+      <li><strong>Deep state-space (Mamba / S4) для длинных последовательностей.</strong> <span class="ev f">Ф</span> Mamba (Gu &amp; Dao, 2024) — selective SSM с линейной сложностью по длине, сопоставим с трансформерами при большей пропускной способности. <span class="ev g">Г</span> Полезен для внутридневных длинных окон (тики, LOB), где квадратичный self-attention дорог.</li>
+      <li><strong>Hawkes / point processes для микроструктуры и order flow.</strong> <span class="ev f">Ф</span> Многомерные и state-dependent Hawkes-процессы моделируют самовозбуждение потока заявок и прогнозируют дисбаланс потока (OFI) и вероятность движения mid-price. <span class="ev v">В</span> Наиболее применимы на HFT-горизонтах, где данные о событиях первичны.</li>
+      <li><strong>Rough volatility (rough Bergomi, fOU log-RV).</strong> <span class="ev f">Ф</span> Волатильность «шероховата» (Hurst &lt; 0.5); fractional OU для log-realized-variance используется в задаче прогноза. <span class="ev g">Г</span> Даёт улучшение прогноза RV и формы улыбки, но оценка параметров чувствительна к микроструктурному шуму.</li>
+      <li><strong>Causal ML: Double/Debiased ML и synthetic control.</strong> <span class="ev f">Ф</span> DML (Chernozhukov et al., 2018) с cross-fitting даёт √n-состоятельные оценки эффектов при ML-«ньюисансах». <span class="ev v">В</span> Критично для прогноза эффекта кампаний/изменений комиссий/регуляторики, где корреляционный ML вводит в заблуждение.</li>
+    </ol>
+  </div>
+
+  <div class="stage">
+    <div class="stage-head"><span class="stage-pill watch">Наблюдать</span><span class="t">1.3. Пока гипотеза / академический эксперимент</span></div>
+    <ol class="num" start="12">
+      <li><strong>Neural SDE / PINN / neuro-symbolic для финансов.</strong> <span class="ev f">Ф</span> Есть работы (neural-SDE forecasting, физически-информированные модели для Heston/Black-Scholes). <span class="ev v">В</span> Зрелость инструментов и воспроизводимость на реальных P-мерах низкие; пока ближе к прайсингу, чем к прогнозу.</li>
+      <li><strong>Graph Neural Networks для доходностей акций.</strong> <span class="ev f">Ф</span> Множество работ по spatiotemporal GNN и гиперграфам для stock trend. <span class="ev v">В</span><span class="ev g">Г</span> Улучшения часто не переживают честный rolling-origin бэктест и корректный учёт транзакционных издержек; риск data leakage через построение графа на будущих корреляциях высок.</li>
+      <li><strong>Symbolic regression / neuro-symbolic market dynamics.</strong> <span class="ev g">Г</span> Интересна интерпретируемость, но убедительных сравнительных out-of-sample результатов на финансах пока мало.</li>
+    </ol>
+  </div>
+
+  <div class="focus">
+    <h3>1.4. Самое применимое для бизнеса в горизонте 6–18 месяцев</h3>
+    <dl>
+      <dt>Волатильность и риск</dt><dd><strong>HAR-RV(+jumps) + GARCH-EVT-Copula</strong>, интервалы через <strong>conformal</strong>. Зрело.</dd>
+      <dt>Кросс-секция доходностей</dt><dd><strong>Gradient boosting / NN a-la Gu-Kelly-Xiu + IPCA</strong>, с честной валидацией.</dd>
+      <dt>Портфель под неопределённость</dt><dd><strong>Wasserstein-DRO Mean-CVaR</strong>.</dd>
+      <dt>Микроструктура и исполнение</dt><dd><strong>Hawkes-процессы</strong> для OFI и market impact.</dd>
+      <dt>Режимы и сдвиги</dt><dd><strong>Bayesian online change-point + regime switching</strong> как надстройка.</dd>
+      <dt>Эффект решений</dt><dd><strong>DML / synthetic control</strong> — комиссии, кампании, регуляторика.</dd>
+      <dt>TSFM</dt><dd>Chronos/TimesFM/TTM — <strong>пилот как backbone и для новых/редких рядов</strong>, не как замена эконометрики на волатильности.</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section id="overview">
+  <div class="sec-head"><span class="sec-num">02</span><h2 class="sec-title">Сводная таблица направлений</h2></div>
+  <p class="tbl-cap">Таблица прокручивается вбок; название направления закреплено слева.</p>
+  <div class="scroller wide">
+    <table>
+      <thead>
+        <tr>
+          <th>Направление</th><th>Ключевые методы</th><th>Математическая основа</th><th>Задачи (трейдинг)</th><th>Требования к данным</th><th>Неопределённость</th><th>Сильные стороны</th><th>Ограничения</th><th>Зрелость</th><th>Бизнес-применимость</th><th>Ключевые работы</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><th scope="row">Байесовские / state-space</th><td>Kalman/EKF/UKF, HMM, GP, DLM, particle filter</td><td>Скрытое состояние + байесовское обновление; апостериор</td><td>Оценка латентного тренда/беты, регимы, nowcasting</td><td>Средние; работает на коротких</td><td>Родная (полный апостериор)</td><td>Интервалы «из коробки», онлайн-обновление, интерпретируемость</td><td>Предположения о линейности/шуме; GP плохо масштабируется O(n³)</td><td>Высокая</td><td>Высокая</td><td>Kalman (1960); GPML</td></tr>
+        <tr><th scope="row">Классические / вероятностные ряды</th><td>ARIMA/SARIMA, ETS, VAR/VECM, <strong>HAR-RV</strong>, GARCH-family, reconciliation, Croston</td><td>Линейная динамика, условная гетероскедастичность, когерентность иерархии</td><td>Волатильность, доходности, спрос на продукты, иерархии портфеля</td><td>От низких; HAR требует HF-данных</td><td>GARCH → условная дисперсия; probabilistic reconciliation</td><td>Дёшево, прозрачно, сильные baseline</td><td>Линейность, стационарность</td><td>Очень высокая</td><td>Очень высокая</td><td>Corsi (2009); MinT (2019); M5 (2022)</td></tr>
+        <tr><th scope="row">Стохастические процессы</th><td>Hawkes, point processes, jump-diffusion, <strong>rough volatility</strong>, SDE</td><td>Интенсивность самовозбуждения; fBM (H&lt;0.5); скачки</td><td>Order flow/OFI, market impact, RV, экстремумы</td><td>HF/событийные (Hawkes); RV-ряды</td><td>Симуляционная (Monte Carlo)</td><td>Механистичность микроструктуры</td><td>Оценка чувствительна к шуму; вычислительно дорого</td><td>Средняя → высокая</td><td>Средняя (HFT — высокая)</td><td>Gatheral et al. (2018); Hawkes-LOB</td></tr>
+        <tr><th scope="row">Современная оптимизация</th><td><strong>Wasserstein-DRO</strong>, robust/stochastic/online opt, DR-Mean-CVaR</td><td>Ambiguity sets, minimax, стохастическое программирование</td><td>Портфель, risk budgeting, исполнение</td><td>Средние</td><td>Через ambiguity set</td><td>Устойчивость к мисспецификации распределения</td><td>Консервативность; выбор радиуса ε</td><td>Высокая</td><td>Высокая</td><td>Mohajerin Esfahani &amp; Kuhn (2018)</td></tr>
+        <tr><th scope="row">Высокая размерность</th><td>LASSO/elastic net, low-rank/<strong>IPCA</strong>, tensor factorization, FDA</td><td>Разреженность, регуляризация, факторная структура</td><td>Кросс-секция доходностей, факторные модели</td><td>Много признаков, панель</td><td>Частично (Bayesian LASSO)</td><td>Отбор сигналов, работа с p≫n</td><td>Стабильность отбора; линейность LASSO</td><td>Высокая</td><td>Высокая</td><td>Kelly-Pruitt-Su (IPCA)</td></tr>
+        <tr><th scope="row">Неопределённость</th><td><strong>Conformal (EnbPI/ACI)</strong>, quantile reg, Bayesian UQ, calibration, CRPS</td><td>Обменяемость / её ослабление; пинбол-функция</td><td>Интервалы к любой модели, risk-aware решения</td><td>Низкие (обёртка)</td><td>Это и есть цель</td><td>Гарантии покрытия без предположений</td><td>Маргинальное (не условное) покрытие; сдвиги</td><td>Высокая</td><td>Высокая</td><td>Xu-Xie EnbPI (2021); Gibbs-Candès ACI (2021)</td></tr>
+        <tr><th scope="row">Causal inference</th><td><strong>DML</strong>, synthetic control, uplift, counterfactual</td><td>Ортогонализация Неймана, cross-fitting</td><td>Эффект комиссий/кампаний/регуляторики, инкрементальность</td><td>Нужны treatment/контроль</td><td>Доверительные интервалы эффекта</td><td>Отделяет причину от корреляции</td><td>Требует допущений идентификации</td><td>Высокая (эконометрика)</td><td>Высокая</td><td>Chernozhukov et al. (2018)</td></tr>
+        <tr><th scope="row">Графовые / пространственные</th><td>GNN, spatiotemporal, graph signal processing</td><td>Диффузия по графу, спектральные свёртки</td><td>Кросс-активные зависимости, спилловеры риска</td><td>Много активов + структура связей</td><td>Слабо развита</td><td>Учёт межактивных связей</td><td>Leakage через граф; хрупкость OOS</td><td>Средняя</td><td>Низкая → средняя</td><td>GNN-stock surveys</td></tr>
+        <tr><th scope="row">Гибрид математика + ML</th><td><strong>TSFM (Chronos/TimesFM/TTM)</strong>, deep state-space (<strong>Mamba</strong>), DeepAR/TFT/N-BEATS/PatchTST, neural SDE, PINN, symbolic reg</td><td>Претрейн + трансфер; SSM; квантильные/вероятностные головы</td><td>Многорядовый прогноз, RV, спрос, backbone</td><td>Много рядов (претрейн)</td><td>DeepAR/TFT — квантили; TSFM — сэмплы</td><td>Zero/few-shot, длинные окна</td><td>На RV не бьют эконометрику (Brini 2026); чёрный ящик</td><td>Средняя (быстро растёт)</td><td>Средняя (пилот)</td><td>Chronos (2024) <span class="tag verified">v</span>; TimesFM (2024) <span class="tag verified">v</span>; Mamba (2024)</td></tr>
+        <tr><th scope="row">Структурные сдвиги</th><td>Bayesian online change-point (BOCPD), regime switching (MS), concept drift, online learning</td><td>Апостериор длины ранинга; марковское переключение режимов</td><td>Детекция смены режима рынка, адаптация</td><td>Потоковые</td><td>Вероятность точки разрыва</td><td>Реакция в реальном времени</td><td>Задержка / ложные срабатывания</td><td>Средняя → высокая</td><td>Высокая</td><td>BOCPD; MS-GARCH</td></tr>
+        <tr><th scope="row">Малые / шумные / редкие данные</th><td>Transfer/meta/few-shot, robust statistics, imputation-with-UQ, anomaly-aware</td><td>Разделяемые представления, MAML, робастные оценки</td><td>Новые инструменты, редкие события, дефолты</td><td>Мало целевых, много смежных</td><td>Через Bayesian/quantile</td><td>Работает при дефиците данных</td><td>Риск negative transfer</td><td>Средняя</td><td>Средняя</td><td>MAML; TS pretraining surveys</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section id="directions">
+  <div class="sec-head"><span class="sec-num">03</span><h2 class="sec-title">Разбор направлений</h2></div>
+  <div class="note"><p>По каждому направлению: интуиция, ключевые работы, модельная конструкция, доказанные преимущества, ограничения и риски, трейдинг-задачи, рекомендация по пилоту.</p></div>
+
+  <article class="dir" id="d31">
+    <div class="dir-head"><span class="dir-num">3.1</span><h3>Байесовские и state-space модели, фильтры Калмана, HMM, Gaussian processes</h3></div>
+    <dl>
+      <dt>Интуиция</dt><dd>Наблюдаемое = функция от скрытого состояния + шум; состояние эволюционирует по динамике. Байесовское обновление даёт апостериорное распределение состояния → прогноз с интервалом.</dd>
+      <dt>Работы</dt><dd>Классика — фильтр Калмана; для нелинейности — EKF/UKF, particle filters; GP для гибкой ковариации; deep-kernel GP и рекуррентные spectral-signature GP как свежая ветка (UQ для рядов, KDD'23). <span class="tag">search-only</span></dd>
+      <dt>Конструкция</dt><dd><span class="formula">xₜ = F·xₜ₋₁ + wₜ ;  yₜ = H·xₜ + vₜ ;  фильтр даёт p(xₜ | y₁:ₜ)</span>GP: f ~ 𝒢𝒫(m, k), апостериор в замкнутой форме для гауссова шума.</dd>
+      <dt>Преимущества</dt><dd><span class="ev f">Ф</span> Интервалы и онлайн-обновление «из коробки»; интерпретируемость (тренд, сезонность, бета). <span class="ev v">В</span> Идеален для nowcasting и оценки меняющейся беты/хеджа.</dd>
+      <dt>Ограничения</dt><dd><span class="ev f">Ф</span> Линейно-гауссовы допущения; GP масштабируется O(n³) — тяжело на длинных HF-рядах (нужны sparse / inducing-point аппроксимации).</dd>
+      <dt>Трейдинг-задачи</dt><dd>Динамическая бета / хедж-коэффициент, латентный тренд цены, nowcasting макро и потоков, режимные HMM-надстройки.</dd>
+      <dt>Пилот</dt><dd class="pilot">DLM/Kalman для time-varying беты против OLS-rolling; метрика — out-of-sample hedging error и покрытие интервалов.</dd>
+    </dl>
+  </article>
+
+  <article class="dir" id="d32">
+    <div class="dir-head"><span class="dir-num">3.2</span><h3>Классические и вероятностные модели рядов (включая HAR и GARCH)</h3></div>
+    <dl>
+      <dt>Интуиция</dt><dd>Явно моделируем автокорреляцию (ARIMA), сезонность (ETS/SARIMA), совместную динамику (VAR/VECM), условную дисперсию (GARCH), realized volatility (HAR), когерентность иерархии.</dd>
+      <dt>Работы</dt><dd><span class="ev f">Ф</span> HAR — Corsi (2009), стандартный линейный бенчмарк RV (окна 5/21/63). GARCH-семейство (EGARCH/GJR/IGARCH). Reconciliation: MinT (Wickramasuriya et al., 2019), вероятностная (Panagiotelis et al., 2023). Итоги M5 (IJF, 2022).</dd>
+      <dt>Конструкция</dt><dd><span class="formula">GARCH(1,1):  σ²ₜ = ω + α·ε²ₜ₋₁ + β·σ²ₜ₋₁</span><span class="formula">HAR:  RVₜ₊₁ = c + β_d·RV_d + β_w·RV_w + β_m·RV_m</span></dd>
+      <dt>Преимущества</dt><dd><span class="ev f">Ф</span> HAR-RV обыгрывает GARCH/ARFIMA-RV при HF-данных. <span class="ev f">Ф</span> В M5 ML обошёл статистические бенчмарки, но выигрыш падает на нижних уровнях иерархии и в хвостах.</dd>
+      <dt>Ограничения</dt><dd><span class="ev f">Ф</span> Линейность и стационарность; GARCH недооценивает скачки; ARIMA плохо работает на длинных горизонтах.</dd>
+      <dt>Трейдинг-задачи</dt><dd>Прогноз волатильности (HAR/GARCH), спреды и коинтеграция (VECM для пар), иерархия портфеля (reconciliation), спрос на брокерские продукты.</dd>
+      <dt>Пилот</dt><dd class="pilot">HAR-RV (+jumps, +leverage) как обязательный baseline волатильности; MinT для согласования прогнозов по инструментам, секторам и портфелю.</dd>
+    </dl>
+  </article>
+
+  <article class="dir" id="d33">
+    <div class="dir-head"><span class="dir-num">3.3</span><h3>Стохастические процессы: Hawkes, jump-diffusion, rough volatility</h3></div>
+    <dl>
+      <dt>Интуиция</dt><dd>События (сделки, заявки) кластеризуются — прошлые события повышают интенсивность будущих (самовозбуждение). Волатильность «шероховата» — траектории грубее броуновских.</dd>
+      <dt>Работы</dt><dd><span class="ev f">Ф</span> Hawkes для LOB и OFI (multivariate, state-dependent Hawkes; прогноз mid-price через Monte Carlo). <span class="ev f">Ф</span> Rough volatility — «Volatility is rough» (Gatheral, Jaisson, Rosenbaum, 2018); rough Bergomi воспроизводит SPX-skew немногими параметрами; fOU для log-RV в задаче прогноза.</dd>
+      <dt>Конструкция</dt><dd><span class="formula">Hawkes:  λ(t) = μ + Σ_{tᵢ&lt;t} φ(t − tᵢ)</span>Rough vol: log-variance ~ fractional OU с Hurst H ≈ 0.1.</dd>
+      <dt>Преимущества</dt><dd><span class="ev f">Ф</span> Механистично объясняют кластеризацию потока и микроструктурные эффекты; rough-модели точнее по форме улыбки и, по ряду работ, по прогнозу RV.</dd>
+      <dt>Ограничения</dt><dd><span class="ev f">Ф</span> Оценка H и параметров чувствительна к микроструктурному шуму; Hawkes вычислительно дорог; немарковость усложняет фильтрацию.</dd>
+      <dt>Трейдинг-задачи</dt><dd>OFI и market-impact для исполнения (HFT), кластеризация экстремумов, прогноз RV.</dd>
+      <dt>Пилот</dt><dd class="pilot">Hawkes-OFI против логистической/GLM-baseline на предсказании направления следующего тика; rough-fOU против HAR на прогнозе RV.</dd>
+    </dl>
+  </article>
+
+  <article class="dir" id="d34">
+    <div class="dir-head"><span class="dir-num">3.4</span><h3>Современная оптимизация (DRO, robust, stochastic, online)</h3></div>
+    <dl>
+      <dt>Интуиция</dt><dd>Не доверяем эмпирическому распределению — оптимизируем worst-case по «шару» распределений вокруг данных (ambiguity set).</dd>
+      <dt>Работы</dt><dd><span class="ev f">Ф</span> Data-driven Wasserstein DRO — Mohajerin Esfahani &amp; Kuhn (2018): tractable reformulations + гарантии. <span class="ev f">Ф</span> DR Mean-CVaR и copula-ambiguity портфели дают лучший rolling-out-of-sample результат против equal-weight и небробастного Mean-CVaR. <span class="tag">search-only</span> на отдельные расширения 2024–2026.</dd>
+      <dt>Конструкция</dt><dd><span class="formula">min_x  sup_{Q∈𝔅_ε(P̂)}  E_Q[loss(x, ξ)],  где 𝔅_ε — Wasserstein-шар радиуса ε</span></dd>
+      <dt>Преимущества</dt><dd><span class="ev f">Ф</span> Устойчивость к мисспецификации и сдвигу распределения; снижение дисперсии и CVaR портфеля.</dd>
+      <dt>Ограничения</dt><dd><span class="ev f">Ф</span> Консервативность растёт с ε; выбор радиуса — отдельная задача (кросс-валидация).</dd>
+      <dt>Трейдинг-задачи</dt><dd>Робастный портфель, risk budgeting, allocation под неопределённость оценок μ/Σ.</dd>
+      <dt>Пилот</dt><dd class="pilot">DR-Mean-CVaR против классического Markowitz/Mean-CVaR; метрики — реализованные Sharpe/CVaR и turnover на walk-forward.</dd>
+    </dl>
+  </article>
+
+  <article class="dir" id="d35">
+    <div class="dir-head"><span class="dir-num">3.5</span><h3>Методы высокой размерности (sparse, low-rank, factor, tensor, FDA)</h3></div>
+    <dl>
+      <dt>Интуиция</dt><dd>Признаков больше, чем наблюдений (p≫n) — нужна разреженность, низкий ранг или факторная структура.</dd>
+      <dt>Работы</dt><dd><span class="ev f">Ф</span> Gu, Kelly, Xiu (2020) — ML в asset pricing. <span class="ev f">Ф</span> IPCA (Kelly, Pruitt, Su): латентные факторы + инструментирование нагрузок наблюдаемыми характеристиками; быстрый, работает на несбалансированных панелях.</dd>
+      <dt>Конструкция</dt><dd><span class="formula">LASSO:  min ‖y − Xβ‖² + λ‖β‖₁</span><span class="formula">IPCA:  rᵢ,ₜ₊₁ = Zᵢ,ₜ · Γ · fₜ₊₁ + εᵢ,ₜ₊₁</span></dd>
+      <dt>Преимущества</dt><dd><span class="ev f">Ф</span> Отбор доминирующих сигналов (momentum, liquidity, volatility); IPCA масштабируется на большие панели без переобучения PCA.</dd>
+      <dt>Ограничения</dt><dd><span class="ev f">Ф</span> Нестабильность отбора LASSO при коллинеарности; линейность; факторы требуют экономической интерпретации.</dd>
+      <dt>Трейдинг-задачи</dt><dd>Кросс-секционный прогноз доходностей, факторные модели риска, отбор предикторов.</dd>
+      <dt>Пилот</dt><dd class="pilot">Elastic net + gradient boosting против OLS на кросс-секции; IPCA против статических факторов.</dd>
+    </dl>
+  </article>
+
+  <article class="dir" id="d36">
+    <div class="dir-head"><span class="dir-num">3.6</span><h3>Прогноз с неопределённостью (conformal, quantile, Bayesian UQ, calibration)</h3></div>
+    <dl>
+      <dt>Интуиция</dt><dd>Дать интервал или распределение с контролируемым покрытием, а не только точку.</dd>
+      <dt>Работы</dt><dd><span class="ev f">Ф</span> EnbPI (Xu &amp; Xie, ICML 2021) — первый conformal для рядов, адаптируется к тренду и сезонности без рефита. <span class="ev f">Ф</span> Adaptive Conformal Inference — ACI (Gibbs &amp; Candès, 2021) — онлайн-подстройка уровня под сдвиги. <span class="ev f">Ф</span> Conformal PID / online (Angelopoulos et al., 2023). <span class="tag">search-only</span> на бенчмарк-обзоры 2025–2026.</dd>
+      <dt>Конструкция</dt><dd><span class="formula">Интервал = ŷ ± Q_{1−α}(|остатки калибровки|);  ACI обновляет α_t по факту покрытия</span></dd>
+      <dt>Преимущества</dt><dd><span class="ev f">Ф</span> Приблизительно валидное маргинальное покрытие без предположений о распределении; обёртка над любой моделью.</dd>
+      <dt>Ограничения</dt><dd><span class="ev f">Ф</span> Покрытие маргинальное, не условное; при резких сдвигах требуется адаптивная версия; хвосты покрываются хуже.</dd>
+      <dt>Трейдинг-задачи</dt><dd>Интервалы к прогнозу цены и RV, risk-aware position sizing, стоп-уровни.</dd>
+      <dt>Пилот</dt><dd class="pilot">EnbPI/ACI поверх текущей точечной модели; метрика — эмпирическое покрытие против номинала и ширина интервала.</dd>
+    </dl>
+  </article>
+
+  <article class="dir" id="d37">
+    <div class="dir-head"><span class="dir-num">3.7</span><h3>Causal inference для прогноза (DML, synthetic control, uplift)</h3></div>
+    <dl>
+      <dt>Интуиция</dt><dd>Прогноз эффекта вмешательства (комиссия, кампания, продукт, регуляторика) ≠ корреляция.</dd>
+      <dt>Работы</dt><dd><span class="ev f">Ф</span> Double/Debiased ML — Chernozhukov et al. (2018, Econometrics Journal): ортогонализация Неймана + cross-fitting → √n-состоятельность при ML-ньюисансах. Synthetic control, uplift, DR-DiD.</dd>
+      <dt>Конструкция</dt><dd><span class="formula">θ через ортогональный момент E[ψ(W; θ, η)] = 0;  η оценивается ML на held-out fold</span></dd>
+      <dt>Преимущества</dt><dd><span class="ev f">Ф</span> Отделяет причинный эффект от смешивания; корректные доверительные интервалы при гибких ML-моделях.</dd>
+      <dt>Ограничения</dt><dd><span class="ev f">Ф</span> Нужны допущения идентификации (unconfoundedness / parallel trends / валидный инструмент); не спасает от ненаблюдаемых конфаундеров.</dd>
+      <dt>Задачи</dt><dd>Эффект снижения комиссии на приток и оборот, инкрементальность маркетинга (ROMI), эффект регуляторного изменения, uplift удержания клиентов.</dd>
+      <dt>Пилот</dt><dd class="pilot">DML для эффекта изменения тарифа или кампании; synthetic control для «что было бы без события» на затронутом сегменте.</dd>
+    </dl>
+  </article>
+
+  <article class="dir" id="d38">
+    <div class="dir-head"><span class="dir-num">3.8</span><h3>Графовые, сетевые и пространственные модели</h3></div>
+    <dl>
+      <dt>Интуиция</dt><dd>Активы связаны (сектор, supply chain, корреляции) — учёт структуры улучшает прогноз.</dd>
+      <dt>Работы</dt><dd><span class="ev f">Ф</span> Множество spatiotemporal-GNN и гиперграфовых моделей для stock trend; обзоры в ACM Computing Surveys. <span class="tag">search-only</span> на конкретные архитектуры 2024–2026.</dd>
+      <dt>Конструкция</dt><dd><span class="formula">hᵢ = σ( Σ_{j∈N(i)} W·xⱼ );  спектральные свёртки на лапласиане графа</span></dd>
+      <dt>Преимущества</dt><dd><span class="ev v">В</span> Захватывают межактивные спилловеры и совместную динамику риска.</dd>
+      <dt>Ограничения</dt><dd><span class="ev v">В</span><span class="ev g">Г</span> Высокий риск <strong>data leakage</strong> (граф из будущих корреляций), хрупкость OOS, улучшения часто исчезают после учёта издержек. <strong>Требует особо строгого бэктеста.</strong></dd>
+      <dt>Трейдинг-задачи</dt><dd>Кросс-активные зависимости, спилловеры волатильности, sector rotation.</dd>
+      <dt>Пилот</dt><dd class="pilot">GNN против сильного некросс-активного baseline (LightGBM с lagged-фичами) с идентичным walk-forward и издержками; принять только при устойчивом приросте на нескольких сегментах.</dd>
+    </dl>
+  </article>
+
+  <article class="dir" id="d39">
+    <div class="dir-head"><span class="dir-num">3.9</span><h3>Гибридные математико-ML подходы (TSFM, deep SSM, deep probabilistic, neural SDE)</h3></div>
+    <dl>
+      <dt>Интуиция</dt><dd>Совместить гибкость нейросетей с вероятностной структурой и претрейном.</dd>
+      <dt>Работы</dt><dd>
+        <p><span class="ev f">Ф</span> <span class="tag verified">verified</span> Chronos (Ansari et al., 2024, arXiv 2403.07815) — токенизация ряда + трансформер-LM, сильный zero-shot. <span class="ev f">Ф</span> <span class="tag verified">verified</span> TimesFM (Das et al., 2023/2024, arXiv 2310.10688) — decoder-only foundation model. <span class="ev f">Ф</span> Mamba (Gu &amp; Dao, 2024) — selective SSM, линейная сложность.</p>
+        <p>Deep probabilistic: DeepAR (квантили), TFT, N-BEATS/N-HiTS, PatchTST; DLinear показал, что простой линейный слой обходит многие трансформеры на бенчмарках.</p>
+        <p><span class="ev f">Ф</span> <span class="tag verified">verified</span> <strong>Brini (2026, arXiv 2607.05291): на realized volatility (50 активов, 9 TSFM против 8 эконометрических моделей) foundation-модели НЕ обыгрывают эконометрику стабильно; только TTM бьёт бенчмарк на всех горизонтах и узко; разброс между архитектурами больше, чем «foundation vs эконометрика».</strong></p>
+      </dd>
+      <dt>Конструкция</dt><dd>TSFM: претрейн на корпусе рядов → zero/few-shot инференс. Mamba: selective state-space с input-зависимыми параметрами. DeepAR: авторегрессия + вероятностная голова.</dd>
+      <dt>Преимущества</dt><dd><span class="ev f">Ф</span> Zero/few-shot на новых рядах; длинные окна (Mamba/PatchTST); нативные квантили (DeepAR/TFT).</dd>
+      <dt>Ограничения</dt><dd><span class="ev f">Ф</span> На финансовой волатильности не дают гарантированного выигрыша (Brini 2026); чёрный ящик; риск утечки при кросс-валидации; дорогой претрейн.</dd>
+      <dt>Трейдинг-задачи</dt><dd>Backbone и трансфер для многих инструментов, прогноз спроса на продукты, редкие ряды, где эконометрика буксует.</dd>
+      <dt>Пилот</dt><dd class="pilot">Chronos/TimesFM/TTM zero-shot против HAR/GARCH на ваших активах; принять только при устойчивом приросте с учётом стоимости инференса.</dd>
+    </dl>
+  </article>
+
+  <article class="dir" id="d310">
+    <div class="dir-head"><span class="dir-num">3.10</span><h3>Структурные сдвиги и нестационарность (change-point, regime switching, concept drift)</h3></div>
+    <dl>
+      <dt>Интуиция</dt><dd>Рынок меняет режим — модель должна детектировать разрыв и адаптироваться.</dd>
+      <dt>Работы</dt><dd><span class="ev f">Ф</span> Bayesian online change-point detection (BOCPD) для order flow и market impact (режимы потока заявок в реальном времени). Markov-switching (MS-GARCH), score-driven режимы, concept-drift детекторы. <span class="tag">search-only</span> на свежие e-process методы 2024–2026.</dd>
+      <dt>Конструкция</dt><dd>BOCPD: апостериор длины «ранинга» rₜ | y₁:ₜ. MS: скрытая цепь режимов + режим-зависимые параметры.</dd>
+      <dt>Преимущества</dt><dd><span class="ev f">Ф</span> Реакция в реальном времени; идентификация устойчивых режимов потока.</dd>
+      <dt>Ограничения</dt><dd><span class="ev f">Ф</span> Компромисс «задержка против ложных срабатываний»; выбор приоров и порогов.</dd>
+      <dt>Трейдинг-задачи</dt><dd>Переключение стратегий по режиму (тренд/флэт, low/high-vol), risk-off детекция.</dd>
+      <dt>Пилот</dt><dd class="pilot">BOCPD/MS-надстройка над волатильностью; оценка по своевременности детекции известных кризисов и снижению просадки.</dd>
+    </dl>
+  </article>
+
+  <article class="dir" id="d311">
+    <div class="dir-head"><span class="dir-num">3.11</span><h3>Малые, шумные, редкие и неполные данные (transfer, meta, few-shot, robust)</h3></div>
+    <dl>
+      <dt>Интуиция</dt><dd>Мало целевых данных — переносим знание со смежных рядов и задач.</dd>
+      <dt>Работы</dt><dd><span class="ev f">Ф</span> Meta-learning (MAML) и few-shot для рядов; TS-pretraining обзоры; robust-статистика для выбросов. <span class="tag">search-only</span> на конкретные few-shot методы 2024–2026.</dd>
+      <dt>Конструкция</dt><dd><span class="formula">MAML:  θ* = argmin Σ_tasks L(θ − α∇L);  Robust: Huber / quantile loss</span></dd>
+      <dt>Преимущества</dt><dd><span class="ev v">В</span> Работает на новых инструментах и редких событиях (дефолты, кризисы).</dd>
+      <dt>Ограничения</dt><dd><span class="ev f">Ф</span> Риск negative transfer при непохожих доменах; трудно валидировать на редких событиях.</dd>
+      <dt>Трейдинг-задачи</dt><dd>Новый листинг или инструмент, прогноз редких дефолтов, cold-start клиентских метрик.</dd>
+      <dt>Пилот</dt><dd class="pilot">Претрейн на пуле активов → few-shot на целевой; против модели, обученной только на цели.</dd>
+    </dl>
+  </article>
+</section>
+
+<!-- ============ 4 ============ -->
+<section id="matrix">
+  <div class="sec-head"><span class="sec-num">04</span><h2 class="sec-title">Матрица приоритизации</h2></div>
+  <p>Шкала 1–5, трейдинг-контекст. Критерии: <strong>A</strong> ожидаемый прирост точности; <strong>B</strong> устойчивость к шуму и сдвигам; <strong>C</strong> учёт неопределённости; <strong>D</strong> экономность по данным (5 = мало данных достаточно); <strong>E</strong> интерпретируемость; <strong>F</strong> вычислительная дешевизна (5 = дёшево); <strong>G</strong> простота внедрения; <strong>H</strong> зрелость библиотек; <strong>I</strong> бизнес-ценность.</p>
+  <p><span class="ev v">В</span> Оценки экспертные, на основе собранных фактов; калибровать на своих данных.</p>
+
+  <div class="scroller matrix">
+    <table>
+      <thead>
+        <tr><th>Метод / направление</th><th class="num" title="Ожидаемый прирост точности">A</th><th class="num" title="Устойчивость">B</th><th class="num" title="Неопределённость">C</th><th class="num" title="Экономность по данным">D</th><th class="num" title="Интерпретируемость">E</th><th class="num" title="Вычислительная дешевизна">F</th><th class="num" title="Простота внедрения">G</th><th class="num" title="Зрелость библиотек">H</th><th class="num" title="Бизнес-ценность">I</th><th class="num">Σ из 45</th></tr>
+      </thead>
+      <tbody>
+        <tr><th scope="row">HAR-RV (+jumps)</th><td class="num">4</td><td class="num">4</td><td class="num">3</td><td class="num">4</td><td class="num">5</td><td class="num">5</td><td class="num">5</td><td class="num">5</td><td class="num">5</td><td class="num"><span class="sum"><b>40</b><span class="bar"><i style="width:88.9%"></i></span></span></td></tr>
+        <tr><th scope="row">Conformal prediction (EnbPI/ACI)</th><td class="num">3</td><td class="num">4</td><td class="num">5</td><td class="num">5</td><td class="num">4</td><td class="num">5</td><td class="num">5</td><td class="num">4</td><td class="num">4</td><td class="num"><span class="sum"><b>39</b><span class="bar"><i style="width:86.7%"></i></span></span></td></tr>
+        <tr><th scope="row">Bayesian / state-space (Kalman, HMM)</th><td class="num">3</td><td class="num">4</td><td class="num">5</td><td class="num">4</td><td class="num">5</td><td class="num">4</td><td class="num">4</td><td class="num">4</td><td class="num">4</td><td class="num"><span class="sum"><b>37</b><span class="bar"><i style="width:82.2%"></i></span></span></td></tr>
+        <tr><th scope="row">GARCH-EVT-Copula (хвосты)</th><td class="num">4</td><td class="num">4</td><td class="num">4</td><td class="num">3</td><td class="num">4</td><td class="num">4</td><td class="num">4</td><td class="num">4</td><td class="num">5</td><td class="num"><span class="sum"><b>36</b><span class="bar"><i style="width:80.0%"></i></span></span></td></tr>
+        <tr><th scope="row">Gradient boosting / NN (кросс-секция)</th><td class="num">5</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">4</td><td class="num">5</td><td class="num">5</td><td class="num"><span class="sum"><b>34</b><span class="bar"><i style="width:75.6%"></i></span></span></td></tr>
+        <tr><th scope="row">Hierarchical reconciliation (MinT)</th><td class="num">3</td><td class="num">3</td><td class="num">4</td><td class="num">4</td><td class="num">4</td><td class="num">4</td><td class="num">4</td><td class="num">4</td><td class="num">4</td><td class="num"><span class="sum"><b>34</b><span class="bar"><i style="width:75.6%"></i></span></span></td></tr>
+        <tr><th scope="row">DML / causal</th><td class="num">4</td><td class="num">4</td><td class="num">4</td><td class="num">3</td><td class="num">4</td><td class="num">3</td><td class="num">3</td><td class="num">4</td><td class="num">5</td><td class="num"><span class="sum"><b>34</b><span class="bar"><i style="width:75.6%"></i></span></span></td></tr>
+        <tr><th scope="row">Wasserstein-DRO Mean-CVaR</th><td class="num">3</td><td class="num">5</td><td class="num">4</td><td class="num">3</td><td class="num">4</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">5</td><td class="num"><span class="sum"><b>33</b><span class="bar"><i style="width:73.3%"></i></span></span></td></tr>
+        <tr><th scope="row">Change-point / regime switching</th><td class="num">3</td><td class="num">5</td><td class="num">3</td><td class="num">4</td><td class="num">4</td><td class="num">4</td><td class="num">3</td><td class="num">3</td><td class="num">4</td><td class="num"><span class="sum"><b>33</b><span class="bar"><i style="width:73.3%"></i></span></span></td></tr>
+        <tr><th scope="row">IPCA / factor high-dim</th><td class="num">4</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">4</td><td class="num">4</td><td class="num">3</td><td class="num">3</td><td class="num">4</td><td class="num"><span class="sum"><b>31</b><span class="bar"><i style="width:68.9%"></i></span></span></td></tr>
+        <tr><th scope="row">TSFM (Chronos/TimesFM/TTM)</th><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">5</td><td class="num">2</td><td class="num">2</td><td class="num">3</td><td class="num">4</td><td class="num">4</td><td class="num"><span class="sum"><b>29</b><span class="bar"><i style="width:64.4%"></i></span></span></td></tr>
+        <tr><th scope="row">Transfer / meta / few-shot</th><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">5</td><td class="num">2</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num"><span class="sum"><b>28</b><span class="bar"><i style="width:62.2%"></i></span></span></td></tr>
+        <tr><th scope="row">Hawkes / point processes</th><td class="num">4</td><td class="num">3</td><td class="num">3</td><td class="num">2</td><td class="num">4</td><td class="num">2</td><td class="num">2</td><td class="num">3</td><td class="num">4</td><td class="num"><span class="sum"><b>27</b><span class="bar"><i style="width:60.0%"></i></span></span></td></tr>
+        <tr><th scope="row">Deep SSM (Mamba/S4)</th><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">2</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num"><span class="sum"><b>26</b><span class="bar"><i style="width:57.8%"></i></span></span></td></tr>
+        <tr><th scope="row">Rough volatility (fOU / rBergomi)</th><td class="num">4</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">3</td><td class="num">2</td><td class="num">2</td><td class="num">2</td><td class="num">3</td><td class="num"><span class="sum"><b>25</b><span class="bar"><i style="width:55.6%"></i></span></span></td></tr>
+        <tr><th scope="row">GNN (кросс-актив)</th><td class="num">3</td><td class="num">2</td><td class="num">2</td><td class="num">2</td><td class="num">2</td><td class="num">2</td><td class="num">2</td><td class="num">3</td><td class="num">3</td><td class="num"><span class="sum"><b>21</b><span class="bar"><i style="width:46.7%"></i></span></span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tbl-cap">Отсортировано по Σ; длина полосы — доля от максимума шкалы (45 баллов: 9 критериев × 5).</p>
+
+  <h3>Четыре группы</h3>
+  <div class="stage">
+    <div class="stage-head"><span class="stage-pill now">Можно внедрять сейчас</span></div>
+    <p>HAR-RV, GARCH-EVT-Copula, Conformal (EnbPI/ACI), gradient boosting / NN для кросс-секции, hierarchical reconciliation, Bayesian / state-space, Wasserstein-DRO, DML, change-point и regime switching.</p>
+  </div>
+  <div class="stage">
+    <div class="stage-head"><span class="stage-pill pilot">Нужен пилот</span></div>
+    <p>TSFM (Chronos/TimesFM/TTM), Hawkes для микроструктуры, rough volatility, IPCA, transfer / meta / few-shot, deep SSM (Mamba).</p>
+  </div>
+  <div class="stage">
+    <div class="stage-head"><span class="stage-pill watch">Нужна исследовательская работа</span></div>
+    <p>Neural SDE / PINN / neuro-symbolic, продвинутый deep-probabilistic с калибровкой на финансах.</p>
+  </div>
+  <div class="stage">
+    <div class="stage-head"><span class="stage-pill watch">Наблюдать за развитием</span></div>
+    <p>GNN для доходностей (пока не переживает честный бэктест), symbolic regression на рынках, quantum reservoir computing для RV <span class="tag">search-only</span>.</p>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section id="practice">
+  <div class="sec-head"><span class="sec-num">05</span><h2 class="sec-title">Практический фокус: 3–5 методов на задачу</h2></div>
+  <p>Для каждой задачи: минимальные данные · baseline · кандидаты · дизайн · бэктест · метрики · критерий внедрения.</p>
+
+  <div class="tasks">
+    <article class="task">
+      <h3><span class="k">5.1</span>Прогноз спроса, продаж, выручки (брокерские продукты, притоки)</h3>
+      <dl>
+        <dt>Данные</dt><dd>≥2–3 года дневных/недельных рядов + промо, сезонность, макро.</dd>
+        <dt>Baseline</dt><dd>ETS/SARIMA, seasonal-naive.</dd>
+        <dt>Кандидаты</dt><dd>LightGBM с lag-фичами; hierarchical reconciliation (MinT); DeepAR/TFT (квантили); intermittent — Croston/ADIDA.</dd>
+        <dt>Дизайн</dt><dd>Глобальная модель по всем рядам + реконсиляция по иерархии продуктов.</dd>
+        <dt>Бэктест</dt><dd>Rolling-origin, несколько origin.</dd>
+        <dt>Метрики</dt><dd>MASE, RMSSE (как в M5), pinball для квантилей.</dd>
+        <dt class="crit">Критерий</dt><dd class="crit">≥10–15% по RMSSE над baseline, устойчиво на нескольких origin.</dd>
+      </dl>
+    </article>
+
+    <article class="task">
+      <h3><span class="k">5.2</span>Прогноз оттока, конверсии, активности, LTV</h3>
+      <dl>
+        <dt>Данные</dt><dd>Клиентские события и транзакции, RFM, ≥12 мес.</dd>
+        <dt>Baseline</dt><dd>Логистическая регрессия, BG/NBD + Gamma-Gamma для LTV.</dd>
+        <dt>Кандидаты</dt><dd>Gradient boosting; uplift-моделирование для управляемого удержания; survival-модели; DML для эффекта воздействий.</dd>
+        <dt>Дизайн</dt><dd>Временной out-of-time split, не случайный.</dd>
+        <dt>Метрики</dt><dd>AUC/PR-AUC (отток), Qini/uplift@k (uplift), MAE и квантили (LTV), калибровка.</dd>
+        <dt class="crit">Критерий</dt><dd class="crit">Прирост Qini над случайным таргетингом + положительный ROI кампании.</dd>
+      </dl>
+    </article>
+
+    <article class="task">
+      <h3><span class="k">5.3</span>Прогноз финансовых и риск-метрик (волатильность, VaR/CVaR/ES)</h3>
+      <dl>
+        <dt>Данные</dt><dd>HF-данные для realized volatility; иначе дневные доходности.</dd>
+        <dt>Baseline</dt><dd>GARCH(1,1); для RV — <strong>HAR-RV</strong>.</dd>
+        <dt>Кандидаты</dt><dd>HAR-RV (+jumps, +leverage); GARCH-EVT-Copula для хвостов; rough-fOU (пилот); TSFM (пилот, с оговоркой Brini 2026).</dd>
+        <dt>Дизайн</dt><dd>Walk-forward; отдельно бэктест VaR (Kupiec / Christoffersen) и ES.</dd>
+        <dt>Метрики</dt><dd>QLIKE, MSE для RV; покрытие и independence-тесты для VaR; ES-бэктест.</dd>
+        <dt class="crit">Критерий</dt><dd class="crit">Значимое улучшение QLIKE над HAR (Diebold-Mariano) + прохождение VaR/ES-бэктестов.</dd>
+      </dl>
+    </article>
+
+    <article class="task">
+      <h3><span class="k">5.4</span>Прогноз маркетингового эффекта, ROMI, инкрементальности</h3>
+      <dl>
+        <dt>Данные</dt><dd>Экспозиция кампаний + контрольные группы или geo.</dd>
+        <dt>Baseline</dt><dd>До/после, разница средних.</dd>
+        <dt>Кандидаты</dt><dd><strong>DML</strong>, synthetic control, geo-эксперименты, uplift, MMM с causal-поправками.</dd>
+        <dt>Дизайн</dt><dd>По возможности рандомизация; иначе synthetic control / DiD.</dd>
+        <dt>Метрики</dt><dd>Оценка эффекта + доверительный интервал, инкрементальный ROMI.</dd>
+        <dt class="crit">Критерий</dt><dd class="crit">Статистически значимый положительный инкрементальный эффект, а не корреляция.</dd>
+      </dl>
+    </article>
+
+    <article class="task">
+      <h3><span class="k">5.5</span>Прогноз операций (нагрузка, обращения, логистика, запасы)</h3>
+      <dl>
+        <dt>Данные</dt><dd>Ряды нагрузки и обращений с сезонностью (день недели, час).</dd>
+        <dt>Baseline</dt><dd>Сезонный ARIMA/ETS.</dd>
+        <dt>Кандидаты</dt><dd>TBATS / Prophet-подобные; квантильный gradient boosting; DeepAR; для запасов — intermittent demand + reconciliation.</dd>
+        <dt>Дизайн</dt><dd>Учёт множественной сезонности и праздников.</dd>
+        <dt>Метрики</dt><dd>Pinball на нужных квантилях (для SLA), service level.</dd>
+        <dt class="crit">Критерий</dt><dd class="crit">Снижение недо- и переоценки при заданном service level.</dd>
+      </dl>
+    </article>
+
+    <article class="task">
+      <h3><span class="k">5.6</span>Прогноз при резких сдвигах (кампании, цены, конкуренция, регуляторика)</h3>
+      <dl>
+        <dt>Данные</dt><dd>Ряды + маркеры событий и интервенций.</dd>
+        <dt>Baseline</dt><dd>Модель без учёта режима.</dd>
+        <dt>Кандидаты</dt><dd><strong>Change-point (BOCPD) + regime switching</strong>; adaptive conformal (ACI) для интервалов; DML / synthetic control для эффекта самого события; online learning.</dd>
+        <dt>Дизайн</dt><dd>Явный стресс-тест на исторических сдвигах (2020, 2022 и т. п.).</dd>
+        <dt>Метрики</dt><dd>Скорость детекции, покрытие интервалов в период сдвига, устойчивость по сегментам.</dd>
+        <dt class="crit">Критерий</dt><dd class="crit">Сохранение покрытия и снижение просадки в режиме сдвига относительно статической модели.</dd>
+      </dl>
+    </article>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section id="validation">
+  <div class="sec-head"><span class="sec-num">06</span><h2 class="sec-title">Валидация и научная строгость — как не обмануться</h2></div>
+
+  <h3>Типичные ловушки и защита</h3>
+  <div class="traps">
+    <div class="trap"><b>Data leakage</b><span><span class="ev v">В</span> Фичи и нормировки считать только на прошлом; в GNN не строить граф на будущих корреляциях; для TSFM следить, чтобы претрейн не пересекался с тестом.</span></div>
+    <div class="trap"><b>Неверное разбиение рядов</b><span>Только <strong>rolling-origin / walk-forward</strong>, никогда не случайный K-fold по времени; между train и test — <strong>эмбарго (gap)</strong> по горизонту прогноза.</span></div>
+    <div class="trap"><b>Selection / survivorship bias</b><span>Использовать point-in-time составы индексов и делистинги; включать «умершие» инструменты.</span></div>
+    <div class="trap"><b>Корреляция ≠ причинность</b><span>Для эффектов решений — только causal-методы (DML, synthetic control), не предиктивный ML.</span></div>
+    <div class="trap"><b>Переобучение при переборе моделей</b><span>Учитывать multiple testing; <strong>Deflated Sharpe Ratio</strong>, контроль числа испытаний; отдельный финальный held-out.</span></div>
+    <div class="trap"><b>Неверная агрегация</b><span>Согласованность уровней через reconciliation; не смешивать частоты.</span></div>
+    <div class="trap"><b>Одна метрика</b><span>Смотреть пакет: точечная (RMSSE/QLIKE) + вероятностная (CRPS/pinball) + экономическая (Sharpe/CVaR после издержек).</span></div>
+    <div class="trap"><b>Игнорирование калибровки</b><span>Проверять <strong>PIT-гистограмму</strong> и <strong>prediction-interval coverage</strong> против номинала.</span></div>
+  </div>
+
+  <h3>Предлагаемый стандарт оценки — обязателен для любого пилота</h3>
+  <ol class="num">
+    <li>Rolling-origin backtesting с эмбарго; несколько origin.</li>
+    <li>Проверка устойчивости по сегментам: активы, режимы, периоды.</li>
+    <li>Стресс-тест на исторических структурных сдвигах.</li>
+    <li>Оценка покрытия интервалов (coverage против nominal) и CRPS/pinball.</li>
+    <li>Значимость улучшения прогноза: <strong>Diebold-Mariano</strong>, для вложенных моделей — Clark-West; Model Confidence Set при сравнении многих.</li>
+    <li>Экономическая значимость <strong>после транзакционных издержек и turnover</strong>, Deflated Sharpe Ratio.</li>
+  </ol>
+</section>
+
+<!-- ============ 7 ============ -->
+<section id="artifacts">
+  <div class="sec-head"><span class="sec-num">07</span><h2 class="sec-title">Итоговые артефакты</h2></div>
+
+  <h3>7.1. Shortlist из 10 методов с максимальным потенциалом</h3>
+  <ol class="shortlist">
+    <li><span><b>HAR-RV (+jumps / leverage)</b> <span>— обязательный бенчмарк и рабочая модель волатильности.</span></span></li>
+    <li><span><b>GARCH-EVT-Copula</b> <span>— условный хвостовой риск (VaR/CVaR/ES).</span></span></li>
+    <li><span><b>Conformal prediction (EnbPI/ACI)</b> <span>— честные интервалы к любой модели.</span></span></li>
+    <li><span><b>Gradient boosting / NN a-la Gu-Kelly-Xiu</b> <span>— кросс-секция доходностей.</span></span></li>
+    <li><span><b>IPCA (Kelly-Pruitt-Su)</b> <span>— факторная модель с динамическими нагрузками.</span></span></li>
+    <li><span><b>Wasserstein-DRO Mean-CVaR</b> <span>— робастный портфель.</span></span></li>
+    <li><span><b>Double / Debiased ML</b> <span>— прогноз эффекта решений: комиссии, кампании, регуляторика.</span></span></li>
+    <li><span><b>Bayesian online change-point + regime switching</b> <span>— детекция смены режима.</span></span></li>
+    <li><span><b>Hawkes / point processes</b> <span>— микроструктура, OFI, market impact (HFT).</span></span></li>
+    <li><span><b>TSFM (Chronos/TimesFM/TTM)</b> <span>— backbone, трансфер и новые ряды; пилот, с оговоркой Brini 2026.</span></span></li>
+  </ol>
+
+  <h3>7.2. Открытые вопросы и научные пробелы</h3>
+  <ul class="plain">
+    <li><strong>Условное (а не маргинальное) покрытие</strong> conformal-интервалов на финансовых рядах при режимных сдвигах.</li>
+    <li><strong>Честная оценка TSFM на доходностях</strong> (не только RV) с корректным walk-forward и издержками — данных мало.</li>
+    <li><strong>Причинно-обоснованный прогноз</strong> реакции рынка и клиентов на политики (комиссии, продукты) — мало качественных квази-экспериментальных дизайнов в рознице.</li>
+    <li><strong>Rough volatility в реальном времени</strong>: устойчивая оценка H при микроструктурном шуме.</li>
+    <li><strong>GNN, переживающие бэктест</strong>: методология против leakage и устойчивость OOS.</li>
+    <li><strong>Калибровка вероятностных прогнозов</strong> deep-моделей на хвостах, где M5 показал провал ML.</li>
+  </ul>
+
+  <h3>7.3. Roadmap исследования на 12 недель</h3>
+  <ol class="road">
+    <li><span class="wk">Нед. 1–2</span><span class="what"><b>Данные и инфраструктура</b>Point-in-time БД, HF→RV пайплайн, каркас walk-forward с эмбарго, метрики (QLIKE, CRPS, pinball, coverage, DM-тест, Deflated Sharpe).</span></li>
+    <li><span class="wk">Нед. 3–4</span><span class="what"><b>Baselines</b>HAR-RV, GARCH(1,1), seasonal-ETS, логистика / GBM — заморозить как эталон.</span></li>
+    <li><span class="wk">Нед. 5–6</span><span class="what"><b>Волатильность и риск</b>HAR (+jumps), GARCH-EVT-Copula, бэктест VaR/ES.</span></li>
+    <li><span class="wk">Нед. 7</span><span class="what"><b>Conformal-интервалы</b>EnbPI/ACI поверх baseline; проверка покрытия.</span></li>
+    <li><span class="wk">Нед. 8–9</span><span class="what"><b>Кросс-секция</b>Elastic net + GBM + IPCA; Deflated Sharpe, Model Confidence Set.</span></li>
+    <li><span class="wk">Нед. 10</span><span class="what"><b>Причинный блок</b>DML / synthetic control на одном реальном событии (тариф или кампания).</span></li>
+    <li><span class="wk">Нед. 11</span><span class="what"><b>Пилот frontier</b>Chronos/TimesFM/TTM zero-shot против HAR; change-point-надстройка.</span></li>
+    <li><span class="wk">Нед. 12</span><span class="what"><b>Сводка</b>Матрица приоритизации на своих данных, решение go / no-go по каждому методу.</span></li>
+  </ol>
+</section>
+
+<footer>
+  <p>Полная библиография, поисковые запросы и легенда надёжности — в файле <code>03_bibliography/Библиография_и_запросы.md</code>.</p>
+</footer>
+
+</main>
+</div>
+</div>
+
+<script>
+(function(){
+  // Evidence-marker highlighting
+  var buttons = document.querySelectorAll('.legend button');
+  buttons.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var ev = btn.getAttribute('data-ev');
+      var on = btn.getAttribute('aria-pressed') === 'true';
+      btn.setAttribute('aria-pressed', on ? 'false' : 'true');
+      document.body.classList.toggle('hl-' + ev, !on);
+    });
+  });
+
+  // Active section in the table of contents
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+  var map = {};
+  links.forEach(function(a){
+    var id = a.getAttribute('href').slice(1);
+    var el = document.getElementById(id);
+    if (el) map[id] = a;
+  });
+  var targets = Object.keys(map).map(function(id){ return document.getElementById(id); });
+  if ('IntersectionObserver' in window && targets.length){
+    var visible = {};
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ visible[e.target.id] = e.isIntersecting; });
+      var current = null;
+      targets.forEach(function(t){ if (visible[t.id] && !current) current = t.id; });
+      links.forEach(function(a){ a.classList.remove('on'); });
+      if (current && map[current]) map[current].classList.add('on');
+    }, { rootMargin: '-10% 0px -70% 0px', threshold: 0 });
+    targets.forEach(function(t){ io.observe(t); });
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "run_id": "20260916-100502-PARK",
+  "phase": "PARK",
+  "finished_at": "2026-09-16T10:05:04+03:00",
+  "verdict": "PARTIAL_FAILURE",
+  "errors": [],
+  "warnings": [],
+  "partial": [
+    "покупка паёв не исполнена: SandboxService/PostSandboxOrder: HTTP 400 \n{\"code\":3,\"message\":\"Not enough balance\",\"description\":\"30034\"}"
+  ],
+  "skipped": null,
+  "treasury": {
+    "ticker": "TMON@",
+    "tmon_lots": 30402,
+    "tmon_price": 164.37,
+    "tmon_value_rub": 4997176.74,
+    "free_cash_rub": 5073.5,
+    "cash_rub": 5000000.0,
+    "virtual_lots": 30402,
+    "mode": "virtual"
+  }
+}

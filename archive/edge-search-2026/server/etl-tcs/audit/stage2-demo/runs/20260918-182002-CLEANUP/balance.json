@@ -1,0 +1,14 @@
+{
+  "run_id": "20260918-182002-CLEANUP",
+  "phase": "CLEANUP",
+  "captured_at": "2026-09-18T18:20:06+03:00",
+  "account_id": "1639899c-2aca-49fe-b5d8-d68e8b84f225",
+  "total_portfolio_rub": 5005101.3772,
+  "free_cash_rub": 30150.2772,
+  "shares_value_rub": 0.0,
+  "etf_value_rub": 4974951.1,
+  "unrealised_pnl_rub": 0.0957,
+  "open_positions": 0,
+  "active_orders": 0,
+  "active_stop_orders": 0
+}

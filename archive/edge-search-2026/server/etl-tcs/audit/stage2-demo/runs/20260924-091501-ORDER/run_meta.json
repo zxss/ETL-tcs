@@ -1,0 +1,17 @@
+{
+  "run_id": "20260924-091501-ORDER",
+  "phase": "ORDER",
+  "finished_at": "2026-09-24T09:15:04+03:00",
+  "verdict": "PASS",
+  "errors": [],
+  "warnings": [],
+  "partial": [],
+  "skipped": null,
+  "plan_run_id": "20260924-084502-PREP",
+  "dataset_hash": "sha256:5f138b87981805052b97f5231e03205cb31a26eb12d5fa96db2d24a413798977",
+  "config_hash": "sha256:353f5aba295a891f5aa7400f3e4323bdbbcd9fe77859b5a801903f80bc711550",
+  "orders_count": 0,
+  "placed_count": 0,
+  "rejected_count": 0,
+  "fills_count": 0
+}

@@ -1,0 +1,14 @@
+{
+  "run_id": "20260924-091301-CLOSE",
+  "phase": "CLOSE",
+  "captured_at": "2026-09-24T09:13:05+03:00",
+  "account_id": "<PROD_ACCOUNT>",
+  "total_portfolio_rub": 1040650.14,
+  "free_cash_rub": 104156.02,
+  "shares_value_rub": 19380.0,
+  "etf_value_rub": 917114.12,
+  "unrealised_pnl_rub": 0.05,
+  "open_positions": 1,
+  "active_orders": 0,
+  "active_stop_orders": 0
+}

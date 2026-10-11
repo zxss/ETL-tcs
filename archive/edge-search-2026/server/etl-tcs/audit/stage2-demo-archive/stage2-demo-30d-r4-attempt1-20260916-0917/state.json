@@ -1,0 +1,14 @@
+{
+  "test_id": "stage2-demo-30d-r4",
+  "started_at": "2026-09-16",
+  "completed_trading_days": 1,
+  "target_trading_days": 30,
+  "status": "running",
+  "days": [
+    "2026-09-16"
+  ],
+  "halted_reason": null,
+  "start_balance_rub": 5000000.0,
+  "start_balance_verified_at": "2026-09-15T23:37+03:00",
+  "previous_run_archive": "audit/stage2-demo-archive/stage2-demo-30d-r3-20260915"
+}

@@ -1,0 +1,8 @@
+{
+  "overnight_before": 0,
+  "closed": [],
+  "failed": [],
+  "orders_cancelled": 0,
+  "registry_reconciled": 0,
+  "orphans": []
+}

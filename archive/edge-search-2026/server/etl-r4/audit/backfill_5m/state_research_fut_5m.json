@@ -1,0 +1,4233 @@
+{
+ "range": "2022-01-01:2026-09-11",
+ "done": {
+  "BRF2:2022": {
+   "ticker": "BRF2",
+   "year": 2022,
+   "bars": 139,
+   "inserted": 139,
+   "archive": true
+  },
+  "BRG2:2022": {
+   "ticker": "BRG2",
+   "year": 2022,
+   "bars": 4289,
+   "inserted": 4289,
+   "archive": true
+  },
+  "BRH2:2022": {
+   "ticker": "BRH2",
+   "year": 2022,
+   "bars": 7820,
+   "inserted": 7820,
+   "archive": true
+  },
+  "BRJ2:2022": {
+   "ticker": "BRJ2",
+   "year": 2022,
+   "bars": 8538,
+   "inserted": 8538,
+   "archive": true
+  },
+  "BRK2:2022": {
+   "ticker": "BRK2",
+   "year": 2022,
+   "bars": 7582,
+   "inserted": 7582,
+   "archive": true
+  },
+  "BRM2:2022": {
+   "ticker": "BRM2",
+   "year": 2022,
+   "bars": 7429,
+   "inserted": 7429,
+   "archive": true
+  },
+  "BRN2:2022": {
+   "ticker": "BRN2",
+   "year": 2022,
+   "bars": 6055,
+   "inserted": 6055,
+   "archive": true
+  },
+  "BRQ2:2022": {
+   "ticker": "BRQ2",
+   "year": 2022,
+   "bars": 6527,
+   "inserted": 6527,
+   "archive": true
+  },
+  "BRU2:2022": {
+   "ticker": "BRU2",
+   "year": 2022,
+   "bars": 9337,
+   "inserted": 9337,
+   "archive": true
+  },
+  "BRV2:2022": {
+   "ticker": "BRV2",
+   "year": 2022,
+   "bars": 9363,
+   "inserted": 9363,
+   "archive": true
+  },
+  "BRX2:2022": {
+   "ticker": "BRX2",
+   "year": 2022,
+   "bars": 9472,
+   "inserted": 9472,
+   "archive": true
+  },
+  "BRZ2:2022": {
+   "ticker": "BRZ2",
+   "year": 2022,
+   "bars": 12588,
+   "inserted": 12588,
+   "archive": true
+  },
+  "BRF3:2022": {
+   "ticker": "BRF3",
+   "year": 2022,
+   "bars": 9739,
+   "inserted": 9739,
+   "archive": true
+  },
+  "BRG3:2022": {
+   "ticker": "BRG3",
+   "year": 2022,
+   "bars": 6407,
+   "inserted": 6407,
+   "archive": true
+  },
+  "BRG3:2023": {
+   "ticker": "BRG3",
+   "year": 2023,
+   "bars": 3771,
+   "inserted": 3771,
+   "archive": true
+  },
+  "BRH3:2022": {
+   "ticker": "BRH3",
+   "year": 2022,
+   "bars": 3471,
+   "inserted": 3471,
+   "archive": true
+  },
+  "BRH3:2023": {
+   "ticker": "BRH3",
+   "year": 2023,
+   "bars": 6908,
+   "inserted": 6908,
+   "archive": true
+  },
+  "BRJ3:2022": {
+   "ticker": "BRJ3",
+   "year": 2022,
+   "bars": 837,
+   "inserted": 837,
+   "archive": true
+  },
+  "BRJ3:2023": {
+   "ticker": "BRJ3",
+   "year": 2023,
+   "bars": 8429,
+   "inserted": 8429,
+   "archive": true
+  },
+  "BRK3:2022": {
+   "ticker": "BRK3",
+   "year": 2022,
+   "bars": 393,
+   "inserted": 393,
+   "archive": true
+  },
+  "BRK3:2023": {
+   "ticker": "BRK3",
+   "year": 2023,
+   "bars": 9297,
+   "inserted": 9297,
+   "archive": true
+  },
+  "BRM3:2022": {
+   "ticker": "BRM3",
+   "year": 2022,
+   "bars": 309,
+   "inserted": 309,
+   "archive": true
+  },
+  "BRM3:2023": {
+   "ticker": "BRM3",
+   "year": 2023,
+   "bars": 10659,
+   "inserted": 10659,
+   "archive": true
+  },
+  "BRN3:2022": {
+   "ticker": "BRN3",
+   "year": 2022,
+   "bars": 389,
+   "inserted": 389,
+   "archive": true
+  },
+  "BRN3:2023": {
+   "ticker": "BRN3",
+   "year": 2023,
+   "bars": 10405,
+   "inserted": 10405,
+   "archive": true
+  },
+  "BRQ3:2022": {
+   "ticker": "BRQ3",
+   "year": 2022,
+   "bars": 130,
+   "inserted": 130,
+   "archive": true
+  },
+  "BRQ3:2023": {
+   "ticker": "BRQ3",
+   "year": 2023,
+   "bars": 10461,
+   "inserted": 10461,
+   "archive": true
+  },
+  "BRU3:2022": {
+   "ticker": "BRU3",
+   "year": 2022,
+   "bars": 119,
+   "inserted": 119,
+   "archive": true
+  },
+  "BRU3:2023": {
+   "ticker": "BRU3",
+   "year": 2023,
+   "bars": 11926,
+   "inserted": 11926,
+   "archive": true
+  },
+  "BRV3:2022": {
+   "ticker": "BRV3",
+   "year": 2022,
+   "bars": 51,
+   "inserted": 51,
+   "archive": true
+  },
+  "BRV3:2023": {
+   "ticker": "BRV3",
+   "year": 2023,
+   "bars": 10949,
+   "inserted": 10949,
+   "archive": true
+  },
+  "BRX3:2022": {
+   "ticker": "BRX3",
+   "year": 2022,
+   "bars": 51,
+   "inserted": 51,
+   "archive": true
+  },
+  "BRX3:2023": {
+   "ticker": "BRX3",
+   "year": 2023,
+   "bars": 10809,
+   "inserted": 10809,
+   "archive": true
+  },
+  "BRZ3:2022": {
+   "ticker": "BRZ3",
+   "year": 2022,
+   "bars": 82,
+   "inserted": 82,
+   "archive": true
+  },
+  "BRZ3:2023": {
+   "ticker": "BRZ3",
+   "year": 2023,
+   "bars": 12517,
+   "inserted": 12517,
+   "archive": true
+  },
+  "BRF4:2022": {
+   "ticker": "BRF4",
+   "year": 2022,
+   "bars": 1,
+   "inserted": 1,
+   "archive": true
+  },
+  "BRF4:2023": {
+   "ticker": "BRF4",
+   "year": 2023,
+   "bars": 12108,
+   "inserted": 12108,
+   "archive": true
+  },
+  "BRG4:2023": {
+   "ticker": "BRG4",
+   "year": 2023,
+   "bars": 8378,
+   "inserted": 8378,
+   "archive": true
+  },
+  "BRG4:2024": {
+   "ticker": "BRG4",
+   "year": 2024,
+   "bars": 3793,
+   "inserted": 3793,
+   "archive": true
+  },
+  "BRH4:2023": {
+   "ticker": "BRH4",
+   "year": 2023,
+   "bars": 5486,
+   "inserted": 5486,
+   "archive": true
+  },
+  "BRH4:2024": {
+   "ticker": "BRH4",
+   "year": 2024,
+   "bars": 7286,
+   "inserted": 7286,
+   "archive": true
+  },
+  "BRJ4:2023": {
+   "ticker": "BRJ4",
+   "year": 2023,
+   "bars": 1906,
+   "inserted": 1906,
+   "archive": true
+  },
+  "BRJ4:2024": {
+   "ticker": "BRJ4",
+   "year": 2024,
+   "bars": 9305,
+   "inserted": 9305,
+   "archive": true
+  },
+  "BRK4:2023": {
+   "ticker": "BRK4",
+   "year": 2023,
+   "bars": 880,
+   "inserted": 880,
+   "archive": true
+  },
+  "BRK4:2024": {
+   "ticker": "BRK4",
+   "year": 2024,
+   "bars": 10300,
+   "inserted": 10300,
+   "archive": true
+  },
+  "BRM4:2023": {
+   "ticker": "BRM4",
+   "year": 2023,
+   "bars": 718,
+   "inserted": 718,
+   "archive": true
+  },
+  "BRM4:2024": {
+   "ticker": "BRM4",
+   "year": 2024,
+   "bars": 11248,
+   "inserted": 11248,
+   "archive": true
+  },
+  "BRN4:2023": {
+   "ticker": "BRN4",
+   "year": 2023,
+   "bars": 274,
+   "inserted": 274,
+   "archive": true
+  },
+  "BRN4:2024": {
+   "ticker": "BRN4",
+   "year": 2024,
+   "bars": 10175,
+   "inserted": 10175,
+   "archive": true
+  },
+  "BRQ4:2023": {
+   "ticker": "BRQ4",
+   "year": 2023,
+   "bars": 180,
+   "inserted": 180,
+   "archive": true
+  },
+  "BRQ4:2024": {
+   "ticker": "BRQ4",
+   "year": 2024,
+   "bars": 10406,
+   "inserted": 10406,
+   "archive": true
+  },
+  "BRU4:2023": {
+   "ticker": "BRU4",
+   "year": 2023,
+   "bars": 262,
+   "inserted": 262,
+   "archive": true
+  },
+  "BRU4:2024": {
+   "ticker": "BRU4",
+   "year": 2024,
+   "bars": 11056,
+   "inserted": 11056,
+   "archive": true
+  },
+  "BRV4:2023": {
+   "ticker": "BRV4",
+   "year": 2023,
+   "bars": 224,
+   "inserted": 224,
+   "archive": true
+  },
+  "BRV4:2024": {
+   "ticker": "BRV4",
+   "year": 2024,
+   "bars": 10196,
+   "inserted": 10196,
+   "archive": true
+  },
+  "BRX4:2023": {
+   "ticker": "BRX4",
+   "year": 2023,
+   "bars": 71,
+   "inserted": 71,
+   "archive": true
+  },
+  "BRX4:2024": {
+   "ticker": "BRX4",
+   "year": 2024,
+   "bars": 11059,
+   "inserted": 11059,
+   "archive": true
+  },
+  "BRZ4:2023": {
+   "ticker": "BRZ4",
+   "year": 2023,
+   "bars": 24,
+   "inserted": 24,
+   "archive": true
+  },
+  "BRZ4:2024": {
+   "ticker": "BRZ4",
+   "year": 2024,
+   "bars": 12027,
+   "inserted": 12027,
+   "archive": true
+  },
+  "BRF5:2024": {
+   "ticker": "BRF5",
+   "year": 2024,
+   "bars": 11052,
+   "inserted": 11052,
+   "archive": true
+  },
+  "BRF5:2025": {
+   "ticker": "BRF5",
+   "year": 2025,
+   "bars": 104,
+   "inserted": 104,
+   "archive": true
+  },
+  "BRG5:2024": {
+   "ticker": "BRG5",
+   "year": 2024,
+   "bars": 7291,
+   "inserted": 7291,
+   "archive": true
+  },
+  "BRG5:2025": {
+   "ticker": "BRG5",
+   "year": 2025,
+   "bars": 3438,
+   "inserted": 3438,
+   "archive": true
+  },
+  "BRH5:2024": {
+   "ticker": "BRH5",
+   "year": 2024,
+   "bars": 3159,
+   "inserted": 3159,
+   "archive": true
+  },
+  "BRH5:2025": {
+   "ticker": "BRH5",
+   "year": 2025,
+   "bars": 6915,
+   "inserted": 6915,
+   "archive": true
+  },
+  "BRJ5:2024": {
+   "ticker": "BRJ5",
+   "year": 2024,
+   "bars": 1468,
+   "inserted": 1468,
+   "archive": true
+  },
+  "BRJ5:2025": {
+   "ticker": "BRJ5",
+   "year": 2025,
+   "bars": 8840,
+   "inserted": 8840,
+   "archive": true
+  },
+  "BRK5:2024": {
+   "ticker": "BRK5",
+   "year": 2024,
+   "bars": 799,
+   "inserted": 799,
+   "archive": true
+  },
+  "BRK5:2025": {
+   "ticker": "BRK5",
+   "year": 2025,
+   "bars": 9778,
+   "inserted": 9778,
+   "archive": true
+  },
+  "BRM5:2024": {
+   "ticker": "BRM5",
+   "year": 2024,
+   "bars": 488,
+   "inserted": 488,
+   "archive": true
+  },
+  "BRM5:2025": {
+   "ticker": "BRM5",
+   "year": 2025,
+   "bars": 10732,
+   "inserted": 10732,
+   "archive": true
+  },
+  "BRN5:2024": {
+   "ticker": "BRN5",
+   "year": 2024,
+   "bars": 290,
+   "inserted": 290,
+   "archive": true
+  },
+  "BRN5:2025": {
+   "ticker": "BRN5",
+   "year": 2025,
+   "bars": 10261,
+   "inserted": 10261,
+   "archive": true
+  },
+  "BRQ5:2024": {
+   "ticker": "BRQ5",
+   "year": 2024,
+   "bars": 233,
+   "inserted": 233,
+   "archive": true
+  },
+  "BRQ5:2025": {
+   "ticker": "BRQ5",
+   "year": 2025,
+   "bars": 10945,
+   "inserted": 10945,
+   "archive": true
+  },
+  "BRU5:2024": {
+   "ticker": "BRU5",
+   "year": 2024,
+   "bars": 274,
+   "inserted": 274,
+   "archive": true
+  },
+  "BRU5:2025": {
+   "ticker": "BRU5",
+   "year": 2025,
+   "bars": 12455,
+   "inserted": 12455,
+   "archive": true
+  },
+  "BRV5:2024": {
+   "ticker": "BRV5",
+   "year": 2024,
+   "bars": 142,
+   "inserted": 142,
+   "archive": true
+  },
+  "BRV5:2025": {
+   "ticker": "BRV5",
+   "year": 2025,
+   "bars": 11996,
+   "inserted": 11996,
+   "archive": true
+  },
+  "BRX5:2024": {
+   "ticker": "BRX5",
+   "year": 2024,
+   "bars": 36,
+   "inserted": 36,
+   "archive": true
+  },
+  "BRX5:2025": {
+   "ticker": "BRX5",
+   "year": 2025,
+   "bars": 12555,
+   "inserted": 12555,
+   "archive": true
+  },
+  "BRZ5:2024": {
+   "ticker": "BRZ5",
+   "year": 2024,
+   "bars": 31,
+   "inserted": 31,
+   "archive": true
+  },
+  "BRZ5:2025": {
+   "ticker": "BRZ5",
+   "year": 2025,
+   "bars": 14029,
+   "inserted": 14029,
+   "archive": true
+  },
+  "BRF6:2025": {
+   "ticker": "BRF6",
+   "year": 2025,
+   "bars": 13488,
+   "inserted": 13488,
+   "archive": true
+  },
+  "BRF6:2026": {
+   "ticker": "BRF6",
+   "year": 2026,
+   "bars": 117,
+   "inserted": 117,
+   "archive": true
+  },
+  "BRG6:2025": {
+   "ticker": "BRG6",
+   "year": 2025,
+   "bars": 8628,
+   "inserted": 8628,
+   "archive": true
+  },
+  "BRG6:2026": {
+   "ticker": "BRG6",
+   "year": 2026,
+   "bars": 4051,
+   "inserted": 4051,
+   "archive": true
+  },
+  "BRH6:2025": {
+   "ticker": "BRH6",
+   "year": 2025,
+   "bars": 6032,
+   "inserted": 6032,
+   "archive": true
+  },
+  "BRH6:2026": {
+   "ticker": "BRH6",
+   "year": 2026,
+   "bars": 8073,
+   "inserted": 8073,
+   "archive": true
+  },
+  "BRJ6:2025": {
+   "ticker": "BRJ6",
+   "year": 2025,
+   "bars": 3439,
+   "inserted": 3439,
+   "archive": true
+  },
+  "BRJ6:2026": {
+   "ticker": "BRJ6",
+   "year": 2026,
+   "bars": 10969,
+   "inserted": 10969,
+   "archive": true
+  },
+  "BRK6:2025": {
+   "ticker": "BRK6",
+   "year": 2025,
+   "bars": 1574,
+   "inserted": 1574,
+   "archive": true
+  },
+  "BRK6:2026": {
+   "ticker": "BRK6",
+   "year": 2026,
+   "bars": 13351,
+   "inserted": 13351,
+   "archive": true
+  },
+  "BRM6:2025": {
+   "ticker": "BRM6",
+   "year": 2025,
+   "bars": 806,
+   "inserted": 806,
+   "archive": true
+  },
+  "BRM6:2026": {
+   "ticker": "BRM6",
+   "year": 2026,
+   "bars": 16711,
+   "inserted": 16711,
+   "archive": true
+  },
+  "BRN6:2025": {
+   "ticker": "BRN6",
+   "year": 2025,
+   "bars": 300,
+   "inserted": 300,
+   "archive": true
+  },
+  "BRN6:2026": {
+   "ticker": "BRN6",
+   "year": 2026,
+   "bars": 19225,
+   "inserted": 19225,
+   "archive": true
+  },
+  "BRQ6:2025": {
+   "ticker": "BRQ6",
+   "year": 2025,
+   "bars": 26,
+   "inserted": 26,
+   "archive": true
+  },
+  "BRQ6:2026": {
+   "ticker": "BRQ6",
+   "year": 2026,
+   "bars": 20846,
+   "inserted": 20846,
+   "archive": true
+  },
+  "BRU6:2025": {
+   "ticker": "BRU6",
+   "year": 2025,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "BRU6:2026": {
+   "ticker": "BRU6",
+   "year": 2026,
+   "bars": 22008,
+   "inserted": 22008,
+   "archive": true
+  },
+  "BRV6:2025": {
+   "ticker": "BRV6",
+   "year": 2025,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "BRV6:2026": {
+   "ticker": "BRV6",
+   "year": 2026,
+   "bars": 20043,
+   "inserted": 20043,
+   "archive": true
+  },
+  "BRX6:2025": {
+   "ticker": "BRX6",
+   "year": 2025,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "BRX6:2026": {
+   "ticker": "BRX6",
+   "year": 2026,
+   "bars": 13130,
+   "inserted": 13130,
+   "archive": true
+  },
+  "BRZ6:2025": {
+   "ticker": "BRZ6",
+   "year": 2025,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "BRZ6:2026": {
+   "ticker": "BRZ6",
+   "year": 2026,
+   "bars": 9051,
+   "inserted": 9051,
+   "archive": true
+  },
+  "BRF7:2026": {
+   "ticker": "BRF7",
+   "year": 2026,
+   "bars": 4659,
+   "inserted": 4659,
+   "archive": true
+  },
+  "BRG7:2026": {
+   "ticker": "BRG7",
+   "year": 2026,
+   "bars": 2172,
+   "inserted": 2172,
+   "archive": true
+  },
+  "BRH7:2026": {
+   "ticker": "BRH7",
+   "year": 2026,
+   "bars": 698,
+   "inserted": 698,
+   "archive": true
+  },
+  "BRJ7:2026": {
+   "ticker": "BRJ7",
+   "year": 2026,
+   "bars": 0,
+   "inserted": 0,
+   "archive": true
+  },
+  "CRM2:2022": {
+   "ticker": "CRM2",
+   "year": 2022,
+   "bars": 2657,
+   "inserted": 2657,
+   "archive": true
+  },
+  "CRU2:2022": {
+   "ticker": "CRU2",
+   "year": 2022,
+   "bars": 9941,
+   "inserted": 9941,
+   "archive": true
+  },
+  "CRZ2:2022": {
+   "ticker": "CRZ2",
+   "year": 2022,
+   "bars": 17090,
+   "inserted": 17090,
+   "archive": true
+  },
+  "CRH3:2022": {
+   "ticker": "CRH3",
+   "year": 2022,
+   "bars": 9915,
+   "inserted": 9915,
+   "archive": true
+  },
+  "CRH3:2023": {
+   "ticker": "CRH3",
+   "year": 2023,
+   "bars": 8748,
+   "inserted": 8748,
+   "archive": true
+  },
+  "CRM3:2022": {
+   "ticker": "CRM3",
+   "year": 2022,
+   "bars": 2765,
+   "inserted": 2765,
+   "archive": true
+  },
+  "CRM3:2023": {
+   "ticker": "CRM3",
+   "year": 2023,
+   "bars": 18567,
+   "inserted": 18567,
+   "archive": true
+  },
+  "CRU3:2022": {
+   "ticker": "CRU3",
+   "year": 2022,
+   "bars": 163,
+   "inserted": 163,
+   "archive": true
+  },
+  "CRU3:2023": {
+   "ticker": "CRU3",
+   "year": 2023,
+   "bars": 22102,
+   "inserted": 22102,
+   "archive": true
+  },
+  "CRZ3:2022": {
+   "ticker": "CRZ3",
+   "year": 2022,
+   "bars": 125,
+   "inserted": 125,
+   "archive": true
+  },
+  "CRZ3:2023": {
+   "ticker": "CRZ3",
+   "year": 2023,
+   "bars": 23748,
+   "inserted": 23748,
+   "archive": true
+  },
+  "CRH4:2023": {
+   "ticker": "CRH4",
+   "year": 2023,
+   "bars": 13949,
+   "inserted": 13949,
+   "archive": true
+  },
+  "CRH4:2024": {
+   "ticker": "CRH4",
+   "year": 2024,
+   "bars": 9510,
+   "inserted": 9510,
+   "archive": true
+  },
+  "CRM4:2023": {
+   "ticker": "CRM4",
+   "year": 2023,
+   "bars": 3413,
+   "inserted": 3413,
+   "archive": true
+  },
+  "CRM4:2024": {
+   "ticker": "CRM4",
+   "year": 2024,
+   "bars": 18916,
+   "inserted": 18916,
+   "archive": true
+  },
+  "CRU4:2023": {
+   "ticker": "CRU4",
+   "year": 2023,
+   "bars": 1256,
+   "inserted": 1256,
+   "archive": true
+  },
+  "CRU4:2024": {
+   "ticker": "CRU4",
+   "year": 2024,
+   "bars": 21208,
+   "inserted": 21208,
+   "archive": true
+  },
+  "CRZ4:2023": {
+   "ticker": "CRZ4",
+   "year": 2023,
+   "bars": 575,
+   "inserted": 575,
+   "archive": true
+  },
+  "CRZ4:2024": {
+   "ticker": "CRZ4",
+   "year": 2024,
+   "bars": 23908,
+   "inserted": 23908,
+   "archive": true
+  },
+  "CRH5:2024": {
+   "ticker": "CRH5",
+   "year": 2024,
+   "bars": 15006,
+   "inserted": 15006,
+   "archive": true
+  },
+  "CRH5:2025": {
+   "ticker": "CRH5",
+   "year": 2025,
+   "bars": 9156,
+   "inserted": 9156,
+   "archive": true
+  },
+  "CRM5:2024": {
+   "ticker": "CRM5",
+   "year": 2024,
+   "bars": 4699,
+   "inserted": 4699,
+   "archive": true
+  },
+  "CRM5:2025": {
+   "ticker": "CRM5",
+   "year": 2025,
+   "bars": 19419,
+   "inserted": 19419,
+   "archive": true
+  },
+  "CRU5:2024": {
+   "ticker": "CRU5",
+   "year": 2024,
+   "bars": 1540,
+   "inserted": 1540,
+   "archive": true
+  },
+  "CRU5:2025": {
+   "ticker": "CRU5",
+   "year": 2025,
+   "bars": 25814,
+   "inserted": 25814,
+   "archive": true
+  },
+  "CRZ5:2024": {
+   "ticker": "CRZ5",
+   "year": 2024,
+   "bars": 835,
+   "inserted": 835,
+   "archive": true
+  },
+  "CRZ5:2025": {
+   "ticker": "CRZ5",
+   "year": 2025,
+   "bars": 28621,
+   "inserted": 28621,
+   "archive": true
+  },
+  "CRH6:2025": {
+   "ticker": "CRH6",
+   "year": 2025,
+   "bars": 18888,
+   "inserted": 18888,
+   "archive": true
+  },
+  "CRH6:2026": {
+   "ticker": "CRH6",
+   "year": 2026,
+   "bars": 8986,
+   "inserted": 8986,
+   "archive": true
+  },
+  "CRM6:2025": {
+   "ticker": "CRM6",
+   "year": 2025,
+   "bars": 8455,
+   "inserted": 8455,
+   "archive": true
+  },
+  "CRM6:2026": {
+   "ticker": "CRM6",
+   "year": 2026,
+   "bars": 19507,
+   "inserted": 19507,
+   "archive": true
+  },
+  "CRU6:2025": {
+   "ticker": "CRU6",
+   "year": 2025,
+   "bars": 4112,
+   "inserted": 4112,
+   "archive": true
+  },
+  "CRU6:2026": {
+   "ticker": "CRU6",
+   "year": 2026,
+   "bars": 28809,
+   "inserted": 28809,
+   "archive": true
+  },
+  "CRZ6:2025": {
+   "ticker": "CRZ6",
+   "year": 2025,
+   "bars": 2231,
+   "inserted": 2231,
+   "archive": true
+  },
+  "CRZ6:2026": {
+   "ticker": "CRZ6",
+   "year": 2026,
+   "bars": 23299,
+   "inserted": 23299,
+   "archive": true
+  },
+  "CRH7:2026": {
+   "ticker": "CRH7",
+   "year": 2026,
+   "bars": 12465,
+   "inserted": 12465,
+   "archive": true
+  },
+  "CRM7:2026": {
+   "ticker": "CRM7",
+   "year": 2026,
+   "bars": 6382,
+   "inserted": 6382,
+   "archive": true
+  },
+  "CRU7:2026": {
+   "ticker": "CRU7",
+   "year": 2026,
+   "bars": 2079,
+   "inserted": 2079,
+   "archive": true
+  },
+  "GDH2:2022": {
+   "ticker": "GDH2",
+   "year": 2022,
+   "bars": 8852,
+   "inserted": 8852,
+   "archive": true
+  },
+  "GDM2:2022": {
+   "ticker": "GDM2",
+   "year": 2022,
+   "bars": 11538,
+   "inserted": 11538,
+   "archive": true
+  },
+  "GDU2:2022": {
+   "ticker": "GDU2",
+   "year": 2022,
+   "bars": 15767,
+   "inserted": 15767,
+   "archive": true
+  },
+  "GDZ2:2022": {
+   "ticker": "GDZ2",
+   "year": 2022,
+   "bars": 21877,
+   "inserted": 21877,
+   "archive": true
+  },
+  "GDH3:2022": {
+   "ticker": "GDH3",
+   "year": 2022,
+   "bars": 14373,
+   "inserted": 14373,
+   "archive": true
+  },
+  "GDH3:2023": {
+   "ticker": "GDH3",
+   "year": 2023,
+   "bars": 8918,
+   "inserted": 8918,
+   "archive": true
+  },
+  "GDM3:2022": {
+   "ticker": "GDM3",
+   "year": 2022,
+   "bars": 3987,
+   "inserted": 3987,
+   "archive": true
+  },
+  "GDM3:2023": {
+   "ticker": "GDM3",
+   "year": 2023,
+   "bars": 18713,
+   "inserted": 18713,
+   "archive": true
+  },
+  "GDU3:2022": {
+   "ticker": "GDU3",
+   "year": 2022,
+   "bars": 866,
+   "inserted": 866,
+   "archive": true
+  },
+  "GDU3:2023": {
+   "ticker": "GDU3",
+   "year": 2023,
+   "bars": 23411,
+   "inserted": 23411,
+   "archive": true
+  },
+  "GDZ3:2022": {
+   "ticker": "GDZ3",
+   "year": 2022,
+   "bars": 104,
+   "inserted": 104,
+   "archive": true
+  },
+  "GDZ3:2023": {
+   "ticker": "GDZ3",
+   "year": 2023,
+   "bars": 24645,
+   "inserted": 24645,
+   "archive": true
+  },
+  "GDH4:2023": {
+   "ticker": "GDH4",
+   "year": 2023,
+   "bars": 13004,
+   "inserted": 13004,
+   "archive": true
+  },
+  "GDH4:2024": {
+   "ticker": "GDH4",
+   "year": 2024,
+   "bars": 9680,
+   "inserted": 9680,
+   "archive": true
+  },
+  "GDM4:2023": {
+   "ticker": "GDM4",
+   "year": 2023,
+   "bars": 2567,
+   "inserted": 2567,
+   "archive": true
+  },
+  "GDM4:2024": {
+   "ticker": "GDM4",
+   "year": 2024,
+   "bars": 18611,
+   "inserted": 18611,
+   "archive": true
+  },
+  "GDU4:2023": {
+   "ticker": "GDU4",
+   "year": 2023,
+   "bars": 768,
+   "inserted": 768,
+   "archive": true
+  },
+  "GDU4:2024": {
+   "ticker": "GDU4",
+   "year": 2024,
+   "bars": 22448,
+   "inserted": 22448,
+   "archive": true
+  },
+  "GDZ4:2023": {
+   "ticker": "GDZ4",
+   "year": 2023,
+   "bars": 51,
+   "inserted": 51,
+   "archive": true
+  },
+  "GDZ4:2024": {
+   "ticker": "GDZ4",
+   "year": 2024,
+   "bars": 24296,
+   "inserted": 24296,
+   "archive": true
+  },
+  "GDH5:2024": {
+   "ticker": "GDH5",
+   "year": 2024,
+   "bars": 14364,
+   "inserted": 14364,
+   "archive": true
+  },
+  "GDH5:2025": {
+   "ticker": "GDH5",
+   "year": 2025,
+   "bars": 9324,
+   "inserted": 9324,
+   "archive": true
+  },
+  "GDM5:2024": {
+   "ticker": "GDM5",
+   "year": 2024,
+   "bars": 4490,
+   "inserted": 4490,
+   "archive": true
+  },
+  "GDM5:2025": {
+   "ticker": "GDM5",
+   "year": 2025,
+   "bars": 19197,
+   "inserted": 19197,
+   "archive": true
+  },
+  "GDU5:2024": {
+   "ticker": "GDU5",
+   "year": 2024,
+   "bars": 1053,
+   "inserted": 1053,
+   "archive": true
+  },
+  "GDU5:2025": {
+   "ticker": "GDU5",
+   "year": 2025,
+   "bars": 24509,
+   "inserted": 24509,
+   "archive": true
+  },
+  "GDZ5:2024": {
+   "ticker": "GDZ5",
+   "year": 2024,
+   "bars": 47,
+   "inserted": 47,
+   "archive": true
+  },
+  "GDZ5:2025": {
+   "ticker": "GDZ5",
+   "year": 2025,
+   "bars": 27046,
+   "inserted": 27046,
+   "archive": true
+  },
+  "GDH6:2025": {
+   "ticker": "GDH6",
+   "year": 2025,
+   "bars": 17238,
+   "inserted": 17238,
+   "archive": true
+  },
+  "GDH6:2026": {
+   "ticker": "GDH6",
+   "year": 2026,
+   "bars": 10695,
+   "inserted": 10695,
+   "archive": true
+  },
+  "GDM6:2025": {
+   "ticker": "GDM6",
+   "year": 2025,
+   "bars": 7021,
+   "inserted": 7021,
+   "archive": true
+  },
+  "GDM6:2026": {
+   "ticker": "GDM6",
+   "year": 2026,
+   "bars": 23675,
+   "inserted": 23675,
+   "archive": true
+  },
+  "GDU6:2025": {
+   "ticker": "GDU6",
+   "year": 2025,
+   "bars": 2500,
+   "inserted": 2500,
+   "archive": true
+  },
+  "GDU6:2026": {
+   "ticker": "GDU6",
+   "year": 2026,
+   "bars": 31185,
+   "inserted": 31185,
+   "archive": true
+  },
+  "GDZ6:2025": {
+   "ticker": "GDZ6",
+   "year": 2025,
+   "bars": 245,
+   "inserted": 245,
+   "archive": true
+  },
+  "GDZ6:2026": {
+   "ticker": "GDZ6",
+   "year": 2026,
+   "bars": 19117,
+   "inserted": 19117,
+   "archive": true
+  },
+  "GDH7:2026": {
+   "ticker": "GDH7",
+   "year": 2026,
+   "bars": 3416,
+   "inserted": 3416,
+   "archive": true
+  },
+  "GDM7:2026": {
+   "ticker": "GDM7",
+   "year": 2026,
+   "bars": 1046,
+   "inserted": 1046,
+   "archive": true
+  },
+  "GDU7:2026": {
+   "ticker": "GDU7",
+   "year": 2026,
+   "bars": 0,
+   "inserted": 0,
+   "archive": true
+  },
+  "GLU3:2022": {
+   "ticker": "GLU3",
+   "year": 2022,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "GLU3:2023": {
+   "ticker": "GLU3",
+   "year": 2023,
+   "bars": 8325,
+   "inserted": 8325,
+   "archive": true
+  },
+  "GLZ3:2022": {
+   "ticker": "GLZ3",
+   "year": 2022,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "GLZ3:2023": {
+   "ticker": "GLZ3",
+   "year": 2023,
+   "bars": 11958,
+   "inserted": 11958,
+   "archive": true
+  },
+  "GLH4:2023": {
+   "ticker": "GLH4",
+   "year": 2023,
+   "bars": 3485,
+   "inserted": 3485,
+   "archive": true
+  },
+  "GLH4:2024": {
+   "ticker": "GLH4",
+   "year": 2024,
+   "bars": 6977,
+   "inserted": 6977,
+   "archive": true
+  },
+  "GLM4:2023": {
+   "ticker": "GLM4",
+   "year": 2023,
+   "bars": 615,
+   "inserted": 615,
+   "archive": true
+  },
+  "GLM4:2024": {
+   "ticker": "GLM4",
+   "year": 2024,
+   "bars": 11432,
+   "inserted": 11432,
+   "archive": true
+  },
+  "GLU4:2023": {
+   "ticker": "GLU4",
+   "year": 2023,
+   "bars": 253,
+   "inserted": 253,
+   "archive": true
+  },
+  "GLU4:2024": {
+   "ticker": "GLU4",
+   "year": 2024,
+   "bars": 14285,
+   "inserted": 14285,
+   "archive": true
+  },
+  "GLZ4:2023": {
+   "ticker": "GLZ4",
+   "year": 2023,
+   "bars": 1,
+   "inserted": 1,
+   "archive": true
+  },
+  "GLZ4:2024": {
+   "ticker": "GLZ4",
+   "year": 2024,
+   "bars": 17757,
+   "inserted": 17757,
+   "archive": true
+  },
+  "GLH5:2024": {
+   "ticker": "GLH5",
+   "year": 2024,
+   "bars": 8674,
+   "inserted": 8674,
+   "archive": true
+  },
+  "GLH5:2025": {
+   "ticker": "GLH5",
+   "year": 2025,
+   "bars": 9033,
+   "inserted": 9033,
+   "archive": true
+  },
+  "GLM5:2024": {
+   "ticker": "GLM5",
+   "year": 2024,
+   "bars": 2106,
+   "inserted": 2106,
+   "archive": true
+  },
+  "GLM5:2025": {
+   "ticker": "GLM5",
+   "year": 2025,
+   "bars": 16391,
+   "inserted": 16391,
+   "archive": true
+  },
+  "GLU5:2024": {
+   "ticker": "GLU5",
+   "year": 2024,
+   "bars": 1530,
+   "inserted": 1530,
+   "archive": true
+  },
+  "GLU5:2025": {
+   "ticker": "GLU5",
+   "year": 2025,
+   "bars": 20753,
+   "inserted": 20753,
+   "archive": true
+  },
+  "GLZ5:2024": {
+   "ticker": "GLZ5",
+   "year": 2024,
+   "bars": 29,
+   "inserted": 29,
+   "archive": true
+  },
+  "GLZ5:2025": {
+   "ticker": "GLZ5",
+   "year": 2025,
+   "bars": 22330,
+   "inserted": 22330,
+   "archive": true
+  },
+  "GLH6:2025": {
+   "ticker": "GLH6",
+   "year": 2025,
+   "bars": 11673,
+   "inserted": 11673,
+   "archive": true
+  },
+  "GLH6:2026": {
+   "ticker": "GLH6",
+   "year": 2026,
+   "bars": 10348,
+   "inserted": 10348,
+   "archive": true
+  },
+  "GLM6:2025": {
+   "ticker": "GLM6",
+   "year": 2025,
+   "bars": 4360,
+   "inserted": 4360,
+   "archive": true
+  },
+  "GLM6:2026": {
+   "ticker": "GLM6",
+   "year": 2026,
+   "bars": 21906,
+   "inserted": 21906,
+   "archive": true
+  },
+  "GLU6:2025": {
+   "ticker": "GLU6",
+   "year": 2025,
+   "bars": 1717,
+   "inserted": 1717,
+   "archive": true
+  },
+  "GLU6:2026": {
+   "ticker": "GLU6",
+   "year": 2026,
+   "bars": 28090,
+   "inserted": 28090,
+   "archive": true
+  },
+  "GLZ6:2025": {
+   "ticker": "GLZ6",
+   "year": 2025,
+   "bars": 311,
+   "inserted": 311,
+   "archive": true
+  },
+  "GLZ6:2026": {
+   "ticker": "GLZ6",
+   "year": 2026,
+   "bars": 17138,
+   "inserted": 17138,
+   "archive": true
+  },
+  "GLH7:2026": {
+   "ticker": "GLH7",
+   "year": 2026,
+   "bars": 5213,
+   "inserted": 5213,
+   "archive": true
+  },
+  "GLM7:2026": {
+   "ticker": "GLM7",
+   "year": 2026,
+   "bars": 2459,
+   "inserted": 2459,
+   "archive": true
+  },
+  "GLU7:2026": {
+   "ticker": "GLU7",
+   "year": 2026,
+   "bars": 0,
+   "inserted": 0,
+   "archive": true
+  },
+  "MXH2:2022": {
+   "ticker": "MXH2",
+   "year": 2022,
+   "bars": 8056,
+   "inserted": 8056,
+   "archive": true
+  },
+  "MXM2:2022": {
+   "ticker": "MXM2",
+   "year": 2022,
+   "bars": 7332,
+   "inserted": 7332,
+   "archive": true
+  },
+  "MXU2:2022": {
+   "ticker": "MXU2",
+   "year": 2022,
+   "bars": 10146,
+   "inserted": 10146,
+   "archive": true
+  },
+  "MXZ2:2022": {
+   "ticker": "MXZ2",
+   "year": 2022,
+   "bars": 13387,
+   "inserted": 13387,
+   "archive": true
+  },
+  "MXH3:2022": {
+   "ticker": "MXH3",
+   "year": 2022,
+   "bars": 5347,
+   "inserted": 5347,
+   "archive": true
+  },
+  "MXH3:2023": {
+   "ticker": "MXH3",
+   "year": 2023,
+   "bars": 8640,
+   "inserted": 8640,
+   "archive": true
+  },
+  "MXM3:2022": {
+   "ticker": "MXM3",
+   "year": 2022,
+   "bars": 297,
+   "inserted": 297,
+   "archive": true
+  },
+  "MXM3:2023": {
+   "ticker": "MXM3",
+   "year": 2023,
+   "bars": 13220,
+   "inserted": 13220,
+   "archive": true
+  },
+  "MXU3:2022": {
+   "ticker": "MXU3",
+   "year": 2022,
+   "bars": 25,
+   "inserted": 25,
+   "archive": true
+  },
+  "MXU3:2023": {
+   "ticker": "MXU3",
+   "year": 2023,
+   "bars": 16223,
+   "inserted": 16223,
+   "archive": true
+  },
+  "MXZ3:2022": {
+   "ticker": "MXZ3",
+   "year": 2022,
+   "bars": 1,
+   "inserted": 1,
+   "archive": true
+  },
+  "MXZ3:2023": {
+   "ticker": "MXZ3",
+   "year": 2023,
+   "bars": 18605,
+   "inserted": 18605,
+   "archive": true
+  },
+  "MXH4:2023": {
+   "ticker": "MXH4",
+   "year": 2023,
+   "bars": 6588,
+   "inserted": 6588,
+   "archive": true
+  },
+  "MXH4:2024": {
+   "ticker": "MXH4",
+   "year": 2024,
+   "bars": 9384,
+   "inserted": 9384,
+   "archive": true
+  },
+  "MXM4:2023": {
+   "ticker": "MXM4",
+   "year": 2023,
+   "bars": 384,
+   "inserted": 384,
+   "archive": true
+  },
+  "MXM4:2024": {
+   "ticker": "MXM4",
+   "year": 2024,
+   "bars": 14424,
+   "inserted": 14424,
+   "archive": true
+  },
+  "MXU4:2023": {
+   "ticker": "MXU4",
+   "year": 2023,
+   "bars": 48,
+   "inserted": 48,
+   "archive": true
+  },
+  "MXU4:2024": {
+   "ticker": "MXU4",
+   "year": 2024,
+   "bars": 15252,
+   "inserted": 15252,
+   "archive": true
+  },
+  "MXZ4:2023": {
+   "ticker": "MXZ4",
+   "year": 2023,
+   "bars": 4,
+   "inserted": 4,
+   "archive": true
+  },
+  "MXZ4:2024": {
+   "ticker": "MXZ4",
+   "year": 2024,
+   "bars": 17652,
+   "inserted": 17652,
+   "archive": true
+  },
+  "MXH5:2024": {
+   "ticker": "MXH5",
+   "year": 2024,
+   "bars": 8316,
+   "inserted": 8316,
+   "archive": true
+  },
+  "MXH5:2025": {
+   "ticker": "MXH5",
+   "year": 2025,
+   "bars": 9212,
+   "inserted": 9212,
+   "archive": true
+  },
+  "MXM5:2024": {
+   "ticker": "MXM5",
+   "year": 2024,
+   "bars": 1220,
+   "inserted": 1220,
+   "archive": true
+  },
+  "MXM5:2025": {
+   "ticker": "MXM5",
+   "year": 2025,
+   "bars": 18002,
+   "inserted": 18002,
+   "archive": true
+  },
+  "MXU5:2024": {
+   "ticker": "MXU5",
+   "year": 2024,
+   "bars": 139,
+   "inserted": 139,
+   "archive": true
+  },
+  "MXU5:2025": {
+   "ticker": "MXU5",
+   "year": 2025,
+   "bars": 22181,
+   "inserted": 22181,
+   "archive": true
+  },
+  "MXZ5:2024": {
+   "ticker": "MXZ5",
+   "year": 2024,
+   "bars": 1,
+   "inserted": 1,
+   "archive": true
+  },
+  "MXZ5:2025": {
+   "ticker": "MXZ5",
+   "year": 2025,
+   "bars": 22929,
+   "inserted": 22929,
+   "archive": true
+  },
+  "MXH6:2025": {
+   "ticker": "MXH6",
+   "year": 2025,
+   "bars": 12342,
+   "inserted": 12342,
+   "archive": true
+  },
+  "MXH6:2026": {
+   "ticker": "MXH6",
+   "year": 2026,
+   "bars": 10585,
+   "inserted": 10585,
+   "archive": true
+  },
+  "MXM6:2025": {
+   "ticker": "MXM6",
+   "year": 2025,
+   "bars": 2384,
+   "inserted": 2384,
+   "archive": true
+  },
+  "MXM6:2026": {
+   "ticker": "MXM6",
+   "year": 2026,
+   "bars": 20396,
+   "inserted": 20396,
+   "archive": true
+  },
+  "MXU6:2025": {
+   "ticker": "MXU6",
+   "year": 2025,
+   "bars": 488,
+   "inserted": 488,
+   "archive": true
+  },
+  "MXU6:2026": {
+   "ticker": "MXU6",
+   "year": 2026,
+   "bars": 22585,
+   "inserted": 22585,
+   "archive": true
+  },
+  "MXZ6:2025": {
+   "ticker": "MXZ6",
+   "year": 2025,
+   "bars": 256,
+   "inserted": 256,
+   "archive": true
+  },
+  "MXZ6:2026": {
+   "ticker": "MXZ6",
+   "year": 2026,
+   "bars": 13082,
+   "inserted": 13082,
+   "archive": true
+  },
+  "MXH7:2026": {
+   "ticker": "MXH7",
+   "year": 2026,
+   "bars": 2218,
+   "inserted": 2218,
+   "archive": true
+  },
+  "MXM7:2026": {
+   "ticker": "MXM7",
+   "year": 2026,
+   "bars": 675,
+   "inserted": 675,
+   "archive": true
+  },
+  "MXU7:2026": {
+   "ticker": "MXU7",
+   "year": 2026,
+   "bars": 286,
+   "inserted": 286,
+   "archive": true
+  },
+  "NGF2:2022": {
+   "ticker": "NGF2",
+   "year": 2022,
+   "bars": 3628,
+   "inserted": 3628,
+   "archive": true
+  },
+  "NGG2:2022": {
+   "ticker": "NGG2",
+   "year": 2022,
+   "bars": 7427,
+   "inserted": 7427,
+   "archive": true
+  },
+  "NGH2:2022": {
+   "ticker": "NGH2",
+   "year": 2022,
+   "bars": 8864,
+   "inserted": 8864,
+   "archive": true
+  },
+  "NGJ2:2022": {
+   "ticker": "NGJ2",
+   "year": 2022,
+   "bars": 6319,
+   "inserted": 6319,
+   "archive": true
+  },
+  "NGK2:2022": {
+   "ticker": "NGK2",
+   "year": 2022,
+   "bars": 6087,
+   "inserted": 6087,
+   "archive": true
+  },
+  "NGM2:2022": {
+   "ticker": "NGM2",
+   "year": 2022,
+   "bars": 7555,
+   "inserted": 7555,
+   "archive": true
+  },
+  "NGN2:2022": {
+   "ticker": "NGN2",
+   "year": 2022,
+   "bars": 6271,
+   "inserted": 6271,
+   "archive": true
+  },
+  "NGQ2:2022": {
+   "ticker": "NGQ2",
+   "year": 2022,
+   "bars": 7550,
+   "inserted": 7550,
+   "archive": true
+  },
+  "NGU2:2022": {
+   "ticker": "NGU2",
+   "year": 2022,
+   "bars": 9951,
+   "inserted": 9951,
+   "archive": true
+  },
+  "NGV2:2022": {
+   "ticker": "NGV2",
+   "year": 2022,
+   "bars": 10149,
+   "inserted": 10149,
+   "archive": true
+  },
+  "NGX2:2022": {
+   "ticker": "NGX2",
+   "year": 2022,
+   "bars": 9639,
+   "inserted": 9639,
+   "archive": true
+  },
+  "NGZ2:2022": {
+   "ticker": "NGZ2",
+   "year": 2022,
+   "bars": 11201,
+   "inserted": 11201,
+   "archive": true
+  },
+  "NGF3:2022": {
+   "ticker": "NGF3",
+   "year": 2022,
+   "bars": 7512,
+   "inserted": 7512,
+   "archive": true
+  },
+  "NGF3:2023": {
+   "ticker": "NGF3",
+   "year": 2023,
+   "bars": 3192,
+   "inserted": 3192,
+   "archive": true
+  },
+  "NGG3:2022": {
+   "ticker": "NGG3",
+   "year": 2022,
+   "bars": 5903,
+   "inserted": 5903,
+   "archive": true
+  },
+  "NGG3:2023": {
+   "ticker": "NGG3",
+   "year": 2023,
+   "bars": 6498,
+   "inserted": 6498,
+   "archive": true
+  },
+  "NGH3:2022": {
+   "ticker": "NGH3",
+   "year": 2022,
+   "bars": 3645,
+   "inserted": 3645,
+   "archive": true
+  },
+  "NGH3:2023": {
+   "ticker": "NGH3",
+   "year": 2023,
+   "bars": 10117,
+   "inserted": 10117,
+   "archive": true
+  },
+  "NGJ3:2022": {
+   "ticker": "NGJ3",
+   "year": 2022,
+   "bars": 1023,
+   "inserted": 1023,
+   "archive": true
+  },
+  "NGJ3:2023": {
+   "ticker": "NGJ3",
+   "year": 2023,
+   "bars": 12103,
+   "inserted": 12103,
+   "archive": true
+  },
+  "NGK3:2022": {
+   "ticker": "NGK3",
+   "year": 2022,
+   "bars": 140,
+   "inserted": 140,
+   "archive": true
+  },
+  "NGK3:2023": {
+   "ticker": "NGK3",
+   "year": 2023,
+   "bars": 12975,
+   "inserted": 12975,
+   "archive": true
+  },
+  "NGM3:2022": {
+   "ticker": "NGM3",
+   "year": 2022,
+   "bars": 2,
+   "inserted": 2,
+   "archive": true
+  },
+  "NGM3:2023": {
+   "ticker": "NGM3",
+   "year": 2023,
+   "bars": 15468,
+   "inserted": 15468,
+   "archive": true
+  },
+  "NGN3:2022": {
+   "ticker": "NGN3",
+   "year": 2022,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGN3:2023": {
+   "ticker": "NGN3",
+   "year": 2023,
+   "bars": 13391,
+   "inserted": 13391,
+   "archive": true
+  },
+  "NGQ3:2022": {
+   "ticker": "NGQ3",
+   "year": 2022,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGQ3:2023": {
+   "ticker": "NGQ3",
+   "year": 2023,
+   "bars": 15305,
+   "inserted": 15305,
+   "archive": true
+  },
+  "NGU3:2022": {
+   "ticker": "NGU3",
+   "year": 2022,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGU3:2023": {
+   "ticker": "NGU3",
+   "year": 2023,
+   "bars": 16203,
+   "inserted": 16203,
+   "archive": true
+  },
+  "NGV3:2022": {
+   "ticker": "NGV3",
+   "year": 2022,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGV3:2023": {
+   "ticker": "NGV3",
+   "year": 2023,
+   "bars": 14482,
+   "inserted": 14482,
+   "archive": true
+  },
+  "NGX3:2022": {
+   "ticker": "NGX3",
+   "year": 2022,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGX3:2023": {
+   "ticker": "NGX3",
+   "year": 2023,
+   "bars": 14991,
+   "inserted": 14991,
+   "archive": true
+  },
+  "NGZ3:2022": {
+   "ticker": "NGZ3",
+   "year": 2022,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGZ3:2023": {
+   "ticker": "NGZ3",
+   "year": 2023,
+   "bars": 14616,
+   "inserted": 14616,
+   "archive": true
+  },
+  "NGF4:2023": {
+   "ticker": "NGF4",
+   "year": 2023,
+   "bars": 9922,
+   "inserted": 9922,
+   "archive": true
+  },
+  "NGF4:2024": {
+   "ticker": "NGF4",
+   "year": 2024,
+   "bars": 3211,
+   "inserted": 3211,
+   "archive": true
+  },
+  "NGG4:2023": {
+   "ticker": "NGG4",
+   "year": 2023,
+   "bars": 7215,
+   "inserted": 7215,
+   "archive": true
+  },
+  "NGG4:2024": {
+   "ticker": "NGG4",
+   "year": 2024,
+   "bars": 6711,
+   "inserted": 6711,
+   "archive": true
+  },
+  "NGH4:2023": {
+   "ticker": "NGH4",
+   "year": 2023,
+   "bars": 6335,
+   "inserted": 6335,
+   "archive": true
+  },
+  "NGH4:2024": {
+   "ticker": "NGH4",
+   "year": 2024,
+   "bars": 10018,
+   "inserted": 10018,
+   "archive": true
+  },
+  "NGJ4:2023": {
+   "ticker": "NGJ4",
+   "year": 2023,
+   "bars": 1336,
+   "inserted": 1336,
+   "archive": true
+  },
+  "NGJ4:2024": {
+   "ticker": "NGJ4",
+   "year": 2024,
+   "bars": 12526,
+   "inserted": 12526,
+   "archive": true
+  },
+  "NGK4:2023": {
+   "ticker": "NGK4",
+   "year": 2023,
+   "bars": 292,
+   "inserted": 292,
+   "archive": true
+  },
+  "NGK4:2024": {
+   "ticker": "NGK4",
+   "year": 2024,
+   "bars": 13744,
+   "inserted": 13744,
+   "archive": true
+  },
+  "NGM4:2023": {
+   "ticker": "NGM4",
+   "year": 2023,
+   "bars": 22,
+   "inserted": 22,
+   "archive": true
+  },
+  "NGM4:2024": {
+   "ticker": "NGM4",
+   "year": 2024,
+   "bars": 14801,
+   "inserted": 14801,
+   "archive": true
+  },
+  "NGN4:2023": {
+   "ticker": "NGN4",
+   "year": 2023,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGN4:2024": {
+   "ticker": "NGN4",
+   "year": 2024,
+   "bars": 13762,
+   "inserted": 13762,
+   "archive": true
+  },
+  "NGQ4:2023": {
+   "ticker": "NGQ4",
+   "year": 2023,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGQ4:2024": {
+   "ticker": "NGQ4",
+   "year": 2024,
+   "bars": 14374,
+   "inserted": 14374,
+   "archive": true
+  },
+  "NGU4:2023": {
+   "ticker": "NGU4",
+   "year": 2023,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGU4:2024": {
+   "ticker": "NGU4",
+   "year": 2024,
+   "bars": 14921,
+   "inserted": 14921,
+   "archive": true
+  },
+  "NGV4:2023": {
+   "ticker": "NGV4",
+   "year": 2023,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGV4:2024": {
+   "ticker": "NGV4",
+   "year": 2024,
+   "bars": 13873,
+   "inserted": 13873,
+   "archive": true
+  },
+  "NGX4:2023": {
+   "ticker": "NGX4",
+   "year": 2023,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGX4:2024": {
+   "ticker": "NGX4",
+   "year": 2024,
+   "bars": 13865,
+   "inserted": 13865,
+   "archive": true
+  },
+  "NGZ4:2023": {
+   "ticker": "NGZ4",
+   "year": 2023,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGZ4:2024": {
+   "ticker": "NGZ4",
+   "year": 2024,
+   "bars": 14496,
+   "inserted": 14496,
+   "archive": true
+  },
+  "NGF5:2024": {
+   "ticker": "NGF5",
+   "year": 2024,
+   "bars": 7983,
+   "inserted": 7983,
+   "archive": true
+  },
+  "NGF5:2025": {
+   "ticker": "NGF5",
+   "year": 2025,
+   "bars": 2856,
+   "inserted": 2856,
+   "archive": true
+  },
+  "NGG5:2024": {
+   "ticker": "NGG5",
+   "year": 2024,
+   "bars": 6048,
+   "inserted": 6048,
+   "archive": true
+  },
+  "NGG5:2025": {
+   "ticker": "NGG5",
+   "year": 2025,
+   "bars": 6356,
+   "inserted": 6356,
+   "archive": true
+  },
+  "NGH5:2024": {
+   "ticker": "NGH5",
+   "year": 2024,
+   "bars": 4141,
+   "inserted": 4141,
+   "archive": true
+  },
+  "NGH5:2025": {
+   "ticker": "NGH5",
+   "year": 2025,
+   "bars": 9981,
+   "inserted": 9981,
+   "archive": true
+  },
+  "NGJ5:2024": {
+   "ticker": "NGJ5",
+   "year": 2024,
+   "bars": 1037,
+   "inserted": 1037,
+   "archive": true
+  },
+  "NGJ5:2025": {
+   "ticker": "NGJ5",
+   "year": 2025,
+   "bars": 12207,
+   "inserted": 12207,
+   "archive": true
+  },
+  "NGK5:2024": {
+   "ticker": "NGK5",
+   "year": 2024,
+   "bars": 154,
+   "inserted": 154,
+   "archive": true
+  },
+  "NGK5:2025": {
+   "ticker": "NGK5",
+   "year": 2025,
+   "bars": 13333,
+   "inserted": 13333,
+   "archive": true
+  },
+  "NGM5:2024": {
+   "ticker": "NGM5",
+   "year": 2024,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGM5:2025": {
+   "ticker": "NGM5",
+   "year": 2025,
+   "bars": 14062,
+   "inserted": 14062,
+   "archive": true
+  },
+  "NGN5:2024": {
+   "ticker": "NGN5",
+   "year": 2024,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGN5:2025": {
+   "ticker": "NGN5",
+   "year": 2025,
+   "bars": 14188,
+   "inserted": 14188,
+   "archive": true
+  },
+  "NGQ5:2024": {
+   "ticker": "NGQ5",
+   "year": 2024,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGQ5:2025": {
+   "ticker": "NGQ5",
+   "year": 2025,
+   "bars": 13730,
+   "inserted": 13730,
+   "archive": true
+  },
+  "NGU5:2024": {
+   "ticker": "NGU5",
+   "year": 2024,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGU5:2025": {
+   "ticker": "NGU5",
+   "year": 2025,
+   "bars": 14478,
+   "inserted": 14478,
+   "archive": true
+  },
+  "NGV5:2024": {
+   "ticker": "NGV5",
+   "year": 2024,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGV5:2025": {
+   "ticker": "NGV5",
+   "year": 2025,
+   "bars": 14394,
+   "inserted": 14394,
+   "archive": true
+  },
+  "NGX5:2024": {
+   "ticker": "NGX5",
+   "year": 2024,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGX5:2025": {
+   "ticker": "NGX5",
+   "year": 2025,
+   "bars": 11063,
+   "inserted": 11063,
+   "archive": true
+  },
+  "NGZ5:2024": {
+   "ticker": "NGZ5",
+   "year": 2024,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGZ5:2025": {
+   "ticker": "NGZ5",
+   "year": 2025,
+   "bars": 14172,
+   "inserted": 14172,
+   "archive": true
+  },
+  "NGF6:2025": {
+   "ticker": "NGF6",
+   "year": 2025,
+   "bars": 9510,
+   "inserted": 9510,
+   "archive": true
+  },
+  "NGF6:2026": {
+   "ticker": "NGF6",
+   "year": 2026,
+   "bars": 3297,
+   "inserted": 3297,
+   "archive": true
+  },
+  "NGG6:2025": {
+   "ticker": "NGG6",
+   "year": 2025,
+   "bars": 7025,
+   "inserted": 7025,
+   "archive": true
+  },
+  "NGG6:2026": {
+   "ticker": "NGG6",
+   "year": 2026,
+   "bars": 7364,
+   "inserted": 7364,
+   "archive": true
+  },
+  "NGH6:2025": {
+   "ticker": "NGH6",
+   "year": 2025,
+   "bars": 5095,
+   "inserted": 5095,
+   "archive": true
+  },
+  "NGH6:2026": {
+   "ticker": "NGH6",
+   "year": 2026,
+   "bars": 11410,
+   "inserted": 11410,
+   "archive": true
+  },
+  "NGJ6:2025": {
+   "ticker": "NGJ6",
+   "year": 2025,
+   "bars": 1962,
+   "inserted": 1962,
+   "archive": true
+  },
+  "NGJ6:2026": {
+   "ticker": "NGJ6",
+   "year": 2026,
+   "bars": 14503,
+   "inserted": 14503,
+   "archive": true
+  },
+  "NGK6:2025": {
+   "ticker": "NGK6",
+   "year": 2025,
+   "bars": 583,
+   "inserted": 583,
+   "archive": true
+  },
+  "NGK6:2026": {
+   "ticker": "NGK6",
+   "year": 2026,
+   "bars": 15283,
+   "inserted": 15283,
+   "archive": true
+  },
+  "NGM6:2025": {
+   "ticker": "NGM6",
+   "year": 2025,
+   "bars": 359,
+   "inserted": 359,
+   "archive": true
+  },
+  "NGM6:2026": {
+   "ticker": "NGM6",
+   "year": 2026,
+   "bars": 16471,
+   "inserted": 16471,
+   "archive": true
+  },
+  "NGN6:2025": {
+   "ticker": "NGN6",
+   "year": 2025,
+   "bars": 19,
+   "inserted": 19,
+   "archive": true
+  },
+  "NGN6:2026": {
+   "ticker": "NGN6",
+   "year": 2026,
+   "bars": 16022,
+   "inserted": 16022,
+   "archive": true
+  },
+  "NGQ6:2025": {
+   "ticker": "NGQ6",
+   "year": 2025,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGQ6:2026": {
+   "ticker": "NGQ6",
+   "year": 2026,
+   "bars": 16817,
+   "inserted": 16817,
+   "archive": true
+  },
+  "NGU6:2025": {
+   "ticker": "NGU6",
+   "year": 2025,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGU6:2026": {
+   "ticker": "NGU6",
+   "year": 2026,
+   "bars": 15218,
+   "inserted": 15218,
+   "archive": true
+  },
+  "NGV6:2025": {
+   "ticker": "NGV6",
+   "year": 2025,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGV6:2026": {
+   "ticker": "NGV6",
+   "year": 2026,
+   "bars": 9116,
+   "inserted": 9116,
+   "archive": true
+  },
+  "NGX6:2025": {
+   "ticker": "NGX6",
+   "year": 2025,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGX6:2026": {
+   "ticker": "NGX6",
+   "year": 2026,
+   "bars": 3909,
+   "inserted": 3909,
+   "archive": true
+  },
+  "NGZ6:2025": {
+   "ticker": "NGZ6",
+   "year": 2025,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "NGZ6:2026": {
+   "ticker": "NGZ6",
+   "year": 2026,
+   "bars": 2756,
+   "inserted": 2756,
+   "archive": true
+  },
+  "NGF7:2026": {
+   "ticker": "NGF7",
+   "year": 2026,
+   "bars": 983,
+   "inserted": 983,
+   "archive": true
+  },
+  "NGG7:2026": {
+   "ticker": "NGG7",
+   "year": 2026,
+   "bars": 0,
+   "inserted": 0,
+   "archive": true
+  },
+  "NGH7:2026": {
+   "ticker": "NGH7",
+   "year": 2026,
+   "bars": 0,
+   "inserted": 0,
+   "archive": true
+  },
+  "SiH2:2022": {
+   "ticker": "SiH2",
+   "year": 2022,
+   "bars": 8819,
+   "inserted": 8819,
+   "archive": true
+  },
+  "SiM2:2022": {
+   "ticker": "SiM2",
+   "year": 2022,
+   "bars": 14950,
+   "inserted": 14950,
+   "archive": true
+  },
+  "SiU2:2022": {
+   "ticker": "SiU2",
+   "year": 2022,
+   "bars": 20163,
+   "inserted": 20163,
+   "archive": true
+  },
+  "SiZ2:2022": {
+   "ticker": "SiZ2",
+   "year": 2022,
+   "bars": 31387,
+   "inserted": 31387,
+   "archive": true
+  },
+  "SiH3:2022": {
+   "ticker": "SiH3",
+   "year": 2022,
+   "bars": 23768,
+   "inserted": 23768,
+   "archive": true
+  },
+  "SiH3:2023": {
+   "ticker": "SiH3",
+   "year": 2023,
+   "bars": 8748,
+   "inserted": 8748,
+   "archive": true
+  },
+  "SiM3:2022": {
+   "ticker": "SiM3",
+   "year": 2022,
+   "bars": 11625,
+   "inserted": 11625,
+   "archive": true
+  },
+  "SiM3:2023": {
+   "ticker": "SiM3",
+   "year": 2023,
+   "bars": 19219,
+   "inserted": 19219,
+   "archive": true
+  },
+  "SiU3:2022": {
+   "ticker": "SiU3",
+   "year": 2022,
+   "bars": 4813,
+   "inserted": 4813,
+   "archive": true
+  },
+  "SiU3:2023": {
+   "ticker": "SiU3",
+   "year": 2023,
+   "bars": 25658,
+   "inserted": 25658,
+   "archive": true
+  },
+  "SiZ3:2022": {
+   "ticker": "SiZ3",
+   "year": 2022,
+   "bars": 4809,
+   "inserted": 4809,
+   "archive": true
+  },
+  "SiZ3:2023": {
+   "ticker": "SiZ3",
+   "year": 2023,
+   "bars": 29608,
+   "inserted": 29608,
+   "archive": true
+  },
+  "SiH4:2023": {
+   "ticker": "SiH4",
+   "year": 2023,
+   "bars": 19638,
+   "inserted": 19638,
+   "archive": true
+  },
+  "SiH4:2024": {
+   "ticker": "SiH4",
+   "year": 2024,
+   "bars": 9511,
+   "inserted": 9511,
+   "archive": true
+  },
+  "SiM4:2023": {
+   "ticker": "SiM4",
+   "year": 2023,
+   "bars": 9030,
+   "inserted": 9030,
+   "archive": true
+  },
+  "SiM4:2024": {
+   "ticker": "SiM4",
+   "year": 2024,
+   "bars": 19894,
+   "inserted": 19894,
+   "archive": true
+  },
+  "SiU4:2023": {
+   "ticker": "SiU4",
+   "year": 2023,
+   "bars": 4441,
+   "inserted": 4441,
+   "archive": true
+  },
+  "SiU4:2024": {
+   "ticker": "SiU4",
+   "year": 2024,
+   "bars": 24172,
+   "inserted": 24172,
+   "archive": true
+  },
+  "SiZ4:2023": {
+   "ticker": "SiZ4",
+   "year": 2023,
+   "bars": 3295,
+   "inserted": 3295,
+   "archive": true
+  },
+  "SiZ4:2024": {
+   "ticker": "SiZ4",
+   "year": 2024,
+   "bars": 27507,
+   "inserted": 27507,
+   "archive": true
+  },
+  "SiH5:2024": {
+   "ticker": "SiH5",
+   "year": 2024,
+   "bars": 19151,
+   "inserted": 19151,
+   "archive": true
+  },
+  "SiH5:2025": {
+   "ticker": "SiH5",
+   "year": 2025,
+   "bars": 9213,
+   "inserted": 9213,
+   "archive": true
+  },
+  "SiM5:2024": {
+   "ticker": "SiM5",
+   "year": 2024,
+   "bars": 7102,
+   "inserted": 7102,
+   "archive": true
+  },
+  "SiM5:2025": {
+   "ticker": "SiM5",
+   "year": 2025,
+   "bars": 19473,
+   "inserted": 19473,
+   "archive": true
+  },
+  "SiU5:2024": {
+   "ticker": "SiU5",
+   "year": 2024,
+   "bars": 2892,
+   "inserted": 2892,
+   "archive": true
+  },
+  "SiU5:2025": {
+   "ticker": "SiU5",
+   "year": 2025,
+   "bars": 26286,
+   "inserted": 26286,
+   "archive": true
+  },
+  "SiZ5:2024": {
+   "ticker": "SiZ5",
+   "year": 2024,
+   "bars": 1834,
+   "inserted": 1834,
+   "archive": true
+  },
+  "SiZ5:2025": {
+   "ticker": "SiZ5",
+   "year": 2025,
+   "bars": 31418,
+   "inserted": 31418,
+   "archive": true
+  },
+  "SiH6:2025": {
+   "ticker": "SiH6",
+   "year": 2025,
+   "bars": 19249,
+   "inserted": 19249,
+   "archive": true
+  },
+  "SiH6:2026": {
+   "ticker": "SiH6",
+   "year": 2026,
+   "bars": 9043,
+   "inserted": 9043,
+   "archive": true
+  },
+  "SiM6:2025": {
+   "ticker": "SiM6",
+   "year": 2025,
+   "bars": 7534,
+   "inserted": 7534,
+   "archive": true
+  },
+  "SiM6:2026": {
+   "ticker": "SiM6",
+   "year": 2026,
+   "bars": 19665,
+   "inserted": 19665,
+   "archive": true
+  },
+  "SiU6:2025": {
+   "ticker": "SiU6",
+   "year": 2025,
+   "bars": 2549,
+   "inserted": 2549,
+   "archive": true
+  },
+  "SiU6:2026": {
+   "ticker": "SiU6",
+   "year": 2026,
+   "bars": 28692,
+   "inserted": 28692,
+   "archive": true
+  },
+  "SiZ6:2025": {
+   "ticker": "SiZ6",
+   "year": 2025,
+   "bars": 1809,
+   "inserted": 1809,
+   "archive": true
+  },
+  "SiZ6:2026": {
+   "ticker": "SiZ6",
+   "year": 2026,
+   "bars": 21116,
+   "inserted": 21116,
+   "archive": true
+  },
+  "SiH7:2026": {
+   "ticker": "SiH7",
+   "year": 2026,
+   "bars": 7296,
+   "inserted": 7296,
+   "archive": true
+  },
+  "SiM7:2026": {
+   "ticker": "SiM7",
+   "year": 2026,
+   "bars": 2999,
+   "inserted": 2999,
+   "archive": true
+  },
+  "SiU7:2026": {
+   "ticker": "SiU7",
+   "year": 2026,
+   "bars": 1142,
+   "inserted": 1142,
+   "archive": true
+  },
+  "CNYRUB_TOM:2022": {
+   "ticker": "CNYRUB_TOM",
+   "year": 2022,
+   "bars": 31601,
+   "inserted": 31601,
+   "archive": true
+  },
+  "CNYRUB_TOM:2023": {
+   "ticker": "CNYRUB_TOM",
+   "year": 2023,
+   "bars": 36824,
+   "inserted": 36824,
+   "archive": true
+  },
+  "CNYRUB_TOM:2024": {
+   "ticker": "CNYRUB_TOM",
+   "year": 2024,
+   "bars": 31905,
+   "inserted": 31905,
+   "archive": true
+  },
+  "CNYRUB_TOM:2025": {
+   "ticker": "CNYRUB_TOM",
+   "year": 2025,
+   "bars": 27685,
+   "inserted": 27685,
+   "archive": true
+  },
+  "CNYRUB_TOM:2026": {
+   "ticker": "CNYRUB_TOM",
+   "year": 2026,
+   "bars": 19185,
+   "inserted": 19185,
+   "archive": true
+  },
+  "GKH2:2022": {
+   "ticker": "GKH2",
+   "year": 2022,
+   "bars": 7888,
+   "inserted": 7888,
+   "archive": true
+  },
+  "GKM2:2022": {
+   "ticker": "GKM2",
+   "year": 2022,
+   "bars": 7852,
+   "inserted": 7852,
+   "archive": true
+  },
+  "GKU2:2022": {
+   "ticker": "GKU2",
+   "year": 2022,
+   "bars": 7731,
+   "inserted": 7731,
+   "archive": true
+  },
+  "GKZ2:2022": {
+   "ticker": "GKZ2",
+   "year": 2022,
+   "bars": 13041,
+   "inserted": 13041,
+   "archive": true
+  },
+  "GKH3:2022": {
+   "ticker": "GKH3",
+   "year": 2022,
+   "bars": 4273,
+   "inserted": 4273,
+   "archive": true
+  },
+  "GKH3:2023": {
+   "ticker": "GKH3",
+   "year": 2023,
+   "bars": 7728,
+   "inserted": 7728,
+   "archive": true
+  },
+  "GKM3:2022": {
+   "ticker": "GKM3",
+   "year": 2022,
+   "bars": 341,
+   "inserted": 341,
+   "archive": true
+  },
+  "GKM3:2023": {
+   "ticker": "GKM3",
+   "year": 2023,
+   "bars": 11008,
+   "inserted": 11008,
+   "archive": true
+  },
+  "GKU3:2022": {
+   "ticker": "GKU3",
+   "year": 2022,
+   "bars": 4,
+   "inserted": 4,
+   "archive": true
+  },
+  "GKU3:2023": {
+   "ticker": "GKU3",
+   "year": 2023,
+   "bars": 13837,
+   "inserted": 13837,
+   "archive": true
+  },
+  "GKZ3:2022": {
+   "ticker": "GKZ3",
+   "year": 2022,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "GKZ3:2023": {
+   "ticker": "GKZ3",
+   "year": 2023,
+   "bars": 14823,
+   "inserted": 14823,
+   "archive": true
+  },
+  "GKH4:2023": {
+   "ticker": "GKH4",
+   "year": 2023,
+   "bars": 3863,
+   "inserted": 3863,
+   "archive": true
+  },
+  "GKH4:2024": {
+   "ticker": "GKH4",
+   "year": 2024,
+   "bars": 8078,
+   "inserted": 8078,
+   "archive": true
+  },
+  "GKM4:2023": {
+   "ticker": "GKM4",
+   "year": 2023,
+   "bars": 161,
+   "inserted": 161,
+   "archive": true
+  },
+  "GKM4:2024": {
+   "ticker": "GKM4",
+   "year": 2024,
+   "bars": 3344,
+   "inserted": 3344,
+   "archive": true
+  },
+  "GKU4:2023": {
+   "ticker": "GKU4",
+   "year": 2023,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "GKU4:2024": {
+   "ticker": "GKU4",
+   "year": 2024,
+   "bars": 16466,
+   "inserted": 16466,
+   "archive": true
+  },
+  "GKZ4:2023": {
+   "ticker": "GKZ4",
+   "year": 2023,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "GKZ4:2024": {
+   "ticker": "GKZ4",
+   "year": 2024,
+   "bars": 15773,
+   "inserted": 15773,
+   "archive": true
+  },
+  "GKH5:2024": {
+   "ticker": "GKH5",
+   "year": 2024,
+   "bars": 6920,
+   "inserted": 6920,
+   "archive": true
+  },
+  "GKH5:2025": {
+   "ticker": "GKH5",
+   "year": 2025,
+   "bars": 9014,
+   "inserted": 9014,
+   "archive": true
+  },
+  "GKM5:2024": {
+   "ticker": "GKM5",
+   "year": 2024,
+   "bars": 530,
+   "inserted": 530,
+   "archive": true
+  },
+  "GKM5:2025": {
+   "ticker": "GKM5",
+   "year": 2025,
+   "bars": 16021,
+   "inserted": 16021,
+   "archive": true
+  },
+  "GKU5:2024": {
+   "ticker": "GKU5",
+   "year": 2024,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "GKU5:2025": {
+   "ticker": "GKU5",
+   "year": 2025,
+   "bars": 16926,
+   "inserted": 16926,
+   "archive": true
+  },
+  "GKZ5:2024": {
+   "ticker": "GKZ5",
+   "year": 2024,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "GKZ5:2025": {
+   "ticker": "GKZ5",
+   "year": 2025,
+   "bars": 17450,
+   "inserted": 17450,
+   "archive": true
+  },
+  "GKH6:2025": {
+   "ticker": "GKH6",
+   "year": 2025,
+   "bars": 6353,
+   "inserted": 6353,
+   "archive": true
+  },
+  "GKH6:2026": {
+   "ticker": "GKH6",
+   "year": 2026,
+   "bars": 9816,
+   "inserted": 9816,
+   "archive": true
+  },
+  "GKM6:2025": {
+   "ticker": "GKM6",
+   "year": 2025,
+   "bars": 584,
+   "inserted": 584,
+   "archive": true
+  },
+  "GKM6:2026": {
+   "ticker": "GKM6",
+   "year": 2026,
+   "bars": 17649,
+   "inserted": 17649,
+   "archive": true
+  },
+  "GKU6:2025": {
+   "ticker": "GKU6",
+   "year": 2025,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "GKU6:2026": {
+   "ticker": "GKU6",
+   "year": 2026,
+   "bars": 18851,
+   "inserted": 18851,
+   "archive": true
+  },
+  "GKZ6:2025": {
+   "ticker": "GKZ6",
+   "year": 2025,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "GKZ6:2026": {
+   "ticker": "GKZ6",
+   "year": 2026,
+   "bars": 6935,
+   "inserted": 6935,
+   "archive": true
+  },
+  "GKH7:2026": {
+   "ticker": "GKH7",
+   "year": 2026,
+   "bars": 0,
+   "inserted": 0,
+   "archive": true
+  },
+  "GZH2:2022": {
+   "ticker": "GZH2",
+   "year": 2022,
+   "bars": 8079,
+   "inserted": 8079,
+   "archive": true
+  },
+  "GZM2:2022": {
+   "ticker": "GZM2",
+   "year": 2022,
+   "bars": 11782,
+   "inserted": 11782,
+   "archive": true
+  },
+  "GZU2:2022": {
+   "ticker": "GZU2",
+   "year": 2022,
+   "bars": 13944,
+   "inserted": 13944,
+   "archive": true
+  },
+  "GZZ2:2022": {
+   "ticker": "GZZ2",
+   "year": 2022,
+   "bars": 18446,
+   "inserted": 18446,
+   "archive": true
+  },
+  "GZH3:2022": {
+   "ticker": "GZH3",
+   "year": 2022,
+   "bars": 9037,
+   "inserted": 9037,
+   "archive": true
+  },
+  "GZH3:2023": {
+   "ticker": "GZH3",
+   "year": 2023,
+   "bars": 8725,
+   "inserted": 8725,
+   "archive": true
+  },
+  "GZM3:2022": {
+   "ticker": "GZM3",
+   "year": 2022,
+   "bars": 1450,
+   "inserted": 1450,
+   "archive": true
+  },
+  "GZM3:2023": {
+   "ticker": "GZM3",
+   "year": 2023,
+   "bars": 15243,
+   "inserted": 15243,
+   "archive": true
+  },
+  "GZU3:2022": {
+   "ticker": "GZU3",
+   "year": 2022,
+   "bars": 278,
+   "inserted": 278,
+   "archive": true
+  },
+  "GZU3:2023": {
+   "ticker": "GZU3",
+   "year": 2023,
+   "bars": 19960,
+   "inserted": 19960,
+   "archive": true
+  },
+  "GZZ3:2022": {
+   "ticker": "GZZ3",
+   "year": 2022,
+   "bars": 6,
+   "inserted": 6,
+   "archive": true
+  },
+  "GZZ3:2023": {
+   "ticker": "GZZ3",
+   "year": 2023,
+   "bars": 19729,
+   "inserted": 19729,
+   "archive": true
+  },
+  "GZH4:2023": {
+   "ticker": "GZH4",
+   "year": 2023,
+   "bars": 8820,
+   "inserted": 8820,
+   "archive": true
+  },
+  "GZH4:2024": {
+   "ticker": "GZH4",
+   "year": 2024,
+   "bars": 9500,
+   "inserted": 9500,
+   "archive": true
+  },
+  "GZM4:2023": {
+   "ticker": "GZM4",
+   "year": 2023,
+   "bars": 2920,
+   "inserted": 2920,
+   "archive": true
+  },
+  "GZM4:2024": {
+   "ticker": "GZM4",
+   "year": 2024,
+   "bars": 16728,
+   "inserted": 16728,
+   "archive": true
+  },
+  "GZU4:2023": {
+   "ticker": "GZU4",
+   "year": 2023,
+   "bars": 1298,
+   "inserted": 1298,
+   "archive": true
+  },
+  "GZU4:2024": {
+   "ticker": "GZU4",
+   "year": 2024,
+   "bars": 18745,
+   "inserted": 18745,
+   "archive": true
+  },
+  "GZZ4:2023": {
+   "ticker": "GZZ4",
+   "year": 2023,
+   "bars": 1074,
+   "inserted": 1074,
+   "archive": true
+  },
+  "GZZ4:2024": {
+   "ticker": "GZZ4",
+   "year": 2024,
+   "bars": 21020,
+   "inserted": 21020,
+   "archive": true
+  },
+  "GZH5:2024": {
+   "ticker": "GZH5",
+   "year": 2024,
+   "bars": 10726,
+   "inserted": 10726,
+   "archive": true
+  },
+  "GZH5:2025": {
+   "ticker": "GZH5",
+   "year": 2025,
+   "bars": 9211,
+   "inserted": 9211,
+   "archive": true
+  },
+  "GZM5:2024": {
+   "ticker": "GZM5",
+   "year": 2024,
+   "bars": 3156,
+   "inserted": 3156,
+   "archive": true
+  },
+  "GZM5:2025": {
+   "ticker": "GZM5",
+   "year": 2025,
+   "bars": 17913,
+   "inserted": 17913,
+   "archive": true
+  },
+  "GZU5:2024": {
+   "ticker": "GZU5",
+   "year": 2024,
+   "bars": 1384,
+   "inserted": 1384,
+   "archive": true
+  },
+  "GZU5:2025": {
+   "ticker": "GZU5",
+   "year": 2025,
+   "bars": 22314,
+   "inserted": 22314,
+   "archive": true
+  },
+  "GZZ5:2024": {
+   "ticker": "GZZ5",
+   "year": 2024,
+   "bars": 1293,
+   "inserted": 1293,
+   "archive": true
+  },
+  "GZZ5:2025": {
+   "ticker": "GZZ5",
+   "year": 2025,
+   "bars": 24437,
+   "inserted": 24437,
+   "archive": true
+  },
+  "GZH6:2025": {
+   "ticker": "GZH6",
+   "year": 2025,
+   "bars": 13465,
+   "inserted": 13465,
+   "archive": true
+  },
+  "GZH6:2026": {
+   "ticker": "GZH6",
+   "year": 2026,
+   "bars": 10493,
+   "inserted": 10493,
+   "archive": true
+  },
+  "GZM6:2025": {
+   "ticker": "GZM6",
+   "year": 2025,
+   "bars": 7014,
+   "inserted": 7014,
+   "archive": true
+  },
+  "GZM6:2026": {
+   "ticker": "GZM6",
+   "year": 2026,
+   "bars": 20803,
+   "inserted": 20803,
+   "archive": true
+  },
+  "GZU6:2025": {
+   "ticker": "GZU6",
+   "year": 2025,
+   "bars": 1447,
+   "inserted": 1447,
+   "archive": true
+  },
+  "GZU6:2026": {
+   "ticker": "GZU6",
+   "year": 2026,
+   "bars": 24704,
+   "inserted": 24704,
+   "archive": true
+  },
+  "GZZ6:2025": {
+   "ticker": "GZZ6",
+   "year": 2025,
+   "bars": 177,
+   "inserted": 177,
+   "archive": true
+  },
+  "GZZ6:2026": {
+   "ticker": "GZZ6",
+   "year": 2026,
+   "bars": 15222,
+   "inserted": 15222,
+   "archive": true
+  },
+  "GZH7:2026": {
+   "ticker": "GZH7",
+   "year": 2026,
+   "bars": 5585,
+   "inserted": 5585,
+   "archive": true
+  },
+  "GZM7:2026": {
+   "ticker": "GZM7",
+   "year": 2026,
+   "bars": 2397,
+   "inserted": 2397,
+   "archive": true
+  },
+  "GZU7:2026": {
+   "ticker": "GZU7",
+   "year": 2026,
+   "bars": 0,
+   "inserted": 0,
+   "archive": true
+  },
+  "LKH2:2022": {
+   "ticker": "LKH2",
+   "year": 2022,
+   "bars": 7970,
+   "inserted": 7970,
+   "archive": true
+  },
+  "LKM2:2022": {
+   "ticker": "LKM2",
+   "year": 2022,
+   "bars": 7857,
+   "inserted": 7857,
+   "archive": true
+  },
+  "LKU2:2022": {
+   "ticker": "LKU2",
+   "year": 2022,
+   "bars": 9156,
+   "inserted": 9156,
+   "archive": true
+  },
+  "LKZ2:2022": {
+   "ticker": "LKZ2",
+   "year": 2022,
+   "bars": 13160,
+   "inserted": 13160,
+   "archive": true
+  },
+  "LKH3:2022": {
+   "ticker": "LKH3",
+   "year": 2022,
+   "bars": 4806,
+   "inserted": 4806,
+   "archive": true
+  },
+  "LKH3:2023": {
+   "ticker": "LKH3",
+   "year": 2023,
+   "bars": 7781,
+   "inserted": 7781,
+   "archive": true
+  },
+  "LKM3:2022": {
+   "ticker": "LKM3",
+   "year": 2022,
+   "bars": 545,
+   "inserted": 545,
+   "archive": true
+  },
+  "LKM3:2023": {
+   "ticker": "LKM3",
+   "year": 2023,
+   "bars": 12460,
+   "inserted": 12460,
+   "archive": true
+  },
+  "LKU3:2022": {
+   "ticker": "LKU3",
+   "year": 2022,
+   "bars": 64,
+   "inserted": 64,
+   "archive": true
+  },
+  "LKU3:2023": {
+   "ticker": "LKU3",
+   "year": 2023,
+   "bars": 15922,
+   "inserted": 15922,
+   "archive": true
+  },
+  "LKZ3:2022": {
+   "ticker": "LKZ3",
+   "year": 2022,
+   "bars": 8,
+   "inserted": 8,
+   "archive": true
+  },
+  "LKZ3:2023": {
+   "ticker": "LKZ3",
+   "year": 2023,
+   "bars": 16588,
+   "inserted": 16588,
+   "archive": true
+  },
+  "LKH4:2023": {
+   "ticker": "LKH4",
+   "year": 2023,
+   "bars": 5526,
+   "inserted": 5526,
+   "archive": true
+  },
+  "LKH4:2024": {
+   "ticker": "LKH4",
+   "year": 2024,
+   "bars": 8665,
+   "inserted": 8665,
+   "archive": true
+  },
+  "LKM4:2023": {
+   "ticker": "LKM4",
+   "year": 2023,
+   "bars": 741,
+   "inserted": 741,
+   "archive": true
+  },
+  "LKM4:2024": {
+   "ticker": "LKM4",
+   "year": 2024,
+   "bars": 12668,
+   "inserted": 12668,
+   "archive": true
+  },
+  "LKU4:2023": {
+   "ticker": "LKU4",
+   "year": 2023,
+   "bars": 42,
+   "inserted": 42,
+   "archive": true
+  },
+  "LKU4:2024": {
+   "ticker": "LKU4",
+   "year": 2024,
+   "bars": 13587,
+   "inserted": 13587,
+   "archive": true
+  },
+  "LKZ4:2023": {
+   "ticker": "LKZ4",
+   "year": 2023,
+   "bars": 14,
+   "inserted": 14,
+   "archive": true
+  },
+  "LKZ4:2024": {
+   "ticker": "LKZ4",
+   "year": 2024,
+   "bars": 14331,
+   "inserted": 14331,
+   "archive": true
+  },
+  "LKH5:2024": {
+   "ticker": "LKH5",
+   "year": 2024,
+   "bars": 5858,
+   "inserted": 5858,
+   "archive": true
+  },
+  "LKH5:2025": {
+   "ticker": "LKH5",
+   "year": 2025,
+   "bars": 8266,
+   "inserted": 8266,
+   "archive": true
+  },
+  "LKM5:2024": {
+   "ticker": "LKM5",
+   "year": 2024,
+   "bars": 808,
+   "inserted": 808,
+   "archive": true
+  },
+  "LKM5:2025": {
+   "ticker": "LKM5",
+   "year": 2025,
+   "bars": 12764,
+   "inserted": 12764,
+   "archive": true
+  },
+  "LKU5:2024": {
+   "ticker": "LKU5",
+   "year": 2024,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "LKU5:2025": {
+   "ticker": "LKU5",
+   "year": 2025,
+   "bars": 13774,
+   "inserted": 13774,
+   "archive": true
+  },
+  "LKZ5:2024": {
+   "ticker": "LKZ5",
+   "year": 2024,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "LKZ5:2025": {
+   "ticker": "LKZ5",
+   "year": 2025,
+   "bars": 15483,
+   "inserted": 15483,
+   "archive": true
+  },
+  "LKH6:2025": {
+   "ticker": "LKH6",
+   "year": 2025,
+   "bars": 6663,
+   "inserted": 6663,
+   "archive": true
+  },
+  "LKH6:2026": {
+   "ticker": "LKH6",
+   "year": 2026,
+   "bars": 9467,
+   "inserted": 9467,
+   "archive": true
+  },
+  "LKM6:2025": {
+   "ticker": "LKM6",
+   "year": 2025,
+   "bars": 1775,
+   "inserted": 1775,
+   "archive": true
+  },
+  "LKM6:2026": {
+   "ticker": "LKM6",
+   "year": 2026,
+   "bars": 16233,
+   "inserted": 16233,
+   "archive": true
+  },
+  "LKU6:2025": {
+   "ticker": "LKU6",
+   "year": 2025,
+   "bars": 606,
+   "inserted": 606,
+   "archive": true
+  },
+  "LKU6:2026": {
+   "ticker": "LKU6",
+   "year": 2026,
+   "bars": 18267,
+   "inserted": 18267,
+   "archive": true
+  },
+  "LKZ6:2025": {
+   "ticker": "LKZ6",
+   "year": 2025,
+   "bars": 35,
+   "inserted": 35,
+   "archive": true
+  },
+  "LKZ6:2026": {
+   "ticker": "LKZ6",
+   "year": 2026,
+   "bars": 7125,
+   "inserted": 7125,
+   "archive": true
+  },
+  "LKH7:2026": {
+   "ticker": "LKH7",
+   "year": 2026,
+   "bars": 1251,
+   "inserted": 1251,
+   "archive": true
+  },
+  "LKM7:2026": {
+   "ticker": "LKM7",
+   "year": 2026,
+   "bars": 474,
+   "inserted": 474,
+   "archive": true
+  },
+  "LKU7:2026": {
+   "ticker": "LKU7",
+   "year": 2026,
+   "bars": 0,
+   "inserted": 0,
+   "archive": true
+  },
+  "SRH2:2022": {
+   "ticker": "SRH2",
+   "year": 2022,
+   "bars": 8084,
+   "inserted": 8084,
+   "archive": true
+  },
+  "SRM2:2022": {
+   "ticker": "SRM2",
+   "year": 2022,
+   "bars": 12538,
+   "inserted": 12538,
+   "archive": true
+  },
+  "SRU2:2022": {
+   "ticker": "SRU2",
+   "year": 2022,
+   "bars": 14402,
+   "inserted": 14402,
+   "archive": true
+  },
+  "SRZ2:2022": {
+   "ticker": "SRZ2",
+   "year": 2022,
+   "bars": 19366,
+   "inserted": 19366,
+   "archive": true
+  },
+  "SRH3:2022": {
+   "ticker": "SRH3",
+   "year": 2022,
+   "bars": 11111,
+   "inserted": 11111,
+   "archive": true
+  },
+  "SRH3:2023": {
+   "ticker": "SRH3",
+   "year": 2023,
+   "bars": 8802,
+   "inserted": 8802,
+   "archive": true
+  },
+  "SRM3:2022": {
+   "ticker": "SRM3",
+   "year": 2022,
+   "bars": 2823,
+   "inserted": 2823,
+   "archive": true
+  },
+  "SRM3:2023": {
+   "ticker": "SRM3",
+   "year": 2023,
+   "bars": 17456,
+   "inserted": 17456,
+   "archive": true
+  },
+  "SRU3:2022": {
+   "ticker": "SRU3",
+   "year": 2022,
+   "bars": 599,
+   "inserted": 599,
+   "archive": true
+  },
+  "SRU3:2023": {
+   "ticker": "SRU3",
+   "year": 2023,
+   "bars": 23903,
+   "inserted": 23903,
+   "archive": true
+  },
+  "SRZ3:2022": {
+   "ticker": "SRZ3",
+   "year": 2022,
+   "bars": 88,
+   "inserted": 88,
+   "archive": true
+  },
+  "SRZ3:2023": {
+   "ticker": "SRZ3",
+   "year": 2023,
+   "bars": 25529,
+   "inserted": 25529,
+   "archive": true
+  },
+  "SRH4:2023": {
+   "ticker": "SRH4",
+   "year": 2023,
+   "bars": 14483,
+   "inserted": 14483,
+   "archive": true
+  },
+  "SRH4:2024": {
+   "ticker": "SRH4",
+   "year": 2024,
+   "bars": 9559,
+   "inserted": 9559,
+   "archive": true
+  },
+  "SRM4:2023": {
+   "ticker": "SRM4",
+   "year": 2023,
+   "bars": 5085,
+   "inserted": 5085,
+   "archive": true
+  },
+  "SRM4:2024": {
+   "ticker": "SRM4",
+   "year": 2024,
+   "bars": 18107,
+   "inserted": 18107,
+   "archive": true
+  },
+  "SRU4:2023": {
+   "ticker": "SRU4",
+   "year": 2023,
+   "bars": 1082,
+   "inserted": 1082,
+   "archive": true
+  },
+  "SRU4:2024": {
+   "ticker": "SRU4",
+   "year": 2024,
+   "bars": 20780,
+   "inserted": 20780,
+   "archive": true
+  },
+  "SRZ4:2023": {
+   "ticker": "SRZ4",
+   "year": 2023,
+   "bars": 17,
+   "inserted": 17,
+   "archive": true
+  },
+  "SRZ4:2024": {
+   "ticker": "SRZ4",
+   "year": 2024,
+   "bars": 21867,
+   "inserted": 21867,
+   "archive": true
+  },
+  "SRH5:2024": {
+   "ticker": "SRH5",
+   "year": 2024,
+   "bars": 12818,
+   "inserted": 12818,
+   "archive": true
+  },
+  "SRH5:2025": {
+   "ticker": "SRH5",
+   "year": 2025,
+   "bars": 9211,
+   "inserted": 9211,
+   "archive": true
+  },
+  "SRM5:2024": {
+   "ticker": "SRM5",
+   "year": 2024,
+   "bars": 2867,
+   "inserted": 2867,
+   "archive": true
+  },
+  "SRM5:2025": {
+   "ticker": "SRM5",
+   "year": 2025,
+   "bars": 17342,
+   "inserted": 17342,
+   "archive": true
+  },
+  "SRU5:2024": {
+   "ticker": "SRU5",
+   "year": 2024,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "SRU5:2025": {
+   "ticker": "SRU5",
+   "year": 2025,
+   "bars": 20914,
+   "inserted": 20914,
+   "archive": true
+  },
+  "SRZ5:2024": {
+   "ticker": "SRZ5",
+   "year": 2024,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "SRZ5:2025": {
+   "ticker": "SRZ5",
+   "year": 2025,
+   "bars": 20568,
+   "inserted": 20568,
+   "archive": true
+  },
+  "SRH6:2025": {
+   "ticker": "SRH6",
+   "year": 2025,
+   "bars": 8779,
+   "inserted": 8779,
+   "archive": true
+  },
+  "SRH6:2026": {
+   "ticker": "SRH6",
+   "year": 2026,
+   "bars": 10458,
+   "inserted": 10458,
+   "archive": true
+  },
+  "SRM6:2025": {
+   "ticker": "SRM6",
+   "year": 2025,
+   "bars": 1374,
+   "inserted": 1374,
+   "archive": true
+  },
+  "SRM6:2026": {
+   "ticker": "SRM6",
+   "year": 2026,
+   "bars": 18555,
+   "inserted": 18555,
+   "archive": true
+  },
+  "SRU6:2025": {
+   "ticker": "SRU6",
+   "year": 2025,
+   "bars": 683,
+   "inserted": 683,
+   "archive": true
+  },
+  "SRU6:2026": {
+   "ticker": "SRU6",
+   "year": 2026,
+   "bars": 23965,
+   "inserted": 23965,
+   "archive": true
+  },
+  "SRZ6:2025": {
+   "ticker": "SRZ6",
+   "year": 2025,
+   "bars": 7,
+   "inserted": 7,
+   "archive": true
+  },
+  "SRZ6:2026": {
+   "ticker": "SRZ6",
+   "year": 2026,
+   "bars": 10398,
+   "inserted": 10398,
+   "archive": true
+  },
+  "SRH7:2026": {
+   "ticker": "SRH7",
+   "year": 2026,
+   "bars": 2204,
+   "inserted": 2204,
+   "archive": true
+  },
+  "SRM7:2026": {
+   "ticker": "SRM7",
+   "year": 2026,
+   "bars": 637,
+   "inserted": 637,
+   "archive": true
+  },
+  "SRU7:2026": {
+   "ticker": "SRU7",
+   "year": 2026,
+   "bars": 0,
+   "inserted": 0,
+   "archive": true
+  },
+  "VBH2:2022": {
+   "ticker": "VBH2",
+   "year": 2022,
+   "bars": 8080,
+   "inserted": 8080,
+   "archive": true
+  },
+  "VBM2:2022": {
+   "ticker": "VBM2",
+   "year": 2022,
+   "bars": 11457,
+   "inserted": 11457,
+   "archive": true
+  },
+  "VBU2:2022": {
+   "ticker": "VBU2",
+   "year": 2022,
+   "bars": 11275,
+   "inserted": 11275,
+   "archive": true
+  },
+  "VBZ2:2022": {
+   "ticker": "VBZ2",
+   "year": 2022,
+   "bars": 16200,
+   "inserted": 16200,
+   "archive": true
+  },
+  "VBH3:2022": {
+   "ticker": "VBH3",
+   "year": 2022,
+   "bars": 8571,
+   "inserted": 8571,
+   "archive": true
+  },
+  "VBH3:2023": {
+   "ticker": "VBH3",
+   "year": 2023,
+   "bars": 8640,
+   "inserted": 8640,
+   "archive": true
+  },
+  "VBM3:2022": {
+   "ticker": "VBM3",
+   "year": 2022,
+   "bars": 1865,
+   "inserted": 1865,
+   "archive": true
+  },
+  "VBM3:2023": {
+   "ticker": "VBM3",
+   "year": 2023,
+   "bars": 15913,
+   "inserted": 15913,
+   "archive": true
+  },
+  "VBU3:2022": {
+   "ticker": "VBU3",
+   "year": 2022,
+   "bars": 85,
+   "inserted": 85,
+   "archive": true
+  },
+  "VBU3:2023": {
+   "ticker": "VBU3",
+   "year": 2023,
+   "bars": 20731,
+   "inserted": 20731,
+   "archive": true
+  },
+  "VBZ3:2022": {
+   "ticker": "VBZ3",
+   "year": 2022,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "VBZ3:2023": {
+   "ticker": "VBZ3",
+   "year": 2023,
+   "bars": 22005,
+   "inserted": 22005,
+   "archive": true
+  },
+  "VBH4:2023": {
+   "ticker": "VBH4",
+   "year": 2023,
+   "bars": 10532,
+   "inserted": 10532,
+   "archive": true
+  },
+  "VBH4:2024": {
+   "ticker": "VBH4",
+   "year": 2024,
+   "bars": 9526,
+   "inserted": 9526,
+   "archive": true
+  },
+  "VBM4:2023": {
+   "ticker": "VBM4",
+   "year": 2023,
+   "bars": 2184,
+   "inserted": 2184,
+   "archive": true
+  },
+  "VBM4:2024": {
+   "ticker": "VBM4",
+   "year": 2024,
+   "bars": 17249,
+   "inserted": 17249,
+   "archive": true
+  },
+  "VBU4:2023": {
+   "ticker": "VBU4",
+   "year": 2023,
+   "bars": 9,
+   "inserted": 9,
+   "archive": true
+  },
+  "VBU4:2024": {
+   "ticker": "VBU4",
+   "year": 2024,
+   "bars": 7082,
+   "inserted": 7082,
+   "archive": true
+  },
+  "VBZ4:2023": {
+   "ticker": "VBZ4",
+   "year": 2023,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "VBZ4:2024": {
+   "ticker": "VBZ4",
+   "year": 2024,
+   "bars": 17882,
+   "inserted": 17882,
+   "archive": true
+  },
+  "VBH5:2024": {
+   "ticker": "VBH5",
+   "year": 2024,
+   "bars": 8883,
+   "inserted": 8883,
+   "archive": true
+  },
+  "VBH5:2025": {
+   "ticker": "VBH5",
+   "year": 2025,
+   "bars": 9164,
+   "inserted": 9164,
+   "archive": true
+  },
+  "VBM5:2024": {
+   "ticker": "VBM5",
+   "year": 2024,
+   "bars": 266,
+   "inserted": 266,
+   "archive": true
+  },
+  "VBM5:2025": {
+   "ticker": "VBM5",
+   "year": 2025,
+   "bars": 16652,
+   "inserted": 16652,
+   "archive": true
+  },
+  "VBU5:2024": {
+   "ticker": "VBU5",
+   "year": 2024,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "VBU5:2025": {
+   "ticker": "VBU5",
+   "year": 2025,
+   "bars": 19283,
+   "inserted": 19283,
+   "archive": true
+  },
+  "VBZ5:2024": {
+   "ticker": "VBZ5",
+   "year": 2024,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "VBZ5:2025": {
+   "ticker": "VBZ5",
+   "year": 2025,
+   "bars": 20958,
+   "inserted": 20958,
+   "archive": true
+  },
+  "VBH6:2025": {
+   "ticker": "VBH6",
+   "year": 2025,
+   "bars": 10155,
+   "inserted": 10155,
+   "archive": true
+  },
+  "VBH6:2026": {
+   "ticker": "VBH6",
+   "year": 2026,
+   "bars": 10450,
+   "inserted": 10450,
+   "archive": true
+  },
+  "VBM6:2025": {
+   "ticker": "VBM6",
+   "year": 2025,
+   "bars": 1283,
+   "inserted": 1283,
+   "archive": true
+  },
+  "VBM6:2026": {
+   "ticker": "VBM6",
+   "year": 2026,
+   "bars": 21380,
+   "inserted": 21380,
+   "archive": true
+  },
+  "VBU6:2025": {
+   "ticker": "VBU6",
+   "year": 2025,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "VBU6:2026": {
+   "ticker": "VBU6",
+   "year": 2026,
+   "bars": 22095,
+   "inserted": 22095,
+   "archive": true
+  },
+  "VBZ6:2025": {
+   "ticker": "VBZ6",
+   "year": 2025,
+   "bars": 0,
+   "inserted": 0,
+   "archive": false
+  },
+  "VBZ6:2026": {
+   "ticker": "VBZ6",
+   "year": 2026,
+   "bars": 10363,
+   "inserted": 10363,
+   "archive": true
+  },
+  "VBH7:2026": {
+   "ticker": "VBH7",
+   "year": 2026,
+   "bars": 0,
+   "inserted": 0,
+   "archive": true
+  }
+ }
+}

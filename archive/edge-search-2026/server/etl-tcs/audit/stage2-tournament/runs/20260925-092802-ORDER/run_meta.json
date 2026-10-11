@@ -1,0 +1,7 @@
+{
+  "run_id": "20260925-092802-ORDER",
+  "phase": "ORDER",
+  "skipped": "тест остановлен (CLOSE 20260925-091302-CLOSE: после CLOSE остались ночные позиции: HYDR)",
+  "finished_at": "2026-09-25T09:28:02+03:00",
+  "verdict": "PASS"
+}

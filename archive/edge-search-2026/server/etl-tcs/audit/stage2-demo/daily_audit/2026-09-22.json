@@ -1,0 +1,39 @@
+{
+  "trading_day": "2026-09-22",
+  "prep_run_id": "20260922-084502-PREP",
+  "close_run_id": "20260922-091002-CLOSE",
+  "order_run_id": "20260922-091502-ORDER",
+  "cleanup_run_id": "20260922-182002-CLEANUP",
+  "overnight_run_id": "20260922-183501-OVERNIGHT",
+  "signals_count": 1,
+  "orders_count": 0,
+  "fills_count": 0,
+  "overnight_orders": 5,
+  "execution_audit_available": true,
+  "execution_audit_count": 5,
+  "execution_audit_filled": 0,
+  "slippage_fact_pct": null,
+  "slippage_expected_pct": null,
+  "treasury": {
+    "ticker": "TMON@",
+    "tmon_lots": 27579,
+    "tmon_price": 164.72,
+    "tmon_value_rub": 4542812.88,
+    "free_cash_rub": 31041.93,
+    "cash_rub": 31041.93,
+    "virtual_lots": 0,
+    "mode": "broker"
+  },
+  "dataset_hash": "sha256:c79113e1a7c470c950f3e25125a18a9b1b65ddb4e0a6519107db3718e5cc01e9",
+  "config_hash": "sha256:6bdc08a2de8f11a9fa81e5f951701c5f0757b79ee4b907e42dd67f6c9d6886d8",
+  "checks": {
+    "critical_passed": 6,
+    "critical_failed": 0,
+    "partial": 0,
+    "warnings": 0
+  },
+  "errors": [],
+  "partial": [],
+  "warnings": [],
+  "verdict": "PASS"
+}

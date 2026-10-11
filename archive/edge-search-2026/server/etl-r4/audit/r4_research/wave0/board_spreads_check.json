@@ -1,0 +1,31 @@
+{
+ "spread_cs_pct": {
+  "n_common": 46,
+  "corr_with_5m": 0.1092142140173399,
+  "median_est_top50": 0.21466638735599725,
+  "median_5m_top50": 0.0482296472043967,
+  "tiers": {
+   "top50": 0.21466638735599725,
+   "mid": 0.3262223063261247,
+   "tail": 0.4341546029800828
+  },
+  "monotone_in_liquidity": true
+ },
+ "spread_ar_pct": {
+  "n_common": 46,
+  "corr_with_5m": -0.12938094072055056,
+  "median_est_top50": 0.0,
+  "median_5m_top50": 0.0482296472043967,
+  "tiers": {
+   "top50": 0.0,
+   "mid": 0.0,
+   "tail": 1.760559549420397
+  },
+  "monotone_in_liquidity": false
+ },
+ "verdict": {
+  "best_estimator": "spread_cs_pct",
+  "usable": false,
+  "rule": "годен, если монотонен по ликвидности И корр. с 5м ≥ 0.5"
+ }
+}

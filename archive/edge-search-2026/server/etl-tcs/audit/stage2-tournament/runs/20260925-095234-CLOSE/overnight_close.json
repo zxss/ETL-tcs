@@ -1,0 +1,12 @@
+{
+  "overnight_before": 1,
+  "closed": [
+    "HYDR"
+  ],
+  "failed": [],
+  "orders_cancelled": 0,
+  "registry_reconciled": 0,
+  "orphans": [
+    "HYDR"
+  ]
+}

@@ -1,0 +1,1229 @@
+{
+ "range": "2022-01-01:2024-05-20",
+ "done": {
+  "SBER:2022": {
+   "ticker": "SBER",
+   "year": 2022,
+   "archive": true,
+   "bars": 36937,
+   "inserted": 36937,
+   "days": 291
+  },
+  "SBER:2023": {
+   "ticker": "SBER",
+   "year": 2023,
+   "archive": true,
+   "bars": 52852,
+   "inserted": 52852,
+   "days": 362
+  },
+  "SBER:2024": {
+   "ticker": "SBER",
+   "year": 2024,
+   "archive": true,
+   "bars": 21256,
+   "inserted": 21256,
+   "days": 140
+  },
+  "VTBR:2022": {
+   "ticker": "VTBR",
+   "year": 2022,
+   "archive": true,
+   "bars": 32104,
+   "inserted": 32104,
+   "days": 245
+  },
+  "VTBR:2023": {
+   "ticker": "VTBR",
+   "year": 2023,
+   "archive": true,
+   "bars": 52948,
+   "inserted": 52948,
+   "days": 363
+  },
+  "VTBR:2024": {
+   "ticker": "VTBR",
+   "year": 2024,
+   "archive": true,
+   "bars": 21253,
+   "inserted": 21253,
+   "days": 140
+  },
+  "GAZP:2022": {
+   "ticker": "GAZP",
+   "year": 2022,
+   "archive": true,
+   "bars": 37128,
+   "inserted": 37128,
+   "days": 293
+  },
+  "GAZP:2023": {
+   "ticker": "GAZP",
+   "year": 2023,
+   "archive": true,
+   "bars": 52968,
+   "inserted": 52968,
+   "days": 363
+  },
+  "GAZP:2024": {
+   "ticker": "GAZP",
+   "year": 2024,
+   "archive": true,
+   "bars": 21256,
+   "inserted": 21256,
+   "days": 140
+  },
+  "ROSN:2022": {
+   "ticker": "ROSN",
+   "year": 2022,
+   "archive": true,
+   "bars": 36945,
+   "inserted": 36945,
+   "days": 291
+  },
+  "ROSN:2023": {
+   "ticker": "ROSN",
+   "year": 2023,
+   "archive": true,
+   "bars": 52750,
+   "inserted": 52750,
+   "days": 361
+  },
+  "ROSN:2024": {
+   "ticker": "ROSN",
+   "year": 2024,
+   "archive": true,
+   "bars": 21255,
+   "inserted": 21255,
+   "days": 140
+  },
+  "LKOH:2022": {
+   "ticker": "LKOH",
+   "year": 2022,
+   "archive": true,
+   "bars": 38069,
+   "inserted": 38069,
+   "days": 291
+  },
+  "LKOH:2023": {
+   "ticker": "LKOH",
+   "year": 2023,
+   "archive": true,
+   "bars": 53181,
+   "inserted": 53181,
+   "days": 363
+  },
+  "LKOH:2024": {
+   "ticker": "LKOH",
+   "year": 2024,
+   "archive": true,
+   "bars": 21250,
+   "inserted": 21250,
+   "days": 140
+  },
+  "NVTK:2022": {
+   "ticker": "NVTK",
+   "year": 2022,
+   "archive": true,
+   "bars": 37966,
+   "inserted": 37966,
+   "days": 289
+  },
+  "NVTK:2023": {
+   "ticker": "NVTK",
+   "year": 2023,
+   "archive": true,
+   "bars": 52783,
+   "inserted": 52783,
+   "days": 360
+  },
+  "NVTK:2024": {
+   "ticker": "NVTK",
+   "year": 2024,
+   "archive": true,
+   "bars": 21253,
+   "inserted": 21253,
+   "days": 140
+  },
+  "TATN:2022": {
+   "ticker": "TATN",
+   "year": 2022,
+   "archive": true,
+   "bars": 35053,
+   "inserted": 35053,
+   "days": 276
+  },
+  "TATN:2023": {
+   "ticker": "TATN",
+   "year": 2023,
+   "archive": true,
+   "bars": 52489,
+   "inserted": 52489,
+   "days": 359
+  },
+  "TATN:2024": {
+   "ticker": "TATN",
+   "year": 2024,
+   "archive": true,
+   "bars": 21033,
+   "inserted": 21033,
+   "days": 138
+  },
+  "SNGS:2022": {
+   "ticker": "SNGS",
+   "year": 2022,
+   "archive": true,
+   "bars": 34440,
+   "inserted": 34440,
+   "days": 268
+  },
+  "SNGS:2023": {
+   "ticker": "SNGS",
+   "year": 2023,
+   "archive": true,
+   "bars": 48703,
+   "inserted": 48703,
+   "days": 363
+  },
+  "SNGS:2024": {
+   "ticker": "SNGS",
+   "year": 2024,
+   "archive": true,
+   "bars": 20498,
+   "inserted": 20498,
+   "days": 140
+  },
+  "SNGSP:2022": {
+   "ticker": "SNGSP",
+   "year": 2022,
+   "archive": true,
+   "bars": 33399,
+   "inserted": 33399,
+   "days": 268
+  },
+  "SNGSP:2023": {
+   "ticker": "SNGSP",
+   "year": 2023,
+   "archive": true,
+   "bars": 49990,
+   "inserted": 49990,
+   "days": 363
+  },
+  "SNGSP:2024": {
+   "ticker": "SNGSP",
+   "year": 2024,
+   "archive": true,
+   "bars": 20247,
+   "inserted": 20247,
+   "days": 140
+  },
+  "GMKN:2022": {
+   "ticker": "GMKN",
+   "year": 2022,
+   "archive": true,
+   "bars": 36176,
+   "inserted": 36176,
+   "days": 281
+  },
+  "GMKN:2023": {
+   "ticker": "GMKN",
+   "year": 2023,
+   "archive": true,
+   "bars": 50312,
+   "inserted": 50312,
+   "days": 363
+  },
+  "GMKN:2024": {
+   "ticker": "GMKN",
+   "year": 2024,
+   "archive": true,
+   "bars": 19725,
+   "inserted": 19725,
+   "days": 134
+  },
+  "PLZL:2022": {
+   "ticker": "PLZL",
+   "year": 2022,
+   "archive": true,
+   "bars": 36491,
+   "inserted": 36491,
+   "days": 280
+  },
+  "PLZL:2023": {
+   "ticker": "PLZL",
+   "year": 2023,
+   "archive": true,
+   "bars": 50618,
+   "inserted": 50618,
+   "days": 363
+  },
+  "PLZL:2024": {
+   "ticker": "PLZL",
+   "year": 2024,
+   "archive": true,
+   "bars": 19887,
+   "inserted": 19887,
+   "days": 140
+  },
+  "MAGN:2022": {
+   "ticker": "MAGN",
+   "year": 2022,
+   "archive": true,
+   "bars": 38044,
+   "inserted": 38044,
+   "days": 289
+  },
+  "MAGN:2023": {
+   "ticker": "MAGN",
+   "year": 2023,
+   "archive": true,
+   "bars": 53087,
+   "inserted": 53087,
+   "days": 363
+  },
+  "MAGN:2024": {
+   "ticker": "MAGN",
+   "year": 2024,
+   "archive": true,
+   "bars": 21249,
+   "inserted": 21249,
+   "days": 140
+  },
+  "CHMF:2022": {
+   "ticker": "CHMF",
+   "year": 2022,
+   "archive": true,
+   "bars": 36651,
+   "inserted": 36651,
+   "days": 291
+  },
+  "CHMF:2023": {
+   "ticker": "CHMF",
+   "year": 2023,
+   "archive": true,
+   "bars": 52462,
+   "inserted": 52462,
+   "days": 363
+  },
+  "CHMF:2024": {
+   "ticker": "CHMF",
+   "year": 2024,
+   "archive": true,
+   "bars": 21222,
+   "inserted": 21222,
+   "days": 140
+  },
+  "ALRS:2022": {
+   "ticker": "ALRS",
+   "year": 2022,
+   "archive": true,
+   "bars": 38122,
+   "inserted": 38122,
+   "days": 289
+  },
+  "ALRS:2023": {
+   "ticker": "ALRS",
+   "year": 2023,
+   "archive": true,
+   "bars": 53125,
+   "inserted": 53125,
+   "days": 363
+  },
+  "ALRS:2024": {
+   "ticker": "ALRS",
+   "year": 2024,
+   "archive": true,
+   "bars": 21155,
+   "inserted": 21155,
+   "days": 140
+  },
+  "IRAO:2022": {
+   "ticker": "IRAO",
+   "year": 2022,
+   "archive": true,
+   "bars": 33524,
+   "inserted": 33524,
+   "days": 245
+  },
+  "IRAO:2023": {
+   "ticker": "IRAO",
+   "year": 2023,
+   "archive": true,
+   "bars": 52605,
+   "inserted": 52605,
+   "days": 359
+  },
+  "IRAO:2024": {
+   "ticker": "IRAO",
+   "year": 2024,
+   "archive": true,
+   "bars": 21202,
+   "inserted": 21202,
+   "days": 140
+  },
+  "FEES:2022": {
+   "ticker": "FEES",
+   "year": 2022,
+   "archive": true,
+   "bars": 29447,
+   "inserted": 29447,
+   "days": 226
+  },
+  "FEES:2023": {
+   "ticker": "FEES",
+   "year": 2023,
+   "archive": true,
+   "bars": 44965,
+   "inserted": 44965,
+   "days": 310
+  },
+  "FEES:2024": {
+   "ticker": "FEES",
+   "year": 2024,
+   "archive": true,
+   "bars": 19234,
+   "inserted": 19234,
+   "days": 140
+  },
+  "HYDR:2022": {
+   "ticker": "HYDR",
+   "year": 2022,
+   "archive": true,
+   "bars": 33062,
+   "inserted": 33062,
+   "days": 245
+  },
+  "HYDR:2023": {
+   "ticker": "HYDR",
+   "year": 2023,
+   "archive": true,
+   "bars": 49326,
+   "inserted": 49326,
+   "days": 361
+  },
+  "HYDR:2024": {
+   "ticker": "HYDR",
+   "year": 2024,
+   "archive": true,
+   "bars": 20030,
+   "inserted": 20030,
+   "days": 140
+  },
+  "UPRO:2022": {
+   "ticker": "UPRO",
+   "year": 2022,
+   "archive": true,
+   "bars": 25015,
+   "inserted": 25015,
+   "days": 243
+  },
+  "UPRO:2023": {
+   "ticker": "UPRO",
+   "year": 2023,
+   "archive": true,
+   "bars": 47241,
+   "inserted": 47241,
+   "days": 363
+  },
+  "UPRO:2024": {
+   "ticker": "UPRO",
+   "year": 2024,
+   "archive": true,
+   "bars": 20071,
+   "inserted": 20071,
+   "days": 140
+  },
+  "MSNG:2022": {
+   "ticker": "MSNG",
+   "year": 2022,
+   "archive": true,
+   "bars": 23003,
+   "inserted": 23003,
+   "days": 232
+  },
+  "MSNG:2023": {
+   "ticker": "MSNG",
+   "year": 2023,
+   "archive": true,
+   "bars": 28362,
+   "inserted": 28362,
+   "days": 254
+  },
+  "MSNG:2024": {
+   "ticker": "MSNG",
+   "year": 2024,
+   "archive": true,
+   "bars": 15729,
+   "inserted": 15729,
+   "days": 129
+  },
+  "TGKA:2022": {
+   "ticker": "TGKA",
+   "year": 2022,
+   "archive": true,
+   "bars": 24047,
+   "inserted": 24047,
+   "days": 232
+  },
+  "TGKA:2023": {
+   "ticker": "TGKA",
+   "year": 2023,
+   "archive": true,
+   "bars": 26633,
+   "inserted": 26633,
+   "days": 254
+  },
+  "TGKA:2024": {
+   "ticker": "TGKA",
+   "year": 2024,
+   "archive": true,
+   "bars": 13876,
+   "inserted": 13876,
+   "days": 113
+  },
+  "OGKB:2022": {
+   "ticker": "OGKB",
+   "year": 2022,
+   "archive": true,
+   "bars": 24166,
+   "inserted": 24166,
+   "days": 232
+  },
+  "OGKB:2023": {
+   "ticker": "OGKB",
+   "year": 2023,
+   "archive": true,
+   "bars": 42835,
+   "inserted": 42835,
+   "days": 316
+  },
+  "OGKB:2024": {
+   "ticker": "OGKB",
+   "year": 2024,
+   "archive": true,
+   "bars": 18320,
+   "inserted": 18320,
+   "days": 140
+  },
+  "PHOR:2022": {
+   "ticker": "PHOR",
+   "year": 2022,
+   "archive": true,
+   "bars": 35119,
+   "inserted": 35119,
+   "days": 291
+  },
+  "PHOR:2023": {
+   "ticker": "PHOR",
+   "year": 2023,
+   "archive": true,
+   "bars": 48895,
+   "inserted": 48895,
+   "days": 357
+  },
+  "PHOR:2024": {
+   "ticker": "PHOR",
+   "year": 2024,
+   "archive": true,
+   "bars": 19454,
+   "inserted": 19454,
+   "days": 140
+  },
+  "AKRN:2022": {
+   "ticker": "AKRN",
+   "year": 2022,
+   "archive": true,
+   "bars": 23006,
+   "inserted": 23006,
+   "days": 243
+  },
+  "AKRN:2023": {
+   "ticker": "AKRN",
+   "year": 2023,
+   "archive": true,
+   "bars": 22786,
+   "inserted": 22786,
+   "days": 301
+  },
+  "AKRN:2024": {
+   "ticker": "AKRN",
+   "year": 2024,
+   "archive": true,
+   "bars": 7716,
+   "inserted": 7716,
+   "days": 113
+  },
+  "MOEX:2022": {
+   "ticker": "MOEX",
+   "year": 2022,
+   "archive": true,
+   "bars": 36498,
+   "inserted": 36498,
+   "days": 276
+  },
+  "MOEX:2023": {
+   "ticker": "MOEX",
+   "year": 2023,
+   "archive": true,
+   "bars": 53041,
+   "inserted": 53041,
+   "days": 363
+  },
+  "MOEX:2024": {
+   "ticker": "MOEX",
+   "year": 2024,
+   "archive": true,
+   "bars": 21178,
+   "inserted": 21178,
+   "days": 140
+  },
+  "MTSS:2022": {
+   "ticker": "MTSS",
+   "year": 2022,
+   "archive": true,
+   "bars": 34421,
+   "inserted": 34421,
+   "days": 276
+  },
+  "MTSS:2023": {
+   "ticker": "MTSS",
+   "year": 2023,
+   "archive": true,
+   "bars": 51993,
+   "inserted": 51993,
+   "days": 363
+  },
+  "MTSS:2024": {
+   "ticker": "MTSS",
+   "year": 2024,
+   "archive": true,
+   "bars": 21090,
+   "inserted": 21090,
+   "days": 140
+  },
+  "RTKM:2022": {
+   "ticker": "RTKM",
+   "year": 2022,
+   "archive": true,
+   "bars": 34696,
+   "inserted": 34696,
+   "days": 267
+  },
+  "RTKM:2023": {
+   "ticker": "RTKM",
+   "year": 2023,
+   "archive": true,
+   "bars": 50847,
+   "inserted": 50847,
+   "days": 363
+  },
+  "RTKM:2024": {
+   "ticker": "RTKM",
+   "year": 2024,
+   "archive": true,
+   "bars": 20503,
+   "inserted": 20503,
+   "days": 140
+  },
+  "AFLT:2022": {
+   "ticker": "AFLT",
+   "year": 2022,
+   "archive": true,
+   "bars": 37243,
+   "inserted": 37243,
+   "days": 280
+  },
+  "AFLT:2023": {
+   "ticker": "AFLT",
+   "year": 2023,
+   "archive": true,
+   "bars": 53198,
+   "inserted": 53198,
+   "days": 363
+  },
+  "AFLT:2024": {
+   "ticker": "AFLT",
+   "year": 2024,
+   "archive": true,
+   "bars": 21219,
+   "inserted": 21219,
+   "days": 140
+  },
+  "FLOT:2022": {
+   "ticker": "FLOT",
+   "year": 2022,
+   "archive": true,
+   "bars": 24160,
+   "inserted": 24160,
+   "days": 232
+  },
+  "FLOT:2023": {
+   "ticker": "FLOT",
+   "year": 2023,
+   "archive": true,
+   "bars": 41547,
+   "inserted": 41547,
+   "days": 278
+  },
+  "FLOT:2024": {
+   "ticker": "FLOT",
+   "year": 2024,
+   "archive": true,
+   "bars": 21095,
+   "inserted": 21095,
+   "days": 140
+  },
+  "NMTP:2022": {
+   "ticker": "NMTP",
+   "year": 2022,
+   "archive": true,
+   "bars": 23912,
+   "inserted": 23912,
+   "days": 232
+  },
+  "NMTP:2023": {
+   "ticker": "NMTP",
+   "year": 2023,
+   "archive": true,
+   "bars": 30117,
+   "inserted": 30117,
+   "days": 278
+  },
+  "NMTP:2024": {
+   "ticker": "NMTP",
+   "year": 2024,
+   "archive": true,
+   "bars": 18792,
+   "inserted": 18792,
+   "days": 140
+  },
+  "MGNT:2022": {
+   "ticker": "MGNT",
+   "year": 2022,
+   "archive": true,
+   "bars": 34878,
+   "inserted": 34878,
+   "days": 289
+  },
+  "MGNT:2023": {
+   "ticker": "MGNT",
+   "year": 2023,
+   "archive": true,
+   "bars": 51769,
+   "inserted": 51769,
+   "days": 363
+  },
+  "MGNT:2024": {
+   "ticker": "MGNT",
+   "year": 2024,
+   "archive": true,
+   "bars": 20369,
+   "inserted": 20369,
+   "days": 140
+  },
+  "X5:2022": {
+   "ticker": "X5",
+   "year": 2022,
+   "archive": true,
+   "bars": 37204,
+   "inserted": 37204,
+   "days": 286
+  },
+  "X5:2023": {
+   "ticker": "X5",
+   "year": 2023,
+   "archive": true,
+   "bars": 52883,
+   "inserted": 52883,
+   "days": 363
+  },
+  "X5:2024": {
+   "ticker": "X5",
+   "year": 2024,
+   "archive": true,
+   "bars": 13545,
+   "inserted": 13545,
+   "days": 93
+  },
+  "LENT:2022": {
+   "ticker": "LENT",
+   "year": 2022,
+   "archive": true,
+   "bars": 22059,
+   "inserted": 22059,
+   "days": 232
+  },
+  "LENT:2023": {
+   "ticker": "LENT",
+   "year": 2023,
+   "archive": true,
+   "bars": 26655,
+   "inserted": 26655,
+   "days": 254
+  },
+  "LENT:2024": {
+   "ticker": "LENT",
+   "year": 2024,
+   "archive": true,
+   "bars": 11390,
+   "inserted": 11390,
+   "days": 111
+  },
+  "FIXR:2022": {
+   "ticker": "FIXR",
+   "year": 2022,
+   "archive": false,
+   "bars": 0,
+   "inserted": 0,
+   "days": 0
+  },
+  "FIXR:2023": {
+   "ticker": "FIXR",
+   "year": 2023,
+   "archive": false,
+   "bars": 0,
+   "inserted": 0,
+   "days": 0
+  },
+  "FIXR:2024": {
+   "ticker": "FIXR",
+   "year": 2024,
+   "archive": false,
+   "bars": 0,
+   "inserted": 0,
+   "days": 0
+  },
+  "YDEX:2022": {
+   "ticker": "YDEX",
+   "year": 2022,
+   "archive": false,
+   "bars": 0,
+   "inserted": 0,
+   "days": 0
+  },
+  "YDEX:2023": {
+   "ticker": "YDEX",
+   "year": 2023,
+   "archive": false,
+   "bars": 0,
+   "inserted": 0,
+   "days": 0
+  },
+  "YDEX:2024": {
+   "ticker": "YDEX",
+   "year": 2024,
+   "archive": true,
+   "bars": 21253,
+   "inserted": 21253,
+   "days": 140
+  },
+  "VKCO:2022": {
+   "ticker": "VKCO",
+   "year": 2022,
+   "archive": true,
+   "bars": 35467,
+   "inserted": 35467,
+   "days": 276
+  },
+  "VKCO:2023": {
+   "ticker": "VKCO",
+   "year": 2023,
+   "archive": true,
+   "bars": 48115,
+   "inserted": 48115,
+   "days": 330
+  },
+  "VKCO:2024": {
+   "ticker": "VKCO",
+   "year": 2024,
+   "archive": true,
+   "bars": 21202,
+   "inserted": 21202,
+   "days": 140
+  },
+  "ASTR:2022": {
+   "ticker": "ASTR",
+   "year": 2022,
+   "archive": false,
+   "bars": 0,
+   "inserted": 0,
+   "days": 0
+  },
+  "ASTR:2023": {
+   "ticker": "ASTR",
+   "year": 2023,
+   "archive": true,
+   "bars": 7901,
+   "inserted": 7901,
+   "days": 56
+  },
+  "ASTR:2024": {
+   "ticker": "ASTR",
+   "year": 2024,
+   "archive": true,
+   "bars": 19686,
+   "inserted": 19686,
+   "days": 129
+  },
+  "POSI:2022": {
+   "ticker": "POSI",
+   "year": 2022,
+   "archive": true,
+   "bars": 26629,
+   "inserted": 26629,
+   "days": 243
+  },
+  "POSI:2023": {
+   "ticker": "POSI",
+   "year": 2023,
+   "archive": true,
+   "bars": 52504,
+   "inserted": 52504,
+   "days": 363
+  },
+  "POSI:2024": {
+   "ticker": "POSI",
+   "year": 2024,
+   "archive": true,
+   "bars": 20778,
+   "inserted": 20778,
+   "days": 140
+  },
+  "PIKK:2022": {
+   "ticker": "PIKK",
+   "year": 2022,
+   "archive": true,
+   "bars": 36395,
+   "inserted": 36395,
+   "days": 280
+  },
+  "PIKK:2023": {
+   "ticker": "PIKK",
+   "year": 2023,
+   "archive": true,
+   "bars": 52579,
+   "inserted": 52579,
+   "days": 363
+  },
+  "PIKK:2024": {
+   "ticker": "PIKK",
+   "year": 2024,
+   "archive": true,
+   "bars": 20552,
+   "inserted": 20552,
+   "days": 140
+  },
+  "SMLT:2022": {
+   "ticker": "SMLT",
+   "year": 2022,
+   "archive": true,
+   "bars": 27113,
+   "inserted": 27113,
+   "days": 274
+  },
+  "SMLT:2023": {
+   "ticker": "SMLT",
+   "year": 2023,
+   "archive": true,
+   "bars": 48561,
+   "inserted": 48561,
+   "days": 363
+  },
+  "SMLT:2024": {
+   "ticker": "SMLT",
+   "year": 2024,
+   "archive": true,
+   "bars": 20817,
+   "inserted": 20817,
+   "days": 140
+  },
+  "ETLN:2022": {
+   "ticker": "ETLN",
+   "year": 2022,
+   "archive": false,
+   "bars": 0,
+   "inserted": 0,
+   "days": 0
+  },
+  "ETLN:2023": {
+   "ticker": "ETLN",
+   "year": 2023,
+   "archive": false,
+   "bars": 0,
+   "inserted": 0,
+   "days": 0
+  },
+  "ETLN:2024": {
+   "ticker": "ETLN",
+   "year": 2024,
+   "archive": false,
+   "bars": 0,
+   "inserted": 0,
+   "days": 0
+  },
+  "RUAL:2022": {
+   "ticker": "RUAL",
+   "year": 2022,
+   "archive": true,
+   "bars": 35176,
+   "inserted": 35176,
+   "days": 276
+  },
+  "RUAL:2023": {
+   "ticker": "RUAL",
+   "year": 2023,
+   "archive": true,
+   "bars": 52880,
+   "inserted": 52880,
+   "days": 363
+  },
+  "RUAL:2024": {
+   "ticker": "RUAL",
+   "year": 2024,
+   "archive": true,
+   "bars": 21155,
+   "inserted": 21155,
+   "days": 140
+  },
+  "ENPG:2022": {
+   "ticker": "ENPG",
+   "year": 2022,
+   "archive": true,
+   "bars": 31309,
+   "inserted": 31309,
+   "days": 245
+  },
+  "ENPG:2023": {
+   "ticker": "ENPG",
+   "year": 2023,
+   "archive": true,
+   "bars": 49450,
+   "inserted": 49450,
+   "days": 363
+  },
+  "ENPG:2024": {
+   "ticker": "ENPG",
+   "year": 2024,
+   "archive": true,
+   "bars": 20120,
+   "inserted": 20120,
+   "days": 140
+  },
+  "SELG:2022": {
+   "ticker": "SELG",
+   "year": 2022,
+   "archive": true,
+   "bars": 23756,
+   "inserted": 23756,
+   "days": 232
+  },
+  "SELG:2023": {
+   "ticker": "SELG",
+   "year": 2023,
+   "archive": true,
+   "bars": 33229,
+   "inserted": 33229,
+   "days": 278
+  },
+  "SELG:2024": {
+   "ticker": "SELG",
+   "year": 2024,
+   "archive": true,
+   "bars": 20298,
+   "inserted": 20298,
+   "days": 140
+  },
+  "BSPB:2022": {
+   "ticker": "BSPB",
+   "year": 2022,
+   "archive": true,
+   "bars": 23887,
+   "inserted": 23887,
+   "days": 232
+  },
+  "BSPB:2023": {
+   "ticker": "BSPB",
+   "year": 2023,
+   "archive": true,
+   "bars": 33899,
+   "inserted": 33899,
+   "days": 314
+  },
+  "BSPB:2024": {
+   "ticker": "BSPB",
+   "year": 2024,
+   "archive": true,
+   "bars": 19605,
+   "inserted": 19605,
+   "days": 138
+  },
+  "CBOM:2022": {
+   "ticker": "CBOM",
+   "year": 2022,
+   "archive": true,
+   "bars": 30472,
+   "inserted": 30472,
+   "days": 245
+  },
+  "CBOM:2023": {
+   "ticker": "CBOM",
+   "year": 2023,
+   "archive": true,
+   "bars": 42977,
+   "inserted": 42977,
+   "days": 301
+  },
+  "CBOM:2024": {
+   "ticker": "CBOM",
+   "year": 2024,
+   "archive": true,
+   "bars": 15626,
+   "inserted": 15626,
+   "days": 113
+  },
+  "MVID:2022": {
+   "ticker": "MVID",
+   "year": 2022,
+   "archive": true,
+   "bars": 27506,
+   "inserted": 27506,
+   "days": 266
+  },
+  "MVID:2023": {
+   "ticker": "MVID",
+   "year": 2023,
+   "archive": true,
+   "bars": 49647,
+   "inserted": 49647,
+   "days": 363
+  },
+  "MVID:2024": {
+   "ticker": "MVID",
+   "year": 2024,
+   "archive": true,
+   "bars": 20993,
+   "inserted": 20993,
+   "days": 140
+  },
+  "T:2022": {
+   "ticker": "T",
+   "year": 2022,
+   "archive": false,
+   "bars": 0,
+   "inserted": 0,
+   "days": 0
+  },
+  "T:2023": {
+   "ticker": "T",
+   "year": 2023,
+   "archive": false,
+   "bars": 0,
+   "inserted": 0,
+   "days": 0
+  },
+  "T:2024": {
+   "ticker": "T",
+   "year": 2024,
+   "archive": true,
+   "bars": 15454,
+   "inserted": 15454,
+   "days": 96
+  },
+  "NLMK:2022": {
+   "ticker": "NLMK",
+   "year": 2022,
+   "archive": true,
+   "bars": 37447,
+   "inserted": 37447,
+   "days": 289
+  },
+  "NLMK:2023": {
+   "ticker": "NLMK",
+   "year": 2023,
+   "archive": true,
+   "bars": 52385,
+   "inserted": 52385,
+   "days": 363
+  },
+  "NLMK:2024": {
+   "ticker": "NLMK",
+   "year": 2024,
+   "archive": true,
+   "bars": 21039,
+   "inserted": 21039,
+   "days": 140
+  },
+  "YNDX->YDEX:2022": {
+   "ticker": "YDEX",
+   "year": 2022,
+   "archive": true,
+   "bars": 38476,
+   "inserted": 38476,
+   "days": 290
+  },
+  "YNDX->YDEX:2023": {
+   "ticker": "YDEX",
+   "year": 2023,
+   "archive": true,
+   "bars": 53137,
+   "inserted": 53137,
+   "days": 363
+  },
+  "YNDX->YDEX:2024": {
+   "ticker": "YDEX",
+   "year": 2024,
+   "archive": true,
+   "bars": 21253,
+   "inserted": 0,
+   "days": 140
+  },
+  "FIVE->X5:2022": {
+   "ticker": "X5",
+   "year": 2022,
+   "archive": true,
+   "bars": 35669,
+   "inserted": 0,
+   "days": 286
+  },
+  "FIVE->X5:2023": {
+   "ticker": "X5",
+   "year": 2023,
+   "archive": true,
+   "bars": 52629,
+   "inserted": 0,
+   "days": 363
+  },
+  "FIVE->X5:2024": {
+   "ticker": "X5",
+   "year": 2024,
+   "archive": true,
+   "bars": 13525,
+   "inserted": 0,
+   "days": 93
+  },
+  "FIXP->FIXR:2022": {
+   "ticker": "FIXR",
+   "year": 2022,
+   "archive": true,
+   "bars": 31612,
+   "inserted": 31612,
+   "days": 242
+  },
+  "FIXP->FIXR:2023": {
+   "ticker": "FIXR",
+   "year": 2023,
+   "archive": true,
+   "bars": 43220,
+   "inserted": 43220,
+   "days": 274
+  },
+  "FIXP->FIXR:2024": {
+   "ticker": "FIXR",
+   "year": 2024,
+   "archive": true,
+   "bars": 21194,
+   "inserted": 21194,
+   "days": 140
+  }
+ }
+}
