@@ -1,0 +1,7 @@
+ts,env,account_id,ticker,direction,action,order_id,qty_lots_api,qty_shares,price,status,info
+2026-09-11T17:26:07,SANDBOX,1639899c-2aca-49fe-b5d8-d68e8b84f225,ENPG,SELL,manual_close,dce88c0d-572e-4088-8625-b6fb126db7b4,32,32,,EXECUTION_REPORT_STATUS_FILL,"дефект выхода long_overnight, решение 11.09"
+2026-09-11T17:28:26,SANDBOX,1639899c-2aca-49fe-b5d8-d68e8b84f225,ENPG,SELL,manual_close,,32,32,308.65,EXECUTION_REPORT_STATUS_FILL,"дефект выхода long_overnight, решение 11.09; операция 4e53404f-f935-4e84-b324-b8092d9d6558"
+2026-09-11T17:56:26,SANDBOX,1639899c-2aca-49fe-b5d8-d68e8b84f225,ENPG,BUY,limit,,32,32,307.95,dry-run,
+2026-09-11T17:56:26,SANDBOX,1639899c-2aca-49fe-b5d8-d68e8b84f225,ETLN,BUY,limit,,480,480,20.44,dry-run,
+2026-09-11T17:56:26,SANDBOX,1639899c-2aca-49fe-b5d8-d68e8b84f225,UPRO,BUY,limit,,9,9000,1.0195,dry-run,
+2026-09-11T17:56:26,SANDBOX,1639899c-2aca-49fe-b5d8-d68e8b84f225,ROSN,BUY,limit,,28,28,347.3,dry-run,

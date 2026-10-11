@@ -1,0 +1,5 @@
+ts,env,account_id,ticker,direction,action,order_id,qty_lots_api,qty_shares,price,status,info
+2026-09-17T09:10:04,SANDBOX,1639899c-2aca-49fe-b5d8-d68e8b84f225,SNGS,,overnight_close_cancel_stop,01a0ab60-31df-79e4-855d-bdd496d0b76c,,,,cancelled,TAKE_PROFIT
+2026-09-17T09:10:05,SANDBOX,1639899c-2aca-49fe-b5d8-d68e8b84f225,TMON,BUY,treasury_sweep,,1203,,164.37,virtual,197737.11 RUB
+2026-09-17T10:05:05,SANDBOX,1639899c-2aca-49fe-b5d8-d68e8b84f225,TMON,BUY,treasury_park,bfde7c10-c911-4a04-afdd-7e1d240c312d,1202,,164.43,broker,197644.86 RUB
+2026-09-17T10:05:05,SANDBOX,1639899c-2aca-49fe-b5d8-d68e8b84f225,TMON,SELL,treasury_convert,,1203,,164.37,virtual,197737.11 RUB

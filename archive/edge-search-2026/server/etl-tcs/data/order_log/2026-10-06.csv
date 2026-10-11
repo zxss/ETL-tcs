@@ -1,0 +1,5 @@
+ts,env,account_id,ticker,direction,action,order_id,qty_lots_api,qty_shares,price,status,info
+2026-10-06T14:28:02,PROD,<PROD_ACCOUNT>,VTBR,BUY,stop_loss,919d843d-0bac-40e5-ac7f-4fb7cd906ad6,364,,55.445,placed,
+2026-10-06T14:28:02,PROD,<PROD_ACCOUNT>,MAGN,BUY,stop_loss,a47e807f-c768-490b-8f61-a79ca51e5597,91,,21.995,placed,
+2026-10-06T14:28:03,PROD,<PROD_ACCOUNT>,ALRS,BUY,stop_loss,c2f4c6cb-a385-4f67-ba0a-3a1b36e1e689,104,,19.35,placed,
+2026-10-06T14:28:03,PROD,<PROD_ACCOUNT>,AFLT,BUY,stop_loss,7437ca67-df33-42c8-af24-febfd9fda92f,60,,33.57,placed,

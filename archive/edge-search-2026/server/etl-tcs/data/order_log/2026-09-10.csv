@@ -1,0 +1,7 @@
+ts,env,account_id,ticker,direction,action,order_id,qty_lots_api,qty_shares,price,status,info
+2026-09-10T18:41:33,SANDBOX,1639899c-2aca-49fe-b5d8-d68e8b84f225,OGKB,BUY,limit,419f4337-ce60-4967-a49b-e8d6f8c188c0,45,45000,0.2195,EXECUTION_REPORT_STATUS_NEW,
+2026-09-10T18:41:33,SANDBOX,1639899c-2aca-49fe-b5d8-d68e8b84f225,ENPG,BUY,limit,3718ee3e-92fc-4f25-87cb-9eb80bb42ea8,32,32,310.8,EXECUTION_REPORT_STATUS_NEW,
+2026-09-10T18:41:33,SANDBOX,1639899c-2aca-49fe-b5d8-d68e8b84f225,AFLT,BUY,limit,,30,,32.72,error,"SandboxService/PostSandboxOrder: HTTP 429 
+"
+2026-09-10T18:41:33,SANDBOX,1639899c-2aca-49fe-b5d8-d68e8b84f225,MTSS,BUY,limit,,5,,193.6,error,"SandboxService/PostSandboxOrder: HTTP 429 
+"
